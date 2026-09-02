@@ -31,6 +31,11 @@ import { V6CardFieldContainer } from './V6CardFieldContainer';
 import { amountFromBilling } from '../utils/amount';
 import { isFreeTrialCart } from '../utils/freeTrial';
 import { hasCheckoutValidationErrors } from './checkoutValidation';
+import {
+	CARD_DECLINE_MESSAGE,
+	CARD_SAVE_DECLINE_MESSAGE,
+	userFacingMessage,
+} from '../utils/cardDeclineMessages';
 
 const CHECKOUT_FIELDS_NOT_VALID_MESSAGE = __(
 	'Please complete all required checkout fields before continuing with payment.',
@@ -97,10 +102,7 @@ async function submitCardPayment( {
 		if ( result.state !== 'succeeded' ) {
 			return {
 				type: responseTypes.ERROR,
-				message: __(
-					'Card payment failed.',
-					'woocommerce-paypal-payments'
-				),
+				message: CARD_DECLINE_MESSAGE,
 			};
 		}
 
@@ -110,9 +112,7 @@ async function submitCardPayment( {
 	} catch ( error ) {
 		return {
 			type: responseTypes.ERROR,
-			message:
-				error?.message ||
-				__( 'Card payment failed.', 'woocommerce-paypal-payments' ),
+			message: userFacingMessage( error, CARD_DECLINE_MESSAGE ),
 		};
 	}
 }
@@ -173,10 +173,7 @@ async function submitCardSave( { config, session, responseTypes } ) {
 		if ( result.state !== 'succeeded' ) {
 			return {
 				type: responseTypes.ERROR,
-				message: __(
-					'Card could not be saved.',
-					'woocommerce-paypal-payments'
-				),
+				message: CARD_SAVE_DECLINE_MESSAGE,
 			};
 		}
 
@@ -186,9 +183,7 @@ async function submitCardSave( { config, session, responseTypes } ) {
 	} catch ( error ) {
 		return {
 			type: responseTypes.ERROR,
-			message:
-				error?.message ||
-				__( 'Card could not be saved.', 'woocommerce-paypal-payments' ),
+			message: userFacingMessage( error, CARD_SAVE_DECLINE_MESSAGE ),
 		};
 	}
 }
@@ -211,7 +206,8 @@ export function V6CardFieldsComponent( {
 	shouldSavePayment,
 	billing,
 } ) {
-	const { onPaymentSetup, onCheckoutValidation } = eventRegistration;
+	const { onPaymentSetup, onCheckoutValidation, onCheckoutFail } =
+		eventRegistration;
 	const { responseTypes } = emitResponse;
 
 	const context = config.page_context;
@@ -367,6 +363,28 @@ export function V6CardFieldsComponent( {
 			return true;
 		} );
 	}, [ onCheckoutValidation, activePaymentMethod, methodId, responseTypes ] );
+
+	// The Store API clears the gateway's notices and Blocks ignores the
+	// errorMessage it returns, so a decline raised during process_payment
+	// reaches the shopper as WooCommerce's generic string unless it is put
+	// back here.
+	useEffect( () => {
+		if (
+			activePaymentMethod !== methodId ||
+			typeof onCheckoutFail !== 'function'
+		) {
+			return undefined;
+		}
+
+		return onCheckoutFail( ( { processingResponse } ) => {
+			const message = processingResponse?.paymentDetails?.errorMessage;
+			if ( ! message ) {
+				return true;
+			}
+
+			return { type: responseTypes.ERROR, message };
+		} );
+	}, [ onCheckoutFail, activePaymentMethod, methodId, responseTypes ] );
 
 	const fieldsReady = session && inputStyle && textStyle;
 

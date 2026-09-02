@@ -63,6 +63,8 @@ let onPaymentSetup;
 let paymentSetupCb;
 let onCheckoutValidation;
 let checkoutValidationCb;
+let onCheckoutFail;
+let checkoutFailCb;
 let hasValidationErrors;
 let eventRegistration;
 let session;
@@ -101,6 +103,10 @@ async function waitForCheckoutValidationReady() {
 	await waitFor( () => expect( checkoutValidationCb ).not.toBeNull() );
 }
 
+async function waitForCheckoutFailReady() {
+	await waitFor( () => expect( checkoutFailCb ).not.toBeNull() );
+}
+
 beforeEach( () => {
 	paymentSetupCb = null;
 	onPaymentSetup = jest.fn( ( cb ) => {
@@ -112,7 +118,16 @@ beforeEach( () => {
 		checkoutValidationCb = cb;
 		return () => {};
 	} );
-	eventRegistration = { onPaymentSetup, onCheckoutValidation };
+	checkoutFailCb = null;
+	onCheckoutFail = jest.fn( ( cb ) => {
+		checkoutFailCb = cb;
+		return () => {};
+	} );
+	eventRegistration = {
+		onPaymentSetup,
+		onCheckoutValidation,
+		onCheckoutFail,
+	};
 
 	hasValidationErrors = false;
 	global.wp = {
@@ -378,7 +393,7 @@ describe( 'V6CardFieldsComponent', () => {
 		);
 	} );
 
-	test( 'reports an error and skips approval when 3D Secure is canceled', async () => {
+	test( 'reports the "authentication not completed" message and skips approval when 3D Secure is canceled', async () => {
 		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
 		session.submit.mockResolvedValueOnce( { state: 'canceled' } );
 
@@ -390,12 +405,14 @@ describe( 'V6CardFieldsComponent', () => {
 			result = await paymentSetupCb();
 		} );
 
-		expect( result.type ).toBe( 'error' );
-		expect( result.message ).toBeTruthy();
+		expect( result ).toEqual( {
+			type: 'error',
+			message: 'Card authentication was not completed. Please try again.',
+		} );
 		expect( mockApproveCardOrder ).not.toHaveBeenCalled();
 	} );
 
-	test( 'reports an error and skips approval when the card payment fails', async () => {
+	test( 'reports the friendly decline message and skips approval when the card payment does not succeed', async () => {
 		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
 		session.submit.mockResolvedValueOnce( { state: 'failed' } );
 
@@ -407,13 +424,17 @@ describe( 'V6CardFieldsComponent', () => {
 			result = await paymentSetupCb();
 		} );
 
-		expect( result.type ).toBe( 'error' );
+		expect( result ).toEqual( {
+			type: 'error',
+			message:
+				'This card could not be authorized. Please try a different payment method.',
+		} );
 		expect( mockApproveCardOrder ).not.toHaveBeenCalled();
 	} );
 
-	test( 'reports the thrown error message when creating the order fails', async () => {
+	test( 'shows the friendly decline message instead of leaking a thrown error that is not marked user-facing', async () => {
 		mockCreateCardOrder.mockRejectedValueOnce(
-			new Error( 'nonce expired' )
+			new Error( 'PayPal SDK internal failure XYZ' )
 		);
 
 		renderComponent();
@@ -424,7 +445,30 @@ describe( 'V6CardFieldsComponent', () => {
 			result = await paymentSetupCb();
 		} );
 
-		expect( result ).toEqual( { type: 'error', message: 'nonce expired' } );
+		expect( result ).toEqual( {
+			type: 'error',
+			message:
+				'This card could not be authorized. Please try a different payment method.',
+		} );
+	} );
+
+	test( 'shows a thrown error verbatim when it is marked user-facing', async () => {
+		const userFacing = new Error( 'Your card was declined by the bank.' );
+		userFacing.isUserFacing = true;
+		mockCreateCardOrder.mockRejectedValueOnce( userFacing );
+
+		renderComponent();
+		await waitForSessionReady();
+
+		let result;
+		await act( async () => {
+			result = await paymentSetupCb();
+		} );
+
+		expect( result ).toEqual( {
+			type: 'error',
+			message: 'Your card was declined by the bank.',
+		} );
 	} );
 
 	test( "passes the reference input's height to each V6CardFieldContainer via its own height prop, not inside style", async () => {
@@ -610,7 +654,7 @@ describe( 'V6CardFieldsComponent', () => {
 			expect( result ).toEqual( { type: 'success' } );
 		} );
 
-		test( 'reports an error and skips the exchange when 3D Secure is canceled', async () => {
+		test( 'reports the "authentication not completed" message and skips the exchange when 3D Secure is canceled', async () => {
 			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
 			session.submit.mockResolvedValueOnce( { state: 'canceled' } );
 
@@ -622,12 +666,15 @@ describe( 'V6CardFieldsComponent', () => {
 				result = await paymentSetupCb();
 			} );
 
-			expect( result.type ).toBe( 'error' );
-			expect( result.message ).toBeTruthy();
+			expect( result ).toEqual( {
+				type: 'error',
+				message:
+					'Card authentication was not completed. Please try again.',
+			} );
 			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
 		} );
 
-		test( 'reports an error and skips the exchange when the save session fails', async () => {
+		test( 'reports the friendly decline message and skips the exchange when the save session does not succeed', async () => {
 			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
 			session.submit.mockResolvedValueOnce( { state: 'failed' } );
 
@@ -639,15 +686,19 @@ describe( 'V6CardFieldsComponent', () => {
 				result = await paymentSetupCb();
 			} );
 
-			expect( result.type ).toBe( 'error' );
+			expect( result ).toEqual( {
+				type: 'error',
+				message:
+					'This card could not be authorized. Please try a different card.',
+			} );
 			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
 		} );
 
-		test( 'reports the thrown error message when the token exchange fails', async () => {
+		test( 'shows the friendly save-decline message instead of leaking a thrown error that is not marked user-facing', async () => {
 			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
 			session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 			mockExchangeSetupToken.mockRejectedValueOnce(
-				new Error( 'exchange failed' )
+				new Error( 'internal exchange error' )
 			);
 
 			renderComponent( { config: freeTrialConfig() } );
@@ -660,8 +711,60 @@ describe( 'V6CardFieldsComponent', () => {
 
 			expect( result ).toEqual( {
 				type: 'error',
-				message: 'exchange failed',
+				message:
+					'This card could not be authorized. Please try a different card.',
+			} );
+		} );
+
+		test( 'shows a thrown error verbatim when it is marked user-facing', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+			const userFacing = new Error( 'This card is already saved.' );
+			userFacing.isUserFacing = true;
+			mockExchangeSetupToken.mockRejectedValueOnce( userFacing );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( result ).toEqual( {
+				type: 'error',
+				message: 'This card is already saved.',
 			} );
 		} );
 	} );
+
+	describe( 'onCheckoutFail observer', () => {
+		test( 'surfaces the gateway decline message from processingResponse when present', async () => {
+			renderComponent();
+			await waitForCheckoutFailReady();
+
+			const result = checkoutFailCb( {
+				processingResponse: {
+					paymentDetails: {
+						errorMessage: 'Card declined during capture.',
+					},
+				},
+			} );
+
+			expect( result ).toEqual( {
+				type: 'error',
+				message: 'Card declined during capture.',
+			} );
+		} );
+
+		test( 'returns true, leaving the default checkout error, when no gateway error message is present', async () => {
+			renderComponent();
+			await waitForCheckoutFailReady();
+
+			expect(
+				checkoutFailCb( { processingResponse: {} } )
+			).toBe( true );
+		} );
+	} );
 } );
+
