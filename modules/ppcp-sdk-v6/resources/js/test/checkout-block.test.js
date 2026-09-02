@@ -193,7 +193,7 @@ describe( 'checkout-block', () => {
 			[ { paypal: true }, true ],
 			[ { paypal: false }, false ],
 		] )(
-			'on a non-free-trial cart, resolves to %s when eligibility reports %s',
+			'on a non-free-trial cart, eligibility %s resolves to %s',
 			async ( eligibility, expected ) => {
 				mockLoadSdkV6.mockResolvedValue( {} );
 				mockCheckEligibility.mockResolvedValue( eligibility );
