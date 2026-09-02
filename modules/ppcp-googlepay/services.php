@@ -218,7 +218,26 @@ return array(
         return new GooglePayButton($container->get('googlepay.asset_getter'), $container->get('googlepay.sdk_url'), $container->get('ppcp.asset-version'), $container->get('settings.settings-provider'), $container->get('settings.environment'), $container->get('button.helper.context'));
     },
     'googlepay.blocks-payment-method' => static function (ContainerInterface $container): PaymentMethodTypeInterface {
-        return new BlocksPaymentMethod('ppcp-googlepay', $container->get('googlepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('googlepay.button'), $container->get('blocks.method'), $container->get('button.helper.context'), $container->get('settings.settings-provider'));
+        return new BlocksPaymentMethod(
+            'ppcp-googlepay',
+            $container->get('googlepay.asset_getter'),
+            $container->get('ppcp.asset-version'),
+            $container->get('googlepay.button'),
+            $container->get('blocks.method'),
+            $container->get('button.helper.context'),
+            $container->get('settings.settings-provider'),
+            /**
+             * The v6 module is feature-flagged and may not be loaded, hence the has()
+             * guard. Resolved on each call so it reflects the page being rendered.
+             */
+            static function () use ($container): bool {
+                if (!$container->has('sdk-v6.owns-current-page')) {
+                    return \false;
+                }
+                $owns_current_page = $container->get('sdk-v6.owns-current-page');
+                return $owns_current_page();
+            }
+        );
     },
     'googlepay.asset_getter' => static function (ContainerInterface $container): AssetGetter {
         $factory = $container->get('assets.asset_getter_factory');
