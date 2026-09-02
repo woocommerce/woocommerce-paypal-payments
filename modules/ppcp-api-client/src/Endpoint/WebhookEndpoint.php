@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ApiHostResolver;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WP_Error;
 /**
@@ -24,11 +25,12 @@ class WebhookEndpoint
 {
     use \WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
     /**
-     * The host.
+     * Resolves the current host at call time rather than freezing it at
+     * construction time.
      *
-     * @var string
+     * @var ApiHostResolver
      */
-    private $host;
+    private $host_resolver;
     /**
      * The bearer.
      *
@@ -53,18 +55,9 @@ class WebhookEndpoint
      * @var LoggerInterface
      */
     private $logger;
-    /**
-     * WebhookEndpoint constructor.
-     *
-     * @param string              $host The host.
-     * @param Bearer              $bearer The bearer.
-     * @param WebhookFactory      $webhook_factory The webhook factory.
-     * @param WebhookEventFactory $webhook_event_factory The webhook event factory.
-     * @param LoggerInterface     $logger The logger.
-     */
-    public function __construct(string $host, Bearer $bearer, WebhookFactory $webhook_factory, WebhookEventFactory $webhook_event_factory, LoggerInterface $logger)
+    public function __construct(ApiHostResolver $host_resolver, Bearer $bearer, WebhookFactory $webhook_factory, WebhookEventFactory $webhook_event_factory, LoggerInterface $logger)
     {
-        $this->host = $host;
+        $this->host_resolver = $host_resolver;
         $this->bearer = $bearer;
         $this->webhook_factory = $webhook_factory;
         $this->webhook_event_factory = $webhook_event_factory;
@@ -86,7 +79,7 @@ class WebhookEndpoint
             return $hook;
         }
         $bearer = $this->bearer->bearer();
-        $url = trailingslashit($this->host) . 'v1/notifications/webhooks';
+        $url = trailingslashit($this->host_resolver->host()) . 'v1/notifications/webhooks';
         $args = array('method' => 'POST', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json'), 'body' => wp_json_encode($hook->to_array()));
         $response = $this->request($url, $args);
         if (is_wp_error($response)) {
@@ -110,7 +103,7 @@ class WebhookEndpoint
     public function list(): array
     {
         $bearer = $this->bearer->bearer();
-        $url = trailingslashit($this->host) . 'v1/notifications/webhooks';
+        $url = trailingslashit($this->host_resolver->host()) . 'v1/notifications/webhooks';
         $args = array('method' => 'GET', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json'));
         $response = $this->request($url, $args);
         if (is_wp_error($response)) {
@@ -137,7 +130,7 @@ class WebhookEndpoint
             return;
         }
         $bearer = $this->bearer->bearer();
-        $url = trailingslashit($this->host) . 'v1/notifications/webhooks/' . $hook->id();
+        $url = trailingslashit($this->host_resolver->host()) . 'v1/notifications/webhooks/' . $hook->id();
         $args = array('method' => 'DELETE', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token()));
         $response = $this->request($url, $args);
         if ($response instanceof WP_Error) {
@@ -171,7 +164,7 @@ class WebhookEndpoint
     public function simulate(Webhook $hook, string $event_type, ?string $resource_version): WebhookEvent
     {
         $bearer = $this->bearer->bearer();
-        $url = trailingslashit($this->host) . 'v1/notifications/simulate-event';
+        $url = trailingslashit($this->host_resolver->host()) . 'v1/notifications/simulate-event';
         $data = array('webhook_id' => $hook->id(), 'event_type' => $event_type);
         if ($resource_version) {
             $data['resource_version'] = $resource_version;
@@ -205,7 +198,7 @@ class WebhookEndpoint
     public function verify_event(string $auth_algo, string $cert_url, string $transmission_id, string $transmission_sig, string $transmission_time, string $webhook_id, \stdClass $webhook_event): bool
     {
         $bearer = $this->bearer->bearer();
-        $url = trailingslashit($this->host) . 'v1/notifications/verify-webhook-signature';
+        $url = trailingslashit($this->host_resolver->host()) . 'v1/notifications/verify-webhook-signature';
         $args = array('method' => 'POST', 'headers' => array('Authorization' => 'Bearer ' . $bearer->token(), 'Content-Type' => 'application/json'), 'body' => wp_json_encode(array('transmission_id' => $transmission_id, 'transmission_time' => $transmission_time, 'cert_url' => $cert_url, 'auth_algo' => $auth_algo, 'transmission_sig' => $transmission_sig, 'webhook_id' => $webhook_id, 'webhook_event' => $webhook_event)));
         $response = $this->request($url, $args);
         if (is_wp_error($response)) {
