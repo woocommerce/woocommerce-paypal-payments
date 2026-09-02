@@ -190,7 +190,10 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType
         // A subscription cart may still use the standard "Place order" flow when a vault
         // token can be saved (vaulting mode) or when manual renewals are accepted (the
         // subscription is charged as a plain, one-time Orders API payment).
-        $place_order_enabled = ($this->use_place_order || $this->add_place_order_method) && (!$this->subscription_helper->cart_contains_subscription() || ($script_data['can_save_vault_token'] ?? \false) || $this->subscription_helper->accept_manual_renewals());
+        //
+        // The vaulting capability comes from the settings, not $script_data: under SDK v6
+        // the smart button is a DisabledSmartButton whose script_data() is empty.
+        $place_order_enabled = ($this->use_place_order || $this->add_place_order_method) && (!$this->subscription_helper->cart_contains_subscription() || $this->plugin_settings->can_save_vault_token() || $this->subscription_helper->accept_manual_renewals());
         $cart = WC()->cart;
         return array(
             'id' => $this->gateway->id,

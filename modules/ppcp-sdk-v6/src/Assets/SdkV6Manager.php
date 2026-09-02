@@ -867,6 +867,11 @@ class SdkV6Manager
         // card block's suppression, so a page keeps exactly one card option.
         $card_fields_enabled = $this->is_card_fields_enabled() && !$this->is_fastlane_enabled();
         $messages_settings_location = $this->messages_settings_location();
+        /*
+         * - final_review: drives the post-approval fork; see V6ExpressComponent.approve().
+         * - is_free_trial_cart, cart_needs_vaulting: a zero-total subscription
+         *   cart is vaulted instead of purchased; see utils/freeTrial.js.
+         */
         $data = array(
             'sdk_url' => $base_url . '/web-sdk/v6/core',
             'page_context' => $page_context,
@@ -876,13 +881,10 @@ class SdkV6Manager
             'merchant_country' => $this->merchant_country,
             'locale' => str_replace('_', '-', get_locale()),
             'vaulting_enabled' => $this->vaulting_enabled,
-            // Drives the post-approval fork; see V6ExpressComponent.approve().
             'final_review' => $this->final_review_enabled,
-            // A subscription cart whose initial total is 0 (free trial, delayed
-            // sync or a 100% coupon). Such a cart must not create a $0 PayPal
-            // order: the frontend switches to the vault "save without purchase"
-            // flow instead, and the gateway places the $0 WC order server-side.
             'is_free_trial_cart' => $this->free_trial_helper->is_free_trial_cart(),
+            'cart_needs_vaulting' => $this->free_trial_helper->cart_requires_vaulting(),
+            'has_subscriptions' => $this->subscription_helper->cart_contains_subscription(),
             /**
              * 3DS/SCA contingency for the card save (setup-token) flow used on a
              * free-trial card checkout. Filtered like the add-payment-method page.
@@ -890,8 +892,6 @@ class SdkV6Manager
              * @param string $three_d_secure_contingency The default 3D Secure enum value.
              */
             'verification_method' => (string) apply_filters('woocommerce_paypal_payments_three_d_secure_contingency', $this->three_d_secure_contingency),
-            // Whether the buyer is logged in, so the free-trial save flow picks the
-            // logged-in create-payment-token endpoint vs the guest one.
             'user' => array('is_logged' => is_user_logged_in()),
             'ajax' => array(
                 'client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())),
@@ -942,7 +942,6 @@ class SdkV6Manager
                 // checkbox. A subscription force-saves, since its card must be
                 // vaulted to renew.
                 'is_vaulting_enabled' => $this->card_vaulting_enabled,
-                'has_subscriptions' => $this->subscription_helper->cart_contains_subscription(),
                 'card_icons' => array_map(static function (array $icon): array {
                     return array('id' => $icon['type'], 'alt' => $icon['title'], 'src' => $icon['url']);
                 }, $this->credit_card_icons),

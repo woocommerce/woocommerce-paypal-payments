@@ -416,6 +416,15 @@ class SettingsProvider
         return $this->settings_model->get_save_paypal_and_venmo();
     }
     /**
+     * Whether a PayPal/Venmo vault token can be saved for this merchant.
+     *
+     * @return bool True if PayPal/Venmo vaulting is available, false otherwise.
+     */
+    public function can_save_vault_token(): bool
+    {
+        return (bool) $this->merchant_data()->client_id && $this->save_paypal_and_venmo();
+    }
+    /**
      * Whether Pay Later may run alongside vaulting ("Save PayPal and Venmo").
      *
      * Allowed whenever the merchant may use Pay Later at all, which is the same
