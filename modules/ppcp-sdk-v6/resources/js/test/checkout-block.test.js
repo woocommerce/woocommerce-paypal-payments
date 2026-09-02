@@ -1,6 +1,3 @@
-import { loadSdkV6 } from '../sdkLoader';
-import { checkEligibility } from '../eligibility';
-
 const mockRegisterExpressPaymentMethod = jest.fn();
 const mockRegisterPaymentMethod = jest.fn();
 // virtual: webpack resolves this to the wc.wcBlocksRegistry global, so there is
@@ -218,8 +215,8 @@ describe( 'checkout-block', () => {
 		};
 
 		beforeEach( () => {
-			loadSdkV6.mockResolvedValue( {} );
-			checkEligibility.mockResolvedValue( eligibleForEveryMethod );
+			mockLoadSdkV6.mockResolvedValue( {} );
+			mockCheckEligibility.mockResolvedValue( eligibleForEveryMethod );
 		} );
 
 		test( 'a cart that became $0 after page load is a free trial even though the server said it was not', async () => {
@@ -439,7 +436,12 @@ describe( 'checkout-block', () => {
 		const cartTotals = { total_price: '0', currency_minor_unit: 2 };
 
 		test( 'resolves to true on a free-trial cart without checking eligibility', async () => {
-			loadCheckoutBlock( baseConfig( { is_free_trial_cart: true } ) );
+			loadCheckoutBlock(
+				baseConfig( {
+					is_free_trial_cart: true,
+					cart_needs_vaulting: true,
+				} )
+			);
 
 			const { canMakePayment } = expressCallFor( 'ppcp-gateway-paypal' );
 

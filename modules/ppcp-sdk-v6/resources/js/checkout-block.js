@@ -248,17 +248,19 @@ if ( config && config.page_context && config.continuation ) {
 					return false;
 				}
 
-				// A $0 free-trial subscription is vaulted through the PayPal
-				// save flow (see V6ExpressComponent), which the amount-based
-				// eligibility check would reject for a zero amount. Only PayPal
-				// is offered on such carts (see FUNDING_SOURCES above), so guard
-				// on it; mirrors boot.js, which bypasses eligibility too.
-				if ( config.is_free_trial_cart ) {
-					return fundingSource === FundingSources.PAYPAL;
-				}
-
 				const amount =
 					amountFromCartTotals( cartTotals ) || config.amount;
+
+				// A free-trial ($0) subscription is vaulted through the PayPal
+				// save flow (see V6ExpressComponent), which the amount-based
+				// eligibility check would reject for a zero amount. Only PayPal
+				// is offered on such carts, so guard on it and bypass eligibility
+				// (mirrors boot.js). Read live from the amount, not the server's
+				// page-load flag, so a coupon that zeroes or un-zeroes the cart
+				// after render is honoured.
+				if ( isFreeTrialCart( config, amount ) ) {
+					return fundingSource === FundingSources.PAYPAL;
+				}
 
 				// Before the SDK is asked, so a cart that only PayPal can pay
 				// for costs no eligibility lookup for the other methods.
