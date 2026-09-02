@@ -21,12 +21,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
  */
 class ApiHostResolver {
 
-	/**
-	 * The connection state.
-	 *
-	 * @var ConnectionState
-	 */
-	private $connection_state;
+	private ConnectionState $connection_state;
 
 	public function __construct( ConnectionState $connection_state ) {
 		$this->connection_state = $connection_state;
