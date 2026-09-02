@@ -5,13 +5,12 @@
  * Every assumption about that contract lives here: ppc-change-cart,
  * ppc-create-order, ppc-approve-order, ppc-update-shipping. Keep the
  * request/response shapes in sync with the endpoint contract tests.
- *
- * @package
  */
 
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson, postStoreApi } from './utils/api';
+import { logError } from './utils/diagnostics';
 import { FundingSources } from './utils/fundingSources';
 import { amountFromCartTotals } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
@@ -274,6 +273,16 @@ export async function approveOrder(
 		if ( ! canCreateOrder ) {
 			throw error;
 		}
+
+		// The retry below is what hides it: this is the only account of a
+		// refused first attempt.
+		logError( config, 'approve-order-retried', {
+			message: error.message,
+			status: error.status,
+			order_id: orderId,
+			funding_source: fundingSource,
+		} );
+
 		// e.g. One-Touch approval without a shipping option; fall back
 		// to the classic continuation on checkout.
 		data = await postJson( config.ajax.approve_order, {
