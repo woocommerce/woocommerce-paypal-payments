@@ -64,6 +64,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ApiHostResolver;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -101,6 +102,9 @@ return array(
 		}
 
 		return (string) $container->get( 'api.production-host' );
+	},
+	'api.host-resolver'                              => static function ( ContainerInterface $container ): ApiHostResolver {
+		return new ApiHostResolver( $container->get( 'settings.connection-state' ) );
 	},
 	'api.paypal-host'                                => function ( ContainerInterface $container ): string {
 		return PAYPAL_API_URL;
@@ -213,9 +217,8 @@ return array(
 		);
 	},
 	'api.endpoint.webhook'                           => static function ( ContainerInterface $container ): WebhookEndpoint {
-
 		return new WebhookEndpoint(
-			$container->get( 'api.host' ),
+			$container->get( 'api.host-resolver' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.webhook' ),
 			$container->get( 'api.factory.webhook-event' ),
