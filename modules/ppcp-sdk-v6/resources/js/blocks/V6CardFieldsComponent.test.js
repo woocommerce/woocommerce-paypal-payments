@@ -39,6 +39,18 @@ import {
 import '@testing-library/jest-dom';
 import { createElement } from '@wordpress/element';
 import { V6CardFieldsComponent } from './V6CardFieldsComponent';
+const { V6CardFieldContainer: ActualV6CardFieldContainer } = jest.requireActual(
+	'./V6CardFieldContainer'
+);
+
+// The component detects floating-label support by querying for this markup.
+function appendFloatingLabelMarker() {
+	const wrapper = document.createElement( 'div' );
+	wrapper.className = 'wc-block-components-text-input';
+	wrapper.appendChild( document.createElement( 'input' ) );
+	document.body.appendChild( wrapper );
+	return wrapper;
+}
 
 function cardConfig( overrides = {} ) {
 	return {
@@ -149,6 +161,7 @@ beforeEach( () => {
 			document.createElement( 'div' )
 		),
 		submit: jest.fn(),
+		on: jest.fn(),
 	};
 
 	mockLoadSdkV6.mockReset().mockResolvedValue( {
@@ -199,6 +212,18 @@ describe( 'V6CardFieldsComponent', () => {
 		await waitForSessionReady();
 
 		expect( onPaymentSetup ).toHaveBeenCalled();
+	} );
+
+	test( 'the root container and the expiry/CVV row carry the class hooks the stylesheet spacing depends on', async () => {
+		renderComponent();
+		await waitForSessionReady();
+
+		expect(
+			document.querySelector( '.ppcp-sdk-v6-card-fields' )
+		).toBeInTheDocument();
+		expect(
+			document.querySelector( '.ppcp-sdk-v6-card-fields__row' )
+		).toBeInTheDocument();
 	} );
 
 	test( 'a pending checkout validation error blocks the card submission before an order is created', async () => {
@@ -530,6 +555,25 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( types ).toContain( 'number' );
 	} );
 
+	test( 'keeps the plain placeholder and passes floatingLabel false to each field when no Blocks text-input markup is on the page', async () => {
+		renderComponent();
+		await waitForSessionReady();
+
+		[ 'number', 'expiry', 'cvv' ].forEach( ( type ) => {
+			const call = mockCardFieldContainer.mock.calls.find(
+				( c ) => c[ 0 ].type === type
+			);
+			expect( call[ 0 ].floatingLabel ).toBe( false );
+		} );
+
+		expect(
+			screen.getByPlaceholderText( 'Cardholder name (optional)' )
+		).toBeInTheDocument();
+		expect(
+			document.querySelector( 'label[for="ppcp-sdk-v6-card-name"]' )
+		).not.toBeInTheDocument();
+	} );
+
 	test( 'forwards the typed cardholder name to createCardOrder on submit', async () => {
 		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
@@ -766,5 +810,257 @@ describe( 'V6CardFieldsComponent', () => {
 			).toBe( true );
 		} );
 	} );
+
+	describe( 'floating-label mode (Blocks text-input markup present)', () => {
+		let marker;
+
+		beforeEach( () => {
+			marker = appendFloatingLabelMarker();
+		} );
+
+		afterEach( () => {
+			marker.remove();
+		} );
+
+		function lastCallFor( type ) {
+			const calls = mockCardFieldContainer.mock.calls.filter(
+				( call ) => call[ 0 ].type === type
+			);
+			return calls[ calls.length - 1 ][ 0 ];
+		}
+
+		test( 'passes floatingLabel true to each V6CardFieldContainer', async () => {
+			renderComponent();
+			await waitForSessionReady();
+
+			expect( lastCallFor( 'number' ).floatingLabel ).toBe( true );
+			expect( lastCallFor( 'expiry' ).floatingLabel ).toBe( true );
+			expect( lastCallFor( 'cvv' ).floatingLabel ).toBe( true );
+		} );
+
+		test( 'subscribes to focus, blur, empty and notempty on the card session', async () => {
+			renderComponent();
+			await waitForSessionReady();
+
+			await waitFor( () =>
+				expect(
+					session.on.mock.calls.map( ( call ) => call[ 0 ] )
+				).toEqual(
+					expect.arrayContaining( [
+						'focus',
+						'blur',
+						'empty',
+						'notempty',
+					] )
+				)
+			);
+		} );
+
+		describe( 'is-active derivation from the session event payload', () => {
+			function fieldState( overrides ) {
+				return {
+					isEmpty: true,
+					isFocused: false,
+					isPotentiallyValid: true,
+					isValid: false,
+					...overrides,
+				};
+			}
+
+			test.each( [
+				[
+					'a focused but still empty field',
+					fieldState( { isFocused: true, isEmpty: true } ),
+					true,
+				],
+				[
+					'a blurred field that already holds a value',
+					fieldState( { isFocused: false, isEmpty: false } ),
+					true,
+				],
+				[
+					'a blurred, empty field',
+					fieldState( { isFocused: false, isEmpty: true } ),
+					false,
+				],
+			] )(
+				'marks the wrapper active=%p for %s',
+				async ( _label, numberState, expectedActive ) => {
+					renderComponent();
+					await waitForSessionReady();
+
+					await waitFor( () =>
+						expect( session.on ).toHaveBeenCalled()
+					);
+					const handler = session.on.mock.calls[ 0 ][ 1 ];
+
+					act( () => {
+						handler( {
+							data: {
+								cards: [],
+								emittedBy: 'number',
+								number: numberState,
+								expiry: fieldState(),
+								cvv: fieldState(),
+							},
+							instanceId: 'instance-1',
+							sender: 'number',
+						} );
+					} );
+
+					expect( lastCallFor( 'number' ).isActive ).toBe(
+						expectedActive
+					);
+				}
+			);
+		} );
+
+		describe( 'cardholder name field', () => {
+			test( 'the label is associated with the input via for/id', async () => {
+				renderComponent();
+				await waitForSessionReady();
+
+				const input = screen.getByLabelText(
+					'Cardholder name (optional)'
+				);
+				expect( input ).toHaveAttribute(
+					'id',
+					'ppcp-sdk-v6-card-name'
+				);
+			} );
+
+			test( 'the wrapper carries the Blocks text-input class the stylesheet margin rule targets', async () => {
+				renderComponent();
+				await waitForSessionReady();
+
+				const input = screen.getByLabelText(
+					'Cardholder name (optional)'
+				);
+				const wrapper = input.closest( 'div' );
+
+				expect( wrapper ).toHaveClass(
+					'wc-block-components-text-input'
+				);
+			} );
+
+			test( 'the wrapper becomes active on focus and stays active once the field holds a value', async () => {
+				renderComponent();
+				await waitForSessionReady();
+
+				const input = screen.getByLabelText(
+					'Cardholder name (optional)'
+				);
+				const wrapper = input.closest( 'div' );
+
+				expect( wrapper ).not.toHaveClass( 'is-active' );
+
+				fireEvent.focus( input );
+				expect( wrapper ).toHaveClass( 'is-active' );
+
+				fireEvent.blur( input );
+				expect( wrapper ).not.toHaveClass( 'is-active' );
+
+				fireEvent.change( input, {
+					target: { value: 'Jane Doe' },
+				} );
+				fireEvent.blur( input );
+				expect( wrapper ).toHaveClass( 'is-active' );
+			} );
+		} );
+	} );
 } );
 
+describe( 'V6CardFieldContainer', () => {
+	function containerSession( fieldElement ) {
+		return {
+			createCardFieldsComponent: jest.fn(
+				() => fieldElement || document.createElement( 'div' )
+			),
+		};
+	}
+
+	test( 'in fallback mode, the SDK receives a placeholder, not an aria-label, and no label element is appended', () => {
+		const session = containerSession();
+
+		const { container } = render(
+			createElement( ActualV6CardFieldContainer, {
+				session,
+				type: 'number',
+				style: {},
+				label: 'Card number',
+			} )
+		);
+
+		expect( session.createCardFieldsComponent ).toHaveBeenCalledWith(
+			expect.objectContaining( { placeholder: 'Card number' } )
+		);
+		expect(
+			session.createCardFieldsComponent.mock.calls[ 0 ][ 0 ]
+		).not.toHaveProperty( 'ariaLabel' );
+		expect( container.firstChild ).not.toHaveClass(
+			'wc-block-components-text-input'
+		);
+		expect( container.querySelector( 'label' ) ).not.toBeInTheDocument();
+	} );
+
+	test( 'in floating-label mode, the SDK receives an aria-label, the wrapper gets the Blocks class, and an aria-hidden label is appended after the field', () => {
+		const field = document.createElement( 'div' );
+		const session = containerSession( field );
+
+		const { container } = render(
+			createElement( ActualV6CardFieldContainer, {
+				session,
+				type: 'number',
+				style: {},
+				label: 'Card number',
+				floatingLabel: true,
+			} )
+		);
+
+		expect( session.createCardFieldsComponent ).toHaveBeenCalledWith(
+			expect.objectContaining( { ariaLabel: 'Card number' } )
+		);
+		expect(
+			session.createCardFieldsComponent.mock.calls[ 0 ][ 0 ]
+		).not.toHaveProperty( 'placeholder' );
+
+		const wrapper = container.firstChild;
+		expect( wrapper ).toHaveClass( 'wc-block-components-text-input' );
+
+		expect( wrapper.children[ 0 ] ).toBe( field );
+
+		const label = wrapper.querySelector( 'label' );
+		expect( label ).toHaveTextContent( 'Card number' );
+		expect( label ).toHaveAttribute( 'aria-hidden', 'true' );
+		expect( label ).toHaveClass( 'ppcp-sdk-v6-card-field__label' );
+		expect( wrapper.lastChild ).toBe( label );
+	} );
+
+	test.each( [
+		[ true, true ],
+		[ false, false ],
+	] )(
+		'the wrapper is-active class follows the isActive prop (%p) in floating-label mode',
+		( isActive, expectActive ) => {
+			const session = containerSession();
+
+			const { container } = render(
+				createElement( ActualV6CardFieldContainer, {
+					session,
+					type: 'number',
+					style: {},
+					floatingLabel: true,
+					isActive,
+				} )
+			);
+
+			if ( expectActive ) {
+				expect( container.firstChild ).toHaveClass( 'is-active' );
+			} else {
+				expect( container.firstChild ).not.toHaveClass(
+					'is-active'
+				);
+			}
+		}
+	);
+} );
