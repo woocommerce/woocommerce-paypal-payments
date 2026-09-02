@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
@@ -62,6 +63,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ApiHostResolver;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -89,6 +91,17 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 return array(
+    'api.host' => static function (ContainerInterface $container): string {
+        $environment = $container->get('settings.environment');
+        assert($environment instanceof Environment);
+        if ($environment->is_sandbox()) {
+            return (string) $container->get('api.sandbox-host');
+        }
+        return (string) $container->get('api.production-host');
+    },
+    'api.host-resolver' => static function (ContainerInterface $container): ApiHostResolver {
+        return new ApiHostResolver($container->get('settings.connection-state'));
+    },
     'api.paypal-host' => function (ContainerInterface $container): string {
         return PAYPAL_API_URL;
     },
@@ -161,6 +174,9 @@ return array(
     },
     'api.endpoint.payment-tokens' => static function (ContainerInterface $container): PaymentTokensEndpoint {
         return new PaymentTokensEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'));
+    },
+    'api.endpoint.webhook' => static function (ContainerInterface $container): WebhookEndpoint {
+        return new WebhookEndpoint($container->get('api.host-resolver'), $container->get('api.bearer'), $container->get('api.factory.webhook'), $container->get('api.factory.webhook-event'), $container->get('woocommerce.logger.woocommerce'));
     },
     'api.endpoint.partner-referrals' => static function (ContainerInterface $container): PartnerReferrals {
         return new PartnerReferrals($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'));
