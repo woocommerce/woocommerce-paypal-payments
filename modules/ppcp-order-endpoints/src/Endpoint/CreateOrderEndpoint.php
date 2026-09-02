@@ -283,6 +283,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Handles the request.
 	 *
 	 * @throws Exception On Error.
+	 * @throws RuntimeException Cart total does not match the order total.
 	 */
 	public function handle_request(): void {
 		try {
@@ -336,18 +337,27 @@ class CreateOrderEndpoint implements EndpointInterface {
 				}
 
 				// The cart does not have any info about payment method, so we must handle free trial here.
-				if ( (
-					in_array( $payment_method, array( CreditCardGateway::ID, CardButtonGateway::ID ), true )
-						|| ( PayPalGateway::ID === $payment_method && 'card' === $funding_source )
-					)
-					&& $this->is_free_trial_cart()
-				) {
-					$this->purchase_unit->set_amount(
-						new Amount(
-							new Money( 1.0, $this->purchase_unit->amount()->currency_code() ),
-							$this->purchase_unit->amount()->breakdown()
-						)
-					);
+				if ( $this->is_free_trial_cart() ) {
+					$is_card = in_array( $payment_method, array( CreditCardGateway::ID, CardButtonGateway::ID ), true )
+						|| ( PayPalGateway::ID === $payment_method && 'card' === $funding_source );
+
+					if ( $is_card ) {
+						$this->purchase_unit->set_amount(
+							new Amount(
+								new Money( 1.0, $this->purchase_unit->amount()->currency_code() ),
+								$this->purchase_unit->amount()->breakdown()
+							)
+						);
+					} elseif ( $this->purchase_unit->amount()->value() <= 0 ) {
+						// A zero total belongs to the save-without-purchase endpoint,
+						// so the client rendered before the cart reached zero.
+						throw new RuntimeException(
+							__(
+								'The order total has changed. Please reload the page and try again.',
+								'woocommerce-paypal-payments'
+							)
+						);
+					}
 				}
 			}
 
@@ -355,6 +365,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			if ( isset( $data['form'] ) ) {
 				$this->form = $data['form'];
+
+				/*
+				 * Persist it here as well as in the save-checkout-form endpoint.
+				 * Both run for the same click, and the session is written whole
+				 * rather than per field, so whichever request finishes last
+				 * overwrites the other's contribution. Storing the form from the
+				 * request that also stores the order keeps the two together, so a
+				 * shopper returning from PayPal still finds what they typed.
+				 */
+				$this->session_handler->replace_checkout_form( $this->form );
 			}
 
 			if ( $this->early_validation_enabled

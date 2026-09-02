@@ -152,3 +152,34 @@ test( 'shows placement warning when placement is disabled', () => {
 		screen.getByText( /messaging placement is disabled/ )
 	).toBeInTheDocument();
 } );
+
+test( 'forces a text preview style when the v6 SDK is active even though the settings use a flex layout', () => {
+	global.PcpCheckoutPayLaterBlock = {
+		...defaultConfig,
+		isSdkV6Active: true,
+		config: {
+			checkout: { ...defaultConfig.config.checkout, layout: 'flex' },
+		},
+	};
+	useScriptParams.mockReturnValue( { url_params: { 'client-id': 'test' } } );
+	const { PayPalMessages } = require( '@paypal/react-paypal-js' );
+
+	render( <Edit { ...defaultProps } /> );
+
+	expect( PayPalMessages.mock.calls[ 0 ][ 0 ].style.layout ).toBe( 'text' );
+} );
+
+test( 'passes through a flex preview style when the v6 SDK is inactive', () => {
+	global.PcpCheckoutPayLaterBlock = {
+		...defaultConfig,
+		config: {
+			checkout: { ...defaultConfig.config.checkout, layout: 'flex' },
+		},
+	};
+	useScriptParams.mockReturnValue( { url_params: { 'client-id': 'test' } } );
+	const { PayPalMessages } = require( '@paypal/react-paypal-js' );
+
+	render( <Edit { ...defaultProps } /> );
+
+	expect( PayPalMessages.mock.calls[ 0 ][ 0 ].style.layout ).toBe( 'flex' );
+} );

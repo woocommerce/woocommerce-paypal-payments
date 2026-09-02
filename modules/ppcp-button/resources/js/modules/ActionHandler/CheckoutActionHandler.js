@@ -52,11 +52,6 @@ class CheckoutActionHandler {
 	configuration() {
 		const spinner = this.spinner;
 		const createOrder = ( data, actions ) => {
-			// Lets onApprove tell an approval in this same document apart from one
-			// that comes back into a rebuilt document (AppSwitch or redirect),
-			// where everything the buyer typed has been discarded.
-			ResumeFlowHelper.markOrderCreated();
-
 			const payer = payerData();
 			const bnCode =
 				typeof this.config.bn_codes[ this.config.context ] !==

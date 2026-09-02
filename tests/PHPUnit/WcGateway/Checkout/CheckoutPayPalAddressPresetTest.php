@@ -62,6 +62,130 @@ class CheckoutPayPalAddressPresetTest extends TestCase
 	}
 
     /**
+     * GIVEN a shopper who typed their own first name into the checkout form
+     * WHEN the checkout page renders again after returning from PayPal
+     * THEN the shopper's own entry is returned instead of the name on their PayPal account
+     */
+    public function testFilterCheckoutFieldPrefersShopperEnteredNameOverPayPalNameAfterReturnFromPayPal(): void
+    {
+        $order = $this->buildOrderWithPayerName('John', 'Doe');
+
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+        $this->buildTestee()[0]->shouldReceive('checkout_form')->andReturn(['billing_first_name' => 'Narek']);
+
+        $testee = $this->buildTestee()[1];
+
+        self::assertSame('Narek', $testee->filter_checkout_field(null, 'billing_first_name'));
+    }
+
+    /**
+     * GIVEN the shopper's saved checkout form has an empty value for a field
+     * WHEN the field is resolved
+     * THEN the PayPal preset is used, because a blank string is not an answer
+     */
+    public function testFilterCheckoutFieldFallsBackToPresetWhenSavedValueIsBlank(): void
+    {
+        $order = $this->buildOrderWithPayerName('John', 'Doe');
+
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+        $this->buildTestee()[0]->shouldReceive('checkout_form')->andReturn(['billing_first_name' => '']);
+
+        $testee = $this->buildTestee()[1];
+
+        self::assertSame('John', $testee->filter_checkout_field(null, 'billing_first_name'));
+    }
+
+    /**
+     * GIVEN an express checkout started from a product or cart page, where no checkout form was ever saved
+     * WHEN a billing field is resolved
+     * THEN the PayPal preset supplies the value, because there is nothing saved to prefer over it
+     */
+    public function testFilterCheckoutFieldFallsBackToPresetWhenNoCheckoutFormWasEverSaved(): void
+    {
+        $order = $this->buildOrderWithPayerName('John', 'Doe');
+
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+        $this->buildTestee()[0]->shouldReceive('checkout_form')->andReturn([]);
+
+        $testee = $this->buildTestee()[1];
+
+        self::assertSame('John', $testee->filter_checkout_field(null, 'billing_first_name'));
+    }
+
+    /**
+     * GIVEN a saved checkout form value that is not a string
+     * WHEN the field is resolved
+     * THEN the PayPal preset is used rather than returning the non-string value
+     *
+     * @dataProvider nonStringSavedCheckoutValueProvider
+     */
+    public function testFilterCheckoutFieldFallsBackToPresetWhenSavedValueIsNotAString($savedValue): void
+    {
+        $order = $this->buildOrderWithPayerName('John', 'Doe');
+
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+        $this->buildTestee()[0]->shouldReceive('checkout_form')->andReturn(['billing_first_name' => $savedValue]);
+
+        $testee = $this->buildTestee()[1];
+
+        self::assertSame('John', $testee->filter_checkout_field(null, 'billing_first_name'));
+    }
+
+    /**
+     * @see testFilterCheckoutFieldFallsBackToPresetWhenSavedValueIsNotAString
+     */
+    public function nonStringSavedCheckoutValueProvider(): array
+    {
+        return [
+            'array value' => [['unexpected']],
+            'boolean value' => [true],
+            'integer value' => [123],
+        ];
+    }
+
+    /**
+     * GIVEN a non-string field ID
+     * WHEN the field is resolved
+     * THEN the default value is returned untouched, without consulting the saved form or the PayPal preset
+     */
+    public function testFilterCheckoutFieldReturnsDefaultValueWhenFieldIdIsNotAString(): void
+    {
+        $this->buildTestee()[0]->shouldReceive('order')->never();
+        $this->buildTestee()[0]->shouldReceive('checkout_form')->never();
+
+        $testee = $this->buildTestee()[1];
+
+        self::assertSame('fallback', $testee->filter_checkout_field('fallback', 123));
+    }
+
+    /**
+     * Builds an Order whose PayPal payer has the given name and no shipping address,
+     * for tests that only care about the shopper's-own-form-vs-preset precedence.
+     */
+    private function buildOrderWithPayerName(string $givenName, string $surname): Order
+    {
+        return \Mockery::mock(
+            Order::class,
+            [
+                'id' => 'order-with-payer-name',
+                'purchase_units' => [],
+                'payer' => \Mockery::mock(
+                    Payer::class,
+                    [
+                        'name' => \Mockery::mock(
+                            PayerName::class,
+                            [
+                                'given_name' => $givenName,
+                                'surname' => $surname,
+                            ]
+                        ),
+                    ]
+                ),
+            ]
+        );
+    }
+
+    /**
      * @see testFilterCheckoutField
      */
     public function filterCheckoutFieldData(): array
@@ -328,6 +452,7 @@ class CheckoutPayPalAddressPresetTest extends TestCase
     {
         if (! $this->mocks) {
             $sessionHandler = \Mockery::mock(SessionHandler::class);
+            $sessionHandler->shouldReceive('checkout_form')->byDefault()->andReturn([]);
             $testee = new CheckoutPayPalAddressPreset($sessionHandler);
             $this->mocks = [
                 $sessionHandler,

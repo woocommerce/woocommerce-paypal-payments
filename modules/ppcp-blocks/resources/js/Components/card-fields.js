@@ -61,10 +61,7 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 			return onCheckoutValidation(
 				() => {
 					if ( hasCheckoutValidationErrors() ) {
-						return {
-							type: responseTypes.ERROR,
-							message: CHECKOUT_FIELDS_NOT_VALID_MESSAGE,
-						};
+						return { type: responseTypes.ERROR };
 					}
 
 					return true;

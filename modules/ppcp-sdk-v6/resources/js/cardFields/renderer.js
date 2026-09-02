@@ -1,21 +1,14 @@
 /**
  * Advanced Card Fields (ACDC), v6 Web SDK — classic checkout.
  *
- * Mounts the number/expiry/CVV fields into the existing WC card-form inputs
- * (the same DOM slots v5's paypal.CardFields() used), and wires the checkout
- * submission: submitting a new card runs through the v6 card session (which
- * also runs 3D Secure automatically), the result is approved server-side, and
- * the native checkout submission is then let through to capture it via the
- * existing CreditCardGateway::process_payment().
+ * Mounts number/expiry/CVV into the existing WC card-form inputs and runs a new
+ * card through the v6 card session (3D Secure included) before letting the
+ * native submit through to CreditCardGateway::process_payment(). The SDK has no
+ * cardholder-name component, so that input stays a plain field forwarded to
+ * create-order.
  *
- * The cardholder name has no v6 card-fields component (the SDK only accepts
- * number|expiry|cvv), so the native WC cardholder-name input is left in place
- * as a plain field and its value is forwarded to create-order instead.
- *
- * Scope: fresh card, one-time payment, plus the $0 free-trial variant (a
- * subscription cart with no initial charge), which saves the card via a setup
- * token instead of creating an order. Paying with an already-saved card still
- * defers to the native submit whenever a saved token is selected.
+ * Scope: a fresh card, one-time or the $0 free-trial variant that saves via a
+ * setup token. A selected saved token is left to the native submit.
  *
  * @package
  */
@@ -30,6 +23,7 @@ import {
 } from '../sessions/freeTrialSave';
 import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
+import { isFreeTrialCart } from '../utils/freeTrial';
 
 const FIELD_TYPES = [ 'number', 'expiry', 'cvv' ];
 
@@ -87,16 +81,14 @@ function shouldSavePaymentMethod() {
 }
 
 /**
- * Force-checks and disables the "Save to account" tokenization checkbox when the
- * cart contains a subscription, so the card is always vaulted for renewals (the
- * buyer cannot opt out). Mirrors v5's CardFieldsRenderer. No-op when vaulting is
- * off (the checkbox is absent) or the cart has no subscription.
+ * Force-checks and disables the "Save to account" checkbox on a subscription
+ * cart, whose card must be vaulted for renewals. Mirrors v5's CardFieldsRenderer.
  *
  * @param {Object} config - The wc_ppcp_sdk_v6 config object.
  */
 function forceSaveForSubscription( config ) {
 	if (
-		! config.card_fields?.has_subscriptions ||
+		! config.has_subscriptions ||
 		! config.card_fields?.is_vaulting_enabled
 	) {
 		return;
@@ -127,17 +119,16 @@ function isCardGatewaySelected( paymentMethod ) {
 /**
  * Bootstraps the ACDC card fields for the classic checkout page.
  *
- * WC's own checkout AJAX (`update_checkout`, fired on billing/shipping
- * field changes) replaces the whole `#payment` box — inputs and
- * `#place_order` included — with freshly rendered DOM nodes on every
- * call, detaching whatever this mounted/listened to before. So instead
- * of a one-shot setup, `attach()` re-queries the DOM and re-runs itself
- * on `updated_checkout`, the same event boot.js's renderAll() already
- * relies on to redraw the wallet buttons after that same DOM swap.
+ * WC's checkout AJAX replaces the whole `#payment` box, inputs and
+ * `#place_order` included, detaching whatever was mounted before. So `attach()`
+ * re-queries the DOM and re-runs itself on `updated_checkout`.
  *
- * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ * @param {Object}   config     - The wc_ppcp_sdk_v6 config object.
+ * @param {Function} [getTotal] - Returns the live cart total as a decimal
+ *                              string. Omit it to use the total as the page
+ *                              rendered.
  */
-export async function initCardFields( config ) {
+export async function initCardFields( config, getTotal = () => undefined ) {
 	if ( ! config.card_fields?.enabled ) {
 		return;
 	}
@@ -149,9 +140,11 @@ export async function initCardFields( config ) {
 	} = config.card_fields;
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 
-	// A $0 free-trial subscription card is saved via a setup token (no order);
-	// the gateway places the $0 order on the native submit that follows.
-	const isFreeTrial = Boolean( config.is_free_trial_cart );
+	// A $0 free-trial subscription card is saved via a setup token instead of an
+	// order. Re-asked per use, since a coupon can zero the cart after mounting.
+	function isFreeTrial() {
+		return isFreeTrialCart( config, getTotal() );
+	}
 
 	let cardSessionPromise = null;
 	let submitting = false;
@@ -177,7 +170,7 @@ export async function initCardFields( config ) {
 			cardSessionPromise = ( async () => {
 				const inputs = getInputs();
 				const sdk = await loadSdkV6( config, 'checkout' );
-				const cardSession = isFreeTrial
+				const cardSession = isFreeTrial()
 					? sdk.createCardFieldsSavePaymentSession()
 					: sdk.createCardFieldsOneTimePaymentSession();
 
@@ -227,7 +220,7 @@ export async function initCardFields( config ) {
 
 			// Free trial: confirm a setup token and store it; the native submit
 			// that follows lets the gateway place the $0 order against it.
-			if ( isFreeTrial ) {
+			if ( isFreeTrial() ) {
 				const setupTokenId = await createCardSetupToken( config );
 				// The save session takes no billing-address option; it confirms
 				// the setup token, running 3D Secure when required.
@@ -281,10 +274,9 @@ export async function initCardFields( config ) {
 	}
 
 	/**
-	 * (Re-)binds to the current DOM: attaches the click interceptor to
-	 * `#place_order` if it's a node we haven't bound yet, and drops any
-	 * card session mounted into now-detached inputs so it gets rebuilt
-	 * against the fresh ones.
+	 * (Re-)binds to the current DOM: attaches the click interceptor to an
+	 * unbound `#place_order`, and drops a card session mounted into inputs that
+	 * are now detached so it is rebuilt against the fresh ones.
 	 */
 	function attach() {
 		const inputs = getInputs();

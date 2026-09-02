@@ -11,7 +11,7 @@
 import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import { loadSdkV6 } from '../sdkLoader';
 import { createSession } from '../sessions/createSession';
-import { minorUnitsToDecimal } from '../utils/amount';
+import { amountFromBilling } from '../utils/amount';
 import { refreshCartUi } from '../utils/cartUi';
 import { methodShippingRequired } from '../methods/methodShipping';
 import { wcAddressToApplePay } from '../wallets/walletContacts';
@@ -21,19 +21,6 @@ import { V6BridgeContainer } from './V6BridgeContainer';
 // this many attempts. The delay grows by one step per attempt.
 const MAX_RENDER_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1000;
-
-/**
- * Derives a decimal amount string from the Blocks billing prop.
- *
- * @param {Object} billing - The Blocks billing prop (cart total in minor units).
- * @return {string} The amount as a decimal string, or '' when unknown.
- */
-function amountFromBilling( billing ) {
-	return minorUnitsToDecimal(
-		billing?.cartTotal?.value,
-		billing?.currency?.minorUnit
-	);
-}
 
 /**
  * @param {Object}                    props                    - Props from the Blocks express payment registry.
