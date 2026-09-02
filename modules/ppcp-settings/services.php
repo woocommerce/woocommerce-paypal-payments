@@ -431,7 +431,11 @@ return array(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'api.helpers.paymentLevelEligibility' ),
 			$check_override(),
-			$container->get( 'settings.service.agentic-beta-eligibility' )
+			$container->get( 'settings.service.agentic-beta-eligibility' ),
+			// The module registers its services only behind its feature flag, so
+			// presence means v6 is active; has() does not instantiate it. Per-page
+			// ownership is moot: one admin screen configures every page.
+			$container->has( 'sdk-v6.owns-current-page' )
 		);
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(

@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ApiHostResolver;
 use Psr\Log\LoggerInterface;
 use WP_Error;
 
@@ -27,11 +28,12 @@ class WebhookEndpoint {
 	use RequestTrait;
 
 	/**
-	 * The host.
+	 * Resolves the current host at call time rather than freezing it at
+	 * construction time.
 	 *
-	 * @var string
+	 * @var ApiHostResolver
 	 */
-	private $host;
+	private $host_resolver;
 
 	/**
 	 * The bearer.
@@ -61,24 +63,14 @@ class WebhookEndpoint {
 	 */
 	private $logger;
 
-	/**
-	 * WebhookEndpoint constructor.
-	 *
-	 * @param string              $host The host.
-	 * @param Bearer              $bearer The bearer.
-	 * @param WebhookFactory      $webhook_factory The webhook factory.
-	 * @param WebhookEventFactory $webhook_event_factory The webhook event factory.
-	 * @param LoggerInterface     $logger The logger.
-	 */
 	public function __construct(
-		string $host,
+		ApiHostResolver $host_resolver,
 		Bearer $bearer,
 		WebhookFactory $webhook_factory,
 		WebhookEventFactory $webhook_event_factory,
 		LoggerInterface $logger
 	) {
-
-		$this->host                  = $host;
+		$this->host_resolver         = $host_resolver;
 		$this->bearer                = $bearer;
 		$this->webhook_factory       = $webhook_factory;
 		$this->webhook_event_factory = $webhook_event_factory;
@@ -101,7 +93,7 @@ class WebhookEndpoint {
 		}
 
 		$bearer   = $this->bearer->bearer();
-		$url      = trailingslashit( $this->host ) . 'v1/notifications/webhooks';
+		$url      = trailingslashit( $this->host_resolver->host() ) . 'v1/notifications/webhooks';
 		$args     = array(
 			'method'  => 'POST',
 			'headers' => array(
@@ -148,7 +140,7 @@ class WebhookEndpoint {
 	 */
 	public function list(): array {
 		$bearer   = $this->bearer->bearer();
-		$url      = trailingslashit( $this->host ) . 'v1/notifications/webhooks';
+		$url      = trailingslashit( $this->host_resolver->host() ) . 'v1/notifications/webhooks';
 		$args     = array(
 			'method'  => 'GET',
 			'headers' => array(
@@ -199,7 +191,7 @@ class WebhookEndpoint {
 		}
 
 		$bearer   = $this->bearer->bearer();
-		$url      = trailingslashit( $this->host ) . 'v1/notifications/webhooks/' . $hook->id();
+		$url      = trailingslashit( $this->host_resolver->host() ) . 'v1/notifications/webhooks/' . $hook->id();
 		$args     = array(
 			'method'  => 'DELETE',
 			'headers' => array(
@@ -243,7 +235,7 @@ class WebhookEndpoint {
 	 */
 	public function simulate( Webhook $hook, string $event_type, ?string $resource_version ): WebhookEvent {
 		$bearer = $this->bearer->bearer();
-		$url    = trailingslashit( $this->host ) . 'v1/notifications/simulate-event';
+		$url    = trailingslashit( $this->host_resolver->host() ) . 'v1/notifications/simulate-event';
 		$data   = array(
 			'webhook_id' => $hook->id(),
 			'event_type' => $event_type,
@@ -301,7 +293,7 @@ class WebhookEndpoint {
 	): bool {
 
 		$bearer   = $this->bearer->bearer();
-		$url      = trailingslashit( $this->host ) . 'v1/notifications/verify-webhook-signature';
+		$url      = trailingslashit( $this->host_resolver->host() ) . 'v1/notifications/verify-webhook-signature';
 		$args     = array(
 			'method'  => 'POST',
 			'headers' => array(

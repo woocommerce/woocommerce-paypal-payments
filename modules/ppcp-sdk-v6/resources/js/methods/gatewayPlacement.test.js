@@ -1,8 +1,10 @@
 import jQuery from 'jquery';
 
 const mockGetCurrentPaymentMethod = jest.fn();
+const mockIsSavedPayPalTokenSelected = jest.fn();
 jest.mock( '@ppcp-button/Helper/CheckoutMethodState', () => ( {
 	getCurrentPaymentMethod: () => mockGetCurrentPaymentMethod(),
+	isSavedPayPalTokenSelected: () => mockIsSavedPayPalTokenSelected(),
 	ORDER_BUTTON_SELECTOR: '#place_order',
 	PaymentMethods: { PAYPAL: 'ppcp-gateway' },
 } ) );
@@ -19,12 +21,15 @@ let revealMethodGateway;
 beforeEach( () => {
 	jest.resetModules();
 	mockGetCurrentPaymentMethod.mockReset();
+	mockIsSavedPayPalTokenSelected.mockReset();
+	mockIsSavedPayPalTokenSelected.mockReturnValue( false );
 	mockHasJQuery.mockReset();
 	mockHasJQuery.mockReturnValue( true );
 	// document.body.innerHTML only replaces the body's children, so handlers
-	// bound to the body itself by a previous test's module instance survive
-	// unless unbound here.
+	// bound to the body itself, or delegated from document, by a previous
+	// test's module instance survive unless unbound here.
 	jQuery( document.body ).off();
+	jQuery( document ).off( 'change', 'input[name="wc-ppcp-gateway-payment-token"]' );
 	document.body.innerHTML = '';
 	global.jQuery = jQuery;
 	( { revealMethodGateway } = require( './gatewayPlacement' ) );
@@ -373,6 +378,70 @@ describe( 'revealMethodGateway()', () => {
 
 				expect( displayOf( '#wallet-wrapper' ) ).toBe( '' );
 				expect( displayOf( '#place_order' ) ).toBe( 'none' );
+			}
+		);
+	} );
+
+	describe( "PayPal's row with a saved payment token", () => {
+		function setDomWithSavedToken() {
+			document.body.innerHTML =
+				'<div id="express-wrapper"><button></button></div>' +
+				'<div id="place_order"></div>' +
+				'<input type="radio" name="wc-ppcp-gateway-payment-token" ' +
+				'value="2" checked />' +
+				'<input type="radio" name="wc-ppcp-gateway-payment-token" ' +
+				'value="new" />';
+		}
+
+		test(
+			'hides the express wrapper and keeps "Place order" when ' +
+				"PayPal's row is selected with a saved token",
+			() => {
+				setDomWithSavedToken();
+				mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+				mockIsSavedPayPalTokenSelected.mockReturnValue( true );
+
+				reveal( { expressSelector: '#express-wrapper' } );
+
+				expect( displayOf( '#express-wrapper' ) ).toBe( 'none' );
+				expect( displayOf( '#place_order' ) ).toBe( '' );
+			}
+		);
+
+		test(
+			'shows the express wrapper and hides "Place order" when ' +
+				'"Use a new payment method" is selected instead',
+			() => {
+				setDomWithSavedToken();
+				mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+				mockIsSavedPayPalTokenSelected.mockReturnValue( false );
+
+				reveal( { expressSelector: '#express-wrapper' } );
+
+				expect( displayOf( '#express-wrapper' ) ).toBe( '' );
+				expect( displayOf( '#place_order' ) ).toBe( 'none' );
+			}
+		);
+
+		test(
+			're-evaluates visibility when the payment-token radio ' +
+				'changes, without a checkout DOM rebuild',
+			() => {
+				setDomWithSavedToken();
+				mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+				mockIsSavedPayPalTokenSelected.mockReturnValue( false );
+
+				reveal( { expressSelector: '#express-wrapper' } );
+				expect( displayOf( '#express-wrapper' ) ).toBe( '' );
+				expect( displayOf( '#place_order' ) ).toBe( 'none' );
+
+				mockIsSavedPayPalTokenSelected.mockReturnValue( true );
+				jQuery(
+					'input[name="wc-ppcp-gateway-payment-token"][value="2"]'
+				).trigger( 'change' );
+
+				expect( displayOf( '#express-wrapper' ) ).toBe( 'none' );
+				expect( displayOf( '#place_order' ) ).toBe( '' );
 			}
 		);
 	} );

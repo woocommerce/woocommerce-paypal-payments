@@ -76,6 +76,7 @@ class SdkV6ManagerTest extends TestCase
         $this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false)->byDefault();
 		$this->free_trial_helper = Mockery::mock(FreeTrialSubscriptionHelper::class);
 		$this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
+		$this->free_trial_helper->shouldReceive('cart_requires_vaulting')->andReturn(false)->byDefault();
 		$this->credit_card_icons = [];
 
 		$this->message_style_mapper = Mockery::mock(MessageStyleMapper::class);
@@ -239,6 +240,7 @@ class SdkV6ManagerTest extends TestCase
         global $wp;
         $wp = null;
         unset($_GET['key']);
+        unset($GLOBALS['post']);
 
         parent::tearDown();
     }
@@ -565,7 +567,7 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN a checkout block page with Advanced Card Fields enabled for the merchant
      * WHEN the SDK bootstrap data is generated
-     * THEN card_fields.enabled is true
+     * THEN card_fields.enabled is true, unless Fastlane renders on the same page
      * AND the gateway title and name-field flag are carried into the payload
      * AND is_vaulting_enabled reflects the card vaulting setting
      * AND has_subscriptions reflects whether the cart contains a subscription
@@ -580,6 +582,7 @@ class SdkV6ManagerTest extends TestCase
         string $show_name_on_card,
         bool $card_vaulting_enabled,
         bool $cart_contains_subscription,
+        bool $fastlane_renders,
         bool $expected_enabled,
         bool $expected_name_field
     ): void {
@@ -588,6 +591,7 @@ class SdkV6ManagerTest extends TestCase
         $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn($gateway_title);
         $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn($show_name_on_card);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn($cart_contains_subscription);
+        $this->fastlane_config->shouldReceive('should_render')->andReturn($fastlane_renders);
 
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
         $this->session_handler->shouldReceive('order')->andReturn(null);
@@ -617,7 +621,7 @@ class SdkV6ManagerTest extends TestCase
         $this->assertSame($expected_name_field, $data['card_fields']['name_field']);
         $this->assertSame(CreditCardGateway::ID, $data['card_fields']['payment_method']);
         $this->assertSame($card_vaulting_enabled, $data['card_fields']['is_vaulting_enabled']);
-        $this->assertSame($cart_contains_subscription, $data['card_fields']['has_subscriptions']);
+        $this->assertSame($cart_contains_subscription, $data['has_subscriptions']);
         $this->assertSame($card_field_styles, $data['card_fields']['styles']);
     }
 
@@ -625,22 +629,31 @@ class SdkV6ManagerTest extends TestCase
     {
         return [
             'checkout-block with ACDC enabled and name field shown' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, false, true, true,
+                'checkout-block', true, 'Credit Card', 'yes', false, false, false, true, true,
             ],
             'checkout-block with ACDC enabled and name field hidden' => [
-                'checkout-block', true, 'Credit Card', 'no', false, false, true, false,
+                'checkout-block', true, 'Credit Card', 'no', false, false, false, true, false,
             ],
             'checkout-block with ACDC disabled' => [
-                'checkout-block', false, 'Credit Card', 'yes', false, false, false, true,
+                'checkout-block', false, 'Credit Card', 'yes', false, false, false, false, true,
             ],
             'classic checkout with ACDC enabled' => [
-                'checkout', true, 'Credit Card', 'yes', false, false, true, true,
+                'checkout', true, 'Credit Card', 'yes', false, false, false, true, true,
             ],
             'checkout-block with card vaulting enabled' => [
-                'checkout-block', true, 'Credit Card', 'yes', true, false, true, true,
+                'checkout-block', true, 'Credit Card', 'yes', true, false, false, true, true,
             ],
             'checkout-block with a subscription in the cart' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, true, true, true,
+                'checkout-block', true, 'Credit Card', 'yes', false, true, false, true, true,
+            ],
+            'checkout-block with ACDC enabled but Fastlane renders' => [
+                'checkout-block', true, 'Credit Card', 'yes', false, false, true, false, true,
+            ],
+            'classic checkout with ACDC enabled but Fastlane renders' => [
+                'checkout', true, 'Credit Card', 'yes', false, false, true, false, true,
+            ],
+            'checkout-block with ACDC disabled and Fastlane renders' => [
+                'checkout-block', false, 'Credit Card', 'yes', false, false, true, false, true,
             ],
         ];
     }
@@ -889,6 +902,72 @@ class SdkV6ManagerTest extends TestCase
             'home page'    => ['home'],
             'no location'  => [''],
         ];
+    }
+
+    /**
+     * GIVEN a page location this module does not otherwise place a message on (shop,
+     *       home, or none), but an enabled Pay Later block sits on that exact page
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it loads anyway - the block prints its own `.ppcp-messages` placeholder, so
+     *      messages_render_hook() returning null does not veto it here, unlike the
+     *      counterpart test where no such block is present
+     *
+     * @dataProvider unsupportedMessageLocationProvider
+     */
+    public function testShouldLoadOnCurrentPageTrueWhenPayLaterBlockSitsOnAnUnsupportedMessageLocation(string $location): void
+    {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with('custom_placement')
+            ->andReturn(true);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
+            ->with('custom_placement')
+            ->andReturn(true);
+
+        when('did_action')->justReturn(true);
+        when('has_block')->justReturn(true);
+        $GLOBALS['post'] = new \WP_Post();
+
+        $testee = $this->createTestee();
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a page location this module does not otherwise place a message on, and no
+     *       Pay Later block is present on the page (has_block() reports false)
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it does not load - an eligible-but-blockless custom placement is not enough,
+     *      distinguishing this from the block-present case above
+     *
+     * @dataProvider unsupportedMessageLocationProvider
+     */
+    public function testShouldLoadOnCurrentPageFalseWhenNoPayLaterBlockSitsOnAnUnsupportedMessageLocation(string $location): void
+    {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with('custom_placement')
+            ->andReturn(true);
+        // No block present, so has_paylater_block() resolves false and
+        // messages_settings_location() falls back to the empty location, not
+        // 'custom_placement' - the eligibility lookup below reflects that.
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
+            ->with('')
+            ->andReturn(true);
+
+        when('did_action')->justReturn(true);
+        when('has_block')->justReturn(false);
+        $GLOBALS['post'] = new \WP_Post();
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->should_load_on_current_page());
     }
 
     /**
@@ -1458,6 +1537,37 @@ class SdkV6ManagerTest extends TestCase
         return [
             'a free trial cart is reported as such' => [true],
             'a regular cart is not reported as a free trial' => [false],
+        ];
+    }
+
+    /**
+     * GIVEN a cart that may or may not hold a subscription paid from a vaulted
+     *       payment method rather than billed by PayPal against a plan
+     * WHEN the SDK bootstrap data is generated
+     * THEN cart_needs_vaulting mirrors the helper's cart_requires_vaulting(),
+     *      independently of is_free_trial_cart, so the frontend can re-answer
+     *      the free-trial question against a live total after a coupon changes it
+     *
+     * @dataProvider cart_requires_vaulting_provider
+     */
+    public function testScriptDataReflectsCartRequiresVaultingIndependentlyOfTotal(bool $cart_requires_vaulting): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->free_trial_helper->shouldReceive('cart_requires_vaulting')->andReturn($cart_requires_vaulting);
+        // The total-dependent flag must not influence cart_needs_vaulting.
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($cart_requires_vaulting, $data['cart_needs_vaulting']);
+    }
+
+    public function cart_requires_vaulting_provider(): array
+    {
+        return [
+            'a cart requiring vaulting is reported as such' => [true],
+            'a cart not requiring vaulting is reported as such' => [false],
         ];
     }
 

@@ -70,6 +70,24 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 	}
 
 	/**
+	 * Whether the SDK v6 stack is rendering the current page.
+	 *
+	 * Per page, not per site: where v6 stands down, v5 can still draw a banner.
+	 * Mirrors GooglepayModule::v6_owns_current_page().
+	 *
+	 * @param ContainerInterface $c The container.
+	 */
+	public static function v6_owns_current_page( ContainerInterface $c ): bool {
+		if ( ! $c->has( 'sdk-v6.owns-current-page' ) ) {
+			return false;
+		}
+
+		$owns_current_page = $c->get( 'sdk-v6.owns-current-page' );
+
+		return $owns_current_page();
+	}
+
+	/**
 	 * Returns whether the under cart totals placement is enabled.
 	 *
 	 * @return bool true if the under cart totals placement is enabled, otherwise false.
@@ -133,6 +151,9 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						'placementEnabled'            => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'cart' ),
 						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
+						// Module loaded, not page ownership: the editor has no page
+						// to own.
+						'isSdkV6Active'               => $c->has( 'sdk-v6.owns-current-page' ),
 					)
 				);
 
@@ -160,6 +181,9 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
 						'placementEnabled'           => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'checkout' ),
 						'payLaterSettingsUrl'        => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						// Module loaded, not page ownership: the editor has no page
+						// to own.
+						'isSdkV6Active'              => $c->has( 'sdk-v6.owns-current-page' ),
 					)
 				);
 			},
