@@ -155,6 +155,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\ShippingPreferenceFactory' => $baseDir . '/modules/ppcp-api-client/src/Factory/ShippingPreferenceFactory.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\WebhookEventFactory' => $baseDir . '/modules/ppcp-api-client/src/Factory/WebhookEventFactory.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\WebhookFactory' => $baseDir . '/modules/ppcp-api-client/src/Factory/WebhookFactory.php',
+    'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ApiHostResolver' => $baseDir . '/modules/ppcp-api-client/src/Helper/ApiHostResolver.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\Cache' => $baseDir . '/modules/ppcp-api-client/src/Helper/Cache.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\CurrencyGetter' => $baseDir . '/modules/ppcp-api-client/src/Helper/CurrencyGetter.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\DccApplies' => $baseDir . '/modules/ppcp-api-client/src/Helper/DccApplies.php',

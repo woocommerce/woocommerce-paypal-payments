@@ -16,10 +16,6 @@ class CartEndpoint
     use RequestTrait;
     private CartFactory $cart_factory;
     private LoggerInterface $logger;
-    /**
-     * Unused (for trait).
-     */
-    private string $host = '';
     public function __construct(CartFactory $cart_factory, LoggerInterface $logger)
     {
         $this->cart_factory = $cart_factory;

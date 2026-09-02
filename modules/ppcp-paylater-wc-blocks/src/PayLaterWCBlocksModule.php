@@ -68,6 +68,22 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule
         return self::is_block_enabled($settings_status, $location);
     }
     /**
+     * Whether the SDK v6 stack is rendering the current page.
+     *
+     * Per page, not per site: where v6 stands down, v5 can still draw a banner.
+     * Mirrors GooglepayModule::v6_owns_current_page().
+     *
+     * @param ContainerInterface $c The container.
+     */
+    public static function v6_owns_current_page(ContainerInterface $c): bool
+    {
+        if (!$c->has('sdk-v6.owns-current-page')) {
+            return \false;
+        }
+        $owns_current_page = $c->get('sdk-v6.owns-current-page');
+        return $owns_current_page();
+    }
+    /**
      * Returns whether the under cart totals placement is enabled.
      *
      * @return bool true if the under cart totals placement is enabled, otherwise false.
@@ -101,10 +117,31 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule
             $asset_getter = $c->get('paylater-wc-blocks.asset_getter');
             assert($asset_getter instanceof AssetGetter);
             wp_register_script($script_handle, $asset_getter->get_asset_url('CartPayLaterMessagesBlock/cart-paylater-block.js'), array(), $c->get('ppcp.asset-version'), \true);
-            wp_localize_script($script_handle, 'PcpCartPayLaterBlock', array('ajax' => array('cart_script_params' => array('endpoint' => \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT))), 'config' => $config_factory->from_settings($paylater_settings), 'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), 'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(), 'placementEnabled' => self::is_placement_enabled($c->get('wcgateway.settings.status'), 'cart'), 'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), 'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled()));
+            wp_localize_script($script_handle, 'PcpCartPayLaterBlock', array(
+                'ajax' => array('cart_script_params' => array('endpoint' => \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT))),
+                'config' => $config_factory->from_settings($paylater_settings),
+                'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
+                'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
+                'placementEnabled' => self::is_placement_enabled($c->get('wcgateway.settings.status'), 'cart'),
+                'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
+                'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
+                // Module loaded, not page ownership: the editor has no page
+                // to own.
+                'isSdkV6Active' => $c->has('sdk-v6.owns-current-page'),
+            ));
             $script_handle = 'ppcp-checkout-paylater-block';
             wp_register_script($script_handle, $asset_getter->get_asset_url('CheckoutPayLaterMessagesBlock/checkout-paylater-block.js'), array(), $c->get('ppcp.asset-version'), \true);
-            wp_localize_script($script_handle, 'PcpCheckoutPayLaterBlock', array('ajax' => array('cart_script_params' => array('endpoint' => \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT))), 'config' => $config_factory->from_settings($paylater_settings), 'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'), 'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(), 'placementEnabled' => self::is_placement_enabled($c->get('wcgateway.settings.status'), 'checkout'), 'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway')));
+            wp_localize_script($script_handle, 'PcpCheckoutPayLaterBlock', array(
+                'ajax' => array('cart_script_params' => array('endpoint' => \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT))),
+                'config' => $config_factory->from_settings($paylater_settings),
+                'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
+                'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
+                'placementEnabled' => self::is_placement_enabled($c->get('wcgateway.settings.status'), 'checkout'),
+                'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
+                // Module loaded, not page ownership: the editor has no page
+                // to own.
+                'isSdkV6Active' => $c->has('sdk-v6.owns-current-page'),
+            ));
         }, 20);
         /**
          * Registers slugs as block categories with WordPress.

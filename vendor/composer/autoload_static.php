@@ -372,6 +372,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\ShippingPreferenceFactory' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Factory/ShippingPreferenceFactory.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\WebhookEventFactory' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Factory/WebhookEventFactory.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\WebhookFactory' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Factory/WebhookFactory.php',
+        'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ApiHostResolver' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/ApiHostResolver.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\Cache' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/Cache.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\CurrencyGetter' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/CurrencyGetter.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\DccApplies' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/DccApplies.php',
