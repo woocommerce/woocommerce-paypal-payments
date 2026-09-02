@@ -181,7 +181,8 @@ export class PayPalUiClassic extends PayPalUi {
 	puiBirthDateInput = () =>
 		this.puiGateway().locator( '#billing_birth_date' );
 	puiPhoneInput = () =>
-		this.puiGateway().locator( '#billing_phone' );
+		this.puiGateway()
+			.locator( '#ppcp_pui_billing_phone' );
 
 	fastlaneContinueButton = () =>
 		this.page.locator( '#ppcp-axo-billing-email-submit-button' );
