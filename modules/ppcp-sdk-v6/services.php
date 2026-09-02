@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedQuote;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedShippingRate;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedTaxBasis;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 /**
  * Builds a payment method's availability check from its own module's services.
  *
@@ -176,10 +177,32 @@ return array(
     'sdk-v6.rate-limiter' => static function (): RateLimiter {
         return new RateLimiter('ppcp_sdk_v6_rl_', 10, 60);
     },
+    'sdk-v6.blocks.place-order-data' => static function (ContainerInterface $container): callable {
+        // The non-express PayPal row's state. A callable, since neither the cart
+        // nor the filtered values below are settled while the container is built.
+        $settings_provider = $container->get('settings.settings-provider');
+        assert($settings_provider instanceof SettingsProvider);
+        $subscription_helper = $container->get('wc-subscriptions.helper');
+        assert($subscription_helper instanceof SubscriptionHelper);
+        return static function () use ($container, $settings_provider, $subscription_helper): array {
+            /**
+             * Whether to offer the non-express PayPal method.
+             *
+             * @param bool $add_place_order_method Whether to offer the method.
+             */
+            $offer_method = (bool) apply_filters('woocommerce_paypal_payments_blocks_add_place_order_method', \true);
+            // A subscription needs a method that can be vaulted to pay the
+            // renewals. SmartButton::can_save_vault_token()'s conditions, inlined
+            // because extensions.php swaps in DisabledSmartButton on v6's pages.
+            $can_vault = $settings_provider->save_paypal_and_venmo() && (bool) $container->get('button.client_id');
+            $usable_for_cart = !$subscription_helper->cart_contains_subscription() || $can_vault;
+            return array('enabled' => $offer_method && $usable_for_cart, 'text' => (string) $container->get('wcgateway.place-order-button-text'), 'description' => (string) $container->get('wcgateway.place-order-button-description'));
+        };
+    },
     'sdk-v6.blocks.payment-method' => static function (ContainerInterface $container): V6PaymentMethod {
         // The saved-PayPal vault component lives in its own feature-flagged module,
         // so its services may be absent; fall back to no saved-token support.
         $has_vault = $container->has('vault-component.data') && $container->has('vault-component.eligibility.check');
-        return new V6PaymentMethod($container->get('sdk-v6.manager'), $container->get('sdk-v6.asset-getter'), $container->get('ppcp.asset-version'), $container->get('wcgateway.paypal-gateway'), $container->get('wcgateway.credit-card-gateway'), $has_vault ? $container->get('vault-component.data') : null, $has_vault ? $container->get('vault-component.eligibility.check') : null, $container->get('button.client_id'));
+        return new V6PaymentMethod($container->get('sdk-v6.manager'), $container->get('sdk-v6.asset-getter'), $container->get('ppcp.asset-version'), $container->get('wcgateway.paypal-gateway'), $container->get('wcgateway.credit-card-gateway'), $has_vault ? $container->get('vault-component.data') : null, $has_vault ? $container->get('vault-component.eligibility.check') : null, $container->get('button.client_id'), $container->get('sdk-v6.blocks.place-order-data'));
     },
 );
