@@ -60,6 +60,24 @@ Cancelling is not a failure. The sheet closes, the payment records are released,
 
 [Failures](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/utils/errorHandler.js) split by who can act on them. A message the server marked shopper-facing is shown in the sheet, so the buyer can correct something and try again. Anything else is internal and the buyer sees the wallet's own wording instead, since a technical detail gives them nothing to act on.
 
+## Diagnostics
+
+A wallet sheet fails inside native UI, and Apple words every failure the same way: "Payment not completed" is its own string, shown for an abort, for a reported failure, and for a rejected authorization alike. On a phone there is no console to read the real reason out of, so [`logError()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/utils/diagnostics.js) posts what the browser saw to [`FrontendLogEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-order-endpoints/src/Endpoint/FrontendLogEndpoint.php), which writes one `[SDK v6] event key=value` line through the plugin's usual logger. That endpoint is generic and lives in `ppcp-order-endpoints`, so any module's frontend can report through it; the tag is what keeps each module's lines apart.
+
+- **Requires the plugin's Logging setting.** Without it the injected logger is a `NullLogger` and the reports are dropped, so this is the first thing to check when the log is empty.
+- **Failures only.** A successful payment posts nothing, and a plain dismissal posts nothing either, so the happy path costs no request and no config flag is needed to hold the volume down. It also means a sheet that closed with no `[SDK v6]` line was cancelled by the buyer, which is otherwise indistinguishable from an abort.
+- **Where the failure was an AJAX call**, the line carries the HTTP status and the first 200 characters of the body. That is what names a cache or WAF error page answering with HTML where JSON was expected, which would otherwise read only as `Unexpected token '<'`.
+
+| Event | Meaning |
+|---|---|
+| `apple-pay-merchant-validation-failed` | PayPal refused to sign the merchant session. Usually an unregistered domain. |
+| `apple-pay-authorization-failed` | The store could not complete an authorized payment. Carries the HTTP status, endpoint and body of the call that failed, when there was one. |
+| `apple-pay-shipping-abort` | A shipping selection could not be priced, so the sheet was aborted. |
+| `google-pay-shipping-failed` | The same, on Google's sheet, which stays open on its own message. |
+| `confirm-order-not-approved` | `confirmOrder` came back with something other than an approval. Carries the status and the payload, which exist nowhere else: the call goes straight from the browser to PayPal, and no order is created for either side to log. |
+| `payer-action-unsupported` | The order needs a payer action this wallet's session cannot present. Apple Pay has no `initiatePayerAction`. |
+| `approve-order-retried` | The first approve attempt was refused and the retry hid it. |
+
 ## How the two wallets differ
 
 The shipping and pricing behavior is identical, and the per-wallet files translate sheet protocols and nothing more. What differs is what each platform's own SDK asks of the store, and each wallet loads that SDK separately from the PayPal one: a wallet whose script fails to load simply does not render.
