@@ -113,7 +113,7 @@ class AmountFactory {
 			null, // shipping discounts?
 			$discount
 		);
-		return new Amount( $total, $breakdown );
+		return apply_filters( 'woocommerce_paypal_payments_amount_from_wc_cart', new Amount( $total, $breakdown ), $breakdown, $cart );
 	}
 
 	/**
@@ -146,18 +146,16 @@ class AmountFactory {
 			return ( new StoreApiMoney( (string) $minor, $currency, $minor_unit ) )->to_paypal();
 		};
 
-		return new Amount(
-			$make( $total_minor ),
-			new AmountBreakdown(
-				$make( $items_minor ),
-				$make( $shipping_minor ),
-				$make( $tax_minor ),
-				null,
-				null,
-				null,
-				$discount_minor > 0 ? $make( $discount_minor ) : null,
-			)
+		$breakdown = new AmountBreakdown(
+			$make( $items_minor ),
+			$make( $shipping_minor ),
+			$make( $tax_minor ),
+			null,
+			null,
+			null,
+			$discount_minor > 0 ? $make( $discount_minor ) : null,
 		);
+		return apply_filters( 'woocommerce_paypal_payments_amount_from_api_cart', new Amount( $make( $total_minor ), $breakdown ), $breakdown, $cart_totals );
 	}
 
 	/**
@@ -234,7 +232,7 @@ class AmountFactory {
 			null, // shipping discounts?
 			$discount
 		);
-		return new Amount( $total, $breakdown );
+		return apply_filters( 'woocommerce_paypal_payments_amount_from_order', new Amount( $total, $breakdown ), $breakdown, $order );
 	}
 
 	/**
@@ -251,7 +249,7 @@ class AmountFactory {
 
 		$money     = $this->money_factory->from_paypal_response( $data );
 		$breakdown = ( isset( $data->breakdown ) ) ? $this->break_down( $data->breakdown ) : null;
-		return new Amount( $money, $breakdown );
+		return apply_filters( 'woocommerce_paypal_payments_amount_from_paypal', new Amount( $money, $breakdown ), $breakdown, $data );
 	}
 
 	/**
