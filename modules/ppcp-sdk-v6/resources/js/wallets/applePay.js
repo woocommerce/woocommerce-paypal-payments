@@ -24,7 +24,7 @@ import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
 import { applePayFailure, attachShippingHandlers } from './applePayShipping';
 import { recordDomainValidation } from './applePayValidation';
-import { buttonStyle } from '../methods/buttonStyle';
+import { buttonHeight, buttonStyle } from '../methods/buttonStyle';
 import {
 	applePayPayer,
 	applePayShippingAddress,
@@ -330,7 +330,11 @@ export async function renderApplePay( {
 	}
 
 	container.appendChild(
-		createButton( styles, overrides.height || config.button_height, pay )
+		createButton(
+			styles,
+			overrides.height || buttonHeight( config, context ),
+			pay
+		)
 	);
 }
 
