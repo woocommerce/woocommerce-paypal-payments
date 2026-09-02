@@ -63,6 +63,14 @@ class SdkV6Manager {
 	 */
 	public const PAYMENT_BUTTON_HEIGHT = '48px';
 
+	/**
+	 * The button height in the mini cart, which is narrower than a page column
+	 * and so carries a shorter button. Matches the v5 default for the location
+	 * (see SmartButton::script_data(), which sends 35 there and 48 for the
+	 * block contexts).
+	 */
+	public const MINI_CART_BUTTON_HEIGHT = '35px';
+
 	// The pay-for-order page has no pre-payment hook, so the message renders
 	// after the submit button and is relocated by SdkV6Module.
 	public const PAY_ORDER_MESSAGE_HOOK = 'woocommerce_pay_order_before_submit';
@@ -938,7 +946,7 @@ class SdkV6Manager {
 
 	/**
 	 * The button styles for one context, carrying the height every button in
-	 * the express stack shares.
+	 * that context's express stack shares.
 	 *
 	 * @param string $context The page context.
 	 * @return array{colorClass: string, borderRadius: string, height: string}
@@ -946,8 +954,17 @@ class SdkV6Manager {
 	private function button_styles( string $context ): array {
 		return array_merge(
 			$this->style_mapper->styles_for_context( $context ),
-			array( 'height' => self::PAYMENT_BUTTON_HEIGHT )
+			array( 'height' => $this->button_height( $context ) )
 		);
+	}
+
+	/**
+	 * The button height for a context.
+	 */
+	private function button_height( string $context ): string {
+		return 'mini-cart' === $context
+			? self::MINI_CART_BUTTON_HEIGHT
+			: self::PAYMENT_BUTTON_HEIGHT;
 	}
 
 	/**
