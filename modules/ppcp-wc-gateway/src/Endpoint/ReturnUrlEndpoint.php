@@ -15,8 +15,10 @@ use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -56,23 +58,40 @@ class ReturnUrlEndpoint {
 	protected $logger;
 
 	/**
+	 * Verifies the single-use secret that the return URL carries.
+	 */
+	protected ReturnUrlSecret $return_url_secret;
+
+	/**
+	 * The one-day period, after the correction is installed, in which a return for
+	 * a PayPal order that carries no secret is still accepted.
+	 */
+	private const BINDING_SINCE_OPTION = 'ppcp_return_url_binding_since';
+
+	/**
 	 * ReturnUrlEndpoint constructor.
 	 *
-	 * @param PayPalGateway   $gateway         The PayPal Gateway.
-	 * @param OrderEndpoint   $order_endpoint  The Order Endpoint.
-	 * @param SessionHandler  $session_handler The session handler.
-	 * @param LoggerInterface $logger          The logger.
+	 * @param PayPalGateway        $gateway           The PayPal Gateway.
+	 * @param OrderEndpoint        $order_endpoint    The Order Endpoint.
+	 * @param SessionHandler       $session_handler   The session handler.
+	 * @param LoggerInterface      $logger            The logger.
+	 * @param ReturnUrlSecret|null $return_url_secret Verifies the return URL secret.
+	 *                                                Defaults to a real instance, so
+	 *                                                that a caller can never turn the
+	 *                                                authorization test off by accident.
 	 */
 	public function __construct(
 		PayPalGateway $gateway,
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		?ReturnUrlSecret $return_url_secret = null
 	) {
-		$this->gateway         = $gateway;
-		$this->order_endpoint  = $order_endpoint;
-		$this->session_handler = $session_handler;
-		$this->logger          = $logger;
+		$this->gateway           = $gateway;
+		$this->order_endpoint    = $order_endpoint;
+		$this->session_handler   = $session_handler;
+		$this->logger            = $logger;
+		$this->return_url_secret = $return_url_secret ?? new ReturnUrlSecret();
 	}
 
 	/**
@@ -88,6 +107,11 @@ class ReturnUrlEndpoint {
 			exit();
 		}
 		$token = sanitize_text_field( wp_unslash( $_GET['token'] ) );
+
+		// wp_unslash() can return an array, so the value is sanitized on the next line behind an is_string() guard.
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$provided_nonce = wp_unslash( $_GET['ppcp_return_nonce'] ?? '' );
+		$provided_nonce = is_string( $provided_nonce ) ? sanitize_text_field( $provided_nonce ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		try {
@@ -95,6 +119,35 @@ class ReturnUrlEndpoint {
 		} catch ( Exception $exception ) {
 			$this->logger->warning( "Return URL endpoint failed to fetch order $token: " . $exception->getMessage() );
 			wc_add_notice( __( 'Could not retrieve payment information. Please try again.', 'woocommerce-paypal-payments' ), 'error' );
+			wp_safe_redirect( $this->get_checkout_url_with_error() );
+			exit();
+		}
+
+		$custom_id   = (string) $order->purchase_units()[0]->custom_id();
+		$wc_order_id = (int) $custom_id;
+		$wc_order    = null;
+
+		if ( $wc_order_id ) {
+			$found    = wc_get_order( $wc_order_id );
+			$wc_order = $found instanceof \WC_Order ? $found : null;
+		}
+
+		// The token travels in a public URL, so it is not proof by itself.
+		// Check the request before performing any operations with the order.
+		if ( ! $this->is_authorized_return( $wc_order, $token, $provided_nonce, $custom_id ) ) {
+			$this->logger->warning( "Return URL endpoint $token: return refused, no proof of origin." );
+			wc_add_notice( __( 'We could not confirm this payment session. Please try again.', 'woocommerce-paypal-payments' ), 'error' );
+			wp_safe_redirect( $this->get_checkout_url_with_error() );
+			exit();
+		}
+
+		// Reported only to a request that has proven its origin. Ahead of the test the
+		// distinct message would tell a stranger whether the WC order behind a guessed
+		// token still exists.
+		if ( $wc_order_id && ! $wc_order instanceof \WC_Order ) {
+			$this->logger->warning( "Return URL endpoint $token: WC order $wc_order_id not found." );
+
+			wc_add_notice( __( 'Order not found. Please try placing your order again.', 'woocommerce-paypal-payments' ), 'error' );
 			wp_safe_redirect( $this->get_checkout_url_with_error() );
 			exit();
 		}
@@ -118,8 +171,7 @@ class ReturnUrlEndpoint {
 			$this->session_handler->replace_order( $order );
 		}
 
-		$wc_order_id = (int) $order->purchase_units()[0]->custom_id();
-		if ( ! $wc_order_id ) {
+		if ( ! $wc_order instanceof \WC_Order ) {
 			// We cannot finish processing here without WC order, but at least go into the continuation mode.
 			if ( $order->status()->is( OrderStatus::APPROVED )
 				|| $order->status()->is( OrderStatus::COMPLETED )
@@ -130,15 +182,6 @@ class ReturnUrlEndpoint {
 
 			$this->logger->warning( "Return URL endpoint $token: no WC order ID." );
 			wc_add_notice( __( 'Order information is missing. Please try placing your order again.', 'woocommerce-paypal-payments' ), 'error' );
-			wp_safe_redirect( $this->get_checkout_url_with_error() );
-			exit();
-		}
-
-		$wc_order = wc_get_order( $wc_order_id );
-		if ( ! ( $wc_order instanceof \WC_Order ) ) {
-			$this->logger->warning( "Return URL endpoint $token: WC order $wc_order_id not found." );
-
-			wc_add_notice( __( 'Order not found. Please try placing your order again.', 'woocommerce-paypal-payments' ), 'error' );
 			wp_safe_redirect( $this->get_checkout_url_with_error() );
 			exit();
 		}
@@ -159,6 +202,9 @@ class ReturnUrlEndpoint {
 		$success = $payment_gateway->process_payment( $wc_order_id );
 
 		if ( isset( $success['result'] ) && 'success' === $success['result'] ) {
+			// The secret works one time only, so a replay of the same URL is refused.
+			$this->return_url_secret->consume( $token );
+
 			add_filter(
 				'allowed_redirect_hosts',
 				function ( $allowed_hosts ): array {
@@ -174,6 +220,67 @@ class ReturnUrlEndpoint {
 		wc_add_notice( __( 'Payment processing failed. Please try again or contact support.', 'woocommerce-paypal-payments' ), 'error' );
 		wp_safe_redirect( $this->get_checkout_url_with_error() );
 		exit();
+	}
+
+	/**
+	 * Tells whether the request gives proof that it comes from the checkout flow
+	 * that made this PayPal order.
+	 *
+	 * Several proofs are accepted. The first one that holds ends the test, so a proof
+	 * that costs more is only used when a cheaper one does not apply.
+	 *
+	 * @param \WC_Order|null $wc_order       The WC order, when the custom_id gives one.
+	 * @param string         $token          The PayPal order ID from the request.
+	 * @param string         $provided_nonce The secret from the request.
+	 * @param string         $custom_id      The custom_id of the first purchase unit.
+	 */
+	private function is_authorized_return( ?\WC_Order $wc_order, string $token, string $provided_nonce, string $custom_id ): bool {
+		// Proof A — the secret that this shop put in the return URL.
+		if ( $this->return_url_secret->verify( $token, $provided_nonce ) ) {
+			return true;
+		}
+
+		// Proof B — the session still holds the same PayPal order.
+		$session_order = $this->session_handler->order();
+		if ( $session_order instanceof Order && hash_equals( $session_order->id(), $token ) ) {
+			return true;
+		}
+
+		// Proof B — the custom_id carries the session that made the order. This is
+		// the binding that PurchaseUnitFactory writes for a cart-context order.
+		if ( 0 === strpos( $custom_id, CustomIds::CUSTOMER_ID_PREFIX ) ) {
+			$expected = substr( $custom_id, strlen( CustomIds::CUSTOMER_ID_PREFIX ) );
+			$session  = WC()->session ?? null;
+			$current  = $session ? (string) $session->get_customer_id() : '';
+
+			if ( '' !== $expected && '' !== $current && hash_equals( $expected, $current ) ) {
+				return true;
+			}
+		}
+
+		// Proof C — the user that sends the request owns the WC order. A guest order
+		// holds the customer ID 0, so 0 never counts as ownership.
+		if ( $wc_order instanceof \WC_Order ) {
+			$current_user_id = get_current_user_id();
+			if ( $current_user_id && $current_user_id === $wc_order->get_customer_id() ) {
+				return true;
+			}
+		}
+
+		// Proof D — the order was made before this correction was installed.
+		if ( ! $this->return_url_secret->has_secret( $token ) ) {
+			$binding_since = (int) get_option( self::BINDING_SINCE_OPTION, 0 );
+
+			if ( $binding_since && time() < $binding_since + DAY_IN_SECONDS ) {
+				$this->logger->warning(
+					"Return URL endpoint $token: accepted with no bound secret inside the migration period."
+				);
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
