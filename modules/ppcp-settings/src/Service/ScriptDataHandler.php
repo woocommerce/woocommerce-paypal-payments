@@ -28,7 +28,11 @@ class ScriptDataHandler
     protected PaymentLevelEligibility $payment_level_eligibility;
     private bool $is_bcdc_override_flag_enabled;
     private AgenticBetaBannerEligibility $agentic_beta_banner_eligibility;
-    public function __construct(AssetGetter $asset_getter, bool $paylater_is_available, string $store_country, string $merchant_id, array $button_language_choices, PartnerAttribution $partner_attribution, SettingsProvider $settings_provider, PaymentLevelEligibility $payment_level_eligibility, bool $is_bcdc_override_flag_enabled, AgenticBetaBannerEligibility $agentic_beta_banner_eligibility)
+    /**
+     * Whether the SDK v6 module is loaded. Defaulted for existing callers.
+     */
+    private bool $is_sdk_v6_active;
+    public function __construct(AssetGetter $asset_getter, bool $paylater_is_available, string $store_country, string $merchant_id, array $button_language_choices, PartnerAttribution $partner_attribution, SettingsProvider $settings_provider, PaymentLevelEligibility $payment_level_eligibility, bool $is_bcdc_override_flag_enabled, AgenticBetaBannerEligibility $agentic_beta_banner_eligibility, bool $is_sdk_v6_active = \false)
     {
         $this->asset_getter = $asset_getter;
         $this->paylater_is_available = $paylater_is_available;
@@ -40,6 +44,7 @@ class ScriptDataHandler
         $this->payment_level_eligibility = $payment_level_eligibility;
         $this->is_bcdc_override_flag_enabled = $is_bcdc_override_flag_enabled;
         $this->agentic_beta_banner_eligibility = $agentic_beta_banner_eligibility;
+        $this->is_sdk_v6_active = $is_sdk_v6_active;
     }
     /**
      * Localize scripts.
@@ -96,7 +101,14 @@ class ScriptDataHandler
         if ($is_pay_later_configurator_available) {
             wp_enqueue_script('ppcp-paylater-configurator-lib', 'https://www.paypalobjects.com/merchant-library/merchant-configurator.js', array('wp-i18n'), $script_asset_file['version'], \true);
             wp_set_script_translations('ppcp-paylater-configurator-lib', 'woocommerce-paypal-payments');
-            $script_data['PcpPayLaterConfigurator'] = array('config' => array(), 'merchantClientId' => $this->settings_provider->merchant_data()->client_id, 'partnerClientId' => $this->merchant_id, 'bnCode' => $this->partner_attribution->get_bn_code());
+            $script_data['PcpPayLaterConfigurator'] = array(
+                'config' => array(),
+                'merchantClientId' => $this->settings_provider->merchant_data()->client_id,
+                'partnerClientId' => $this->merchant_id,
+                'bnCode' => $this->partner_attribution->get_bn_code(),
+                // v6 serves neither shop nor home and styles text only.
+                'isSdkV6Active' => $this->is_sdk_v6_active,
+            );
         }
         wp_localize_script('ppcp-admin-settings', 'ppcpSettings', $script_data);
         // Dequeue the PayPal Subscription script.

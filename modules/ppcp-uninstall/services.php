@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\Pay
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 return array('uninstall.ppcp-all-option-names' => static function (ContainerInterface $container): array {
-    $own_option_keys = array($container->get('webhook.last-webhook-storage.key'), 'woocommerce_ppcp-is_pay_later_settings_migrated', 'woocommerce_' . PayPalGateway::ID . '_settings', 'woocommerce_' . CreditCardGateway::ID . '_settings', 'woocommerce_' . PayUponInvoiceGateway::ID . '_settings', 'woocommerce_' . CardButtonGateway::ID . '_settings', 'woocommerce-ppcp-version', WebhookSimulation::OPTION_ID, WebhookRegistrar::KEY, 'ppcp_payment_tokens_migration_initialized', MigrationManager::OPTION_NAME_MIGRATION_IS_DONE, PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, Recaptcha::REJECTION_COUNTER_OPTION, 'ppcp_bn_code');
+    $own_option_keys = array($container->get('webhook.last-webhook-storage.key'), 'woocommerce_ppcp-is_pay_later_settings_migrated', 'woocommerce_' . PayPalGateway::ID . '_settings', 'woocommerce_' . CreditCardGateway::ID . '_settings', 'woocommerce_' . PayUponInvoiceGateway::ID . '_settings', 'woocommerce_' . CardButtonGateway::ID . '_settings', 'woocommerce-ppcp-version', 'woocommerce-ppcp-sdk-v6-eligible', WebhookSimulation::OPTION_ID, WebhookRegistrar::KEY, 'ppcp_payment_tokens_migration_initialized', MigrationManager::OPTION_NAME_MIGRATION_IS_DONE, PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, Recaptcha::REJECTION_COUNTER_OPTION, 'ppcp_bn_code');
     /**
      * Remove legacy settings data:
      * This item stores data of the legacy settings UI, which is only available by downgrading

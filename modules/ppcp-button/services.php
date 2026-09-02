@@ -36,11 +36,13 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 return array(
     'button.client_id' => static function (ContainerInterface $container): string {
         $settings_provider = $container->get('settings.settings-provider');
@@ -203,14 +205,9 @@ return array(
         return static function () use ($container): string {
             $settings_provider = $container->get('settings.settings-provider');
             $subscription_helper = $container->get('wc-subscriptions.helper');
-            if (!$subscription_helper->plugin_is_active()) {
-                return '';
-            }
-            $subscription_mode_disabled = (bool) apply_filters('woocommerce_paypal_payments_subscription_mode_disabled', \false);
-            if ($subscription_mode_disabled) {
-                return 'disable_paypal_subscriptions';
-            }
-            return $settings_provider->save_paypal_and_venmo() ? 'vaulting_api' : 'subscriptions_api';
+            assert($settings_provider instanceof SettingsProvider);
+            assert($subscription_helper instanceof SubscriptionHelper);
+            return $subscription_helper->resolve_subscription_mode($settings_provider);
         };
     },
     'button.handle-shipping-in-paypal' => static function (ContainerInterface $container): bool {

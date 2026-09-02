@@ -12,8 +12,8 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
-use WooCommerce\PayPalCommerce\SdkV6\Helper\WalletConfig;
-class WalletPlacement
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MethodRenderGate;
+class MethodPlacement
 {
     /**
      * The key this wallet's subtree takes in the script data.
@@ -31,10 +31,10 @@ class WalletPlacement
      * The third-party script the frontend loads for this wallet.
      */
     public string $sdk_url;
-    public WalletConfig $config;
+    public MethodRenderGate $config;
     /**
      * Not reached through $config: styles() is deliberately absent from the
-     * WalletConfig contract, because the return shapes differ (Apple's
+     * MethodRenderGate contract, because the return shapes differ (Apple's
      * borderRadius is a CSS length, Google's an integer) and a shared signature
      * would widen to string|int. Holding it as a callable keeps each subclass's
      * own narrow return type intact.
@@ -43,10 +43,10 @@ class WalletPlacement
      */
     public $styles_resolver;
     /**
-     * Memoizes is_wallet_gateway(), which walks every available gateway.
+     * Memoizes is_method_gateway(), which walks every available gateway.
      */
     public ?bool $is_gateway = null;
-    public function __construct(string $config_key, string $gateway_id, string $wrapper_id, string $sdk_url, WalletConfig $config, callable $styles)
+    public function __construct(string $config_key, string $gateway_id, string $wrapper_id, string $sdk_url, MethodRenderGate $config, callable $styles)
     {
         $this->config_key = $config_key;
         $this->gateway_id = $gateway_id;

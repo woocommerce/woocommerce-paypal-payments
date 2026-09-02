@@ -96,7 +96,7 @@ return array(
         return $factory->for_module('ppcp-settings');
     },
     'settings.settings-provider' => static function (ContainerInterface $container): SettingsProvider {
-        return new SettingsProvider($container->get('settings.data.general'), $container->get('settings.data.onboarding'), $container->get('settings.data.payment'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.fastlane'), $container->get('settings.data.paylater-messaging-settings'));
+        return new SettingsProvider($container->get('settings.data.general'), $container->get('settings.data.onboarding'), $container->get('settings.data.payment'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.fastlane'), $container->get('settings.data.paylater-messaging-settings'), $container->get('button.helper.messages-apply'));
     },
     'settings.data.onboarding' => static function (ContainerInterface $container): OnboardingProfile {
         $can_use_casual_selling = $container->get('settings.casual-selling.eligible');
@@ -244,7 +244,7 @@ return array(
         return new DataSanitizer();
     },
     'settings.service.data-manager' => static function (ContainerInterface $container): SettingsDataManager {
-        return new SettingsDataManager($container->get('settings.data.definition.methods'), $container->get('settings.data.onboarding'), $container->get('settings.data.general'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.payment'), $container->get('settings.data.paylater-messaging'), $container->get('settings.data.todos'));
+        return new SettingsDataManager($container->get('settings.data.definition.methods'), $container->get('settings.data.onboarding'), $container->get('settings.data.general'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.payment'), $container->get('settings.data.paylater-messaging'), $container->get('settings.settings-provider'), $container->get('settings.data.todos'));
     },
     'settings.service.agentic-beta-eligibility' => static function (ContainerInterface $container): AgenticBetaBannerEligibility {
         return new AgenticBetaBannerEligibility($container->get('settings.data.general'), $container->get('wcgateway.store-country'));
@@ -252,7 +252,22 @@ return array(
     'settings.service.script-data-handler' => static function (ContainerInterface $container): ScriptDataHandler {
         $check_override = $container->get('settings.migration.bcdc-override-check');
         assert(is_callable($check_override));
-        return new ScriptDataHandler($container->get('settings.asset_getter'), $container->get('paylater-configurator.is-available'), $container->get('wcgateway.store-country'), $container->get('api.partner_merchant_id'), $container->get('wcgateway.wp-paypal-locales-map'), $container->get('api.helper.partner-attribution'), $container->get('settings.settings-provider'), $container->get('api.helpers.paymentLevelEligibility'), $check_override(), $container->get('settings.service.agentic-beta-eligibility'));
+        return new ScriptDataHandler(
+            $container->get('settings.asset_getter'),
+            $container->get('paylater-configurator.is-available'),
+            $container->get('wcgateway.store-country'),
+            $container->get('api.partner_merchant_id'),
+            $container->get('wcgateway.wp-paypal-locales-map'),
+            $container->get('api.helper.partner-attribution'),
+            $container->get('settings.settings-provider'),
+            $container->get('api.helpers.paymentLevelEligibility'),
+            $check_override(),
+            $container->get('settings.service.agentic-beta-eligibility'),
+            // The module registers its services only behind its feature flag, so
+            // presence means v6 is active; has() does not instantiate it. Per-page
+            // ownership is moot: one admin screen configures every page.
+            $container->has('sdk-v6.owns-current-page')
+        );
     },
     'settings.service.data-migration' => static fn(ContainerInterface $c): MigrationManager => new MigrationManager($c->get('settings.service.data-migration.general-settings'), $c->get('settings.service.data-migration.settings-tab'), $c->get('settings.service.data-migration.styling'), $c->get('settings.service.data-migration.payment-settings'), $c->get('settings.service.data-migration.fastlane'), $c->get('settings.data.onboarding'), $c->get('woocommerce.logger.woocommerce')),
     'settings.service.data-migration.settings-tab' => static fn(ContainerInterface $c): SettingsTabMigration => new SettingsTabMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.settings')),

@@ -48,7 +48,17 @@ return array(
         return !$status->has_request_failure();
     },
     'applepay.availability_notice' => static function (ContainerInterface $container): AvailabilityNotice {
-        return new AvailabilityNotice($container->get('applepay.apple-product-status'), $container->get('wcgateway.is-wc-gateways-list-page'), $container->get('wcgateway.is-plugin-settings-page'), $container->get('applepay.available') || !$container->get('applepay.is_referral'), $container->get('applepay.server_supported'), $container->get('settings.settings-provider'), $container->get('applepay.button'));
+        return new AvailabilityNotice(
+            $container->get('applepay.apple-product-status'),
+            $container->get('wcgateway.is-wc-gateways-list-page'),
+            $container->get('wcgateway.is-plugin-settings-page'),
+            // Deferred: resolving this performs a merchant-integrations API call,
+            // so it must not run while merely constructing the notice.
+            static fn(): bool => $container->get('applepay.available') || !$container->get('applepay.is_referral'),
+            $container->get('applepay.server_supported'),
+            $container->get('settings.settings-provider'),
+            $container->get('applepay.button')
+        );
     },
     'applepay.has_validated' => static function (ContainerInterface $container): bool {
         $cache = $container->get('applepay.status-cache');

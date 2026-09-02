@@ -187,7 +187,10 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType
             $funding_sources = array_values(array_diff(array_keys($this->all_funding_sources), $disabled_funding_sources));
         }
         $smart_buttons_enabled = !$this->use_place_order && $this->settings_status->is_smart_button_enabled_for_location($script_data['context'] ?? 'block-checkout');
-        $place_order_enabled = ($this->use_place_order || $this->add_place_order_method) && (!$this->subscription_helper->cart_contains_subscription() || ($script_data['can_save_vault_token'] ?? \false));
+        // A subscription cart may still use the standard "Place order" flow when a vault
+        // token can be saved (vaulting mode) or when manual renewals are accepted (the
+        // subscription is charged as a plain, one-time Orders API payment).
+        $place_order_enabled = ($this->use_place_order || $this->add_place_order_method) && (!$this->subscription_helper->cart_contains_subscription() || ($script_data['can_save_vault_token'] ?? \false) || $this->subscription_helper->accept_manual_renewals());
         $cart = WC()->cart;
         return array(
             'id' => $this->gateway->id,

@@ -29,6 +29,10 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway
 {
     use OrderMetaTrait;
     public const ID = 'ppcp-pay-upon-invoice-gateway';
+    /**
+     * The phone field PUI renders itself when the checkout does not require one.
+     */
+    public const PHONE_FIELD_ID = 'ppcp_pui_billing_phone';
     private PayUponInvoiceOrderEndpoint $order_endpoint;
     private PurchaseUnitFactory $purchase_unit_factory;
     private \WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PaymentSourceFactory $payment_source_factory;
@@ -88,9 +92,10 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway
                 return array('result' => 'failure');
             }
         }
-        $phone_number = wc_clean(wp_unslash($_POST['billing_phone'] ?? ''));
-        $phone_number = is_string($phone_number) ? $phone_number : '';
         // phpcs:enable WordPress.Security.NonceVerification
+        // PUI only renders a field of its own when the checkout does not require a phone number;
+        // otherwise the value arrives under WooCommerce's field id, as it does from the blocks checkout.
+        $phone_number = $this->checkout_helper->submitted_phone(self::PHONE_FIELD_ID, 'billing_phone');
         if ($phone_number) {
             $wc_order->set_billing_phone($phone_number);
             $wc_order->save();
