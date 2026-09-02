@@ -38,6 +38,27 @@ class ApiHostResolver {
 	public function host(): string {
 		$environment = $this->connection_state->get_environment();
 
+		// TEMPORARY diagnostic for the ngrok webhook-host investigation. Remove
+		// alongside the other [ngrok-diag] lines. PR #4669 moved host
+		// resolution to call time (this class), but the symptom persisted
+		// after that fix shipped - this logs the actual ConnectionState/
+		// Environment instance this resolver holds, to compare against the
+		// object ids logged right after connect() mutates its own instance,
+		// and confirm or rule out a DI-graph identity mismatch across modules.
+		if ( getenv( 'NGROK_HOST' ) ) {
+			file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- temporary diagnostic.
+				WP_CONTENT_DIR . '/ngrok-diag.log',
+				sprintf(
+					"[ngrok-diag] ApiHostResolver::host(): is_sandbox=%s is_connected=%s connection_state_obj=%d environment_obj=%d\n",
+					var_export( $environment->is_sandbox(), true ),
+					var_export( $this->connection_state->is_connected(), true ),
+					spl_object_id( $this->connection_state ),
+					spl_object_id( $environment )
+				),
+				FILE_APPEND
+			);
+		}
+
 		if ( $environment->is_sandbox() ) {
 			return $this->connection_state->is_connected() ? PAYPAL_SANDBOX_API_URL : CONNECT_WOO_SANDBOX_URL;
 		}
