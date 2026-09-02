@@ -1,9 +1,4 @@
 <?php
-/**
- * Resolves the API bearer to use for the current connection state.
- *
- * @package WooCommerce\PayPalCommerce\ApiClient\Authentication
- */
 
 declare(strict_types=1);
 
@@ -17,7 +12,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 
 /**
- * Class ResolvingBearer
+ * Resolves the API bearer to use for the current connection state.
  *
  * A Bearer that mirrors ApiHostResolver's approach for the host: is_connected()
  * decides between ConnectBearer and PayPalBearer on every call rather than
