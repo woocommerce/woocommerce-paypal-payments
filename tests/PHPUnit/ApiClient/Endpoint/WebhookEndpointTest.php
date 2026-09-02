@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ApiHostResolver;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -25,6 +26,9 @@ use function Brain\Monkey\Functions\when;
 class WebhookEndpointTest extends TestCase
 {
 	private $host = 'https://example.com/';
+
+	/** @var ApiHostResolver&Mockery\MockInterface */
+	private $host_resolver;
 
 	/** @var Bearer&Mockery\MockInterface */
 	private $bearer;
@@ -47,6 +51,8 @@ class WebhookEndpointTest extends TestCase
 			return rtrim($url, '/') . '/';
 		});
 
+		$this->host_resolver          = Mockery::mock(ApiHostResolver::class);
+		$this->host_resolver->shouldReceive('host')->andReturn($this->host)->byDefault();
 		$this->bearer                 = Mockery::mock(Bearer::class);
 		$this->webhook_factory        = Mockery::mock(WebhookFactory::class);
 		$this->webhook_event_factory  = Mockery::mock(WebhookEventFactory::class);
@@ -56,7 +62,7 @@ class WebhookEndpointTest extends TestCase
 	private function createEndpoint(): WebhookEndpoint
 	{
 		return new WebhookEndpoint(
-			$this->host,
+			$this->host_resolver,
 			$this->bearer,
 			$this->webhook_factory,
 			$this->webhook_event_factory,
@@ -379,6 +385,48 @@ class WebhookEndpointTest extends TestCase
 			'transmission-time',
 			'WEBHOOK-ID',
 			new \stdClass()
+		);
+	}
+
+	/**
+	 * Verify host is resolved fresh per call, not cached at construction.
+	 */
+	public function test_host_is_resolved_fresh_on_every_call_not_cached_at_construction(): void
+	{
+		$this->stubBearerToken();
+
+		$host_before_connect = 'https://before-connect.example.com';
+		$host_after_connect   = 'https://after-connect.example.com';
+
+		$this->host_resolver = Mockery::mock(ApiHostResolver::class);
+		$this->host_resolver->shouldReceive('host')
+			->andReturn($host_before_connect, $host_after_connect);
+
+		$this->webhook_factory->shouldReceive('from_paypal_response')->andReturn(
+			new Webhook('https://mysite.com/incoming', [], 'ID-1')
+		);
+
+		$requested_urls = [];
+		expect('wp_remote_get')->andReturnUsing(
+			function ($url, $args) use (&$requested_urls) {
+				$requested_urls[] = $url;
+
+				return $this->responseWithHeaders(json_encode(['webhooks' => [new \stdClass()]]));
+			}
+		);
+		expect('is_wp_error')->andReturn(false);
+		expect('wp_remote_retrieve_response_code')->andReturn(200);
+
+		$testee = $this->createEndpoint();
+		$testee->list();
+		$testee->list();
+
+		$this->assertSame(
+			[
+				$host_before_connect . '/v1/notifications/webhooks',
+				$host_after_connect . '/v1/notifications/webhooks',
+			],
+			$requested_urls
 		);
 	}
 }

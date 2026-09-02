@@ -37,6 +37,23 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 return array(
 
+	'webhook.registrar'                       => static function ( ContainerInterface $container ): WebhookRegistrar {
+		$factory      = $container->get( 'api.factory.webhook' );
+		$endpoint     = $container->get( 'api.endpoint.webhook' );
+		$rest_endpoint = $container->get( 'webhook.endpoint.controller' );
+		$last_webhook_storage = $container->get( 'webhook.last-webhook-storage' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+
+		return new WebhookRegistrar(
+			$factory,
+			$endpoint,
+			$rest_endpoint,
+			$last_webhook_storage,
+			$container->get( 'webhook.status.simulation' ),
+			$container->get( 'webhook.orchestration' ),
+			$logger
+		);
+	},
 	'webhook.orchestration'                   => static function ( ContainerInterface $container ): WebhookOrchestrator {
 		return new WebhookOrchestrator(
 			$container->get( 'woocommerce.logger.woocommerce' )
