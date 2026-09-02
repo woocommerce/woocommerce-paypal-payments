@@ -3,11 +3,10 @@
  *
  * Translates between Google's paymentDataCallbacks protocol and the shared
  * shipping quote; everything about pricing lives in methodShipping.js.
- *
- * @package
  */
 
 import { resolveOptionId } from '../methods/shippingQuote';
+import { logError } from '../utils/diagnostics';
 import { walletAddressToWc } from './walletContacts';
 
 // Google rejects newShippingOptionParameters on a SHIPPING_OPTION trigger: the
@@ -99,13 +98,15 @@ export function buildPaymentDataCallbacks( {
 					),
 				} );
 			} catch ( error ) {
+				logError( config, 'google-pay-shipping-failed', {
+					message: error.message,
+					status: error.status,
+					endpoint: error.endpoint,
+					body: error.bodySnippet,
+				} );
+
 				// Rethrown so Google keeps the sheet open on its own message;
 				// a toast would be hidden behind the sheet anyway.
-				// eslint-disable-next-line no-console
-				console.error(
-					'[PPCP SDK v6] Google Pay shipping update failed: ' +
-						error.message
-				);
 				throw error;
 			}
 

@@ -8,14 +8,13 @@
  * so approval arrives in onpaymentauthorized and the outcome goes back through
  * completePayment(). And merchant validation is the merchant's to perform, which
  * the session's validateMerchant() answers.
- *
- * @package
  */
 
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { releaseCartShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
+import { logError } from '../utils/diagnostics';
 import { handleError } from '../utils/errorHandler';
 import { loadScript } from '../utils/scriptLoaders';
 import { revealMethodGateway } from '../methods/gatewayPlacement';
@@ -242,6 +241,12 @@ export async function renderApplePay( {
 		} catch ( error ) {
 			recordDomainValidation( settings, false );
 
+			// PayPal answers this one straight to the browser, so the reason
+			// exists nowhere else.
+			logError( config, 'apple-pay-merchant-validation-failed', {
+				message: error.message,
+			} );
+
 			// Nothing can be paid without a validated merchant, and the usual
 			// cause (an unregistered domain) is not something the shopper can
 			// act on, so close the sheet rather than leave it open.
@@ -308,6 +313,15 @@ export async function renderApplePay( {
 				window.ApplePaySession.STATUS_SUCCESS
 			);
 		} catch ( error ) {
+			// Apple's generic sheet wording fits every branch equally, so
+			// record which one this was.
+			logError( config, 'apple-pay-authorization-failed', {
+				message: error.message,
+				status: error.status,
+				endpoint: error.endpoint,
+				body: error.bodySnippet,
+			} );
+
 			// Apple still has the sheet up, so it can tell the shopper why.
 			appleSession.completePayment(
 				applePayFailure( error, window.ApplePaySession.STATUS_FAILURE )
