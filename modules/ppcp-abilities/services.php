@@ -1,4 +1,5 @@
 <?php
+
 /**
  * The abilities module services.
  *
@@ -7,9 +8,7 @@
  *
  * @package WooCommerce\PayPalCommerce\Abilities
  */
-
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Abilities;
 
 return array();
