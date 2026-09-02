@@ -5,11 +5,10 @@
  * The method-specific parts (confirmOrder payload, mapped contact) arrive as
  * arguments, so every method reuses the sequence. DOM-free: failures throw
  * and the caller reports them.
- *
- * @package
  */
 
 import { createOrder, approveOrder } from '../endpointsAdapter';
+import { logError } from '../utils/diagnostics';
 
 /**
  * Reads the outcome off a confirmOrder result.
@@ -48,7 +47,8 @@ function confirmedStatus( result ) {
  * @param {string}   [args.paymentMethod] - The WC gateway that processes the
  *                                        order; defaults to the express one.
  * @return {Promise<void>} Resolves once the order is approved.
- * @throws {Error} When the wallet does not approve the order.
+ * @throws {Error} When the wallet does not approve the order, or cannot service
+ *                 a payer action the order requires.
  */
 export async function payWithSession( {
 	config,
@@ -71,17 +71,43 @@ export async function payWithSession( {
 	);
 
 	const result = await session.confirmOrder( { orderId, ...confirmData } );
+	const status = confirmedStatus( result );
 
-	switch ( confirmedStatus( result ) ) {
+	switch ( status ) {
 		case 'APPROVED':
 		case 'succeeded':
 			break;
 		case 'PAYER_ACTION_REQUIRED':
+			// Not every wallet session can service a step-up: the shipped
+			// applepay-payments bundle has no initiatePayerAction, so calling
+			// it blindly raised a TypeError that reached the sheet as Apple's
+			// own "Payment not completed".
+			if ( 'function' !== typeof session.initiatePayerAction ) {
+				logError( config, 'payer-action-unsupported', {
+					funding_source: fundingSource,
+					order_id: orderId,
+					status,
+				} );
+
+				throw new Error(
+					'This wallet cannot complete the required payer action.'
+				);
+			}
+
 			// No re-confirm afterwards: the server-side approval below is what
 			// validates the resulting order state.
 			await session.initiatePayerAction( { orderId } );
 			break;
 		default:
+			// confirmOrder goes straight from the browser to PayPal, so this
+			// result is the only account of the refusal.
+			logError( config, 'confirm-order-not-approved', {
+				funding_source: fundingSource,
+				order_id: orderId,
+				status,
+				result,
+			} );
+
 			throw new Error( 'Wallet payment was not approved.' );
 	}
 
