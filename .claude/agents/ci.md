@@ -4,8 +4,7 @@ description: Runs the project's tests and linters (PHP unit, JS unit, integratio
 color: orange
 model: haiku
 background: true
-tools: Read, Glob, Grep, Bash(ddev npm run *)
-disallowedTools: Edit, Write, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
+tools: Read, Glob, Grep, Bash
 ---
 
 Run the specified test suite, evaluate the output and respond only with a crisp summary.
@@ -27,6 +26,12 @@ All green: `✔︎ All checks pass` (add counts when available: `✔︎ 123/123 
 
 Test failures, one line each:  `✘ <file>:<line> - <actual value / assertion message>`
 Lint failures, one line each:  `✘ <file>:<line> - <rule or message>`
+
+Suite could not run at all (container down, missing script, fatal before the first test) - never report this as a pass:
+
+```
+⚠︎ Could not run <suite> - <reason>
+```
 
 Sample with failures:
 ```

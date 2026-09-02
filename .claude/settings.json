@@ -2,13 +2,8 @@
     "permissions": {
         "allow": [
             "Bash(git log:*)",
-            "Bash(git diff *)",
-            "Bash(git status *)",
-            "Read(.notes/*.md)",
-            "Glob(.notes/*.md)",
-            "Grep(.notes/*.md)",
-            "Edit(.notes/*.md)",
-            "Write(.notes/*.md)"
+            "Bash(git diff:*)",
+            "Bash(git status:*)"
         ],
         "deny": [],
         "ask": []
@@ -20,7 +15,8 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/php-review-track.sh\""
+                        "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/track-edited-php-files.sh\"",
+                        "timeout": 30
                     }
                 ]
             }
@@ -30,7 +26,8 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/php-review-stop.sh\""
+                        "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/review-edited-php-files.sh\"",
+                        "timeout": 600
                     }
                 ]
             }
