@@ -3,11 +3,10 @@
  *
  * Translates between Apple's ApplePaySession protocol and the shared shipping
  * quote; everything about pricing lives in methodShipping.js.
- *
- * @package
  */
 
 import { resolveOptionId } from '../methods/shippingQuote';
+import { describeError, logError } from '../utils/diagnostics';
 import { walletAddressToWc } from './walletContacts';
 
 /**
@@ -212,12 +211,14 @@ export function attachShippingHandlers(
 			complete( applePayShippingUpdate( quote, { displayName, labels } ) );
 		} catch ( error ) {
 			// A sheet that cannot price what it is about to charge must not go on,
-			// and nothing can be shown to the shopper behind it.
-			// eslint-disable-next-line no-console
-			console.error(
-				'[PPCP SDK v6] Apple Pay shipping update failed: ' +
-					error.message
+			// and nothing can be shown to the shopper behind it. Reported because
+			// Apple words an abort and a shopper's dismissal identically.
+			logError(
+				config,
+				'apple-pay-shipping-abort',
+				describeError( error )
 			);
+
 			appleSession.abort();
 		}
 	}

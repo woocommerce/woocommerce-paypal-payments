@@ -13,6 +13,12 @@ jest.mock( '../utils/errorHandler', () => ( {
 	handleError: ( ...args ) => mockHandleError( ...args ),
 } ) );
 
+const mockLogError = jest.fn();
+jest.mock( '../utils/diagnostics', () => ( {
+	...jest.requireActual( '../utils/diagnostics' ),
+	logError: ( ...args ) => mockLogError( ...args ),
+} ) );
+
 const mockResolveWalletTotal = jest.fn();
 jest.mock( '../methods/contextTotal', () => ( {
 	resolveContextTotal: ( ...args ) => mockResolveWalletTotal( ...args ),
@@ -730,6 +736,11 @@ describe( 'onvalidatemerchant', () => {
 			false
 		);
 		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
+		expect( mockLogError ).toHaveBeenCalledWith(
+			config,
+			'apple-pay-merchant-validation-failed',
+			'unregistered domain'
+		);
 
 		wrapper.querySelector( 'apple-pay-button' ).click();
 		expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 2 );
@@ -885,7 +896,7 @@ describe( 'onpaymentauthorized', () => {
 
 	test( 'recovers the page and releases the guard when the payment throws', async () => {
 		mockPayWithWallet.mockRejectedValueOnce( new Error( 'declined' ) );
-		const { appleSession, wrapper } = await clickAndGetSession();
+		const { config, appleSession, wrapper } = await clickAndGetSession();
 
 		appleSession.onpaymentauthorized( paymentEvent );
 		await flushPromises();
@@ -898,6 +909,11 @@ describe( 'onpaymentauthorized', () => {
 			'wc_fragment_refresh'
 		);
 		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
+		expect( mockLogError ).toHaveBeenCalledWith(
+			config,
+			'apple-pay-authorization-failed',
+			'declined'
+		);
 
 		wrapper.querySelector( 'apple-pay-button' ).click();
 		expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 2 );

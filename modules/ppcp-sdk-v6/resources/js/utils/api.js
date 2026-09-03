@@ -1,8 +1,38 @@
 /**
  * Shared WC AJAX request helper.
- *
- * @package
  */
+
+/**
+ * The parsed JSON body of a WC AJAX response.
+ *
+ * A bare SyntaxError names neither the call nor its outcome, so a non-JSON
+ * answer is rethrown carrying the status.
+ *
+ * @param {Response} response - The answered request.
+ * @return {Promise<Object>} The parsed body.
+ * @throws {Error} When the answer is not JSON, or is the bare `0` WordPress
+ *                 replies with for an unregistered ajax action.
+ */
+async function readJsonBody( response ) {
+	let json = null;
+
+	try {
+		json = await response.json();
+	} catch ( parseError ) {
+		// Not JSON.
+	}
+
+	if ( json ) {
+		return json;
+	}
+
+	const error = new Error(
+		`Endpoint returned no usable JSON (HTTP ${ response.status }).`
+	);
+	error.status = response.status;
+
+	throw error;
+}
 
 /**
  * Posts a JSON body to a WC AJAX endpoint and returns the response data.
@@ -24,7 +54,7 @@ export async function postJson( { endpoint, nonce }, body = {} ) {
 		body: JSON.stringify( { nonce, ...body } ),
 	} );
 
-	const json = await response.json();
+	const json = await readJsonBody( response );
 
 	if ( ! json.success ) {
 		const error = new Error( json.data?.message || '' );
@@ -35,6 +65,7 @@ export async function postJson( { endpoint, nonce }, body = {} ) {
 		// (expired session); forwarded for v5-parity error rendering.
 		error.errors = json.data?.errors;
 		error.refresh = Boolean( json.data?.refresh );
+		error.status = response.status;
 		throw error;
 	}
 
