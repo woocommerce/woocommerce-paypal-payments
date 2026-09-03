@@ -131,12 +131,13 @@ class SdkV6Manager {
 	private array $placements;
 
 	/**
-	 * Memoizes is_card_button_row(), asked once per request to print the row and
-	 * once to build the script data.
+	 * Memoizes is_card_button_available(), which the script data asks three times
+	 * over (directly, and through each of the two placement questions) on top of
+	 * the call that prints the classic row.
 	 *
 	 * @var bool|null
 	 */
-	private ?bool $is_card_button_row = null;
+	private ?bool $is_card_button_available = null;
 
 	/**
 	 * Memoizes available_gateways(), which every placement asks twice.
@@ -487,6 +488,42 @@ class SdkV6Manager {
 	}
 
 	/**
+	 * One available gateway, or null when WooCommerce does not offer it here.
+	 *
+	 * The shared lookup behind gateway_title() and gateway_supports(), so the
+	 * guard that makes both of them null-safe lives in one place.
+	 */
+	private function gateway( string $gateway_id ): ?WC_Payment_Gateway {
+		$gateway = $this->available_gateways()[ $gateway_id ] ?? null;
+
+		return $gateway instanceof WC_Payment_Gateway ? $gateway : null;
+	}
+
+	/**
+	 * The gateway's own user-facing title, empty when the gateway is unavailable.
+	 *
+	 * The buyer-facing label, so it has to be the merchant's own wording for that
+	 * gateway rather than anything derived from the funding source.
+	 *
+	 * Entity-decoded, because get_title() returns the title encoded ("Debit &amp;
+	 * Credit Cards") and every consumer renders it as text through React, which
+	 * escapes again and would show the entity verbatim - in the method label, in
+	 * the aria-label a screen reader announces, and in the editor description. v5
+	 * solves the same problem with dangerouslySetInnerHTML, which is not an option
+	 * here: the title is admin-settable, so injecting it as HTML would hand anyone
+	 * who can edit gateway settings a stored-XSS vector.
+	 */
+	private function gateway_title( string $gateway_id ): string {
+		$gateway = $this->gateway( $gateway_id );
+
+		if ( ! $gateway ) {
+			return '';
+		}
+
+		return html_entity_decode( (string) $gateway->get_title(), ENT_QUOTES, 'UTF-8' );
+	}
+
+	/**
 	 * The gateway's own supports list, or `array( 'products' )` when the gateway
 	 * is unavailable. The narrowest list hides the method rather than offering
 	 * it on a cart it cannot pay for.
@@ -494,9 +531,9 @@ class SdkV6Manager {
 	 * @return string[]
 	 */
 	private function gateway_supports( string $gateway_id ): array {
-		$gateway = $this->available_gateways()[ $gateway_id ] ?? null;
+		$gateway = $this->gateway( $gateway_id );
 
-		if ( ! $gateway instanceof WC_Payment_Gateway ) {
+		if ( ! $gateway ) {
 			return array( 'products' );
 		}
 
@@ -597,37 +634,46 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether BCDC is configured for this kind of page, not whether the row
-	 * prints here, which is is_card_button_row().
+	 * Whether BCDC is configured for this kind of page.
 	 *
-	 * Narrower than its ACDC counterpart: BCDC has no block checkout support.
+	 * is_card_button_available() then decides whether it renders at all, and
+	 * is_card_button_row() / is_card_button_block_method() which surface it
+	 * renders on.
+	 *
+	 * Same context list as its ACDC counterpart, block checkout included.
 	 *
 	 * @param string|null $location Page context to test; defaults to the current page.
 	 */
 	public function is_card_button_enabled( ?string $location = null ): bool {
 		$location = $location ?? $this->get_page_context();
 
-		return in_array( $location, array( 'checkout', 'pay-now' ), true )
+		return in_array( $location, array( 'checkout', 'checkout-block', 'pay-now' ), true )
 			&& $this->card_payments_configuration->is_bcdc_enabled();
 	}
 
 	/**
-	 * Whether the BCDC button renders as its own payment-method row here.
+	 * Whether the BCDC button may render on this page at all, on either surface.
 	 *
-	 * Asks the gateway list rather than re-deriving its policy, which already
-	 * covers the checkout button location being off, ACDC outside Mexico,
-	 * free-trial carts and zero-total carts.
+	 * The single home of the policy, so neither surface restates it: BCDC is
+	 * configured for this context, the cart is one a card payment can settle, and
+	 * WooCommerce still offers the gateway. Asking the gateway list rather than
+	 * re-deriving its policy is what covers the checkout button location being
+	 * off, ACDC outside Mexico, free-trial carts and zero-total carts.
 	 */
-	private function is_card_button_row(): bool {
-		if ( null !== $this->is_card_button_row ) {
-			return $this->is_card_button_row;
+	private function is_card_button_available(): bool {
+		// Checked before the conditions below, not after them: is_card_button_row()
+		// and is_card_button_block_method() both come through here, and the script data
+		// asks all three, so a memo consulted last would still re-run the gateway
+		// settings lookup and both subscription queries on every call.
+		if ( null !== $this->is_card_button_available ) {
+			return $this->is_card_button_available;
 		}
 
-		if ( ! $this->is_card_button_enabled() || $this->is_block_context() ) {
+		if ( ! $this->is_card_button_enabled() ) {
 			return false;
 		}
 
-		// No row for subscription carts: the v6 guest component has no
+		// Never for subscription carts: the v6 guest component has no
 		// equivalent of the SDK URL vault param v5 uses here, so the button
 		// would take a payment that can never renew. Not a dead end: without a
 		// button "Place order" stays visible, and CardButtonGateway falls back
@@ -638,10 +684,31 @@ class SdkV6Manager {
 			return false;
 		}
 
-		// Memoized only from here on, for the reason is_method_gateway() gives.
-		$this->is_card_button_row = isset( $this->available_gateways()[ CardButtonGateway::ID ] );
+		// Memoized only from here on, for the reason is_method_gateway() gives: a
+		// refusal above can be asked again, since it may have come from a context
+		// that had not resolved yet.
+		$this->is_card_button_available = isset( $this->available_gateways()[ CardButtonGateway::ID ] );
 
-		return $this->is_card_button_row;
+		return $this->is_card_button_available;
+	}
+
+	/**
+	 * Whether the BCDC button renders as its own payment-method row here, which
+	 * only the classic pages have.
+	 */
+	private function is_card_button_row(): bool {
+		return ! $this->is_block_context() && $this->is_card_button_available();
+	}
+
+	/**
+	 * Whether BCDC renders as a WooCommerce Blocks payment method.
+	 *
+	 * A regular method, not an express one: the guest session renders its card
+	 * form inline, and WooCommerce disables the express area once an express
+	 * method starts, leaving that form inert.
+	 */
+	private function is_card_button_block_method(): bool {
+		return $this->is_block_context() && $this->is_card_button_available();
 	}
 
 	/**
@@ -1204,13 +1271,22 @@ class SdkV6Manager {
 				'styles'              => $this->card_field_styles->overrides(),
 			),
 			'card_button'         => array(
-				'enabled'        => $this->is_card_button_row(),
-				'payment_method' => CardButtonGateway::ID,
-				'funding_source' => 'card',
-				'wrapper'        => '#' . self::CARD_BUTTON_WRAPPER_ID,
+				// The two surfaces: `row` renders the SDK button on classic,
+				// `block_method` registers a redirect method on block checkout.
+				'row'                => $this->is_card_button_row(),
+				'block_method'       => $this->is_card_button_block_method(),
+				'payment_method'     => CardButtonGateway::ID,
+				'funding_source'     => 'card',
+				'wrapper'            => '#' . self::CARD_BUTTON_WRAPPER_ID,
+				// Labels the block method; the classic row takes its title from
+				// the gateway itself.
+				'title'              => $this->gateway_title( CardButtonGateway::ID ),
+				// This method's own gateway, never PayPal's, for the reason
+				// placement_script_data() gives.
+				'supported_features' => $this->gateway_supports( CardButtonGateway::ID ),
 				// No colour: the element is black-only. Width is ours to set
 				// because it ships a fixed 225px, where v5 spanned the column.
-				'styles'         => array(
+				'styles'             => array(
 					'borderRadius' => $this->style_mapper->styles_for_context( $page_context ?: 'checkout' )['borderRadius'],
 					'height'       => self::PAYMENT_BUTTON_HEIGHT,
 					'width'        => '100%',

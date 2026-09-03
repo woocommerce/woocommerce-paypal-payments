@@ -212,6 +212,10 @@ if ( config && config.page_context && config.continuation ) {
 	 *                                          supports. Deliberately without
 	 *                                          a default, so a wallet cannot
 	 *                                          inherit PayPal's list.
+	 * @param {string}   [args.label]           - The buyer-facing label, for a
+	 *                                          method whose name is the
+	 *                                          merchant's to set rather than a
+	 *                                          brand.
 	 */
 	const registerExpress = ( {
 		name,
@@ -220,8 +224,9 @@ if ( config && config.page_context && config.continuation ) {
 		content,
 		isDeviceCapable,
 		features,
+		label: labelOverride,
 	} ) => {
-		const label = fundingSourceLabel( fundingSource );
+		const label = labelOverride || fundingSourceLabel( fundingSource );
 
 		registerExpressPaymentMethod( {
 			/*
@@ -242,7 +247,7 @@ if ( config && config.page_context && config.continuation ) {
 			label: createElement( 'div', null, label ),
 			ariaLabel: label,
 			content,
-			edit: createElement( V6EditorPreview, { fundingSource } ),
+			edit: createElement( V6EditorPreview, { fundingSource, label } ),
 			canMakePayment: async ( { cartTotals } = {} ) => {
 				if ( isDeviceCapable && ! isDeviceCapable() ) {
 					return false;
@@ -312,6 +317,34 @@ if ( config && config.page_context && config.continuation ) {
 			features: settings.supported_features,
 		} );
 	}
+}
+
+// BCDC. A plain redirect method here, with no SDK involvement: the v6 guest
+// session renders its card form inline, which needs an express placement that
+// WooCommerce then disables, so "Place order" hands off to PayPal instead.
+// CardButtonGateway already does that - with no approved order in the session it
+// creates one and returns PayPal's hosted checkout URL to redirect to.
+//
+// Skipped in continuation mode, like the card fields.
+if ( config?.card_button?.block_method && ! config.continuation ) {
+	const cardButtonDescription = __(
+		'Pay securely with your credit or debit card. You will be redirected to PayPal to complete your payment.',
+		'woocommerce-paypal-payments'
+	);
+
+	registerPaymentMethod( {
+		name: config.card_button.payment_method,
+		label: createElement( 'div', null, config.card_button.title ),
+		ariaLabel: config.card_button.title,
+		content: createElement( 'div', null, cardButtonDescription ),
+		edit: createElement( 'div', null, cardButtonDescription ),
+		canMakePayment: () => true,
+		supports: {
+			features: gatewayFeatures( config.card_button.supported_features ),
+			// PayPal's hosted card page cannot vault into WooCommerce.
+			showSaveOption: false,
+		},
+	} );
 }
 
 /**

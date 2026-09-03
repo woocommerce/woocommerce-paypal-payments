@@ -99,7 +99,9 @@ async function createInstance( config, context ) {
 		components.push( 'card-fields' );
 	}
 	// The basic card button lives in its own component, not in paypal-payments.
-	if ( config.card_button?.enabled ) {
+	// Only the classic row needs it; on blocks BCDC redirects to PayPal instead
+	// of using the SDK.
+	if ( config.card_button?.row ) {
 		components.push( 'paypal-guest-payments' );
 	}
 	if ( config.fastlane?.enabled ) {
