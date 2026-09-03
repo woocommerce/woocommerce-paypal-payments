@@ -15,6 +15,7 @@ jest.mock( '../utils/errorHandler', () => ( {
 
 const mockLogError = jest.fn();
 jest.mock( '../utils/diagnostics', () => ( {
+	...jest.requireActual( '../utils/diagnostics' ),
 	logError: ( ...args ) => mockLogError( ...args ),
 } ) );
 
