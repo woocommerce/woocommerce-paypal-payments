@@ -573,6 +573,24 @@ class SdkV6Manager {
 			return true;
 		}
 
+		// Home and shop, where v5 places a Pay Later message and v6 has no
+		// message hook of its own yet. Whether v5 rendered there came down to the
+		// unrelated mini-cart setting: with the mini-cart on, the fallback below
+		// claimed the page and v5 went dark; with it off, v5 stayed and drew the
+		// banner. Claim the page either way, so one stack owns messaging
+		// everywhere rather than v6 and v5 splitting it per page. The message is
+		// withheld until v6 can draw it itself, at which point should_load_messages()
+		// above claims the page first and this branch stops being reached.
+		//
+		// Scoped to the empty page context so the block and page-context
+		// locations keep deciding without consulting messaging, as
+		// testShouldLoadOnCurrentPageInBlockContextsIsUnaffectedByMessagingEligibility
+		// pins.
+		$message_location = $page_location ? '' : $this->context->location();
+		if ( $message_location && $this->settings_status->is_pay_later_messaging_enabled_for_location( $message_location ) ) {
+			return true;
+		}
+
 		// Sitewide, because the mini-cart can appear on any page as either the
 		// classic "Cart" widget or the block Mini-Cart, and is_active_widget()
 		// only detects the classic one. boot.js renders into the mini-cart
