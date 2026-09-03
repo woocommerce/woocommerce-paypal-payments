@@ -59,6 +59,13 @@ class SdkV6Manager
      * DTOs carry no height of their own (see ButtonStyleMapper).
      */
     public const PAYMENT_BUTTON_HEIGHT = '48px';
+    /**
+     * The button height in the mini cart, which is narrower than a page column
+     * and so carries a shorter button. Matches the v5 default for the location
+     * (see SmartButton::script_data(), which sends 35 there and 48 for the
+     * block contexts).
+     */
+    public const MINI_CART_BUTTON_HEIGHT = '35px';
     // The pay-for-order page has no pre-payment hook, so the message renders
     // after the submit button and is relocated by SdkV6Module.
     public const PAY_ORDER_MESSAGE_HOOK = 'woocommerce_pay_order_before_submit';
@@ -467,6 +474,23 @@ class SdkV6Manager
         if ($this->is_fastlane_enabled($page_location)) {
             return \true;
         }
+        // Home and shop, where v5 places a Pay Later message and v6 has no
+        // message hook of its own yet. Whether v5 rendered there came down to the
+        // unrelated mini-cart setting: with the mini-cart on, the fallback below
+        // claimed the page and v5 went dark; with it off, v5 stayed and drew the
+        // banner. Claim the page either way, so one stack owns messaging
+        // everywhere rather than v6 and v5 splitting it per page. The message is
+        // withheld until v6 can draw it itself, at which point should_load_messages()
+        // above claims the page first and this branch stops being reached.
+        //
+        // Scoped to the empty page context so the block and page-context
+        // locations keep deciding without consulting messaging, as
+        // testShouldLoadOnCurrentPageInBlockContextsIsUnaffectedByMessagingEligibility
+        // pins.
+        $message_location = $page_location ? '' : $this->context->location();
+        if ($message_location && $this->settings_status->is_pay_later_messaging_enabled_for_location($message_location)) {
+            return \true;
+        }
         // Sitewide, because the mini-cart can appear on any page as either the
         // classic "Cart" widget or the block Mini-Cart, and is_active_widget()
         // only detects the classic one. boot.js renders into the mini-cart
@@ -779,14 +803,21 @@ class SdkV6Manager
     }
     /**
      * The button styles for one context, carrying the height every button in
-     * the express stack shares.
+     * that context's express stack shares.
      *
      * @param string $context The page context.
      * @return array{colorClass: string, borderRadius: string, height: string}
      */
     private function button_styles(string $context): array
     {
-        return array_merge($this->style_mapper->styles_for_context($context), array('height' => self::PAYMENT_BUTTON_HEIGHT));
+        return array_merge($this->style_mapper->styles_for_context($context), array('height' => $this->button_height($context)));
+    }
+    /**
+     * The button height for a context.
+     */
+    private function button_height(string $context): string
+    {
+        return 'mini-cart' === $context ? self::MINI_CART_BUTTON_HEIGHT : self::PAYMENT_BUTTON_HEIGHT;
     }
     /**
      * Whether the Pay Later button belongs in a location.
