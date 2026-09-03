@@ -118,7 +118,8 @@ function regularCallsFor( name ) {
  * The single registerPaymentMethod call for one registered name.
  *
  * @param {string} name - The registration name to find.
- * @return {Object} The args object passed to registerPaymentMethod.
+ * @return {Object|undefined} The args object passed to registerPaymentMethod,
+ *                            or undefined when no such call was made.
  */
 function regularCallFor( name ) {
 	return regularCallsFor( name )[ 0 ];
@@ -426,6 +427,118 @@ describe( 'checkout-block', () => {
 			expect( calls[ 0 ].supports.features ).toContain(
 				'ppcp_continuation'
 			);
+		} );
+	} );
+
+	describe( 'BCDC registration', () => {
+		const cardButtonConfig = ( overrides = {} ) => ( {
+			block_method: true,
+			payment_method: 'ppcp-card-button-gateway',
+			title: 'Debit & Credit Cards',
+			supported_features: [ 'products' ],
+			...overrides,
+		} );
+
+		test( 'registers BCDC as a regular method, not an express one, when card_button.block_method is true', () => {
+			loadCheckoutBlock(
+				baseConfig( { card_button: cardButtonConfig() } )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+			).toBeDefined();
+			expect( mockRegisterExpressPaymentMethod ).not.toHaveBeenCalledWith(
+				expect.objectContaining( { name: 'ppcp-card-button-gateway' } )
+			);
+		} );
+
+		test( 'does not register BCDC when card_button.block_method is false', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig( { block_method: false } ),
+				} )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+			).toBeUndefined();
+		} );
+
+		test( 'does not register BCDC in continuation mode', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig(),
+					continuation: { funding_source: 'paypal' },
+				} )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+			).toBeUndefined();
+		} );
+
+		test( 'takes its label and ariaLabel from card_button.title', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig( {
+						title: 'Pay with Card',
+					} ),
+				} )
+			);
+
+			const { ariaLabel } = regularCallFor( 'ppcp-card-button-gateway' );
+
+			expect( ariaLabel ).toBe( 'Pay with Card' );
+		} );
+
+		test( 'declares card_button.supported_features with no ppcp_continuation appended', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig( {
+						supported_features: [ 'products', 'refunds' ],
+					} ),
+				} )
+			);
+
+			const { supports } = regularCallFor( 'ppcp-card-button-gateway' );
+
+			expect( supports.features ).toEqual( [ 'products', 'refunds' ] );
+		} );
+
+		test( 'falls back to the "products" feature when card_button declares none of its own', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig( {
+						supported_features: undefined,
+					} ),
+				} )
+			);
+
+			const { supports } = regularCallFor( 'ppcp-card-button-gateway' );
+
+			expect( supports.features ).toEqual( [ 'products' ] );
+		} );
+
+		test( 'disables the save-payment-method option, since a hosted PayPal card page cannot vault into WooCommerce', () => {
+			loadCheckoutBlock(
+				baseConfig( { card_button: cardButtonConfig() } )
+			);
+
+			const { supports } = regularCallFor( 'ppcp-card-button-gateway' );
+
+			expect( supports.showSaveOption ).toBe( false );
+		} );
+
+		test( 'canMakePayment is true unconditionally, with no eligibility check', () => {
+			loadCheckoutBlock(
+				baseConfig( { card_button: cardButtonConfig() } )
+			);
+
+			const { canMakePayment } = regularCallFor(
+				'ppcp-card-button-gateway'
+			);
+
+			expect( canMakePayment() ).toBe( true );
 		} );
 	} );
 } );
