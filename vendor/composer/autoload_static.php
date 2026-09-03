@@ -264,6 +264,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\ClientCredentials' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Authentication/ClientCredentials.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\ConnectBearer' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Authentication/ConnectBearer.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\PayPalBearer' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Authentication/PayPalBearer.php',
+        'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\ResolvingBearer' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Authentication/ResolvingBearer.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\SdkClientToken' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Authentication/SdkClientToken.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\TokenRateLimiter' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Authentication/TokenRateLimiter.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\UserIdToken' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Authentication/UserIdToken.php',

@@ -47,6 +47,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\ClientCredentials' => $baseDir . '/modules/ppcp-api-client/src/Authentication/ClientCredentials.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\ConnectBearer' => $baseDir . '/modules/ppcp-api-client/src/Authentication/ConnectBearer.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\PayPalBearer' => $baseDir . '/modules/ppcp-api-client/src/Authentication/PayPalBearer.php',
+    'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\ResolvingBearer' => $baseDir . '/modules/ppcp-api-client/src/Authentication/ResolvingBearer.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\SdkClientToken' => $baseDir . '/modules/ppcp-api-client/src/Authentication/SdkClientToken.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\TokenRateLimiter' => $baseDir . '/modules/ppcp-api-client/src/Authentication/TokenRateLimiter.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Authentication\\UserIdToken' => $baseDir . '/modules/ppcp-api-client/src/Authentication/UserIdToken.php',
