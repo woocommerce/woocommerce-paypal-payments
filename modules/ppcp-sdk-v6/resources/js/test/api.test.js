@@ -7,7 +7,6 @@ describe( 'postJson', () => {
 
 	test( 'posts the nonce merged with the body and returns data', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
-			clone: () => ( { text: async () => '' } ),
 			json: async () => ( { success: true, data: { id: 'ABC' } } ),
 		} );
 
@@ -29,7 +28,6 @@ describe( 'postJson', () => {
 	test( 'marks server-provided messages as user facing', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
 			status: 400,
-			clone: () => ( { text: async () => '' } ),
 			json: async () => ( {
 				success: false,
 				data: { message: 'Übersetzter Fehler' },
@@ -42,13 +40,11 @@ describe( 'postJson', () => {
 			message: 'Übersetzter Fehler',
 			isUserFacing: true,
 			status: 400,
-			endpoint: '/e',
 		} );
 	} );
 
 	test( 'does not mark message-less failures as user facing', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
-			clone: () => ( { text: async () => '' } ),
 			json: async () => ( { success: false } ),
 		} );
 
@@ -61,7 +57,6 @@ describe( 'postJson', () => {
 
 	test( 'forwards the errors list and refresh flag from a validation failure', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
-			clone: () => ( { text: async () => '' } ),
 			json: async () => ( {
 				success: false,
 				data: {
@@ -80,11 +75,9 @@ describe( 'postJson', () => {
 		} );
 	} );
 
-	test( 'throws with status, endpoint and a body snippet when the response is not JSON', async () => {
-		const snapshot = { text: async () => 'a'.repeat( 250 ) };
+	test( 'throws with the status attached when the response is not JSON', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
 			status: 500,
-			clone: () => snapshot,
 			json: async () => {
 				throw new SyntaxError( 'Unexpected token' );
 			},
@@ -95,27 +88,21 @@ describe( 'postJson', () => {
 		).rejects.toMatchObject( {
 			message: 'Endpoint returned no usable JSON (HTTP 500).',
 			status: 500,
-			endpoint: '/e',
-			bodySnippet: 'a'.repeat( 200 ),
 		} );
 	} );
 
-	test( 'falls back to an empty body snippet when reading the clone fails', async () => {
+	test( 'rejects the bare 0 WordPress replies with for an unregistered ajax action', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
-			status: 500,
-			clone: () => ( {
-				text: async () => {
-					throw new Error( 'stream locked' );
-				},
-			} ),
-			json: async () => {
-				throw new SyntaxError( 'Unexpected token' );
-			},
+			status: 400,
+			json: async () => 0,
 		} );
 
 		await expect(
 			postJson( { endpoint: '/e', nonce: 'n' } )
-		).rejects.toMatchObject( { bodySnippet: '' } );
+		).rejects.toMatchObject( {
+			message: 'Endpoint returned no usable JSON (HTTP 400).',
+			status: 400,
+		} );
 	} );
 } );
 

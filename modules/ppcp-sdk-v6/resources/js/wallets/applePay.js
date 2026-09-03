@@ -14,7 +14,7 @@ import Spinner from '@ppcp-button/Helper/Spinner';
 import { releaseCartShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
-import { logError } from '../utils/diagnostics';
+import { describeError, logError } from '../utils/diagnostics';
 import { handleError } from '../utils/errorHandler';
 import { loadScript } from '../utils/scriptLoaders';
 import { revealMethodGateway } from '../methods/gatewayPlacement';
@@ -241,11 +241,13 @@ export async function renderApplePay( {
 		} catch ( error ) {
 			recordDomainValidation( settings, false );
 
-			// PayPal answers this one straight to the browser, so the reason
-			// exists nowhere else.
-			logError( config, 'apple-pay-merchant-validation-failed', {
-				message: error.message,
-			} );
+			// PayPal answers straight to the browser, so the reason exists
+			// nowhere else.
+			logError(
+				config,
+				'apple-pay-merchant-validation-failed',
+				describeError( error )
+			);
 
 			// Nothing can be paid without a validated merchant, and the usual
 			// cause (an unregistered domain) is not something the shopper can
@@ -313,14 +315,12 @@ export async function renderApplePay( {
 				window.ApplePaySession.STATUS_SUCCESS
 			);
 		} catch ( error ) {
-			// Apple's generic sheet wording fits every branch equally, so
-			// record which one this was.
-			logError( config, 'apple-pay-authorization-failed', {
-				message: error.message,
-				status: error.status,
-				endpoint: error.endpoint,
-				body: error.bodySnippet,
-			} );
+			// Apple's sheet wording is the same whichever branch failed.
+			logError(
+				config,
+				'apple-pay-authorization-failed',
+				describeError( error )
+			);
 
 			// Apple still has the sheet up, so it can tell the shopper why.
 			appleSession.completePayment(

@@ -10,7 +10,7 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson, postStoreApi } from './utils/api';
-import { logError } from './utils/diagnostics';
+import { describeError, logError } from './utils/diagnostics';
 import { FundingSources } from './utils/fundingSources';
 import { amountFromCartTotals } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
@@ -274,14 +274,12 @@ export async function approveOrder(
 			throw error;
 		}
 
-		// The retry below is what hides it: this is the only account of a
-		// refused first attempt.
-		logError( config, 'approve-order-retried', {
-			message: error.message,
-			status: error.status,
-			order_id: orderId,
-			funding_source: fundingSource,
-		} );
+		// The retry below hides the refusal, so record it first.
+		logError(
+			config,
+			'approve-order-retried',
+			`${ fundingSource } order=${ orderId } ${ describeError( error ) }`
+		);
 
 		// e.g. One-Touch approval without a shipping option; fall back
 		// to the classic continuation on checkout.

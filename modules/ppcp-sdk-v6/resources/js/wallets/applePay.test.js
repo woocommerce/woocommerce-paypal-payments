@@ -738,7 +738,7 @@ describe( 'onvalidatemerchant', () => {
 		expect( mockLogError ).toHaveBeenCalledWith(
 			config,
 			'apple-pay-merchant-validation-failed',
-			{ message: 'unregistered domain' }
+			'unregistered domain'
 		);
 
 		wrapper.querySelector( 'apple-pay-button' ).click();
@@ -911,12 +911,7 @@ describe( 'onpaymentauthorized', () => {
 		expect( mockLogError ).toHaveBeenCalledWith(
 			config,
 			'apple-pay-authorization-failed',
-			{
-				message: 'declined',
-				status: undefined,
-				endpoint: undefined,
-				body: undefined,
-			}
+			'declined'
 		);
 
 		wrapper.querySelector( 'apple-pay-button' ).click();

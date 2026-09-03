@@ -2,30 +2,24 @@
  * Shared WC AJAX request helper.
  */
 
-// Enough of an unexpected body to recognize a cache or WAF error page by.
-const MAX_BODY_SNIPPET = 200;
-
 /**
  * The parsed JSON body of a WC AJAX response.
  *
- * Cloned before parsing, because parsing consumes the body: an answer that is
- * not JSON can then still be quoted back, instead of surfacing only as a
- * SyntaxError naming neither the endpoint nor the status.
+ * A bare SyntaxError names neither the call nor its outcome, so a non-JSON
+ * answer is rethrown carrying the status.
  *
  * @param {Response} response - The answered request.
- * @param {string}   endpoint - The URL, named in the error.
  * @return {Promise<Object>} The parsed body.
  * @throws {Error} When the answer is not JSON, or is the bare `0` WordPress
  *                 replies with for an unregistered ajax action.
  */
-async function readJsonBody( response, endpoint ) {
-	const unparsed = response.clone();
+async function readJsonBody( response ) {
 	let json = null;
 
 	try {
 		json = await response.json();
 	} catch ( parseError ) {
-		// Not JSON. Reported below, with the body quoted back.
+		// Not JSON.
 	}
 
 	if ( json ) {
@@ -36,15 +30,6 @@ async function readJsonBody( response, endpoint ) {
 		`Endpoint returned no usable JSON (HTTP ${ response.status }).`
 	);
 	error.status = response.status;
-	error.endpoint = endpoint;
-	error.bodySnippet = '';
-
-	try {
-		const text = await unparsed.text();
-		error.bodySnippet = text.slice( 0, MAX_BODY_SNIPPET );
-	} catch ( readError ) {
-		// A body that cannot be read still leaves the status and endpoint.
-	}
 
 	throw error;
 }
@@ -69,7 +54,7 @@ export async function postJson( { endpoint, nonce }, body = {} ) {
 		body: JSON.stringify( { nonce, ...body } ),
 	} );
 
-	const json = await readJsonBody( response, endpoint );
+	const json = await readJsonBody( response );
 
 	if ( ! json.success ) {
 		const error = new Error( json.data?.message || '' );
@@ -81,7 +66,6 @@ export async function postJson( { endpoint, nonce }, body = {} ) {
 		error.errors = json.data?.errors;
 		error.refresh = Boolean( json.data?.refresh );
 		error.status = response.status;
-		error.endpoint = endpoint;
 		throw error;
 	}
 

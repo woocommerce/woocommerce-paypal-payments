@@ -6,7 +6,7 @@
  */
 
 import { resolveOptionId } from '../methods/shippingQuote';
-import { logError } from '../utils/diagnostics';
+import { describeError, logError } from '../utils/diagnostics';
 import { walletAddressToWc } from './walletContacts';
 
 // Google rejects newShippingOptionParameters on a SHIPPING_OPTION trigger: the
@@ -98,12 +98,11 @@ export function buildPaymentDataCallbacks( {
 					),
 				} );
 			} catch ( error ) {
-				logError( config, 'google-pay-shipping-failed', {
-					message: error.message,
-					status: error.status,
-					endpoint: error.endpoint,
-					body: error.bodySnippet,
-				} );
+				logError(
+					config,
+					'google-pay-shipping-failed',
+					describeError( error )
+				);
 
 				// Rethrown so Google keeps the sheet open on its own message;
 				// a toast would be hidden behind the sheet anyway.
