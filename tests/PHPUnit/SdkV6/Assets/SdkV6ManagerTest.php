@@ -1871,6 +1871,29 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a checkout page where the mini-cart smart button location is also enabled
+     * WHEN the SDK bootstrap data is generated
+     * THEN button_styles carries a shorter height for the mini-cart entry, since the
+     *      mini-cart column is narrower than a page column and a full-height button
+     *      there renders oversized
+     * AND the checkout page's own entry keeps the full page-width button height, so the
+     *     two heights differ within the same payload rather than both falling back to
+     *     one hardcoded value
+     */
+    public function testScriptDataButtonStylesMiniCartHeightDiffersFromPageContext(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('mini-cart')->andReturn(true);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(SdkV6Manager::PAYMENT_BUTTON_HEIGHT, $data['button_styles']['checkout']['height']);
+        $this->assertSame(SdkV6Manager::MINI_CART_BUTTON_HEIGHT, $data['button_styles']['mini-cart']['height']);
+    }
+
+    /**
      * GIVEN the BCDC row is eligible to print (checkout, BCDC enabled, the
      *       gateway available, no subscription in the cart)
      * WHEN the card button wrapper is rendered
