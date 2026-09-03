@@ -66,6 +66,7 @@ class V6PaymentMethod extends AbstractPaymentMethodType
      */
     public function initialize()
     {
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_style'));
     }
     public function is_active()
     {
@@ -81,6 +82,25 @@ class V6PaymentMethod extends AbstractPaymentMethodType
         $asset = $this->asset_getter->get_asset_data('checkout-block.js', $this->version);
         wp_register_script($handle, $script_url, $asset['dependencies'], $asset['version'], \true);
         return array($handle);
+    }
+    /**
+     * Enqueues the styles for the express buttons on block pages.
+     *
+     * Block pages bypass SdkV6Manager::enqueue(), which serves the classic
+     * pages only, so their styles are registered here instead.
+     */
+    public function enqueue_style(): void
+    {
+        if (!$this->is_active()) {
+            return;
+        }
+        $style_url = $this->asset_getter->get_asset_url('checkout-block.css');
+        if (!$style_url) {
+            return;
+        }
+        $handle = 'wc-ppcp-sdk-v6-blocks-style';
+        wp_register_style($handle, $style_url, array(), $this->version);
+        wp_enqueue_style($handle);
     }
     public function get_payment_method_data(): array
     {

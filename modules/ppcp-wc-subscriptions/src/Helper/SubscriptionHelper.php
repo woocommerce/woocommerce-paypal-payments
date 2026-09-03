@@ -213,6 +213,30 @@ class SubscriptionHelper
         return $can_save_vault_token;
     }
     /**
+     * Whether the current (subscription) cart can actually be processed by the PayPal gateway.
+     *
+     * This resolves the mode-aware {@see self::paypal_subscription_button_allowed()} rule from
+     * settings, so callers that only have a {@see SettingsProvider} (such as the classic-checkout
+     * gateway-availability filter) can hide the PayPal gateway when it could not fulfil the payment
+     * instead of leaving it visible with a disabled button. A non-subscription cart is always
+     * processable.
+     *
+     * @param SettingsProvider $settings_provider The settings provider.
+     * @return bool
+     * @throws NotFoundException If setting is not found.
+     */
+    public function subscription_cart_processable(SettingsProvider $settings_provider): bool
+    {
+        if (!$this->cart_contains_subscription()) {
+            return \true;
+        }
+        $is_paypal_subscription = self::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS === $this->resolve_subscription_mode($settings_provider);
+        // Mirrors SmartButton::can_save_vault_token(): a token can only be saved with a
+        // connected merchant and vaulting ("Save PayPal and Venmo") enabled.
+        $can_save_vault_token = !empty($settings_provider->merchant_data()->client_id) && $settings_provider->save_paypal_and_venmo();
+        return $this->paypal_subscription_button_allowed($is_paypal_subscription, $can_save_vault_token);
+    }
+    /**
      * Resolves how a subscription checkout must be routed.
      *
      * This is the single deciding function for the subscriptions mode. Rules:
