@@ -1,6 +1,6 @@
 import '@ppcp-test/helpers/silenceConsole';
 
-import { logError } from './diagnostics';
+import { describeError, logError } from './diagnostics';
 
 const config = ( overrides = {} ) => ( {
 	ajax: {
@@ -12,17 +12,37 @@ const config = ( overrides = {} ) => ( {
 	...overrides,
 } );
 
+describe( 'describeError()', () => {
+	test( 'prefixes the message with the HTTP status when the error carries one', () => {
+		const error = { status: 422, message: 'Unprocessable' };
+
+		expect( describeError( error ) ).toBe( 'HTTP 422 Unprocessable' );
+	} );
+
+	test( 'returns just the message when the error has no status', () => {
+		const error = new Error( 'network down' );
+
+		expect( describeError( error ) ).toBe( 'network down' );
+	} );
+
+	test( 'falls back to "unknown error" when the error has no message', () => {
+		expect( describeError( {} ) ).toBe( 'unknown error' );
+	} );
+} );
+
 describe( 'logError()', () => {
 	afterEach( () => {
 		global.fetch = undefined;
 	} );
 
-	test( 'posts the nonce, tag, event and detail as context to the frontend log endpoint', async () => {
+	test( 'posts the nonce, tag, event and detail as a message to the frontend log endpoint', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {} );
 
-		await logError( config(), 'apple-pay-shipping-abort', {
-			message: 'Rate not found',
-		} );
+		await logError(
+			config(),
+			'apple-pay-shipping-abort',
+			'Rate not found'
+		);
 
 		const [ url, options ] = global.fetch.mock.calls[ 0 ];
 		expect( url ).toBe( '/wc-ajax/ppc-frontend-log' );
@@ -30,52 +50,8 @@ describe( 'logError()', () => {
 			nonce: 'n1',
 			tag: 'SDK v6',
 			event: 'apple-pay-shipping-abort',
-			context: { message: 'Rate not found' },
+			message: 'Rate not found',
 		} );
-	} );
-
-	test( 'stringifies non-string detail values', async () => {
-		global.fetch = jest.fn().mockResolvedValue( {} );
-
-		await logError( config(), 'confirm-order-not-approved', {
-			status: 'DECLINED',
-			result: { status: 'DECLINED' },
-			count: 3,
-		} );
-
-		const [ , options ] = global.fetch.mock.calls[ 0 ];
-		expect( JSON.parse( options.body ).context ).toEqual( {
-			status: 'DECLINED',
-			result: '{"status":"DECLINED"}',
-			count: '3',
-		} );
-	} );
-
-	test( 'drops undefined and null detail values from the posted context', async () => {
-		global.fetch = jest.fn().mockResolvedValue( {} );
-
-		await logError( config(), 'event', {
-			present: 'value',
-			missing: undefined,
-			absent: null,
-		} );
-
-		const [ , options ] = global.fetch.mock.calls[ 0 ];
-		expect( JSON.parse( options.body ).context ).toEqual( {
-			present: 'value',
-		} );
-	} );
-
-	test( 'clamps a long value to 500 characters', async () => {
-		global.fetch = jest.fn().mockResolvedValue( {} );
-
-		await logError( config(), 'event', {
-			body: 'x'.repeat( 600 ),
-		} );
-
-		const [ , options ] = global.fetch.mock.calls[ 0 ];
-		const posted = JSON.parse( options.body ).context.body;
-		expect( posted ).toHaveLength( 500 );
 	} );
 
 	test.each( [
@@ -89,7 +65,7 @@ describe( 'logError()', () => {
 	] )( 'skips the POST when %s', async ( _label, brokenConfig ) => {
 		global.fetch = jest.fn();
 
-		await logError( brokenConfig, 'event', {} );
+		await logError( brokenConfig, 'event', 'detail' );
 
 		expect( global.fetch ).not.toHaveBeenCalled();
 	} );
@@ -98,7 +74,7 @@ describe( 'logError()', () => {
 		global.fetch = undefined;
 
 		await expect(
-			logError( config(), 'event', {} )
+			logError( config(), 'event', 'detail' )
 		).resolves.toBeUndefined();
 	} );
 
@@ -106,36 +82,21 @@ describe( 'logError()', () => {
 		global.fetch = jest.fn().mockRejectedValue( new Error( 'network down' ) );
 
 		await expect(
-			logError( config(), 'event', {} )
+			logError( config(), 'event', 'detail' )
 		).resolves.toBeUndefined();
 	} );
 
-	test( 'stringifies a circular detail value instead of throwing', async () => {
+	test( 'never rejects when reading the config throws', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {} );
-		const circular = {};
-		circular.self = circular;
+		const poisonedConfig = {
+			get ajax() {
+				throw new Error( 'boom' );
+			},
+		};
 
 		await expect(
-			logError( config(), 'event', { circular } )
+			logError( poisonedConfig, 'event', 'detail' )
 		).resolves.toBeUndefined();
-
-		const [ , options ] = global.fetch.mock.calls[ 0 ];
-		expect( JSON.parse( options.body ).context.circular ).toBe(
-			'[object Object]'
-		);
-	} );
-
-	test( 'never throws and skips the POST when a detail value has a throwing getter', async () => {
-		global.fetch = jest.fn().mockResolvedValue( {} );
-
-		await expect(
-			logError( config(), 'event', {
-				get poison() {
-					throw new Error( 'boom' );
-				},
-			} )
-		).resolves.toBeUndefined();
-
 		expect( global.fetch ).not.toHaveBeenCalled();
 	} );
 } );
