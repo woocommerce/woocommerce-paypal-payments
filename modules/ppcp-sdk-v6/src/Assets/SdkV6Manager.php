@@ -63,6 +63,14 @@ class SdkV6Manager {
 	 */
 	public const PAYMENT_BUTTON_HEIGHT = '48px';
 
+	/**
+	 * The button height in the mini cart, which is narrower than a page column
+	 * and so carries a shorter button. Matches the v5 default for the location
+	 * (see SmartButton::script_data(), which sends 35 there and 48 for the
+	 * block contexts).
+	 */
+	public const MINI_CART_BUTTON_HEIGHT = '35px';
+
 	// The pay-for-order page has no pre-payment hook, so the message renders
 	// after the submit button and is relocated by SdkV6Module.
 	public const PAY_ORDER_MESSAGE_HOOK = 'woocommerce_pay_order_before_submit';
@@ -307,12 +315,19 @@ class SdkV6Manager {
 
 		$needs_payment = $this->cart_needs_payment();
 
+		// A free-trial ($0) subscription cart needs no one-time payment, so
+		// $needs_payment is false, but the checkout still needs the PayPal
+		// save-without-purchase button (boot.js renders it for the checkout /
+		// pay-now contexts only). Confined to checkout: the cart and mini-cart
+		// have no form to submit the vaulted token with.
+		$free_trial_checkout = $this->free_trial_helper->is_free_trial_cart();
+
 		// pay-now is driven by the existing WC order rather than the cart, so
 		// the zero-total guard does not apply to it.
 		return array(
 			'product'   => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'cart'      => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
-			'checkout'  => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ),
+			'checkout'  => ( $needs_payment || $free_trial_checkout ) && $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ),
 			'pay-now'   => $this->settings_status->is_smart_button_enabled_for_location( 'pay-now' ),
 			'mini-cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 		);
@@ -321,8 +336,10 @@ class SdkV6Manager {
 	/**
 	 * Whether the current cart still needs payment.
 	 *
-	 * Keeps buttons off $0 orders (a full-value coupon, a free trial), where no
-	 * payment method should be offered at all.
+	 * Keeps buttons off $0 orders (a full-value coupon), where no payment method
+	 * should be offered at all. A free-trial subscription cart is $0 too but is
+	 * handled separately in determine_render_places(), since it still needs the
+	 * PayPal save-without-purchase button on the checkout.
 	 */
 	private function cart_needs_payment(): bool {
 		$cart = WC()->cart;
@@ -938,7 +955,7 @@ class SdkV6Manager {
 
 	/**
 	 * The button styles for one context, carrying the height every button in
-	 * the express stack shares.
+	 * that context's express stack shares.
 	 *
 	 * @param string $context The page context.
 	 * @return array{colorClass: string, borderRadius: string, height: string}
@@ -946,8 +963,17 @@ class SdkV6Manager {
 	private function button_styles( string $context ): array {
 		return array_merge(
 			$this->style_mapper->styles_for_context( $context ),
-			array( 'height' => self::PAYMENT_BUTTON_HEIGHT )
+			array( 'height' => $this->button_height( $context ) )
 		);
+	}
+
+	/**
+	 * The button height for a context.
+	 */
+	private function button_height( string $context ): string {
+		return 'mini-cart' === $context
+			? self::MINI_CART_BUTTON_HEIGHT
+			: self::PAYMENT_BUTTON_HEIGHT;
 	}
 
 	/**

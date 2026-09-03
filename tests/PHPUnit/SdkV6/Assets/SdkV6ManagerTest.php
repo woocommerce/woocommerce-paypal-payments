@@ -329,6 +329,46 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a subscription cart on a free trial ($0 today), which therefore needs no
+     *       one-time payment
+     * WHEN determining which locations should render on the current page
+     * THEN the checkout still renders, because it must offer the PayPal
+     *      save-without-purchase button for the vaulted token backing the future
+     *      recurring payment
+     * AND the cart and mini-cart stay suppressed regardless of the free-trial flag,
+     *     since neither has a form to submit that vaulted token from
+     * AND a $0 cart that is NOT a free trial (e.g. a full-value coupon) keeps the
+     *     checkout suppressed too, same as before the fix
+     *
+     * @dataProvider free_trial_checkout_provider
+     */
+    public function testDetermineRenderPlacesCheckoutOnFreeTrialCart(bool $needs_payment, bool $is_free_trial_cart, bool $expected_checkout): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn($is_free_trial_cart);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn($needs_payment);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $testee = $this->createTestee();
+        $result = $testee->determine_render_places();
+
+        $this->assertSame($expected_checkout, $result['checkout']);
+        $this->assertSame($needs_payment, $result['cart']);
+        $this->assertSame($needs_payment, $result['mini-cart']);
+    }
+
+    public function free_trial_checkout_provider(): array
+    {
+        return [
+            'free-trial cart needing no payment still enables checkout' => [false, true, true],
+            'zero-total non-free-trial cart keeps checkout suppressed'  => [false, false, false],
+            'ordinary cart needing payment enables checkout regardless of free trial' => [true, false, true],
+        ];
+    }
+
+    /**
      * GIVEN the mini-cart smart button location is enabled sitewide
      * WHEN checking whether the v6 SDK should load on a page with no matching page context
      *      (e.g. the shop or home page, where a block Mini-Cart may still appear)
@@ -1828,6 +1868,29 @@ class SdkV6ManagerTest extends TestCase
         );
         $this->assertArrayHasKey('card_declined', $data['labels']);
         $this->assertNotSame('', $data['labels']['card_declined']);
+    }
+
+    /**
+     * GIVEN a checkout page where the mini-cart smart button location is also enabled
+     * WHEN the SDK bootstrap data is generated
+     * THEN button_styles carries a shorter height for the mini-cart entry, since the
+     *      mini-cart column is narrower than a page column and a full-height button
+     *      there renders oversized
+     * AND the checkout page's own entry keeps the full page-width button height, so the
+     *     two heights differ within the same payload rather than both falling back to
+     *     one hardcoded value
+     */
+    public function testScriptDataButtonStylesMiniCartHeightDiffersFromPageContext(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('mini-cart')->andReturn(true);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(SdkV6Manager::PAYMENT_BUTTON_HEIGHT, $data['button_styles']['checkout']['height']);
+        $this->assertSame(SdkV6Manager::MINI_CART_BUTTON_HEIGHT, $data['button_styles']['mini-cart']['height']);
     }
 
     /**
