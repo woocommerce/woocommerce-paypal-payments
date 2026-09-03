@@ -6,6 +6,7 @@ import FormValidator from '@ppcp-button/Helper/FormValidator';
 import ErrorHandler from '@ppcp-button/ErrorHandler';
 import widgetBuilder from '@ppcp-button/Renderer/WidgetBuilder';
 import PaymentButton from '@ppcp-button/Renderer/PaymentButton';
+import { describeError } from '@ppcp-button/Helper/FrontendLog';
 import {
 	PaymentContext,
 	PaymentMethods,
@@ -759,7 +760,10 @@ class ApplePayButton extends PaymentButton {
 					this.adminValidation( true );
 				} )
 				.catch( ( validateError ) => {
-					console.error( validateError );
+					this.reportFailure(
+						'merchant-validation-failed',
+						describeError( validateError )
+					);
 					this.adminValidation( false );
 					this.log( 'onvalidatemerchant session abort' );
 					session.abort();
@@ -805,8 +809,11 @@ class ApplePayButton extends PaymentButton {
 					session.completeShippingMethodSelection( response );
 				},
 				error: ( jqXHR, textStatus, errorThrown ) => {
-					this.log( 'onshippingmethodselected error', textStatus );
-					console.warn( textStatus, errorThrown );
+					// Apple words an aborted sheet exactly like a buyer's dismissal.
+					this.reportFailure(
+						'shipping-method-abort',
+						`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
+					);
 					session.abort();
 				},
 			} );
@@ -841,8 +848,11 @@ class ApplePayButton extends PaymentButton {
 					session.completeShippingContactSelection( response );
 				},
 				error: ( jqXHR, textStatus, errorThrown ) => {
-					this.log( 'onshippingcontactselected error', textStatus );
-					console.warn( textStatus, errorThrown );
+					// Apple words an aborted sheet exactly like a buyer's dismissal.
+					this.reportFailure(
+						'shipping-contact-abort',
+						`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
+					);
 					session.abort();
 				},
 			} );
@@ -1058,8 +1068,8 @@ class ApplePayButton extends PaymentButton {
 										ApplePaySession.STATUS_SUCCESS
 									);
 								} else {
-									this.error(
-										'onpaymentauthorized approveOrder FAIL'
+									this.reportFailure(
+										'approve-order-failed'
 									);
 									session.completePayment(
 										ApplePaySession.STATUS_FAILURE
@@ -1093,26 +1103,37 @@ class ApplePayButton extends PaymentButton {
 								}
 							}
 						} catch ( error ) {
+							this.reportFailure(
+								'authorization-failed',
+								describeError( error )
+							);
 							session.completePayment(
 								ApplePaySession.STATUS_FAILURE
 							);
 							session.abort();
-							console.error( error );
 						}
 					} else {
-						console.error( 'Error status is not APPROVED' );
+						// confirmOrder goes straight from the browser to PayPal,
+						// so this status is the only account of the refusal.
+						this.reportFailure(
+							'confirm-order-not-approved',
+							`status=${ confirmOrderResponse.approveApplePayPayment.status }`
+						);
 						session.completePayment(
 							ApplePaySession.STATUS_FAILURE
 						);
 					}
 				} else {
-					console.error( 'Invalid confirmOrderResponse' );
+					this.reportFailure(
+						'confirm-order-unrecognized',
+						`keys=${ Object.keys( confirmOrderResponse ?? {} ).join( ',' ) }`
+					);
 					session.completePayment( ApplePaySession.STATUS_FAILURE );
 				}
 			} catch ( error ) {
-				console.error(
-					'Error confirming order with applepay token',
-					error
+				this.reportFailure(
+					'confirm-order-failed',
+					describeError( error )
 				);
 				session.completePayment( ApplePaySession.STATUS_FAILURE );
 				session.abort();
