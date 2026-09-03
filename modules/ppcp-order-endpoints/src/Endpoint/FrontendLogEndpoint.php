@@ -14,8 +14,8 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 class FrontendLogEndpoint implements EndpointInterface
 {
-    const ENDPOINT = 'ppc-frontend-log';
-    private const MAX_VALUE_LENGTH = 500;
+    public const ENDPOINT = 'ppc-frontend-log';
+    private const MAX_LINE_LENGTH = 1024;
     private \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data;
     private LoggerInterface $logger;
     public function __construct(\WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data, LoggerInterface $logger)
@@ -29,66 +29,43 @@ class FrontendLogEndpoint implements EndpointInterface
     }
     /**
      * Logs one report at error level, since only failures are reported.
-     *
-     * Answers success even for an unusable payload: the caller reports a failure it
-     * has already handled, and a rejection it cannot act on would only be dropped.
      */
     public function handle_request(): void
     {
         try {
             $data = $this->request_data->read_request(self::nonce());
-            $this->logger->error($this->message($data));
-            wp_send_json_success(array('logged' => \true));
+            /**
+             * Disable front-end logging without disabling logging completely.
+             */
+            if (apply_filters('woocommerce_paypal_payments_frontend_log_enabled', \true)) {
+                $this->logger->error($this->line($data));
+            }
+            wp_send_json_success();
         } catch (NonceValidationException $error) {
-            wp_send_json_error(array('message' => $error->getMessage()), 400);
+            // Fire-and-forget endpoint, response data is never parsed, no need to indicate failures.
+            wp_send_json_success();
         }
     }
     /**
-     * Shaped `[tag] event key=value key=value`.
+     * Shaped `[tag] event: detail`, capped.
      *
      * @param array<string, mixed> $data The request data.
      */
-    private function message(array $data): string
+    private function line(array $data): string
     {
         $tag = $this->string_field($data, 'tag') ?: 'frontend';
         $event = $this->string_field($data, 'event') ?: 'unknown';
-        $pairs = $this->context_pairs($data);
+        $detail = $this->string_field($data, 'message');
         $line = sprintf('[%1$s] %2$s', $tag, $event);
-        if ($pairs) {
-            $line .= ' ' . implode(' ', $pairs);
+        if ('' !== $detail) {
+            $line .= ': ' . $detail;
         }
-        return $line;
-    }
-    /**
-     * The reported context as `key=value` pairs, dropping unusable values.
-     *
-     * @param array<string, mixed> $data The request data.
-     * @return string[]
-     */
-    private function context_pairs(array $data): array
-    {
-        $posted = $data['context'] ?? array();
-        if (!is_array($posted)) {
-            return array();
-        }
-        $pairs = array();
-        foreach ($posted as $key => $raw_value) {
-            if (!is_scalar($raw_value)) {
-                continue;
-            }
-            $value = substr((string) $raw_value, 0, self::MAX_VALUE_LENGTH);
-            if ('' !== $value) {
-                $pairs[] = $key . '=' . $value;
-            }
-        }
-        return $pairs;
+        return substr($line, 0, self::MAX_LINE_LENGTH);
     }
     /**
      * A reported field as a string.
      *
-     * Not sanitized here: RequestData already ran every key and value through
-     * sanitize_text_field, which also strips the newlines that would otherwise
-     * break one report into several log lines.
+     * RequestData already ran every key and value through sanitize_text_field.
      *
      * @param array<string, mixed> $data The data to read from.
      * @param string               $key  The field to read.
