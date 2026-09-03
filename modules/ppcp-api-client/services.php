@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\ResolvingBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ClientCredentials;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
@@ -105,6 +106,23 @@ return array(
 	},
 	'api.host-resolver'                              => static function ( ContainerInterface $container ): ApiHostResolver {
 		return new ApiHostResolver( $container->get( 'settings.connection-state' ) );
+	},
+	/**
+	 * Scoped the same way as api.host-resolver; see ResolvingBearer's class
+	 * docblock for the rationale. The shared api.bearer service below is
+	 * intentionally left untouched.
+	 */
+	'api.bearer-resolver'                            => static function ( ContainerInterface $container ): ResolvingBearer {
+		return new ResolvingBearer(
+			$container->get( 'settings.connection-state' ),
+			$container->get( 'api.paypal-bearer-cache' ),
+			$container->get( 'api.host-resolver' ),
+			$container->get( 'api.key' ),
+			$container->get( 'api.secret' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'api.token-rate-limiter' )
+		);
 	},
 	'api.paypal-host'                                => function ( ContainerInterface $container ): string {
 		return PAYPAL_API_URL;
@@ -219,7 +237,7 @@ return array(
 	'api.endpoint.webhook'                           => static function ( ContainerInterface $container ): WebhookEndpoint {
 		return new WebhookEndpoint(
 			$container->get( 'api.host-resolver' ),
-			$container->get( 'api.bearer' ),
+			$container->get( 'api.bearer-resolver' ),
 			$container->get( 'api.factory.webhook' ),
 			$container->get( 'api.factory.webhook-event' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
