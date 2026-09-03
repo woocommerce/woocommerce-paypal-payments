@@ -170,21 +170,17 @@ describe( 'payWithSession()', () => {
 		expect( logError ).toHaveBeenCalledWith(
 			args.config,
 			'payer-action-unsupported',
-			{
-				funding_source: args.fundingSource,
-				order_id: 'ORDER1',
-				status: 'PAYER_ACTION_REQUIRED',
-			}
+			`${ args.fundingSource } order=ORDER1 status=PAYER_ACTION_REQUIRED`
 		);
 		expect( approveOrder ).not.toHaveBeenCalled();
 	} );
 
 	test.each( [
-		[ 'an unrecognized status', { status: 'DECLINED' } ],
-		[ 'a null result', null ],
+		[ 'an unrecognized status', { status: 'DECLINED' }, 'keys=status' ],
+		[ 'a null result', null, 'keys=' ],
 	] )(
 		'reports confirm-order-not-approved and rejects without approving on %s',
-		async ( _label, confirmResult ) => {
+		async ( _label, confirmResult, expectedKeys ) => {
 			const session = makeSession( confirmResult );
 			const args = payArgs( { session } );
 
@@ -195,16 +191,36 @@ describe( 'payWithSession()', () => {
 			expect( logError ).toHaveBeenCalledWith(
 				args.config,
 				'confirm-order-not-approved',
-				{
-					funding_source: args.fundingSource,
-					order_id: 'ORDER1',
-					status: confirmResult?.status,
-					result: confirmResult,
-				}
+				`${ args.fundingSource } order=ORDER1 status=${ confirmResult?.status } ${ expectedKeys }`
 			);
 			expect( approveOrder ).not.toHaveBeenCalled();
 		}
 	);
+
+	test( 'reports the named error fields from a confirm-order-not-approved result', async () => {
+		const confirmResult = {
+			status: 'DECLINED',
+			id: 'PAY-1',
+			name: 'UNPROCESSABLE_ENTITY',
+			message: 'Declined.',
+			debug_id: 'abc123',
+		};
+		const session = makeSession( confirmResult );
+		const args = payArgs( { session } );
+
+		await expect( payWithSession( args ) ).rejects.toThrow(
+			'Wallet payment was not approved.'
+		);
+
+		expect( logError ).toHaveBeenCalledWith(
+			args.config,
+			'confirm-order-not-approved',
+			`${ args.fundingSource } order=ORDER1 status=DECLINED ` +
+				'keys=status,id,name,message,debug_id ' +
+				'id=PAY-1 name=UNPROCESSABLE_ENTITY message=Declined. debug_id=abc123'
+		);
+		expect( approveOrder ).not.toHaveBeenCalled();
+	} );
 
 	test( 'propagates a confirmOrder rejection and never approves', async () => {
 		const session = makeSession();

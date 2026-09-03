@@ -32,6 +32,27 @@ function confirmedStatus( result ) {
 }
 
 /**
+ * The reportable facts about a result that was not an approval.
+ *
+ * Named fields only, since the payload can carry the payer's contact details.
+ * The key list keeps an unanticipated shape diagnosable.
+ *
+ * @param {Object} result - What session.confirmOrder() resolved to.
+ * @return {string}
+ */
+function refusalDetail( result ) {
+	const payment = result?.approveApplePayPayment ?? result;
+	const named = [ 'id', 'name', 'message', 'debug_id' ]
+		.filter( ( field ) => payment?.[ field ] )
+		.map( ( field ) => `${ field }=${ payment[ field ] }` );
+
+	return [
+		`keys=${ Object.keys( payment ?? {} ).join( ',' ) }`,
+		...named,
+	].join( ' ' );
+}
+
+/**
  * Creates the PayPal order, confirms it with the wallet payload, approves it.
  *
  * @param {Object}   args                 - The payment inputs.
@@ -83,11 +104,11 @@ export async function payWithSession( {
 			// it blindly raised a TypeError that reached the sheet as Apple's
 			// own "Payment not completed".
 			if ( 'function' !== typeof session.initiatePayerAction ) {
-				logError( config, 'payer-action-unsupported', {
-					funding_source: fundingSource,
-					order_id: orderId,
-					status,
-				} );
+				logError(
+					config,
+					'payer-action-unsupported',
+					`${ fundingSource } order=${ orderId } status=${ status }`
+				);
 
 				throw new Error(
 					'This wallet cannot complete the required payer action.'
@@ -101,12 +122,12 @@ export async function payWithSession( {
 		default:
 			// confirmOrder goes straight from the browser to PayPal, so this
 			// result is the only account of the refusal.
-			logError( config, 'confirm-order-not-approved', {
-				funding_source: fundingSource,
-				order_id: orderId,
-				status,
-				result,
-			} );
+			logError(
+				config,
+				'confirm-order-not-approved',
+				`${ fundingSource } order=${ orderId } status=${ status } ` +
+					refusalDetail( result )
+			);
 
 			throw new Error( 'Wallet payment was not approved.' );
 	}
