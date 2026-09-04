@@ -1668,7 +1668,8 @@ class SdkV6ManagerTest extends TestCase
      * GIVEN a page context and a BCDC (Basic Credit and Debit Cards) setting
      * WHEN checking whether the v6 Basic Card button is enabled for that location
      * THEN the result depends on both the page context and the BCDC setting
-     * AND checkout-block is never eligible, since BCDC has no block checkout support
+     * AND checkout-block is eligible too, since BCDC now offers a block-checkout
+     *     payment method alongside its classic payment-method row
      *
      * @dataProvider card_button_enablement_provider
      */
@@ -1689,7 +1690,8 @@ class SdkV6ManagerTest extends TestCase
             'classic checkout with BCDC disabled does not render the card button' => ['checkout', false, false],
             'pay-now with BCDC enabled renders the card button' => ['pay-now', true, true],
             'pay-now with BCDC disabled does not render the card button' => ['pay-now', false, false],
-            'checkout-block is never eligible, even with BCDC enabled' => ['checkout-block', true, false],
+            'checkout-block with BCDC enabled is eligible for the block payment method' => ['checkout-block', true, true],
+            'checkout-block with BCDC disabled is not eligible' => ['checkout-block', false, false],
             'product page is never eligible for the card button' => ['product', true, false],
             'cart page is never eligible for the card button' => ['cart', true, false],
         ];
@@ -1699,9 +1701,11 @@ class SdkV6ManagerTest extends TestCase
      * GIVEN BCDC configured for checkout/pay-now, with every smart-button
      *       location and ACDC turned off
      * WHEN checking whether the v6 SDK should load on the current page
-     * THEN the SDK loads on checkout and pay-now purely because BCDC is enabled there
-     * AND it does not load on product, cart or checkout-block, since BCDC has no
-     *     block checkout support and settings alone never enable it elsewhere
+     * THEN the SDK loads on checkout, pay-now and checkout-block purely because
+     *      BCDC is enabled there, now that the button offers a block-checkout
+     *      payment method alongside its classic row
+     * AND it does not load on product or cart, since settings alone never
+     *     enable it there
      *
      * @dataProvider should_load_for_card_button_provider
      */
@@ -1725,24 +1729,26 @@ class SdkV6ManagerTest extends TestCase
             'checkout with BCDC disabled does not load for the card button' => ['checkout', false, false],
             'product page never loads for the card button' => ['product', true, false],
             'cart page never loads for the card button' => ['cart', true, false],
-            'checkout-block never loads for the card button (no block support)' => ['checkout-block', true, false],
+            'checkout-block with BCDC enabled loads the SDK for the block payment method' => ['checkout-block', true, true],
         ];
     }
 
     /**
-     * GIVEN a checkout page where BCDC is enabled for the settings-only gate
+     * GIVEN a classic checkout page where BCDC is enabled for the settings-only gate
      * WHEN the SDK bootstrap data is generated
-     * THEN card_button.enabled is true only when the CardButtonGateway is also
-     *      among WooCommerce's available payment gateways
+     * THEN card_button.row is true only when the CardButtonGateway is also among
+     *      WooCommerce's available payment gateways
      * AND it is false whenever the gateway is unavailable — the same signal
      *     WooCommerce gives for ACDC-active-outside-Mexico, a free-trial cart,
      *     or a zero-total cart, since each of those removes the gateway itself
      * AND it is false for a cart containing a subscription, since BCDC is
      *     withheld there regardless of gateway availability
+     * AND card_button.block_method is always false here, since the classic page
+     *     has no block-checkout payment method to render
      *
      * @dataProvider card_button_row_provider
      */
-    public function testScriptDataCardButtonEnabled(bool $cart_contains_subscription, bool $gateway_available, bool $expected): void
+    public function testScriptDataCardButtonRowReflectsAvailabilityOnClassicCheckout(bool $cart_contains_subscription, bool $gateway_available, bool $expected): void
     {
         $this->context->shouldReceive('context')->andReturn('checkout');
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
@@ -1768,7 +1774,8 @@ class SdkV6ManagerTest extends TestCase
         $testee = $this->createTestee();
         $data   = $testee->script_data();
 
-        $this->assertSame($expected, $data['card_button']['enabled']);
+        $this->assertSame($expected, $data['card_button']['row']);
+        $this->assertFalse($data['card_button']['block_method']);
     }
 
     public function card_button_row_provider(): array
@@ -1777,6 +1784,163 @@ class SdkV6ManagerTest extends TestCase
             'gateway available and no subscription renders the row' => [false, true, true],
             'gateway unavailable never renders the row (ACDC-active, free trial, or zero-total cart)' => [false, false, false],
             'subscription cart withholds the row even though the gateway is available' => [true, true, false],
+        ];
+    }
+
+    /**
+     * GIVEN a WooCommerce Blocks checkout page where BCDC is enabled for the
+     *       settings-only gate
+     * WHEN the SDK bootstrap data is generated
+     * THEN card_button.block_method is true only when the CardButtonGateway is
+     *      also among WooCommerce's available payment gateways
+     * AND it is false for a cart containing a subscription, since the shared
+     *     availability policy withholds BCDC there regardless of the surface
+     * AND card_button.row is always false here, since Blocks has no gateway
+     *     row for the button to occupy
+     *
+     * @dataProvider card_button_row_provider
+     */
+    public function testScriptDataCardButtonBlockMethodReflectsAvailabilityOnBlockCheckout(bool $cart_contains_subscription, bool $gateway_available, bool $expected): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout-block');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn($cart_contains_subscription);
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
+
+        when('WC')->justReturn($this->create_wc_stub($gateway_available ? [CardButtonGateway::ID => true] : []));
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected, $data['card_button']['block_method']);
+        $this->assertFalse($data['card_button']['row']);
+    }
+
+    /**
+     * GIVEN the CardButtonGateway is available, exposing its own title and
+     *       supports list
+     * WHEN the SDK bootstrap data is generated
+     * THEN card_button.title carries that gateway's own user-facing title
+     * AND card_button.supported_features carries that gateway's own supports
+     *     list, never a borrowed one
+     * AND both degrade to '' and ['products'] respectively when the gateway is
+     *     unavailable, offering the button on no more carts than a registered
+     *     gateway would
+     * AND card_button.description carries that gateway's own description,
+     *     unchanged (not entity-decoded, unlike the title), degrading to ''
+     *     when the gateway is unavailable
+     *
+     * @dataProvider card_button_title_and_features_provider
+     */
+    public function testScriptDataCardButtonTitleAndSupportedFeaturesReflectOwnGateway(
+        bool $gateway_available,
+        string $expected_title,
+        array $expected_supported_features,
+        string $expected_description
+    ): void {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+
+        $gateways = [];
+        if ($gateway_available) {
+            $gateway = Mockery::mock('WC_Payment_Gateway');
+            $gateway->shouldReceive('get_title')->andReturn('Debit or Credit Card');
+            $gateway->shouldReceive('get_description')->andReturn('Pay with your <strong>debit</strong> or credit card.');
+            $gateway->supports = ['products', 'refunds'];
+            $gateways[CardButtonGateway::ID] = $gateway;
+        }
+
+        when('WC')->justReturn($this->create_wc_stub($gateways));
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected_title, $data['card_button']['title']);
+        $this->assertSame($expected_supported_features, $data['card_button']['supported_features']);
+        $this->assertSame($expected_description, $data['card_button']['description']);
+    }
+
+    public function card_button_title_and_features_provider(): array
+    {
+        return [
+            'gateway available carries its own title and supports list' => [
+                true, 'Debit or Credit Card', ['products', 'refunds'], 'Pay with your <strong>debit</strong> or credit card.',
+            ],
+            'gateway unavailable degrades to an empty title and products-only supports' => [
+                false, '', ['products'], '',
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN block checkout with BCDC enabled and the CardButtonGateway available
+     * AND the gateway's title is HTML-entity-encoded, the way
+     *     WC_Payment_Gateway::get_title() returns it on a real store (e.g.
+     *     "Debit &amp; Credit Cards")
+     * WHEN the SDK bootstrap data is generated
+     * THEN card_button.title is HTML-entity-decoded, since Blocks renders this
+     *      value as plain text in the block payment method's label, aria-label
+     *      and editor description — an undecoded title would display a literal
+     *      "&amp;" and be read aloud as "ampersand" by a screen reader
+     *
+     * @dataProvider card_button_title_entity_decoding_provider
+     */
+    public function testScriptDataCardButtonTitleIsEntityDecodedOnBlockCheckout(string $encoded_title, string $expected_title): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout-block');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
+
+        $gateway = Mockery::mock('WC_Payment_Gateway');
+        $gateway->shouldReceive('get_title')->andReturn($encoded_title);
+        $gateway->shouldReceive('get_description')->andReturn('');
+        $gateway->supports = ['products'];
+
+        when('WC')->justReturn($this->create_wc_stub([CardButtonGateway::ID => $gateway]));
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected_title, $data['card_button']['title']);
+    }
+
+    public function card_button_title_entity_decoding_provider(): array
+    {
+        return [
+            'ampersand entity decodes to a literal ampersand' => [
+                'Debit &amp; Credit Cards', 'Debit & Credit Cards',
+            ],
+            'apostrophe entity decodes under ENT_QUOTES' => [
+                "Merchant&#039;s Card", "Merchant's Card",
+            ],
         ];
     }
 

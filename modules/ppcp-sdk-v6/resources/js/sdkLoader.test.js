@@ -71,8 +71,8 @@ describe( 'loadSdkV6', () => {
 			],
 		],
 		[
-			'the card button enabled',
-			{ card_button: { enabled: true } },
+			'the card button rendering its classic row',
+			{ card_button: { row: true } },
 			[ 'paypal-payments', 'venmo-payments', 'paypal-guest-payments' ],
 		],
 		[
@@ -130,9 +130,9 @@ describe( 'loadSdkV6', () => {
 		);
 	} );
 
-	test( 'does not request paypal-guest-payments when the card button is explicitly disabled', async () => {
+	test( 'does not request paypal-guest-payments when the card button has no classic row', async () => {
 		await loadSdkV6(
-			baseConfig( { card_button: { enabled: false } } ),
+			baseConfig( { card_button: { row: false } } ),
 			'checkout'
 		);
 

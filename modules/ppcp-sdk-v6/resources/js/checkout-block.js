@@ -130,6 +130,31 @@ function gatewayFeatures( features ) {
 	return features || [ 'products' ];
 }
 
+/**
+ * Relabels "Place order" while a redirect method is selected.
+ *
+ * The registration's own placeOrderButtonLabel is not enough: the Checkout
+ * Actions block reads the label through this filter. Same pair as v5.
+ *
+ * @param {string} gatewayId - The method whose selection changes the label.
+ * @param {string} label     - The label to show while it is selected.
+ */
+function registerPlaceOrderLabel( gatewayId, label ) {
+	if ( ! label ) {
+		return;
+	}
+
+	window.wc?.blocksCheckout?.registerCheckoutFilters?.( gatewayId, {
+		placeOrderButtonLabel: ( defaultLabel ) => {
+			const payment = window.wp?.data?.select( 'wc/store/payment' );
+
+			return payment?.getActivePaymentMethod?.() === gatewayId
+				? label
+				: defaultLabel;
+		},
+	} );
+}
+
 if ( config && config.page_context && config.continuation ) {
 	registerPaymentMethod( {
 		name: PAYPAL_GATEWAY_ID,
@@ -312,6 +337,39 @@ if ( config && config.page_context && config.continuation ) {
 			features: settings.supported_features,
 		} );
 	}
+}
+
+// BCDC, redirecting rather than using the SDK: its card form only renders
+// inline, which needs an express placement that WooCommerce then disables.
+// CardButtonGateway returns PayPal's hosted checkout URL when the session holds
+// no approved order. Skipped in continuation mode, like the card fields.
+if ( config?.card_button?.block_method && ! config.continuation ) {
+	const cardButtonId = config.card_button.payment_method;
+	// Shared with the non-express PayPal row, so a merchant retitling the button
+	// moves both.
+	const placeOrder = config.place_order || {};
+
+	registerPaymentMethod( {
+		name: cardButtonId,
+		label: createElement( 'div', null, config.card_button.title ),
+		ariaLabel: config.card_button.title,
+		content: createElement( PayPalPlaceOrderContent, {
+			description: config.card_button.description,
+			placeOrderButtonDescription: placeOrder.description,
+		} ),
+		edit: createElement( PayPalPlaceOrderContent, {
+			description: config.card_button.description,
+		} ),
+		placeOrderButtonLabel: placeOrder.text,
+		canMakePayment: () => true,
+		supports: {
+			features: gatewayFeatures( config.card_button.supported_features ),
+			// PayPal's hosted card page cannot vault into WooCommerce.
+			showSaveOption: false,
+		},
+	} );
+
+	registerPlaceOrderLabel( cardButtonId, placeOrder.text );
 }
 
 /**
@@ -505,24 +563,8 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 		},
 	} );
 
-	// placeOrderButtonLabel above is not honoured on its own by the Checkout
-	// Actions block, which reads the label through this filter instead. Same
-	// belt-and-braces pair as v5.
 	if ( placeOrderEnabled ) {
-		const placeOrderButtonLabel = ( defaultLabel ) => {
-			const payment = window.wp?.data?.select( 'wc/store/payment' );
-
-			if ( payment?.getActivePaymentMethod?.() !== PAYPAL_GATEWAY_ID ) {
-				return defaultLabel;
-			}
-
-			return config.place_order.text;
-		};
-
-		window.wc?.blocksCheckout?.registerCheckoutFilters?.(
-			PAYPAL_GATEWAY_ID,
-			{ placeOrderButtonLabel }
-		);
+		registerPlaceOrderLabel( PAYPAL_GATEWAY_ID, config.place_order.text );
 	}
 }
 
