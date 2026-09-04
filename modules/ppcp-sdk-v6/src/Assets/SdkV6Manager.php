@@ -641,9 +641,8 @@ class SdkV6Manager {
 	/**
 	 * Whether BCDC is configured for this kind of page.
 	 *
-	 * is_card_button_available() then decides whether it renders at all, and
-	 * is_card_button_row() / is_card_button_block_method() which surface it
-	 * renders on.
+	 * Whether it renders at all is is_card_button_available(); which surface it
+	 * renders on is is_card_button_row() or is_card_button_block_method().
 	 *
 	 * Same context list as its ACDC counterpart, block checkout included.
 	 *
