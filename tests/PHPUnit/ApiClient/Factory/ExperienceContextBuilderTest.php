@@ -148,11 +148,6 @@ class ExperienceContextBuilderTest extends TestCase
 	}
 
 	/**
-	 * GIVEN a builder
-	 * WHEN with_landing_page() is called
-	 * THEN the original builder instance is left unmodified
-	 */
-	/**
 	 * GIVEN a builder that already applied the merchant's current landing page setting
 	 * WHEN with_landing_page() is called afterwards with an explicit value
 	 * THEN the explicit value overrides the merchant setting
