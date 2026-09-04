@@ -340,17 +340,14 @@ if ( config && config.page_context && config.continuation ) {
 	}
 }
 
-// BCDC. A plain redirect method here, with no SDK involvement: the v6 guest
-// session renders its card form inline, which needs an express placement that
-// WooCommerce then disables, so "Place order" hands off to PayPal instead.
-// CardButtonGateway already does that - with no approved order in the session it
-// creates one and returns PayPal's hosted checkout URL to redirect to.
-//
-// Skipped in continuation mode, like the card fields.
+// BCDC, redirecting rather than using the SDK: its card form only renders
+// inline, which needs an express placement that WooCommerce then disables.
+// CardButtonGateway returns PayPal's hosted checkout URL when the session holds
+// no approved order. Skipped in continuation mode, like the card fields.
 if ( config?.card_button?.block_method && ! config.continuation ) {
 	const cardButtonId = config.card_button.payment_method;
-	// Shared with the non-express PayPal row: both send the buyer to PayPal, so
-	// both say so, and a merchant filtering that wording moves them together.
+	// Shared with the non-express PayPal row, so a merchant retitling the button
+	// moves both.
 	const placeOrder = config.place_order || {};
 
 	registerPaymentMethod( {
