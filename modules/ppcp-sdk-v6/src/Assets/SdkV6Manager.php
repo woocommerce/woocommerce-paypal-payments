@@ -673,10 +673,9 @@ class SdkV6Manager {
 	 * off, ACDC outside Mexico, free-trial carts and zero-total carts.
 	 */
 	private function is_card_button_available(): bool {
-		// Checked before the conditions below, not after them: is_card_button_row()
-		// and is_card_button_block_method() both come through here, and the script data
-		// asks all three, so a memo consulted last would still re-run the gateway
-		// settings lookup and both subscription queries on every call.
+		// Checked first, not after the conditions: both placement questions come
+		// through here, so a memo consulted last would still re-run the settings
+		// lookup and the subscription queries on every call.
 		if ( null !== $this->is_card_button_available ) {
 			return $this->is_card_button_available;
 		}
