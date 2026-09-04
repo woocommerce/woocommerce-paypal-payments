@@ -1,7 +1,7 @@
 /**
- * The Basic Card (BCDC) button element, placed in its own gateway row by
- * cardButton/renderCardButton.js. Kept out of components/buttonRenderer.js so it
- * cannot end up in the shared express wrapper.
+ * The Basic Card (BCDC) button element, mounted into its gateway row by
+ * cardButton/renderCardButton.js. Kept separate from that file so the express
+ * placement, dropped from block checkout but not gone for good, can reuse it.
  *
  * @package
  */
