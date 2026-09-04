@@ -3,6 +3,7 @@ import { checkEligibility } from '../eligibility';
 
 const mockRegisterExpressPaymentMethod = jest.fn();
 const mockRegisterPaymentMethod = jest.fn();
+const mockRegisterCheckoutFilters = jest.fn();
 // virtual: webpack resolves this to the wc.wcBlocksRegistry global, so there is
 // no package under node_modules for Jest to find.
 jest.mock(
@@ -83,6 +84,10 @@ function loadCheckoutBlock( config ) {
 			getSetting: ( key ) =>
 				key === 'paymentMethodData' ? { 'ppcp-sdk-v6': config } : undefined,
 		},
+		blocksCheckout: {
+			registerCheckoutFilters: ( ...args ) =>
+				mockRegisterCheckoutFilters( ...args ),
+		},
 	};
 	jest.isolateModules( () => {
 		require( '../checkout-block.js' );
@@ -125,12 +130,27 @@ function regularCallFor( name ) {
 	return regularCallsFor( name )[ 0 ];
 }
 
+/**
+ * The checkout filters object registered for one gateway id.
+ *
+ * @param {string} gatewayId - The gateway id passed to registerCheckoutFilters.
+ * @return {Object|undefined} The filters object, or undefined when no such
+ *                             call was made.
+ */
+function checkoutFiltersFor( gatewayId ) {
+	const call = mockRegisterCheckoutFilters.mock.calls.find(
+		( [ id ] ) => id === gatewayId
+	);
+	return call ? call[ 1 ] : undefined;
+}
+
 beforeEach( () => {
 	jest.clearAllMocks();
 } );
 
 afterEach( () => {
 	delete window.wc;
+	delete window.wp;
 } );
 
 describe( 'checkout-block', () => {
@@ -539,6 +559,90 @@ describe( 'checkout-block', () => {
 			);
 
 			expect( canMakePayment() ).toBe( true );
+		} );
+
+		test( 'uses place_order.text as the placeOrderButtonLabel, warning the buyer they are leaving the site', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig(),
+					place_order: { text: 'Proceed to PayPal' },
+				} )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+					.placeOrderButtonLabel
+			).toBe( 'Proceed to PayPal' );
+		} );
+
+		test( 'registers a placeOrderButtonLabel checkout filter for the card gateway id when place_order.text is set', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig(),
+					place_order: { text: 'Proceed to PayPal' },
+				} )
+			);
+
+			expect(
+				checkoutFiltersFor( 'ppcp-card-button-gateway' )
+			).toBeDefined();
+		} );
+
+		describe( 'the registered placeOrderButtonLabel filter', () => {
+			beforeEach( () => {
+				loadCheckoutBlock(
+					baseConfig( {
+						card_button: cardButtonConfig(),
+						place_order: { text: 'Proceed to PayPal' },
+					} )
+				);
+			} );
+
+			test( 'returns the configured label while the card gateway is the active payment method', () => {
+				window.wp = {
+					data: {
+						select: () => ( {
+							getActivePaymentMethod: () =>
+								'ppcp-card-button-gateway',
+						} ),
+					},
+				};
+				const { placeOrderButtonLabel } = checkoutFiltersFor(
+					'ppcp-card-button-gateway'
+				);
+
+				expect( placeOrderButtonLabel( 'Place order' ) ).toBe(
+					'Proceed to PayPal'
+				);
+			} );
+
+			test( 'returns the passed-in default label while a different method is active', () => {
+				window.wp = {
+					data: {
+						select: () => ( {
+							getActivePaymentMethod: () => 'ppcp-gateway',
+						} ),
+					},
+				};
+				const { placeOrderButtonLabel } = checkoutFiltersFor(
+					'ppcp-card-button-gateway'
+				);
+
+				expect( placeOrderButtonLabel( 'Place order' ) ).toBe(
+					'Place order'
+				);
+			} );
+		} );
+
+		test( 'registers with no checkout filter and no placeOrderButtonLabel when config.place_order is absent', () => {
+			loadCheckoutBlock(
+				baseConfig( { card_button: cardButtonConfig() } )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+			).toBeDefined();
+			expect( mockRegisterCheckoutFilters ).not.toHaveBeenCalled();
 		} );
 	} );
 } );

@@ -1840,13 +1840,17 @@ class SdkV6ManagerTest extends TestCase
      * AND both degrade to '' and ['products'] respectively when the gateway is
      *     unavailable, offering the button on no more carts than a registered
      *     gateway would
+     * AND card_button.description carries that gateway's own description,
+     *     unchanged (not entity-decoded, unlike the title), degrading to ''
+     *     when the gateway is unavailable
      *
      * @dataProvider card_button_title_and_features_provider
      */
     public function testScriptDataCardButtonTitleAndSupportedFeaturesReflectOwnGateway(
         bool $gateway_available,
         string $expected_title,
-        array $expected_supported_features
+        array $expected_supported_features,
+        string $expected_description
     ): void {
         $this->stubScriptDataBaseline('checkout', 'checkout');
         $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
@@ -1855,6 +1859,7 @@ class SdkV6ManagerTest extends TestCase
         if ($gateway_available) {
             $gateway = Mockery::mock('WC_Payment_Gateway');
             $gateway->shouldReceive('get_title')->andReturn('Debit or Credit Card');
+            $gateway->shouldReceive('get_description')->andReturn('Pay with your <strong>debit</strong> or credit card.');
             $gateway->supports = ['products', 'refunds'];
             $gateways[CardButtonGateway::ID] = $gateway;
         }
@@ -1866,16 +1871,17 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame($expected_title, $data['card_button']['title']);
         $this->assertSame($expected_supported_features, $data['card_button']['supported_features']);
+        $this->assertSame($expected_description, $data['card_button']['description']);
     }
 
     public function card_button_title_and_features_provider(): array
     {
         return [
             'gateway available carries its own title and supports list' => [
-                true, 'Debit or Credit Card', ['products', 'refunds'],
+                true, 'Debit or Credit Card', ['products', 'refunds'], 'Pay with your <strong>debit</strong> or credit card.',
             ],
             'gateway unavailable degrades to an empty title and products-only supports' => [
-                false, '', ['products'],
+                false, '', ['products'], '',
             ],
         ];
     }
@@ -1909,6 +1915,7 @@ class SdkV6ManagerTest extends TestCase
 
         $gateway = Mockery::mock('WC_Payment_Gateway');
         $gateway->shouldReceive('get_title')->andReturn($encoded_title);
+        $gateway->shouldReceive('get_description')->andReturn('');
         $gateway->supports = ['products'];
 
         when('WC')->justReturn($this->create_wc_stub([CardButtonGateway::ID => $gateway]));

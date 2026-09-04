@@ -524,6 +524,19 @@ class SdkV6Manager {
 	}
 
 	/**
+	 * The gateway's own description, empty when the gateway is unavailable.
+	 *
+	 * Left encoded, unlike gateway_title(): the block renders this one through
+	 * PayPalPlaceOrderContent, which sets it as HTML so a merchant can format the
+	 * description, exactly as the non-express PayPal row does with its own.
+	 */
+	private function gateway_description( string $gateway_id ): string {
+		$gateway = $this->gateway( $gateway_id );
+
+		return $gateway ? (string) $gateway->get_description() : '';
+	}
+
+	/**
 	 * The gateway's own supports list, or `array( 'products' )` when the gateway
 	 * is unavailable. The narrowest list hides the method rather than offering
 	 * it on a cart it cannot pay for.
@@ -1278,9 +1291,10 @@ class SdkV6Manager {
 				'payment_method'     => CardButtonGateway::ID,
 				'funding_source'     => 'card',
 				'wrapper'            => '#' . self::CARD_BUTTON_WRAPPER_ID,
-				// Labels the block method; the classic row takes its title from
-				// the gateway itself.
+				// Label and body for the block method; the classic row takes both
+				// from the gateway itself.
 				'title'              => $this->gateway_title( CardButtonGateway::ID ),
+				'description'        => $this->gateway_description( CardButtonGateway::ID ),
 				// This method's own gateway, never PayPal's, for the reason
 				// placement_script_data() gives.
 				'supported_features' => $this->gateway_supports( CardButtonGateway::ID ),
