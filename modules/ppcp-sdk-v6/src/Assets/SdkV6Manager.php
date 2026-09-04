@@ -506,12 +506,11 @@ class SdkV6Manager {
 	 * gateway rather than anything derived from the funding source.
 	 *
 	 * Entity-decoded, because get_title() returns the title encoded ("Debit &amp;
-	 * Credit Cards") and every consumer renders it as text through React, which
-	 * escapes again and would show the entity verbatim - in the method label, in
-	 * the aria-label a screen reader announces, and in the editor description. v5
-	 * solves the same problem with dangerouslySetInnerHTML, which is not an option
-	 * here: the title is admin-settable, so injecting it as HTML would hand anyone
-	 * who can edit gateway settings a stored-XSS vector.
+	 * Credit Cards") and the block renders it as text through React, which escapes
+	 * again and would show the entity verbatim - in the method label and in the
+	 * aria-label a screen reader announces. Decoding keeps that escaping in place;
+	 * v5 instead sets the title as HTML, which is not worth copying for a value a
+	 * shop manager can edit.
 	 */
 	private function gateway_title( string $gateway_id ): string {
 		$gateway = $this->gateway( $gateway_id );
@@ -526,9 +525,9 @@ class SdkV6Manager {
 	/**
 	 * The gateway's own description, empty when the gateway is unavailable.
 	 *
-	 * Left encoded, unlike gateway_title(): the block renders this one through
-	 * PayPalPlaceOrderContent, which sets it as HTML so a merchant can format the
-	 * description, exactly as the non-express PayPal row does with its own.
+	 * Left encoded, unlike gateway_title(): PayPalPlaceOrderContent sets the
+	 * description as HTML so a merchant can format it, which is how gateway
+	 * descriptions already reach both the classic checkout and the PayPal row.
 	 */
 	private function gateway_description( string $gateway_id ): string {
 		$gateway = $this->gateway( $gateway_id );
