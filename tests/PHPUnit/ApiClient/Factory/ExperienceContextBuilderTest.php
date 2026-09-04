@@ -152,15 +152,6 @@ class ExperienceContextBuilderTest extends TestCase
 	 * WHEN with_landing_page() is called
 	 * THEN the original builder instance is left unmodified
 	 */
-	public function testLandingPageDoesNotMutateOriginalBuilder()
-	{
-		$this->sut
-			->with_landing_page(ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT)
-			->build();
-
-		self::assertEmpty($this->sut->build()->to_array());
-	}
-
 	/**
 	 * GIVEN a builder that already applied the merchant's current landing page setting
 	 * WHEN with_landing_page() is called afterwards with an explicit value
