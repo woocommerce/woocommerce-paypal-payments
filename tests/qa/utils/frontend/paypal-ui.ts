@@ -252,6 +252,8 @@ export class PayPalUi {
 	isClassicCheckoutPage = () =>
 		this.page.url().includes( '/classic-checkout/' ) &&
 		! this.isPayForOrderPage();
+	isAddPaymentMethodPage = () =>
+		this.page.url().includes( '/add-payment-method/' );
 
 	// Actions
 

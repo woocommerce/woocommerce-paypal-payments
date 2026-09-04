@@ -205,11 +205,15 @@ export class PayPalUiClassic extends PayPalUi {
 
 	/**
 	 * Clicks PayPal gateway and PayPal button to open popup
-	 * Actual on Pay for Order and classic checkout pages
+	 * Actual on Pay for Order, classic checkout, and Add payment method pages
 	 */
 	async openPayPalPopup(): Promise< PayPalPopup > {
 		// Select gateway if not on classic-cart page
-		if ( this.isClassicCheckoutPage() || this.isPayForOrderPage() ) {
+		if (
+			this.isClassicCheckoutPage() ||
+			this.isPayForOrderPage() ||
+			this.isAddPaymentMethodPage()
+		) {
 			await expect(
 				this.payPalGateway(),
 				'Assert PayPal gateway is visible'
