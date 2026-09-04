@@ -133,9 +133,8 @@ function gatewayFeatures( features ) {
 /**
  * Relabels "Place order" while a redirect method is selected.
  *
- * The registration's own placeOrderButtonLabel is not honoured on its own by the
- * Checkout Actions block, which reads the label through this filter instead.
- * Same belt-and-braces pair as v5.
+ * The registration's own placeOrderButtonLabel is not enough: the Checkout
+ * Actions block reads the label through this filter. Same pair as v5.
  *
  * @param {string} gatewayId - The method whose selection changes the label.
  * @param {string} label     - The label to show while it is selected.

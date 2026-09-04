@@ -501,12 +501,9 @@ class SdkV6Manager {
 	/**
 	 * The gateway's own user-facing title, empty when the gateway is unavailable.
 	 *
-	 * Entity-decoded, because get_title() returns the title encoded ("Debit &amp;
-	 * Credit Cards") and the block renders it as text through React, which escapes
-	 * again and would show the entity verbatim - in the method label and in the
-	 * aria-label a screen reader announces. Decoding keeps that escaping in place;
-	 * v5 instead sets the title as HTML, which is not worth copying for a value a
-	 * shop manager can edit.
+	 * Entity-decoded because get_title() returns it encoded ("Debit &amp; Credit
+	 * Cards") and the block renders it as text, which would escape it again. v5
+	 * instead sets it as HTML, not worth copying for a shop-manager-editable value.
 	 */
 	private function gateway_title( string $gateway_id ): string {
 		$gateway = $this->gateway( $gateway_id );
