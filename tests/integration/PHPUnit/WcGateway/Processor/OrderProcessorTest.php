@@ -243,13 +243,13 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 	}
 
 	/**
-	 * GIVEN a buyer paying with the card funding source
-	 * WHEN a PayPal order is created for their WooCommerce order
-	 * THEN the experience context forces the guest checkout landing page, regardless of the merchant's setting
+	 * GIVEN a merchant configured to use the login landing page
+	 * WHEN a PayPal order is created with an explicit landing page argument
+	 * THEN the experience context uses the explicit landing page, overriding the merchant's setting
 	 */
-	public function testCreateOrderForCardFundingSourceForcesGuestCheckoutLandingPage(): void
+	public function testCreateOrderUsesExplicitLandingPageOverMerchantSetting(): void
 	{
-		$capturedPaymentSource = $this->captureCreatedPaymentSource('card');
+		$capturedPaymentSource = $this->captureCreatedPaymentSource('paypal', ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT);
 
 		$this->assertSame(
 			ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT,
@@ -258,11 +258,13 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 	}
 
 	/**
-	 * GIVEN a buyer paying with the default PayPal funding source
-	 * WHEN a PayPal order is created for their WooCommerce order
-	 * THEN the experience context uses the merchant's configured landing page instead of being forced
+	 * GIVEN a merchant configured to use the login landing page
+	 * WHEN a PayPal order is created without an explicit landing page argument
+	 * THEN the experience context falls back to the merchant's configured landing page
+	 * AND the payment source is created under the 'paypal' key, not 'card', so PayPal
+	 *     routes it as a redirect flow instead of direct card processing
 	 */
-	public function testCreateOrderForDefaultFundingSourceUsesMerchantLandingPageSetting(): void
+	public function testCreateOrderUsesMerchantLandingPageSettingWhenNoneGiven(): void
 	{
 		$capturedPaymentSource = $this->captureCreatedPaymentSource('paypal');
 
@@ -270,13 +272,14 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 			ExperienceContext::LANDING_PAGE_LOGIN,
 			$capturedPaymentSource->properties()->experience_context['landing_page']
 		);
+		$this->assertSame('paypal', $capturedPaymentSource->name());
 	}
 
 	/**
 	 * Creates a PayPal order via OrderProcessor::create_order() for the given funding source
-	 * and returns the PaymentSource that was passed to OrderEndpoint::create().
+	 * and landing page, and returns the PaymentSource that was passed to OrderEndpoint::create().
 	 */
-	private function captureCreatedPaymentSource(string $fundingSource): PaymentSource
+	private function captureCreatedPaymentSource(string $fundingSource, ?string $landingPage = null): PaymentSource
 	{
 		$capturedPaymentSource = null;
 
@@ -303,7 +306,7 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 		);
 
 		$orderProcessor = $container->get('wcgateway.order-processor');
-		$orderProcessor->create_order($wcOrder, $fundingSource);
+		$orderProcessor->create_order($wcOrder, $fundingSource, $landingPage);
 
 		return $capturedPaymentSource;
 	}
