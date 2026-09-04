@@ -490,8 +490,8 @@ class SdkV6Manager {
 	/**
 	 * One available gateway, or null when WooCommerce does not offer it here.
 	 *
-	 * The shared lookup behind gateway_title() and gateway_supports(), so the
-	 * guard that makes both of them null-safe lives in one place.
+	 * The shared lookup behind the gateway_* readers below, so the guard that
+	 * makes them null-safe lives in one place.
 	 */
 	private function gateway( string $gateway_id ): ?WC_Payment_Gateway {
 		$gateway = $this->available_gateways()[ $gateway_id ] ?? null;
