@@ -238,10 +238,6 @@ if ( config && config.page_context && config.continuation ) {
 	 *                                          supports. Deliberately without
 	 *                                          a default, so a wallet cannot
 	 *                                          inherit PayPal's list.
-	 * @param {string}   [args.label]           - The buyer-facing label, for a
-	 *                                          method whose name is the
-	 *                                          merchant's to set rather than a
-	 *                                          brand.
 	 */
 	const registerExpress = ( {
 		name,
@@ -250,9 +246,8 @@ if ( config && config.page_context && config.continuation ) {
 		content,
 		isDeviceCapable,
 		features,
-		label: labelOverride,
 	} ) => {
-		const label = labelOverride || fundingSourceLabel( fundingSource );
+		const label = fundingSourceLabel( fundingSource );
 
 		registerExpressPaymentMethod( {
 			/*
@@ -273,7 +268,7 @@ if ( config && config.page_context && config.continuation ) {
 			label: createElement( 'div', null, label ),
 			ariaLabel: label,
 			content,
-			edit: createElement( V6EditorPreview, { fundingSource, label } ),
+			edit: createElement( V6EditorPreview, { fundingSource } ),
 			canMakePayment: async ( { cartTotals } = {} ) => {
 				if ( isDeviceCapable && ! isDeviceCapable() ) {
 					return false;
