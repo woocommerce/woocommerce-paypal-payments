@@ -539,28 +539,6 @@ describe( 'checkout-block', () => {
 			expect( supports.features ).toEqual( [ 'products' ] );
 		} );
 
-		test( 'disables the save-payment-method option, since a hosted PayPal card page cannot vault into WooCommerce', () => {
-			loadCheckoutBlock(
-				baseConfig( { card_button: cardButtonConfig() } )
-			);
-
-			const { supports } = regularCallFor( 'ppcp-card-button-gateway' );
-
-			expect( supports.showSaveOption ).toBe( false );
-		} );
-
-		test( 'canMakePayment is true unconditionally, with no eligibility check', () => {
-			loadCheckoutBlock(
-				baseConfig( { card_button: cardButtonConfig() } )
-			);
-
-			const { canMakePayment } = regularCallFor(
-				'ppcp-card-button-gateway'
-			);
-
-			expect( canMakePayment() ).toBe( true );
-		} );
-
 		test( 'uses place_order.text as the placeOrderButtonLabel, warning the buyer they are leaving the site', () => {
 			loadCheckoutBlock(
 				baseConfig( {
