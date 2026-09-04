@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
 
@@ -160,5 +161,70 @@ class WooCommerceOrderCreatorTest extends TestCase {
 		$method->invoke( $sut, $wc_order, $cart_data, null, null );
 
 		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN a PayPal order with no payer or shipping information
+	 * AND an empty cart carrying a known cart hash
+	 * WHEN create_from_paypal_order() builds the WC order
+	 * THEN the resulting WC order's cart hash is set to the cart's hash
+	 *      so the PayPal subscription replay guard can compare it later
+	 */
+	public function test_create_from_paypal_order_sets_cart_hash_from_cart_data(): void {
+		$cart_data = new CartData( array(), array(), false, 0, 'expected-cart-hash' );
+
+		$order = Mockery::mock( Order::class );
+		$order->shouldReceive( 'payer' )->andReturn( null );
+		$order->shouldReceive( 'purchase_units' )->andReturn( array() );
+
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'set_payment_method' )->once()->with( PayPalGateway::ID );
+		$wc_order->shouldReceive( 'calculate_totals' )->twice();
+		$wc_order->shouldReceive( 'set_cart_hash' )->once()->with( 'expected-cart-hash' );
+		$wc_order->shouldReceive( 'save' )->once();
+
+		expect( 'wc_create_order' )->once()->andReturn( $wc_order );
+
+		$current_user     = new \stdClass();
+		$current_user->ID = 0;
+		expect( 'wp_get_current_user' )->once()->andReturn( $current_user );
+
+		$wc_customer_holder           = new \stdClass();
+		$wc_customer_holder->customer = null;
+		expect( 'WC' )->once()->andReturn( $wc_customer_holder );
+
+		expect( 'apply_filters' )
+			->once()
+			->with(
+				'woocommerce_paypal_payments_order_creator_get_shipping',
+				null,
+				$order,
+				null
+			)
+			->andReturn( null );
+
+		expect( 'do_action' )
+			->once()
+			->with(
+				'woocommerce_paypal_payments_woocommerce_order_created_from_cart',
+				$wc_order,
+				$cart_data
+			);
+
+		$session_handler = Mockery::mock( SessionHandler::class );
+		$session_handler->shouldReceive( 'funding_source' )->once()->andReturn( null );
+
+		$sut = new WooCommerceOrderCreator(
+			Mockery::mock( FundingSourceRenderer::class ),
+			$session_handler,
+			Mockery::mock( SubscriptionHelper::class ),
+			Mockery::mock( CartDataFactory::class ),
+			Mockery::mock( ShippingFactory::class ),
+			Mockery::mock( PayerFactory::class )
+		);
+
+		$result = $sut->create_from_paypal_order( $order, $cart_data );
+
+		$this->assertSame( $wc_order, $result );
 	}
 }
