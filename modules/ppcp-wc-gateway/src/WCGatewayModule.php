@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use WC_Order;
+use WC_Session;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
@@ -999,11 +1000,38 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				if ( $order->get_payment_method() === CreditCardGateway::ID ) {
 					return;
 				}
+				if ( ! $this->shopper_is_paying_with_ppcp() ) {
+					return;
+				}
 				$order->set_payment_method( PayPalGateway::ID );
 			},
 			10,
 			1
 		);
+	}
+
+	/**
+	 * Whether the shopper's session still says they are paying with one of our gateways.
+	 *
+	 * The order meta the caller checks outlives the attempt that wrote it, so on its own
+	 * it cannot tell a payment in flight from one the shopper abandoned before choosing
+	 * another gateway. Asking the session narrows the override to the first case: a
+	 * shopper who has since selected another gateway keeps that choice, and so does every
+	 * context with no shopper session at all - the admin order screen, cron, webhooks.
+	 */
+	private function shopper_is_paying_with_ppcp(): bool {
+		if ( ! function_exists( 'WC' ) ) {
+			return false;
+		}
+
+		$session = WC()->session;
+		if ( ! $session instanceof WC_Session ) {
+			return false;
+		}
+
+		$chosen = $session->get( 'chosen_payment_method' );
+
+		return is_string( $chosen ) && 0 === strpos( $chosen, 'ppcp-' );
 	}
 
 	/**
