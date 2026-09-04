@@ -131,9 +131,8 @@ class SdkV6Manager {
 	private array $placements;
 
 	/**
-	 * Memoizes is_card_button_available(), which the script data asks three times
-	 * over (directly, and through each of the two placement questions) on top of
-	 * the call that prints the classic row.
+	 * Memoizes is_card_button_available(), which the script data asks through
+	 * both placement questions on top of the call that prints the classic row.
 	 *
 	 * @var bool|null
 	 */
@@ -502,9 +501,6 @@ class SdkV6Manager {
 	/**
 	 * The gateway's own user-facing title, empty when the gateway is unavailable.
 	 *
-	 * The buyer-facing label, so it has to be the merchant's own wording for that
-	 * gateway rather than anything derived from the funding source.
-	 *
 	 * Entity-decoded, because get_title() returns the title encoded ("Debit &amp;
 	 * Credit Cards") and the block renders it as text through React, which escapes
 	 * again and would show the entity verbatim - in the method label and in the
@@ -666,11 +662,9 @@ class SdkV6Manager {
 	/**
 	 * Whether the BCDC button may render on this page at all, on either surface.
 	 *
-	 * The single home of the policy, so neither surface restates it: BCDC is
-	 * configured for this context, the cart is one a card payment can settle, and
-	 * WooCommerce still offers the gateway. Asking the gateway list rather than
-	 * re-deriving its policy is what covers the checkout button location being
-	 * off, ACDC outside Mexico, free-trial carts and zero-total carts.
+	 * Asking the gateway list rather than re-deriving its policy is what covers
+	 * the checkout button location being off, ACDC outside Mexico, free-trial
+	 * carts and zero-total carts.
 	 */
 	private function is_card_button_available(): bool {
 		// Checked first, not after the conditions: both placement questions come
@@ -1282,15 +1276,11 @@ class SdkV6Manager {
 				'styles'              => $this->card_field_styles->overrides(),
 			),
 			'card_button'         => array(
-				// The two surfaces: `row` renders the SDK button on classic,
-				// `block_method` registers a redirect method on block checkout.
 				'row'                => $this->is_card_button_row(),
 				'block_method'       => $this->is_card_button_block_method(),
 				'payment_method'     => CardButtonGateway::ID,
 				'funding_source'     => 'card',
 				'wrapper'            => '#' . self::CARD_BUTTON_WRAPPER_ID,
-				// Label and body for the block method; the classic row takes both
-				// from the gateway itself.
 				'title'              => $this->gateway_title( CardButtonGateway::ID ),
 				'description'        => $this->gateway_description( CardButtonGateway::ID ),
 				// This method's own gateway, never PayPal's, for the reason

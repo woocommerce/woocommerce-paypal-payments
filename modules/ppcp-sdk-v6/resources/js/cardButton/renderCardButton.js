@@ -26,8 +26,6 @@ import {
  * @return {Promise<void>} Resolves once the pass is done.
  */
 export async function initCardButton( config, ensureSessions ) {
-	// The row, not `enabled`: availability alone is also true on block checkout,
-	// where there is no gateway row and no wrapper to render into.
 	if ( ! config.card_button?.row ) {
 		return;
 	}
