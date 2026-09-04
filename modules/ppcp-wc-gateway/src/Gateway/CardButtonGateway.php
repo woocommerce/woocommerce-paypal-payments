@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -193,7 +194,10 @@ class CardButtonGateway extends \WC_Payment_Gateway
                 do_action('woocommerce_paypal_payments_before_handle_payment_success', $wc_order);
                 return $this->handle_payment_success($wc_order);
             } catch (PayPalOrderMissingException $exc) {
-                $order = $this->order_processor->create_order($wc_order);
+                // Guest checkout so the hosted page opens on card fields, not a
+                // login. Do not pass 'card' here: that is the direct-card payment
+                // source, which ignores landing_page.
+                $order = $this->order_processor->create_order($wc_order, 'paypal', ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT);
                 return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($order->id()));
             }
         } catch (PayPalApiException $error) {
