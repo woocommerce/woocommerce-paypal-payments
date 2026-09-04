@@ -6,7 +6,6 @@ namespace WooCommerce\PayPalCommerce\Webhooks;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
@@ -32,6 +31,8 @@ class WebhookRegistrar {
 
 	private LoggerInterface $logger;
 
+	private OwnWebhookResolver $own_webhook_resolver;
+
 	public function __construct(
 		WebhookFactory $webhook_factory,
 		WebhookEndpoint $endpoint,
@@ -39,7 +40,8 @@ class WebhookRegistrar {
 		WebhookEventStorage $last_webhook_event_storage,
 		WebhookSimulation $webhook_simulation,
 		WebhookOrchestrator $webhook_orchestrator,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		OwnWebhookResolver $own_webhook_resolver
 	) {
 
 		$this->webhook_factory            = $webhook_factory;
@@ -49,6 +51,7 @@ class WebhookRegistrar {
 		$this->webhook_simulation         = $webhook_simulation;
 		$this->webhook_orchestrator       = $webhook_orchestrator;
 		$this->logger                     = $logger;
+		$this->own_webhook_resolver       = $own_webhook_resolver;
 	}
 
 	/**
@@ -122,13 +125,10 @@ class WebhookRegistrar {
 	 * the primary site's webhook. See GitHub issue #4604.
 	 */
 	private function do_unregister(): void {
-		$stored_id    = (string) ( ( (array) get_option( self::KEY, array() ) )['id'] ?? '' );
-		$own_identity = $this->webhook_identity( $this->incoming_webhook_endpoint->url() );
-
 		try {
 			$webhooks = $this->endpoint->list();
 			foreach ( $webhooks as $webhook ) {
-				if ( ! $this->is_own_webhook( $webhook, $own_identity, $stored_id ) ) {
+				if ( ! $this->own_webhook_resolver->is_own( $webhook ) ) {
 					$this->logger->warning(
 						"Skipping deletion of webhook {$webhook->id()} ({$webhook->url()}): it belongs to a different site and is not managed by this install."
 					);
@@ -148,53 +148,5 @@ class WebhookRegistrar {
 		delete_option( self::KEY );
 		$this->last_webhook_event_storage->clear();
 		$this->logger->info( 'Webhooks deleted.' );
-	}
-
-	/**
-	 * Whether the given webhook belongs to this site and may be deleted.
-	 *
-	 * A webhook is considered ours when either:
-	 * - its id matches the one we previously stored (provably ours regardless of the
-	 *   host it currently uses, so a domain migration or NGROK_HOST rotation still
-	 *   cleans up our former webhook instead of leaking it), or
-	 * - its URL identity (host + path) equals this install's incoming endpoint. The
-	 *   path is included so that same-host installs (e.g. example.com/shop and
-	 *   example.com/staging, or subdirectory multisite) do not delete each other's
-	 *   webhooks. The host comparison honours the NGROK_HOST development override.
-	 *
-	 * A webhook whose URL cannot be parsed (empty identity) is left in place.
-	 *
-	 * @param Webhook $webhook      The webhook to check.
-	 * @param string  $own_identity This install's incoming endpoint identity (host + path).
-	 * @param string  $stored_id    The id of the webhook this install previously registered.
-	 * @return bool
-	 */
-	private function is_own_webhook( Webhook $webhook, string $own_identity, string $stored_id ): bool {
-		if ( '' !== $stored_id && $webhook->id() === $stored_id ) {
-			return true;
-		}
-
-		$webhook_identity = $this->webhook_identity( $webhook->url() );
-
-		return '' !== $own_identity && $own_identity === $webhook_identity;
-	}
-
-	/**
-	 * Builds a host+path identity for a webhook URL, used to compare webhooks
-	 * independently of scheme, port, query string or a trailing slash.
-	 *
-	 * @param string $url The webhook URL.
-	 * @return string The lower-cased host and path, or an empty string when the host cannot be parsed.
-	 */
-	private function webhook_identity( string $url ): string {
-		$host = wp_parse_url( $url, PHP_URL_HOST );
-		if ( ! is_string( $host ) || '' === $host ) {
-			return '';
-		}
-
-		$path = wp_parse_url( $url, PHP_URL_PATH );
-		$path = is_string( $path ) ? rtrim( $path, '/' ) : '';
-
-		return strtolower( $host ) . $path;
 	}
 }
