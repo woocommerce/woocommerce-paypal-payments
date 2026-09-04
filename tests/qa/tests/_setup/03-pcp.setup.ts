@@ -14,6 +14,8 @@ import {
 
 const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo, pui } = gateways;
 
+setup.use( { screencastOptions: null } );
+
 // =====================================================================
 // Layer 2 — PCP country: configureStore + installPcp + resetDb + connect
 // =====================================================================

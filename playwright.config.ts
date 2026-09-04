@@ -15,7 +15,7 @@ const dotenvPath = process.env.CI
 	: undefined;
 dotenv.config( { path: dotenvPath } );
 
-const viewportSize: ViewportSize = { width: 1280, height: 850 };
+const viewportSize: ViewportSize = { width: 1280, height: 720 };
 
 export default defineConfig< BaseExtend >( {
 	testDir: 'tests/qa/tests',
@@ -79,28 +79,21 @@ export default defineConfig< BaseExtend >( {
 
 		viewport: viewportSize,
 
+		// screenshots disabled: trace's built-in screencast client races startPageScreencast()
+		// for the CDP screencast session and, if it wins, locks recording to its own smaller
+		// auto-scaled size, cropping our video. See playwright-utils/docs/e2e/video-recording.
 		trace: process.env.CI
 			? 'off'
-			: 'retain-on-failure', //process.env.CI ? 'off' : 'on-first-retry',//'on',//
+			: { mode: 'retain-on-failure', screenshots: false, snapshots: true, sources: true },
 
 		screenshot: {
 			mode: 'only-on-failure',
 			fullPage: true, // Captures entire scrollable page
 		},
 
-		video: process.env.CI
-			? 'off'
-			: {
-					mode: 'retain-on-failure', //'on',//
-					size: viewportSize,
-			  },
-
-		recordVideoOptions: process.env.CI
+		screencastOptions: process.env.CI
 			? undefined
-			: {
-				mode: 'retain-on-failure',
-				size: viewportSize,
-			},
+			: { size: viewportSize },
 
 		cliConfig: {
 			envType: process.env.WPCLI_ENV_TYPE as WpCliEnvType,
