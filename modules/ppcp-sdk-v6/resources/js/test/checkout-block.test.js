@@ -337,6 +337,28 @@ describe( 'checkout-block', () => {
 				).toBe( 'Complete order' );
 			} );
 
+			test( 'registers a placeOrderButtonLabel checkout filter for ppcp-gateway that resolves to place_order.text while it is the active payment method', () => {
+				loadCheckoutBlock(
+					baseConfig( {
+						place_order: { enabled: true, text: 'Complete order' },
+					} )
+				);
+				window.wp = {
+					data: {
+						select: () => ( {
+							getActivePaymentMethod: () => 'ppcp-gateway',
+						} ),
+					},
+				};
+
+				const { placeOrderButtonLabel } =
+					checkoutFiltersFor( 'ppcp-gateway' );
+
+				expect( placeOrderButtonLabel( 'Place order' ) ).toBe(
+					'Complete order'
+				);
+			} );
+
 			test( 'does not show saved cards when the vault component is not eligible', () => {
 				loadCheckoutBlock(
 					baseConfig( {
