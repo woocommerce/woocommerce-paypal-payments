@@ -246,8 +246,8 @@ class OrderProcessor {
 		$experience_context = $this->experience_context_builder
 			->with_default_paypal_config( $shipping_preference, ExperienceContext::USER_ACTION_PAY_NOW );
 
-		// A buyer who chose the card method wants the card fields, not a PayPal
-		// login, so the merchant's landing-page setting does not apply here.
+		// The card buyer wants card fields, not a PayPal login, whatever the
+		// merchant's landing-page setting says.
 		if ( 'card' === $funding_source ) {
 			$experience_context = $experience_context->with_landing_page(
 				ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT
