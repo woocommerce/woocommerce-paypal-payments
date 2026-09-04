@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenDeleted;
+use WooCommerce\PayPalCommerce\Webhooks\OwnWebhookResolver;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 return array('webhook.registrar' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar {
     $factory = $container->get('api.factory.webhook');
@@ -39,7 +40,9 @@ return array('webhook.registrar' => static function (ContainerInterface $contain
     $rest_endpoint = $container->get('webhook.endpoint.controller');
     $last_webhook_storage = $container->get('webhook.last-webhook-storage');
     $logger = $container->get('woocommerce.logger.woocommerce');
-    return new \WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar($factory, $endpoint, $rest_endpoint, $last_webhook_storage, $container->get('webhook.status.simulation'), $container->get('webhook.orchestration'), $logger);
+    return new \WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar($factory, $endpoint, $rest_endpoint, $last_webhook_storage, $container->get('webhook.status.simulation'), $container->get('webhook.orchestration'), $logger, $container->get('webhook.own-resolver'));
+}, 'webhook.own-resolver' => static function (ContainerInterface $container): OwnWebhookResolver {
+    return new OwnWebhookResolver($container->get('webhook.endpoint.controller'));
 }, 'webhook.orchestration' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Webhooks\WebhookOrchestrator {
     return new \WooCommerce\PayPalCommerce\Webhooks\WebhookOrchestrator($container->get('woocommerce.logger.woocommerce'));
 }, 'webhook.endpoint.controller' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Webhooks\IncomingWebhookEndpoint {
