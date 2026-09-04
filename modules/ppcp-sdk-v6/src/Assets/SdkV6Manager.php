@@ -1280,8 +1280,8 @@ class SdkV6Manager {
 				'wrapper'            => '#' . self::CARD_BUTTON_WRAPPER_ID,
 				'title'              => $this->gateway_title( CardButtonGateway::ID ),
 				'description'        => $this->gateway_description( CardButtonGateway::ID ),
-				// This method's own gateway, never PayPal's, for the reason
-				// placement_script_data() gives.
+				// Its own gateway's list, never PayPal's: a borrowed vaulting
+				// list would offer the method on a subscription cart it cannot pay.
 				'supported_features' => $this->gateway_supports( CardButtonGateway::ID ),
 				// No colour: the element is black-only. Width is ours to set
 				// because it ships a fixed 225px, where v5 spanned the column.
