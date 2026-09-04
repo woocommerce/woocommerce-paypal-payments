@@ -80,3 +80,9 @@ add_filter(
   `WcGiftCardsCompat` for the classic cart/checkout, express button shipping callback, and order
   paths. No manual
   integration is needed for that plugin.
+- Account Funds for WooCommerce (`woocommerce-account-funds`) is handled automatically via
+  `WcAccountFundsCompat` across the same three paths. No manual integration is needed.
+- Reporting the amount matters beyond the charged total. `AmountFactory` reconciles any gap between
+  the WC total and the summed breakdown by adjusting the tax line, which was sized for
+  inclusive-tax rounding. An unreported discount pushes that adjustment negative, and PayPal
+  rejects the Level 2 card data with `CANNOT_BE_NEGATIVE` on `tax_total`.
