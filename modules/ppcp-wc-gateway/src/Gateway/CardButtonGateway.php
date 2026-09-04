@@ -271,7 +271,9 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 
 				return $this->handle_payment_success( $wc_order );
 			} catch ( PayPalOrderMissingException $exc ) {
-				$order = $this->order_processor->create_order( $wc_order );
+				// 'card', so the hosted page opens on the card fields rather than
+				// a PayPal login. See OrderProcessor::create_order().
+				$order = $this->order_processor->create_order( $wc_order, 'card' );
 
 				return array(
 					'result'   => 'success',

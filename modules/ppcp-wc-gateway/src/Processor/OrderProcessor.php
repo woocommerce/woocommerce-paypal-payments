@@ -242,7 +242,19 @@ class OrderProcessor {
 	public function create_order( WC_Order $wc_order, string $funding_source = 'paypal' ): Order {
 		$pu                  = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$shipping_preference = $this->shipping_preference_factory->from_state( $pu, 'checkout' );
-		$order               = $this->order_endpoint->create(
+
+		$experience_context = $this->experience_context_builder
+			->with_default_paypal_config( $shipping_preference, ExperienceContext::USER_ACTION_PAY_NOW );
+
+		// A buyer who chose the card method wants the card fields, not a PayPal
+		// login, so the merchant's landing-page setting does not apply here.
+		if ( 'card' === $funding_source ) {
+			$experience_context = $experience_context->with_landing_page(
+				ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT
+			);
+		}
+
+		$order = $this->order_endpoint->create(
 			array( $pu ),
 			$shipping_preference,
 			$this->payer_factory->from_wc_order( $wc_order ),
@@ -251,9 +263,7 @@ class OrderProcessor {
 			new PaymentSource(
 				$funding_source,
 				(object) array(
-					'experience_context' => $this->experience_context_builder
-						->with_default_paypal_config( $shipping_preference, ExperienceContext::USER_ACTION_PAY_NOW )
-						->build()->to_array(),
+					'experience_context' => $experience_context->build()->to_array(),
 				)
 			)
 		);
