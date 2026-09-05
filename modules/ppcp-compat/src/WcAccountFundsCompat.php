@@ -17,15 +17,9 @@ namespace WooCommerce\PayPalCommerce\Compat;
  * credit surfaces as the gap between the WC total and the summed breakdown, which
  * AmountFactory folds into the tax line - producing a negative tax_total that PayPal
  * rejects with CANNOT_BE_NEGATIVE once Level 2 card data is sent.
- *
- * Both readers mirror the exact condition under which the plugin reduces the total,
- * so the reported discount can never exceed the reduction it accounts for.
  */
 class WcAccountFundsCompat {
 
-	/**
-	 * The plugin's cart helper, holding the credit applied to the session cart.
-	 */
 	private const CART_CLASS = '\Kestrel\Account_Funds\Cart';
 
 	/**
@@ -55,9 +49,6 @@ class WcAccountFundsCompat {
 		);
 	}
 
-	/**
-	 * Adds the store credit applied to the cart to whatever other hooks reported.
-	 */
 	public function cart_extra_discount( float $extra, \WC_Cart $cart ): float {
 		return $extra + $this->applied_cart_credit();
 	}
@@ -66,18 +57,10 @@ class WcAccountFundsCompat {
 	 * Same for the Store API, which works in minor units on both sides of the sum.
 	 */
 	public function store_api_cart_extra_discount( int $extra ): int {
-		$credit = $this->applied_cart_credit();
-
-		if ( $credit <= 0.0 ) {
-			return $extra;
-		}
-
-		return $extra + (int) round( $credit * 10 ** wc_get_price_decimals() );
+		return $extra + (int) round( $this->applied_cart_credit() * 10 ** wc_get_price_decimals() );
 	}
 
 	/**
-	 * Adds the store credit applied to the order to whatever other hooks reported.
-	 *
 	 * Read from order meta rather than the cart: the cart session is gone on the
 	 * pay-for-order page, and a stored order keeps the amount it was reduced by.
 	 */
@@ -86,8 +69,6 @@ class WcAccountFundsCompat {
 	}
 
 	/**
-	 * The credit applied to the current cart, or 0.0 when none is.
-	 *
 	 * Gated on partial use, which is what makes the plugin reduce the cart total.
 	 * Fully covered carts are paid through the plugin's own gateway and never reach
 	 * a PayPal amount, but the getter would still report a balance for them.

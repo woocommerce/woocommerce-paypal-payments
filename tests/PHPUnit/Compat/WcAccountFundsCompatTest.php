@@ -88,12 +88,15 @@ class WcAccountFundsCompatTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN a cart that Account Funds is not partially covering
+	 * GIVEN the plugin reports a balance while not partially covering the cart, so the
+	 *   cart total was never reduced
 	 * WHEN store_api_cart_extra_discount() runs
-	 * THEN the extra discount in minor units is returned untouched
+	 * THEN the extra discount in minor units is returned untouched, the block checkout
+	 *   counterpart of the classic guard below
 	 */
-	public function test_store_api_cart_extra_discount_unchanged_when_no_credit_applies(): void {
-		$this->stub_kestrel_cart( false, 0.0 );
+	public function test_store_api_cart_extra_discount_unchanged_when_cart_total_was_not_reduced(): void {
+		$this->stub_kestrel_cart( false, 25.0 );
+		when( 'wc_get_price_decimals' )->justReturn( 2 );
 
 		$result = $this->testee->store_api_cart_extra_discount( 100 );
 
@@ -110,6 +113,22 @@ class WcAccountFundsCompatTest extends TestCase {
 	 */
 	public function test_cart_extra_discount_ignores_credit_when_cart_total_was_not_reduced(): void {
 		$this->stub_kestrel_cart( false, 25.0 );
+
+		$cart = Mockery::mock( \WC_Cart::class );
+
+		$result = $this->testee->cart_extra_discount( 2.0, $cart );
+
+		$this->assertSame( 2.0, $result );
+	}
+
+	/**
+	 * GIVEN the plugin reports a negative applied amount
+	 * WHEN cart_extra_discount() runs
+	 * THEN it is clamped to zero rather than inflating what other hooks reported, which
+	 *   the factory's own clamp on the summed value would not catch
+	 */
+	public function test_cart_extra_discount_clamps_a_negative_applied_amount(): void {
+		$this->stub_kestrel_cart( true, -5.0 );
 
 		$cart = Mockery::mock( \WC_Cart::class );
 
