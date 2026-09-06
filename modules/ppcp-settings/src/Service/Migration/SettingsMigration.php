@@ -1,87 +1,59 @@
 <?php
+
 /**
  * Handles migration of general settings from legacy format to new structure.
  *
  * @package WooCommerce\PayPalCommerce\Settings\Service\Migration
  */
-
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 
-use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 use WooCommerce\PayPalCommerce\Settings\Service\SellerTypeResolver;
-
 /**
  * Class SettingsMigration
  *
  * Handles migration of general plugin settings.
  */
-class SettingsMigration implements SettingsMigrationInterface {
-
-	/**
-	 * @var array<string, mixed>
-	 */
-	protected array $settings;
-	protected GeneralSettings $general_settings;
-	protected PartnersEndpoint $partners_endpoint;
-	protected LoggerInterface $logger;
-	protected SellerTypeResolver $seller_type_resolver;
-
-	public function __construct(
-		array $settings,
-		GeneralSettings $general_settings,
-		PartnersEndpoint $partners_endpoint,
-		LoggerInterface $logger,
-		SellerTypeResolver $seller_type_resolver
-	) {
-		$this->settings             = $settings;
-		$this->general_settings     = $general_settings;
-		$this->partners_endpoint    = $partners_endpoint;
-		$this->logger               = $logger;
-		$this->seller_type_resolver = $seller_type_resolver;
-	}
-
-	public function is_merchant_connected(): bool {
-		return $this->general_settings->is_merchant_connected();
-	}
-
-	public function migrate(): void {
-		if ( empty( $this->settings['client_id'] )
-			|| empty( $this->settings['client_secret'] )
-			|| empty( $this->settings['merchant_id'] ) ) {
-			return;
-		}
-
-		// Save credentials first so they persist even if the API call fails.
-		$connection = new MerchantConnectionDTO(
-			! empty( $this->settings['sandbox_on'] ),
-			$this->settings['client_id'],
-			$this->settings['client_secret'],
-			$this->settings['merchant_id'],
-			$this->settings['merchant_email'] ?? '',
-			'',
-			SellerTypeEnum::UNKNOWN
-		);
-		$this->general_settings->set_merchant_data( $connection );
-		$this->general_settings->save();
-
-		// Resolve seller type — exception propagates so migration can retry.
-		$seller_status = $this->partners_endpoint->seller_status();
-		$connection    = new MerchantConnectionDTO(
-			! empty( $this->settings['sandbox_on'] ),
-			$this->settings['client_id'],
-			$this->settings['client_secret'],
-			$this->settings['merchant_id'],
-			$this->settings['merchant_email'] ?? '',
-			$seller_status->country(),
-			$this->seller_type_resolver->resolve( $seller_status )
-		);
-		$this->general_settings->set_merchant_data( $connection );
-		$this->general_settings->save();
-	}
+class SettingsMigration implements \WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsMigrationInterface
+{
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $settings;
+    protected GeneralSettings $general_settings;
+    protected PartnersEndpoint $partners_endpoint;
+    protected LoggerInterface $logger;
+    protected SellerTypeResolver $seller_type_resolver;
+    public function __construct(array $settings, GeneralSettings $general_settings, PartnersEndpoint $partners_endpoint, LoggerInterface $logger, SellerTypeResolver $seller_type_resolver)
+    {
+        $this->settings = $settings;
+        $this->general_settings = $general_settings;
+        $this->partners_endpoint = $partners_endpoint;
+        $this->logger = $logger;
+        $this->seller_type_resolver = $seller_type_resolver;
+    }
+    public function is_merchant_connected(): bool
+    {
+        return $this->general_settings->is_merchant_connected();
+    }
+    public function migrate(): void
+    {
+        if (empty($this->settings['client_id']) || empty($this->settings['client_secret']) || empty($this->settings['merchant_id'])) {
+            return;
+        }
+        // Save credentials first so they persist even if the API call fails.
+        $connection = new MerchantConnectionDTO(!empty($this->settings['sandbox_on']), $this->settings['client_id'], $this->settings['client_secret'], $this->settings['merchant_id'], $this->settings['merchant_email'] ?? '', '', SellerTypeEnum::UNKNOWN);
+        $this->general_settings->set_merchant_data($connection);
+        $this->general_settings->save();
+        // Resolve seller type — exception propagates so migration can retry.
+        $seller_status = $this->partners_endpoint->seller_status();
+        $connection = new MerchantConnectionDTO(!empty($this->settings['sandbox_on']), $this->settings['client_id'], $this->settings['client_secret'], $this->settings['merchant_id'], $this->settings['merchant_email'] ?? '', $seller_status->country(), $this->seller_type_resolver->resolve($seller_status));
+        $this->general_settings->set_merchant_data($connection);
+        $this->general_settings->save();
+    }
 }
