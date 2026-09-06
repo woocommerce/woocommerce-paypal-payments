@@ -177,11 +177,11 @@ class AmountFactory
             $component_total_cents = (int) round($item_total_val * 100) + (int) round($shipping_val * 100) + (int) round($taxes_val * 100) - $discount_cents;
             $delta_cents = $wc_total_cents - $component_total_cents;
             $taxes_cents = (int) round($taxes_val * 100) + $delta_cents;
-            // Deeper than the tax means an unreported discount, not rounding. Book it
-            // as one: PayPal rejects a negative tax_total on Level 2 card data.
+            // Deeper than the tax means an unreported discount, not rounding. Book it as
+            // one: PayPal rejects a negative tax_total on Level 2 card data.
             if ($taxes_cents < 0) {
-                $taxes_cents = (int) round($taxes_val * 100);
-                $discount = new Money(($discount_cents - $delta_cents) / 100, $currency);
+                $taxes_cents = max(0, (int) round($taxes_val * 100));
+                $discount = new Money(((int) round($item_total_val * 100) + (int) round($shipping_val * 100) + $taxes_cents - $wc_total_cents) / 100, $currency);
             }
             $taxes = new Money($taxes_cents / 100, $currency);
             $total = new Money($wc_total, $currency);
