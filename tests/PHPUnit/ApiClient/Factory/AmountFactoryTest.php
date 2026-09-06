@@ -515,6 +515,92 @@ class AmountFactoryTest extends TestCase
 	}
 
 	/**
+	 * A plain order with no fees, on the non-free-trial path, carrying only the totals
+	 * the tax reconciliation reads.
+	 */
+	private function orderWithTotals(
+		float $subtotal,
+		float $tax,
+		float $shipping,
+		float $discount,
+		float $total
+	): \WC_Order {
+		$order = Mockery::mock( \WC_Order::class );
+		$order->shouldReceive( 'get_subtotal' )->andReturn( $subtotal );
+		$order->shouldReceive( 'get_total_fees' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_shipping_total' )->andReturn( $shipping );
+		$order->shouldReceive( 'get_total_tax' )->andReturn( $tax );
+		$order->shouldReceive( 'get_total_discount' )->andReturn( $discount );
+		$order->shouldReceive( 'get_total' )->andReturn( $total );
+		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
+		$order->shouldReceive( 'get_meta' )->andReturn( null );
+		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
+		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
+
+		return $order;
+	}
+
+	/**
+	 * An unreported discount (a plugin calling set_total() directly, or an order read
+	 * before get_total_discount() populates) used to push the whole gap into tax and
+	 * drive it negative, which PayPal rejects on Level 2 card data.
+	 *
+	 * @dataProvider dataUnreportedDiscountCases
+	 */
+	public function testFromWcOrderRestoresTaxAndBooksUnreportedDiscount(
+		float $subtotal,
+		float $tax,
+		float $shipping,
+		float $reported_discount,
+		float $wc_total,
+		string $expected_tax,
+		string $expected_discount
+	): void {
+		$order = $this->orderWithTotals( $subtotal, $tax, $shipping, $reported_discount, $wc_total );
+
+		$result    = $this->testee->from_wc_order( $order );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( $expected_tax, $breakdown->tax_total()->value_str() );
+		$this->assertSame( $expected_discount, $breakdown->discount()->value_str() );
+
+		$sum = (float) $breakdown->item_total()->value_str()
+			+ (float) $breakdown->shipping()->value_str()
+			+ (float) $breakdown->tax_total()->value_str()
+			- (float) $breakdown->discount()->value_str();
+		$this->assertSame(
+			number_format( $wc_total, 2, '.', '' ),
+			number_format( $sum, 2, '.', '' )
+		);
+	}
+
+	public function dataUnreportedDiscountCases(): array
+	{
+		return [
+			// Rows 1 and 2 must produce the same split: reported or not, the breakdown
+			// PayPal receives is identical.
+			'unreported_discount_smaller_than_tax'      => [ 100.0, 19.0, 0.0, 0.0, 69.0, '19.00', '50.00' ],
+			'reported_discount_matches_unreported_case' => [ 100.0, 19.0, 0.0, 50.0, 69.0, '19.00', '50.00' ],
+			'zero_tax_whole_item_total_discounted'      => [ 45.01, 0.0, 0.0, 0.0, 0.01, '0.00', '45.00' ],
+		];
+	}
+
+	/**
+	 * Guards the behaviour that predates the fallback.
+	 */
+	public function testFromWcOrderSmallRoundingDeltaStaysInTaxNotDiscount(): void
+	{
+		// 16.54 is one cent under the component sum of 16.55.
+		$order = $this->orderWithTotals( 13.90, 2.65, 0.0, 0.0, 16.54 );
+
+		$result    = $this->testee->from_wc_order( $order );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '2.64', $breakdown->tax_total()->value_str() );
+		$this->assertNull( $breakdown->discount() );
+	}
+
+	/**
 	 * A manually created order with a negative fee
 	 * must not be undercharged on the PayPal side. The negative fee is surfaced as
 	 * a discount AND filtered out of the items sent to PayPal, so it must not also
