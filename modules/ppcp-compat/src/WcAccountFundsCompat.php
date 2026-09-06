@@ -10,22 +10,15 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat;
 
 /**
- * Provides Account Funds (store credit) compatibility.
- *
- * The plugin applies store credit directly via WC_Cart::set_total() and
- * WC_Order::set_total(), bypassing the standard coupon/fee getters. Unreported, the
- * credit surfaces as the gap between the WC total and the summed breakdown, which
- * AmountFactory folds into the tax line - producing a negative tax_total that PayPal
- * rejects with CANNOT_BE_NEGATIVE once Level 2 card data is sent.
+ * Reports Account Funds store credit, which the plugin applies through
+ * WC_Cart::set_total() and WC_Order::set_total() rather than a coupon or fee. Left
+ * unreported it lands in the tax line, and PayPal rejects a negative tax_total.
  */
 class WcAccountFundsCompat {
 
 	private const CART_CLASS = '\Kestrel\Account_Funds\Cart';
 
-	/**
-	 * Order meta carrying the credit applied to a partially covered order. Written on
-	 * order creation, before payment processing, and by the plugin's pre-4.0 path too.
-	 */
+	// Written on order creation, before payment processing, and by the pre-4.0 path too.
 	private const ORDER_META = '_funds_used';
 
 	public function register(): void {
@@ -69,9 +62,8 @@ class WcAccountFundsCompat {
 	}
 
 	/**
-	 * Gated on partial use, which is what makes the plugin reduce the cart total.
-	 * Fully covered carts are paid through the plugin's own gateway and never reach
-	 * a PayPal amount, but the getter would still report a balance for them.
+	 * Gated on partial use, which is what makes the plugin reduce the cart total. The
+	 * getter reports a balance for fully covered carts too, which PayPal never sees.
 	 */
 	private function applied_cart_credit(): float {
 		$cart_class = self::CART_CLASS;
