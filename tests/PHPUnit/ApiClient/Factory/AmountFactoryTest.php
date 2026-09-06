@@ -462,17 +462,7 @@ class AmountFactoryTest extends TestCase
 		float $discount,
 		float $wc_total
 	): void {
-		$order = Mockery::mock( \WC_Order::class );
-		$order->shouldReceive( 'get_subtotal' )->andReturn( $subtotal );
-		$order->shouldReceive( 'get_total_fees' )->andReturn( $fees );
-		$order->shouldReceive( 'get_shipping_total' )->andReturn( $shipping );
-		$order->shouldReceive( 'get_total_tax' )->andReturn( $tax );
-		$order->shouldReceive( 'get_total_discount' )->andReturn( $discount );
-		$order->shouldReceive( 'get_total' )->andReturn( $wc_total );
-		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
-		$order->shouldReceive( 'get_meta' )->andReturn( null );
-		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
-		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
+		$order = $this->orderWithTotals( $subtotal, $tax, $shipping, $discount, $wc_total, $fees );
 
 		$result    = $this->testee->from_wc_order( $order );
 		$breakdown = $result->breakdown();
@@ -515,19 +505,20 @@ class AmountFactoryTest extends TestCase
 	}
 
 	/**
-	 * A plain order with no fees, on the non-free-trial path, carrying only the totals
-	 * the tax reconciliation reads.
+	 * An order on the non-free-trial path, carrying only the totals the tax
+	 * reconciliation reads.
 	 */
 	private function orderWithTotals(
 		float $subtotal,
 		float $tax,
 		float $shipping,
 		float $discount,
-		float $total
+		float $total,
+		float $fees = 0.0
 	): \WC_Order {
 		$order = Mockery::mock( \WC_Order::class );
 		$order->shouldReceive( 'get_subtotal' )->andReturn( $subtotal );
-		$order->shouldReceive( 'get_total_fees' )->andReturn( 0.0 );
+		$order->shouldReceive( 'get_total_fees' )->andReturn( $fees );
 		$order->shouldReceive( 'get_shipping_total' )->andReturn( $shipping );
 		$order->shouldReceive( 'get_total_tax' )->andReturn( $tax );
 		$order->shouldReceive( 'get_total_discount' )->andReturn( $discount );
@@ -541,9 +532,8 @@ class AmountFactoryTest extends TestCase
 	}
 
 	/**
-	 * An unreported discount (a plugin calling set_total() directly, or an order read
-	 * before get_total_discount() populates) used to push the whole gap into tax and
-	 * drive it negative, which PayPal rejects on Level 2 card data.
+	 * An unreported discount (set_total() called directly, or an order read before
+	 * get_total_discount() populates) used to push the whole gap into tax.
 	 *
 	 * @dataProvider dataUnreportedDiscountCases
 	 */
@@ -577,11 +567,12 @@ class AmountFactoryTest extends TestCase
 	public function dataUnreportedDiscountCases(): array
 	{
 		return [
-			// Rows 1 and 2 must produce the same split: reported or not, the breakdown
-			// PayPal receives is identical.
+			// Rows 1 and 2 must produce the same split, reported or not.
 			'unreported_discount_smaller_than_tax'      => [ 100.0, 19.0, 0.0, 0.0, 69.0, '19.00', '50.00' ],
 			'reported_discount_matches_unreported_case' => [ 100.0, 19.0, 0.0, 50.0, 69.0, '19.00', '50.00' ],
 			'zero_tax_whole_item_total_discounted'      => [ 45.01, 0.0, 0.0, 0.0, 0.01, '0.00', '45.00' ],
+			// A negative fee can make WC report negative tax.
+			'negative_wc_tax_is_floored_at_zero'       => [ 100.0, -5.0, 0.0, 0.0, 60.0, '0.00', '40.00' ],
 		];
 	}
 
@@ -590,7 +581,7 @@ class AmountFactoryTest extends TestCase
 	 */
 	public function testFromWcOrderSmallRoundingDeltaStaysInTaxNotDiscount(): void
 	{
-		// 16.54 is one cent under the component sum of 16.55.
+		// The delta_minus_one case above, asserted on the split rather than the invariant.
 		$order = $this->orderWithTotals( 13.90, 2.65, 0.0, 0.0, 16.54 );
 
 		$result    = $this->testee->from_wc_order( $order );
