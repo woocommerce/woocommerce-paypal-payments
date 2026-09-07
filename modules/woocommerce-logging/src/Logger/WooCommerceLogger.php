@@ -64,10 +64,6 @@ class WooCommerceLogger implements LoggerInterface {
 		$this->wc_logger = $wc_logger;
 		$this->source    = $source;
 
-		if ( ! self::$prefix ) {
-			self::$prefix = sprintf( '#%s - ', wp_rand( 1000, 9999 ) );
-		}
-
 		// phpcs:disable -- Intentionally not sanitized, for logging purposes.
 		$method = wp_unslash( $_SERVER['REQUEST_METHOD'] ?? 'CLI' );
 		$uri    = wp_unslash( $_SERVER['REQUEST_URI'] ?? '-' );
@@ -89,6 +85,10 @@ class WooCommerceLogger implements LoggerInterface {
 			$context['source'] = $this->source;
 		}
 
+		if ( ! self::$prefix ) {
+			self::$prefix = self::request_prefix();
+		}
+
 		if ( ! $this->request_logged ) {
 			$this->log_new_request( $context['source'] );
 		}
@@ -96,6 +96,33 @@ class WooCommerceLogger implements LoggerInterface {
 		$prefix = self::$prefix;
 
 		$this->wc_logger->log( $level, "{$prefix}$message", $context );
+	}
+
+	/**
+	 * A random ID for the current request, tagged with the kind of request it
+	 * is, so that lines of one kind can be told apart at a glance.
+	 */
+	private static function request_prefix(): string {
+		$id = wp_rand( 1000, 9999 );
+
+		if ( wp_doing_cron() ) {
+			return "cron-$id - ";
+		}
+
+		if ( function_exists( 'wp_is_serving_rest_request' ) && wp_is_serving_rest_request() ) {
+			return "rest-$id - ";
+		}
+
+		// WooCommerce defines DOING_AJAX as well, so this comes first.
+		if ( defined( 'WC_DOING_AJAX' ) && \WC_DOING_AJAX ) {
+			return "wc-$id - ";
+		}
+
+		if ( wp_doing_ajax() ) {
+			return "ajax-$id - ";
+		}
+
+		return "#$id - ";
 	}
 
 	/**
