@@ -6,7 +6,7 @@
  */
 
 import { resolveOptionId } from '../methods/shippingQuote';
-import { describeError, logError } from '../utils/diagnostics';
+import { describeError, logEvent } from '../utils/diagnostics';
 import { walletAddressToWc } from './walletContacts';
 
 /**
@@ -213,7 +213,7 @@ export function attachShippingHandlers(
 			// A sheet that cannot price what it is about to charge must not go on,
 			// and nothing can be shown to the shopper behind it. Reported because
 			// Apple words an abort and a shopper's dismissal identically.
-			logError(
+			logEvent(
 				config,
 				'apple-pay-shipping-abort',
 				describeError( error )

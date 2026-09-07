@@ -14,7 +14,7 @@ import Spinner from '@ppcp-button/Helper/Spinner';
 import { releaseCartShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
-import { describeError, logError } from '../utils/diagnostics';
+import { describeError, logEvent } from '../utils/diagnostics';
 import { handleError } from '../utils/errorHandler';
 import { loadScript } from '../utils/scriptLoaders';
 import { revealMethodGateway } from '../methods/gatewayPlacement';
@@ -243,7 +243,7 @@ export async function renderApplePay( {
 
 			// PayPal answers straight to the browser, so the reason exists
 			// nowhere else.
-			logError(
+			logEvent(
 				config,
 				'apple-pay-merchant-validation-failed',
 				describeError( error )
@@ -316,7 +316,7 @@ export async function renderApplePay( {
 			);
 		} catch ( error ) {
 			// Apple's sheet wording is the same whichever branch failed.
-			logError(
+			logEvent(
 				config,
 				'apple-pay-authorization-failed',
 				describeError( error )

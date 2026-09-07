@@ -13,10 +13,10 @@ jest.mock( '../utils/errorHandler', () => ( {
 	handleError: ( ...args ) => mockHandleError( ...args ),
 } ) );
 
-const mockLogError = jest.fn();
+const mockLogEvent = jest.fn();
 jest.mock( '../utils/diagnostics', () => ( {
 	...jest.requireActual( '../utils/diagnostics' ),
-	logError: ( ...args ) => mockLogError( ...args ),
+	logEvent: ( ...args ) => mockLogEvent( ...args ),
 } ) );
 
 const mockResolveWalletTotal = jest.fn();
@@ -736,7 +736,7 @@ describe( 'onvalidatemerchant', () => {
 			false
 		);
 		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
-		expect( mockLogError ).toHaveBeenCalledWith(
+		expect( mockLogEvent ).toHaveBeenCalledWith(
 			config,
 			'apple-pay-merchant-validation-failed',
 			'unregistered domain'
@@ -909,7 +909,7 @@ describe( 'onpaymentauthorized', () => {
 			'wc_fragment_refresh'
 		);
 		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
-		expect( mockLogError ).toHaveBeenCalledWith(
+		expect( mockLogEvent ).toHaveBeenCalledWith(
 			config,
 			'apple-pay-authorization-failed',
 			'declined'

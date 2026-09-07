@@ -6,7 +6,7 @@
  */
 
 import { resolveOptionId } from '../methods/shippingQuote';
-import { describeError, logError } from '../utils/diagnostics';
+import { describeError, logEvent } from '../utils/diagnostics';
 import { walletAddressToWc } from './walletContacts';
 
 // Google rejects newShippingOptionParameters on a SHIPPING_OPTION trigger: the
@@ -98,7 +98,7 @@ export function buildPaymentDataCallbacks( {
 					),
 				} );
 			} catch ( error ) {
-				logError(
+				logEvent(
 					config,
 					'google-pay-shipping-failed',
 					describeError( error )

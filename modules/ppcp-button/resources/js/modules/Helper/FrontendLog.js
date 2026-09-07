@@ -1,7 +1,7 @@
 /**
- * Reports a frontend failure to the console and the WooCommerce log.
+ * Reports a frontend event to the console and the WooCommerce log.
  *
- * Some failures reach no console anyone can read, so the browser posts what it
+ * Some events reach no console anyone can read, so the browser posts what it
  * saw to the server as well.
  */
 
@@ -16,20 +16,33 @@ export function describeError( error ) {
 }
 
 /**
- * Records one failure, in the console and in the server log.
+ * Records one report, in the console and in the server log.
  *
  * Never throws, never rejects, and is not awaited.
  *
  * @param {Object} ajax     - The `frontend_log` entry of the script config.
  * @param {string} tag      - Groups this frontend's lines in the shared log.
  * @param {string} event    - What happened, as a stable slug.
- * @param {string} [detail] - Named facts about the failure.
+ * @param {string} [detail] - Named facts about the report.
+ * @param {string} [level]  - The level to record it at.
  * @return {Promise<void>}
  */
-export async function logFrontendError( ajax, tag, event, detail = '' ) {
+export async function logFrontendEvent(
+	ajax,
+	tag,
+	event,
+	detail = '',
+	level = 'error'
+) {
 	try {
-		// eslint-disable-next-line no-console
-		console.error( `[PPCP ${ tag }] ${ event }`, detail );
+		const write =
+			'error' === level || 'warning' === level
+				? // eslint-disable-next-line no-console
+				  console.error
+				: // eslint-disable-next-line no-console
+				  console.info;
+
+		write( `[PPCP ${ tag }] ${ event }`, detail );
 
 		if ( ! ajax?.endpoint ) {
 			return;
@@ -48,6 +61,7 @@ export async function logFrontendError( ajax, tag, event, detail = '' ) {
 				tag,
 				event,
 				message: String( detail ),
+				level,
 			} ),
 		} );
 	} catch ( error ) {

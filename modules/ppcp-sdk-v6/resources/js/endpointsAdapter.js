@@ -10,7 +10,7 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson, postStoreApi } from './utils/api';
-import { describeError, logError } from './utils/diagnostics';
+import { describeError, logEvent } from './utils/diagnostics';
 import { FundingSources } from './utils/fundingSources';
 import { amountFromCartTotals } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
@@ -275,7 +275,7 @@ export async function approveOrder(
 		}
 
 		// The retry below hides the refusal, so record it first.
-		logError(
+		logEvent(
 			config,
 			'approve-order-retried',
 			`${ fundingSource } order=${ orderId } ${ describeError( error ) }`

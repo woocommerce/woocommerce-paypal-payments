@@ -4,11 +4,11 @@ jest.mock( '../endpointsAdapter', () => ( {
 } ) );
 
 jest.mock( '../utils/diagnostics', () => ( {
-	logError: jest.fn(),
+	logEvent: jest.fn(),
 } ) );
 
 import { createOrder, approveOrder } from '../endpointsAdapter';
-import { logError } from '../utils/diagnostics';
+import { logEvent } from '../utils/diagnostics';
 import { payWithSession } from './sessionPayment';
 
 const config = { ajax: {} };
@@ -153,7 +153,7 @@ describe( 'payWithSession()', () => {
 		expect(
 			session.initiatePayerAction.mock.invocationCallOrder[ 0 ]
 		).toBeLessThan( approveOrder.mock.invocationCallOrder[ 0 ] );
-		expect( logError ).not.toHaveBeenCalled();
+		expect( logEvent ).not.toHaveBeenCalled();
 	} );
 
 	test( 'reports and throws without approving on PAYER_ACTION_REQUIRED when the session cannot service it, as the shipped Apple Pay bundle cannot', async () => {
@@ -167,7 +167,7 @@ describe( 'payWithSession()', () => {
 			'This wallet cannot complete the required payer action.'
 		);
 
-		expect( logError ).toHaveBeenCalledWith(
+		expect( logEvent ).toHaveBeenCalledWith(
 			args.config,
 			'payer-action-unsupported',
 			`${ args.fundingSource } order=ORDER1 status=PAYER_ACTION_REQUIRED`
@@ -188,7 +188,7 @@ describe( 'payWithSession()', () => {
 				'Wallet payment was not approved.'
 			);
 
-			expect( logError ).toHaveBeenCalledWith(
+			expect( logEvent ).toHaveBeenCalledWith(
 				args.config,
 				'confirm-order-not-approved',
 				`${ args.fundingSource } order=ORDER1 status=${ confirmResult?.status } ${ expectedKeys }`
@@ -212,7 +212,7 @@ describe( 'payWithSession()', () => {
 			'Wallet payment was not approved.'
 		);
 
-		expect( logError ).toHaveBeenCalledWith(
+		expect( logEvent ).toHaveBeenCalledWith(
 			args.config,
 			'confirm-order-not-approved',
 			`${ args.fundingSource } order=ORDER1 status=DECLINED ` +

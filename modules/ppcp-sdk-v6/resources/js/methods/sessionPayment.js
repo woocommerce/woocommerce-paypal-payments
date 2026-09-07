@@ -8,7 +8,7 @@
  */
 
 import { createOrder, approveOrder } from '../endpointsAdapter';
-import { logError } from '../utils/diagnostics';
+import { logEvent } from '../utils/diagnostics';
 
 /**
  * Reads the outcome off a confirmOrder result.
@@ -104,7 +104,7 @@ export async function payWithSession( {
 			// it blindly raised a TypeError that reached the sheet as Apple's
 			// own "Payment not completed".
 			if ( 'function' !== typeof session.initiatePayerAction ) {
-				logError(
+				logEvent(
 					config,
 					'payer-action-unsupported',
 					`${ fundingSource } order=${ orderId } status=${ status }`
@@ -122,7 +122,7 @@ export async function payWithSession( {
 		default:
 			// confirmOrder goes straight from the browser to PayPal, so this
 			// result is the only account of the refusal.
-			logError(
+			logEvent(
 				config,
 				'confirm-order-not-approved',
 				`${ fundingSource } order=${ orderId } status=${ status } ` +

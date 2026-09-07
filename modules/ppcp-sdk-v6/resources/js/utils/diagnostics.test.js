@@ -1,6 +1,6 @@
 import '@ppcp-test/helpers/silenceConsole';
 
-import { describeError, logError } from './diagnostics';
+import { describeError, logEvent } from './diagnostics';
 
 const config = ( overrides = {} ) => ( {
 	ajax: {
@@ -30,7 +30,7 @@ describe( 'describeError()', () => {
 	} );
 } );
 
-describe( 'logError()', () => {
+describe( 'logEvent()', () => {
 	afterEach( () => {
 		global.fetch = undefined;
 	} );
@@ -38,7 +38,7 @@ describe( 'logError()', () => {
 	test( 'posts the nonce, tag, event and detail as a message to the frontend log endpoint', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {} );
 
-		await logError(
+		await logEvent(
 			config(),
 			'apple-pay-shipping-abort',
 			'Rate not found'
@@ -51,6 +51,7 @@ describe( 'logError()', () => {
 			tag: 'SDK v6',
 			event: 'apple-pay-shipping-abort',
 			message: 'Rate not found',
+			level: 'error',
 		} );
 	} );
 
@@ -65,7 +66,7 @@ describe( 'logError()', () => {
 	] )( 'skips the POST when %s', async ( _label, brokenConfig ) => {
 		global.fetch = jest.fn();
 
-		await logError( brokenConfig, 'event', 'detail' );
+		await logEvent( brokenConfig, 'event', 'detail' );
 
 		expect( global.fetch ).not.toHaveBeenCalled();
 	} );
@@ -74,7 +75,7 @@ describe( 'logError()', () => {
 		global.fetch = undefined;
 
 		await expect(
-			logError( config(), 'event', 'detail' )
+			logEvent( config(), 'event', 'detail' )
 		).resolves.toBeUndefined();
 	} );
 
@@ -82,7 +83,7 @@ describe( 'logError()', () => {
 		global.fetch = jest.fn().mockRejectedValue( new Error( 'network down' ) );
 
 		await expect(
-			logError( config(), 'event', 'detail' )
+			logEvent( config(), 'event', 'detail' )
 		).resolves.toBeUndefined();
 	} );
 
@@ -95,7 +96,7 @@ describe( 'logError()', () => {
 		};
 
 		await expect(
-			logError( poisonedConfig, 'event', 'detail' )
+			logEvent( poisonedConfig, 'event', 'detail' )
 		).resolves.toBeUndefined();
 		expect( global.fetch ).not.toHaveBeenCalled();
 	} );

@@ -12,7 +12,7 @@ import {
 } from '../Helper/PaymentButtonHelpers';
 import { isVisible } from '../Helper/Hiding';
 import { isDisabled, setEnabled } from '../Helper/ButtonDisabler';
-import { logFrontendError } from '../Helper/FrontendLog';
+import { logFrontendEvent } from '../Helper/FrontendLog';
 
 /**
  * Collection of all available styling options for this button.
@@ -715,7 +715,7 @@ export default class PaymentButton {
 	 * @param {string} [detail] - Named facts about the failure.
 	 */
 	reportFailure( event, detail = '' ) {
-		logFrontendError(
+		logFrontendEvent(
 			this.ppcpConfig?.ajax?.frontend_log,
 			this.methodId,
 			event,
