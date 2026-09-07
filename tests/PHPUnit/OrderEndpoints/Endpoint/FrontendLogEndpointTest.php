@@ -62,9 +62,9 @@ class FrontendLogEndpointTest extends TestCase {
 			)
 		);
 
-		$this->logger->shouldReceive( 'error' )
+		$this->logger->shouldReceive( 'log' )
 			->once()
-			->with( '[apple-pay] sheet_failed: declined 5000' );
+			->with( 'error', '[apple-pay] sheet_failed: declined 5000' );
 
 		expect( 'wp_send_json_success' )
 			->once()
@@ -85,7 +85,7 @@ class FrontendLogEndpointTest extends TestCase {
 			->with( FrontendLogEndpoint::nonce() )
 			->andThrow( new NonceValidationException( 'Could not validate nonce.' ) );
 
-		$this->logger->shouldReceive( 'error' )->never();
+		$this->logger->shouldReceive( 'log' )->never();
 
 		expect( 'wp_send_json_success' )
 			->once()
@@ -104,9 +104,9 @@ class FrontendLogEndpointTest extends TestCase {
 
 		$this->stub_posted_data( array() );
 
-		$this->logger->shouldReceive( 'error' )
+		$this->logger->shouldReceive( 'log' )
 			->once()
-			->with( '[frontend] unknown' );
+			->with( 'error', '[frontend] unknown' );
 
 		when( 'wp_send_json_success' )->justReturn( null );
 
@@ -128,9 +128,9 @@ class FrontendLogEndpointTest extends TestCase {
 			)
 		);
 
-		$this->logger->shouldReceive( 'error' )
+		$this->logger->shouldReceive( 'log' )
 			->once()
-			->with( '[sdk] call_failed' );
+			->with( 'error', '[sdk] call_failed' );
 
 		when( 'wp_send_json_success' )->justReturn( null );
 
@@ -155,9 +155,10 @@ class FrontendLogEndpointTest extends TestCase {
 			)
 		);
 
-		$this->logger->shouldReceive( 'error' )
+		$this->logger->shouldReceive( 'log' )
 			->once()
 			->with(
+				'error',
 				Mockery::on(
 					static function ( string $line ): bool {
 						return 1024 === strlen( $line );
@@ -190,7 +191,7 @@ class FrontendLogEndpointTest extends TestCase {
 			)
 		);
 
-		$this->logger->shouldReceive( 'error' )->never();
+		$this->logger->shouldReceive( 'log' )->never();
 
 		expect( 'wp_send_json_success' )
 			->once()
