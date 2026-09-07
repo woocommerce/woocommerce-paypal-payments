@@ -113,6 +113,11 @@ class WooCommerceOrderCreator {
 			$this->configure_addresses( $wc_order, $payer, $shipping, $cart_data->needs_shipping() );
 			$this->configure_coupons( $wc_order, $cart_data->coupons() );
 
+			// Mirror WC_Checkout::create_order() so the order carries the cart hash. Downstream
+			// gates (e.g. the PayPal subscription replay guard) compare this against the hash
+			// captured at approval time; an unset hash makes a legitimate express purchase fail.
+			$wc_order->set_cart_hash( $cart_data->cart_hash() );
+
 			$wc_order->calculate_totals();
 			$wc_order->save();
 		} catch ( Exception $exception ) {
