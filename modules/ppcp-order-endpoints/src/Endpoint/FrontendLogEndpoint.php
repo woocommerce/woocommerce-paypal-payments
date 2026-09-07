@@ -16,6 +16,7 @@ class FrontendLogEndpoint implements EndpointInterface
 {
     public const ENDPOINT = 'ppc-frontend-log';
     private const MAX_LINE_LENGTH = 1024;
+    private const LEVELS = array('debug', 'info', 'warning', 'error');
     private \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data;
     private LoggerInterface $logger;
     public function __construct(\WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData $request_data, LoggerInterface $logger)
@@ -28,7 +29,7 @@ class FrontendLogEndpoint implements EndpointInterface
         return self::ENDPOINT;
     }
     /**
-     * Logs one report at error level, since only failures are reported.
+     * Logs one report at the level it claims, `error` unless it names another.
      */
     public function handle_request(): void
     {
@@ -38,13 +39,18 @@ class FrontendLogEndpoint implements EndpointInterface
              * Disable front-end logging without disabling logging completely.
              */
             if (apply_filters('woocommerce_paypal_payments_frontend_log_enabled', \true)) {
-                $this->logger->error($this->line($data));
+                $this->logger->log($this->level($data), $this->line($data));
             }
             wp_send_json_success();
         } catch (NonceValidationException $error) {
             // Fire-and-forget endpoint, response data is never parsed, no need to indicate failures.
             wp_send_json_success();
         }
+    }
+    private function level(array $data): string
+    {
+        $level = $this->string_field($data, 'level');
+        return in_array($level, self::LEVELS, \true) ? $level : 'error';
     }
     /**
      * Shaped `[tag] event: detail`, capped.
