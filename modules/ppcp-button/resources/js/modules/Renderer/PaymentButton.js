@@ -724,6 +724,23 @@ export default class PaymentButton {
 	}
 
 	/**
+	 * Records a lifecycle step, so that a sheet which ends without one of the
+	 * terminal events can be told apart from a buyer who walked away.
+	 *
+	 * @param {string} event    - What happened, as a stable slug.
+	 * @param {string} [detail] - Named facts about the step.
+	 */
+	reportEvent( event, detail = '' ) {
+		logFrontendEvent(
+			this.ppcpConfig?.ajax?.frontend_log,
+			this.methodId,
+			event,
+			detail,
+			'info'
+		);
+	}
+
+	/**
 	 * Open or close a log-group
 	 *
 	 * @param {?string} [label=null] Group label.
