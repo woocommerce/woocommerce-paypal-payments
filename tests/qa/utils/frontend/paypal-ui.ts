@@ -61,6 +61,16 @@ export class PayPalUi {
 			: this.page.locator(
 					'#express-payment-method-ppcp-gateway-paypal paypal-button, #ppc-button-ppcp-gateway-v6 paypal-button, #ppc-button-ppcp-gateway-save-payment-method paypal-button'
 			  );
+	/**
+	 * [Temporary] The express PayPal button on a native PayPal Subscription checkout
+	 * (SubscriptionHelper::resolve_subscription_mode() === subscriptions_api:
+	 * "Save PayPal and Venmo" is off and the cart holds a subscription).
+	 * SdkV6Manager::is_native_paypal_subscription_page() withholds the v6
+	 * module on such pages unconditionally, so unlike payPalButton() this
+	 * never depends on sdkVersion() / the sitewide v6 flag.
+	 */
+	nativeSubscriptionPayPalButton = () =>
+		this.payPalIframeV5().locator( '[data-funding-source="paypal"]' );
 	payLaterButton = () =>
 		sdkVersion() === 'v5'
 			? this.page
@@ -293,6 +303,42 @@ export class PayPalUi {
 	}
 
 	/**
+	 * [Temporary] Clicks PayPal button to open popup - native PayPal Subscription checkout
+	 * variant (see nativeSubscriptionPayPalButton()). Temporary duplicate of
+	 * openPayPalPopup() with the locator swapped; consolidate once there's a
+	 * single reliable way to pick the right button for both cases.
+	 */
+	async openPayPalSubscriptionPopup(): Promise< PayPalPopup > {
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
+		await expect(
+			this.nativeSubscriptionPayPalButton(),
+			'Assert PayPal button is visible'
+		).toBeVisible();
+		await this.nativeSubscriptionPayPalButton().click();
+		// Popup opens directly or PayPal shows "Click to Continue" overlay
+		await Promise.race( [
+			popupPromise,
+			( async () => {
+				try {
+					const clickToContinue = this.page.getByRole( 'link', {
+						name: 'Click to Continue',
+					} );
+					await clickToContinue.waitFor( { state: 'visible' } );
+					await clickToContinue.click();
+				} catch {
+					// popup opened directly (normal case)
+				}
+			} )(),
+		] );
+
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new PayPalPopup( popup );
+	}
+
+	/**
 	 * Clicks Pay Later button to open popup
 	 */
 	async openPayLaterPopup(): Promise< PayPalPopup > {
@@ -353,13 +399,15 @@ export class PayPalUi {
 	 * @param data.payment
 	 * @param data.merchant
 	 * @param data.customer
+	 * @param data.isPayPalSubscription
 	 */
 	makePayment = async ( data: {
 		payment: Pcp.Payment;
 		merchant?: Pcp.Merchant;
 		customer?: ShopOrder[ 'customer' ];
+		isPayPalSubscription?: boolean;
 	} ) => {
-		const { payment, merchant, customer } = data;
+		const { payment, merchant, customer, isPayPalSubscription } = data;
 		const { gateway, payPalAccount } = payment;
 		const { shortcut } = gateway;
 		let popup: PayPalPopup;
@@ -372,7 +420,9 @@ export class PayPalUi {
 					break;
 				}
 
-				popup = await this.openPayPalPopup();
+				popup = isPayPalSubscription
+					? await this.openPayPalSubscriptionPopup()
+					: await this.openPayPalPopup();
 				// pay with given PayPal account
 				await popup.completePayPalPayment( payPalAccount );
 				// PayPal popap occasionally shows "Try again" error need to assert the hang
