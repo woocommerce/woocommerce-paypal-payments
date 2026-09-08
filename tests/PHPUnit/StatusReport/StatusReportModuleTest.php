@@ -9,6 +9,8 @@ use ReflectionMethod;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Webhooks\IncomingWebhookEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\OwnWebhookResolver;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -24,6 +26,7 @@ class StatusReportModuleTest extends TestCase
 		parent::setUp();
 
 		when('wp_parse_url')->alias('parse_url');
+		when('get_option')->justReturn([]);
 
 		if (!defined('MINUTE_IN_SECONDS')) {
 			define('MINUTE_IN_SECONDS', 60);
@@ -32,12 +35,20 @@ class StatusReportModuleTest extends TestCase
 		$this->sut = new StatusReportModule();
 	}
 
-	private function webhook_delivery_host_status(array $registered_webhooks): string
+	private function createResolver(string $own_url = 'https://mysite.com/wp-json/paypal/v1/incoming'): OwnWebhookResolver
+	{
+		$incoming_webhook_endpoint = Mockery::mock(IncomingWebhookEndpoint::class);
+		$incoming_webhook_endpoint->shouldReceive('url')->andReturn($own_url);
+
+		return new OwnWebhookResolver($incoming_webhook_endpoint);
+	}
+
+	private function webhook_delivery_host_status(array $registered_webhooks, ?OwnWebhookResolver $resolver = null): string
 	{
 		$method = new ReflectionMethod(StatusReportModule::class, 'webhook_delivery_host_status');
 		$method->setAccessible(true);
 
-		return $method->invoke($this->sut, $registered_webhooks);
+		return $method->invoke($this->sut, $registered_webhooks, $resolver ?? $this->createResolver());
 	}
 
 	private function registered_webhooks(ContainerInterface $c, bool $is_connected): array
@@ -56,8 +67,6 @@ class StatusReportModuleTest extends TestCase
 	 */
 	public function test_returns_yes_when_a_registered_webhook_matches_this_site(): void
 	{
-		when('home_url')->justReturn('https://mysite.com');
-
 		$result = $this->webhook_delivery_host_status([
 			new Webhook('https://other-clone.com/wp-json/paypal/v1/incoming', [], 'FOREIGN'),
 			new Webhook('https://MySite.com/wp-json/paypal/v1/incoming', [], 'OWN'),
@@ -73,14 +82,15 @@ class StatusReportModuleTest extends TestCase
 	 */
 	public function test_reports_foreign_hosts_when_no_registered_webhook_matches_this_site(): void
 	{
-		when('home_url')->justReturn('https://mysite.com');
-
 		$result = $this->webhook_delivery_host_status([
 			new Webhook('https://other-clone.com/wp-json/paypal/v1/incoming', [], 'FOREIGN'),
 		]);
 
 		$this->assertStringContainsString('<mark class="error">', $result);
-		$this->assertStringContainsString('Delivered to other-clone.com (this site: mysite.com)', $result);
+		$this->assertStringContainsString(
+			'Delivered to other-clone.com/wp-json/paypal/v1/incoming (this site: mysite.com/wp-json/paypal/v1/incoming)',
+			$result
+		);
 	}
 
 	/**
@@ -91,8 +101,6 @@ class StatusReportModuleTest extends TestCase
 	 */
 	public function test_returns_dash_when_list_contains_only_non_webhook_items(): void
 	{
-		when('home_url')->justReturn('https://mysite.com');
-
 		$result = $this->webhook_delivery_host_status([new \stdClass(), 'a-string']);
 
 		$this->assertSame('<mark class="no">&ndash;</mark>', $result);
@@ -105,8 +113,6 @@ class StatusReportModuleTest extends TestCase
 	 */
 	public function test_returns_dash_when_webhooks_have_unparseable_hosts(): void
 	{
-		when('home_url')->justReturn('https://mysite.com');
-
 		$result = $this->webhook_delivery_host_status([
 			new Webhook('not a url', [], 'BROKEN'),
 			new Webhook('', [], 'EMPTY'),
@@ -122,11 +128,33 @@ class StatusReportModuleTest extends TestCase
 	 */
 	public function test_returns_dash_for_empty_webhook_list(): void
 	{
-		when('home_url')->justReturn('https://mysite.com');
-
 		$result = $this->webhook_delivery_host_status([]);
 
 		$this->assertSame('<mark class="no">&ndash;</mark>', $result);
+	}
+
+	/**
+	 * GIVEN two sibling installs registered under different subdirectories of the same host
+	 * (e.g. example.com/shop and example.com/staging)
+	 * WHEN determining the webhook delivery host status
+	 * THEN the sibling's webhook is treated as foreign and the row reports the mismatch,
+	 * not a match, since host-only comparison used to conflate the two installs
+	 */
+	public function test_reports_foreign_when_sibling_subdirectory_install_shares_host(): void
+	{
+		$resolver = $this->createResolver('https://example.com/shop/wp-json/paypal/v1/incoming');
+
+		$sibling_webhook = new Webhook('https://example.com/staging/wp-json/paypal/v1/incoming', [], 'SIBLING');
+
+		$result = $this->webhook_delivery_host_status([$sibling_webhook], $resolver);
+
+		$this->assertStringContainsString('<mark class="error">', $result);
+
+		// Host-only reporting rendered this as the nonsensical "example.com (this site: example.com)".
+		$this->assertStringContainsString(
+			'Delivered to example.com/staging/wp-json/paypal/v1/incoming (this site: example.com/shop/wp-json/paypal/v1/incoming)',
+			$result
+		);
 	}
 
 	/**

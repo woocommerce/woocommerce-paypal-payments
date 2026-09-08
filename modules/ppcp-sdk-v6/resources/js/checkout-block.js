@@ -409,15 +409,27 @@ const placeOrderEnabled =
  * coupon applied on the checkout is taken into account. Mirrors v5's
  * paypalPaymentMethodAllowed().
  *
+ * A free-trial ($0) subscription is the exception: it cannot be paid through
+ * this row. The "Place order" flow redirects to a PayPal order that cannot be
+ * created for a zero total, and PayPal can only vault a payment method without a
+ * purchase through an approval the buyer opens from a button. So the row is
+ * withheld and the express "Pay with PayPal" button (which runs that save flow)
+ * is offered instead. Read live, so a coupon that zeroes or un-zeroes the cart
+ * after render is honoured.
+ *
  * @param {Object} [cartTotals] - The canMakePayment cart totals.
  * @return {boolean} Whether the row may show.
  */
 function regularRowAllowedForCart( cartTotals ) {
+	const amount = amountFromCartTotals( cartTotals ) || config.amount;
+
+	if ( isFreeTrialCart( config, amount ) ) {
+		return false;
+	}
+
 	if ( config.has_subscriptions ) {
 		return true;
 	}
-
-	const amount = amountFromCartTotals( cartTotals ) || config.amount;
 
 	return parseFloat( amount ) > 0;
 }
@@ -489,7 +501,9 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 	} else {
 		rowProps = {
 			// The row exists because a saved token does, so it is always
-			// available; a new PayPal payment uses the express button.
+			// available; a new PayPal payment uses the express button. A saved
+			// token completes a free-trial order too (the gateway attaches it),
+			// so this variant carries no broken redirect to withhold.
 			content: createElement( SavedTokenNote ),
 			canMakePayment: () => true,
 		};

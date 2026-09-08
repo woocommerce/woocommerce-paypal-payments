@@ -350,26 +350,47 @@ describe( 'checkout-block', () => {
 					totalPrice: '4900',
 					expected: true,
 				},
-			] )( '$name', ( { hasSubscriptions, totalPrice, expected } ) => {
-				loadCheckoutBlock(
-					baseConfig( {
-						place_order: { enabled: true, text: 'Complete order' },
-						has_subscriptions: hasSubscriptions,
-						amount: '10.00',
-					} )
-				);
+				{
+					name: 'a free-trial subscription cart at a $0 live total is not allowed: it is vaulted through the express button instead',
+					hasSubscriptions: true,
+					totalPrice: '0',
+					cartNeedsVaulting: true,
+					expected: false,
+				},
+			] )(
+				'$name',
+				( {
+					hasSubscriptions,
+					totalPrice,
+					cartNeedsVaulting,
+					expected,
+				} ) => {
+					loadCheckoutBlock(
+						baseConfig( {
+							place_order: {
+								enabled: true,
+								text: 'Complete order',
+							},
+							has_subscriptions: hasSubscriptions,
+							cart_needs_vaulting: cartNeedsVaulting,
+							amount: '10.00',
+						} )
+					);
 
-				const { canMakePayment } = regularCallFor( 'ppcp-gateway' );
+					const { canMakePayment } = regularCallFor(
+						'ppcp-gateway'
+					);
 
-				expect(
-					canMakePayment( {
-						cartTotals: {
-							total_price: totalPrice,
-							currency_minor_unit: 2,
-						},
-					} )
-				).toBe( expected );
-			} );
+					expect(
+						canMakePayment( {
+							cartTotals: {
+								total_price: totalPrice,
+								currency_minor_unit: 2,
+							},
+						} )
+					).toBe( expected );
+				}
+			);
 		} );
 
 		describe( 'when only the saved-PayPal vault row is eligible', () => {
