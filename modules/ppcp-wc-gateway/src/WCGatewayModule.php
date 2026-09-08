@@ -47,6 +47,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\ResumedOrderShippingRestorer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
@@ -92,6 +93,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		$this->register_block_express_payment_method_handler( $c );
 		$this->register_columns( $c );
 		$this->register_checkout_paypal_address_preset( $c );
+		$this->register_resumed_order_shipping_restorer( $c );
 		$this->register_wc_tasks( $c );
 		$this->register_woo_inbox_notes( $c );
 		$this->register_void_button( $c );
@@ -777,6 +779,42 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			},
 			10,
 			2
+		);
+	}
+
+	/**
+	 * Registers the restorer that keeps the shipping line item of a resumed order.
+	 *
+	 * WooCommerce wipes and rebuilds a resumed order's line items; the rebuild can leave a
+	 * non-zero shipping total with no shipping line item behind it. The restorer snapshots
+	 * the items before they are wiped and puts them back when that happens.
+	 *
+	 * @param ContainerInterface $container The container.
+	 * @return void
+	 */
+	private function register_resumed_order_shipping_restorer( ContainerInterface $container ): void {
+		add_action(
+			'woocommerce_resume_order',
+			static function ( $order_id ) use ( $container ): void {
+				$restorer = $container->get( 'wcgateway.helper.resumed-order-shipping-restorer' );
+				assert( $restorer instanceof ResumedOrderShippingRestorer );
+
+				$restorer->snapshot( (int) $order_id );
+			},
+			10,
+			1
+		);
+
+		add_action(
+			'woocommerce_checkout_order_processed',
+			static function ( $order_id ) use ( $container ): void {
+				$restorer = $container->get( 'wcgateway.helper.resumed-order-shipping-restorer' );
+				assert( $restorer instanceof ResumedOrderShippingRestorer );
+
+				$restorer->restore( (int) $order_id );
+			},
+			10,
+			1
 		);
 	}
 

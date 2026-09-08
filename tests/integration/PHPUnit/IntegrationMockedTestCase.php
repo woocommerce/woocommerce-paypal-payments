@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CleansTestData;
 use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreateTestOrders;
 use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreateTestProducts;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -47,10 +48,23 @@ class IntegrationMockedTestCase extends TestCase
     }
 
     /**
-     * @param array<string, callable> $overriddenServices
+     * Boots the plugin with the given services and/or extensions replaced.
+     *
+     * Overriding a service id is not always enough: a service that another module extends
+     * via `extensions.php` is rebuilt by that extension, which may discard the override
+     * entirely (`woocommerce.logger.woocommerce` is one such service). Registering the
+     * replacement as an extension instead wins, because this module is added last and its
+     * extensions therefore run last.
+     *
+     * @param array<string, callable> $overriddenServices Service id => factory.
+     * @param array<string, callable> $overriddenExtensions Service id => extender, called
+     *                                                      with ($previous, $container).
      * @return ContainerInterface
      */
-    protected function bootstrapModule(array $overriddenServices = []): ContainerInterface
+    protected function bootstrapModule(
+        array $overriddenServices = [],
+        array $overriddenExtensions = []
+    ): ContainerInterface
     {
         $overriddenServices = array_merge([
             'http.redirector' => function () {
@@ -59,17 +73,25 @@ class IntegrationMockedTestCase extends TestCase
         ], $overriddenServices);
 
 
-        $module = new class ($overriddenServices) implements ServiceModule, ExecutableModule {
+        $module = new class ($overriddenServices, $overriddenExtensions) implements ServiceModule, ExtendingModule, ExecutableModule {
             use ModuleClassNameIdTrait;
 
-            public function __construct(array $services)
+            private $extensions;
+
+            public function __construct(array $services, array $extensions = [])
             {
                 $this->services = $services;
+                $this->extensions = $extensions;
             }
 
             public function services(): array
             {
                 return $this->services;
+            }
+
+            public function extensions(): array
+            {
+                return $this->extensions;
             }
 
             public function run(ContainerInterface $c): bool
