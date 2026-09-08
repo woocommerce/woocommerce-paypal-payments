@@ -694,6 +694,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Webhooks\\Handler\\RequestHandlerTrait' => $baseDir . '/modules/ppcp-webhooks/src/Handler/RequestHandlerTrait.php',
     'WooCommerce\\PayPalCommerce\\Webhooks\\Handler\\VaultPaymentTokenDeleted' => $baseDir . '/modules/ppcp-webhooks/src/Handler/VaultPaymentTokenDeleted.php',
     'WooCommerce\\PayPalCommerce\\Webhooks\\IncomingWebhookEndpoint' => $baseDir . '/modules/ppcp-webhooks/src/IncomingWebhookEndpoint.php',
+    'WooCommerce\\PayPalCommerce\\Webhooks\\OwnWebhookResolver' => $baseDir . '/modules/ppcp-webhooks/src/OwnWebhookResolver.php',
     'WooCommerce\\PayPalCommerce\\Webhooks\\Status\\WebhookSimulation' => $baseDir . '/modules/ppcp-webhooks/src/Status/WebhookSimulation.php',
     'WooCommerce\\PayPalCommerce\\Webhooks\\WebhookEventStorage' => $baseDir . '/modules/ppcp-webhooks/src/WebhookEventStorage.php',
     'WooCommerce\\PayPalCommerce\\Webhooks\\WebhookModule' => $baseDir . '/modules/ppcp-webhooks/src/WebhookModule.php',

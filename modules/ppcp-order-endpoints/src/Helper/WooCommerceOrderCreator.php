@@ -94,6 +94,10 @@ class WooCommerceOrderCreator
             $this->configure_line_items($wc_order, $cart_data, $payer, $shipping);
             $this->configure_addresses($wc_order, $payer, $shipping, $cart_data->needs_shipping());
             $this->configure_coupons($wc_order, $cart_data->coupons());
+            // Mirror WC_Checkout::create_order() so the order carries the cart hash. Downstream
+            // gates (e.g. the PayPal subscription replay guard) compare this against the hash
+            // captured at approval time; an unset hash makes a legitimate express purchase fail.
+            $wc_order->set_cart_hash($cart_data->cart_hash());
             $wc_order->calculate_totals();
             $wc_order->save();
         } catch (Exception $exception) {
@@ -207,6 +211,15 @@ class WooCommerceOrderCreator
             }
             $email = $wc_email ?: $payer->email_address();
             $billing_address = array('email' => $email ?: '', 'first_name' => $payer_name ? $payer_name->given_name() : '', 'last_name' => $payer_name ? $payer_name->surname() : '', 'address_1' => $address ? $address->address_line_1() : '', 'address_2' => $address ? $address->address_line_2() : '', 'city' => $address ? $address->admin_area_2() : '', 'state' => $address ? $address->admin_area_1() : '', 'postcode' => $address ? $address->postal_code() : '', 'country' => $address ? $address->country_code() : '', 'phone' => $payer_phone ? $payer_phone->phone()->national_number() : '');
+        }
+        // Fall back to the logged-in customer's saved billing address when PayPal returned no
+        // payer address (common with shipping disabled / NO_SHIPPING, where the payer carries
+        // only an email). Without this the order and any subscription are left with an empty
+        // billing address even though the customer has one saved. Only fires when the payer
+        // billing address block is empty, so a valid PayPal address is never overwritten.
+        $has_billing_address = $billing_address && (!empty($billing_address['address_1']) || !empty($billing_address['country']));
+        if (!$has_billing_address && $wc_customer instanceof WC_Customer && $wc_customer->get_billing_address_1()) {
+            $billing_address = array('email' => $billing_address['email'] ?? '' ?: ($wc_customer->get_billing_email() ?: ''), 'first_name' => $wc_customer->get_billing_first_name(), 'last_name' => $wc_customer->get_billing_last_name(), 'address_1' => $wc_customer->get_billing_address_1(), 'address_2' => $wc_customer->get_billing_address_2(), 'city' => $wc_customer->get_billing_city(), 'state' => $wc_customer->get_billing_state(), 'postcode' => $wc_customer->get_billing_postcode(), 'country' => $wc_customer->get_billing_country(), 'phone' => $wc_customer->get_billing_phone());
         }
         if ($shipping) {
             $address = $shipping->address();
