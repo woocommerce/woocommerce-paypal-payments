@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ShippingOption;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -273,6 +274,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$address->shouldReceive('country_code')->andReturn('');
 		$shipping = Mockery::mock(Shipping::class);
 		$shipping->shouldReceive('address')->andReturn($address);
+		$shipping->shouldReceive('options')->andReturn([]);
 
 		$shipping_factory = Mockery::mock(ShippingFactory::class);
 		$shipping_factory->expects('from_wc_customer')->andReturn($shipping);
@@ -369,6 +371,82 @@ class PurchaseUnitFactoryTest extends TestCase
 
 		$unit = $testee->from_wc_cart($wc_cart);
 		$this->assertEquals($shipping, $unit->shipping());
+	}
+
+	/**
+	 * GIVEN a cart customer with an unusable shipping address whose shipping node
+	 *       carries shipping options
+	 * WHEN the purchase unit is built for the cart
+	 * THEN the shipping node is kept with a null address
+	 * AND the shipping name and options survive unchanged
+	 */
+	public function test_wc_cart_shipping_kept_with_null_address_when_unusable_address_has_options()
+	{
+		$wc_customer = Mockery::mock(\WC_Customer::class);
+		expect('WC')->andReturn((object) ['customer' => $wc_customer, 'session' => null]);
+
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+
+		$address = $this->create_address_mock('DE', '12345', '', 'Berlin');
+		$option = new ShippingOption('flat_rate', 'Flat rate', true, new Money(5.0, 'USD'), ShippingOption::TYPE_SHIPPING);
+
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->shouldReceive('address')->andReturn($address);
+		$shipping->shouldReceive('options')->andReturn([$option]);
+		$shipping->shouldReceive('name')->andReturn('Jane Doe');
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_customer')->with($wc_customer, false)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$this->item], 'from_wc_cart', $wc_cart),
+			$shipping_factory,
+			null,
+			null,
+			$this->create_payment_level_eligibility_mock('', false)
+		);
+
+		$unit = $testee->from_wc_cart($wc_cart);
+
+		$result_shipping = $unit->shipping();
+		$this->assertInstanceOf(Shipping::class, $result_shipping);
+		$this->assertNull($result_shipping->address());
+		$this->assertSame([$option], $result_shipping->options());
+		$this->assertEquals('Jane Doe', $result_shipping->name());
+	}
+
+	/**
+	 * GIVEN a cart customer with an unusable shipping address and no shipping options
+	 * WHEN the purchase unit is built for the cart
+	 * THEN the shipping node is dropped
+	 */
+	public function test_wc_cart_shipping_dropped_when_unusable_address_has_no_options()
+	{
+		$wc_customer = Mockery::mock(\WC_Customer::class);
+		expect('WC')->andReturn((object) ['customer' => $wc_customer, 'session' => null]);
+
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$amount = Mockery::mock(Amount::class);
+
+		$address = $this->create_address_mock('DE', '12345', '', 'Berlin');
+		$shipping = $this->create_shipping_mock($address);
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->expects('from_wc_customer')->with($wc_customer, false)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_cart', $wc_cart),
+			$this->create_item_factory_mock([$this->item], 'from_wc_cart', $wc_cart),
+			$shipping_factory,
+			null,
+			null,
+			$this->create_payment_level_eligibility_mock('', false)
+		);
+
+		$unit = $testee->from_wc_cart($wc_cart);
+		$this->assertNull($unit->shipping());
 	}
 
 	public function test_from_paypal_response_default()
@@ -994,6 +1072,7 @@ class PurchaseUnitFactoryTest extends TestCase
 	{
 		$shipping = Mockery::mock(Shipping::class);
 		$shipping->shouldReceive('address')->zeroOrMoreTimes()->andReturn($address);
+		$shipping->shouldReceive('options')->zeroOrMoreTimes()->andReturn([]);
 		return $shipping;
 	}
 
