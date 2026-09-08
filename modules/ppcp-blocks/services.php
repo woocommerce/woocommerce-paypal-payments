@@ -42,6 +42,8 @@ return array(
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'wcgateway.place-order-button-description' ),
 			$container->get( 'wcgateway.all-funding-sources' ),
+			$container->get( 'wc-subscriptions.free-trial-subscription-helper' ),
+			$container->get( 'wc-payment-tokens.wc-payment-tokens' ),
 		);
 	},
 	'blocks.advanced-card-method'          => static function ( ContainerInterface $container ): AdvancedCardPaymentMethod {
