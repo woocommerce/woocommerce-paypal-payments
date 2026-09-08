@@ -3,6 +3,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
+use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ShippingOption;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
@@ -50,16 +51,26 @@ class ShippingCallbackEndpoint
         $request_data = $request->get_params();
         $this->logger->debug('Shipping callback received: ' . $request->get_body());
         $request_id = $request_data['id'];
-        $pu_id = $request_data['purchase_units'][0]['reference_id'];
-        $address = $this->convert_address_to_wc($request_data['shipping_address']);
-        $cart_response = $this->cart_endpoint->update_customer($cart_token, array('shipping_address' => $address));
+        $pu_id = $request_data['purchase_units'][0]['reference_id'] ?? 'default';
+        $address = $this->convert_address_to_wc($request_data['shipping_address'] ?? array());
+        try {
+            $cart_response = $this->cart_endpoint->update_customer($cart_token, array('shipping_address' => $address));
+        } catch (Exception $exception) {
+            $this->logger->warning('Shipping callback response: ADDRESS_ERROR (' . $exception->getMessage() . ').');
+            return $this->error_response('ADDRESS_ERROR');
+        }
         if (empty($cart_response->cart()->shipping_rates())) {
             $this->logger->debug('Shipping callback response: ADDRESS_ERROR (no shipping rates found).');
-            return new WP_REST_Response(array('name' => 'UNPROCESSABLE_ENTITY', 'details' => array(array('issue' => 'ADDRESS_ERROR'))), 422);
+            return $this->error_response('ADDRESS_ERROR');
         }
         if (isset($request_data['shipping_option'])) {
             $selected_shipping_method_id = $request_data['shipping_option']['id'];
-            $cart_response = $this->cart_endpoint->select_shipping_rate($cart_token, 0, $selected_shipping_method_id);
+            try {
+                $cart_response = $this->cart_endpoint->select_shipping_rate($cart_token, 0, $selected_shipping_method_id);
+            } catch (Exception $exception) {
+                $this->logger->warning('Shipping callback response: METHOD_UNAVAILABLE (' . $exception->getMessage() . ').');
+                return $this->error_response('METHOD_UNAVAILABLE');
+            }
         }
         $cart = $cart_response->cart();
         $amount = $this->amount_factory->from_store_api_cart($cart->totals());
@@ -80,8 +91,57 @@ class ShippingCallbackEndpoint
         $url = rest_url(self::NAMESPACE . '/' . self::ROUTE);
         return $url;
     }
+    /**
+     * Tells PayPal that the order cannot be updated for the requested address or shipping option.
+     *
+     * @param string $issue The PayPal issue, like ADDRESS_ERROR or METHOD_UNAVAILABLE.
+     */
+    private function error_response(string $issue): WP_REST_Response
+    {
+        return new WP_REST_Response(array('name' => 'UNPROCESSABLE_ENTITY', 'details' => array(array('issue' => $issue))), 422);
+    }
+    /**
+     * Converts the PayPal address into the fields of the Store API customer endpoint.
+     *
+     * The callback payload contains no street lines, so those fields are omitted and the address
+     * that is already stored for the customer remains unchanged.
+     *
+     * @param array<string, mixed> $address The shipping_address of the callback payload.
+     * @return array<string, string>
+     */
     private function convert_address_to_wc(array $address): array
     {
-        return array('country' => $address['country_code'] ?? '', 'state' => $address['admin_area_1'] ?? '', 'city' => $address['admin_area_2'] ?? '', 'postcode' => $address['postal_code'] ?? '', 'address_line_1' => '', 'address_line_2' => '');
+        $country = (string) ($address['country_code'] ?? '');
+        return array('country' => $country, 'state' => $this->convert_state_to_wc((string) ($address['admin_area_1'] ?? ''), $country), 'city' => (string) ($address['admin_area_2'] ?? ''), 'postcode' => (string) ($address['postal_code'] ?? ''));
+    }
+    /**
+     * Converts the PayPal state into a state that WooCommerce accepts for the given country.
+     *
+     * PayPal sends regions that are not always part of the WooCommerce state list of the country,
+     * and the Store API rejects the whole address in that case. Such states are dropped, so that
+     * the shipping rates are calculated based on the remaining address fields.
+     *
+     * @param string $state The admin_area_1 of the callback payload, a state code or name.
+     * @param string $country The 2-letter country code.
+     */
+    private function convert_state_to_wc(string $state, string $country): string
+    {
+        if ('' === $state || '' === $country) {
+            return $state;
+        }
+        $states = array_filter((array) WC()->countries->get_states($country));
+        if (!$states) {
+            return $state;
+        }
+        $state = wc_strtoupper($state);
+        if (in_array($state, array_map('wc_strtoupper', array_keys($states)), \true)) {
+            return $state;
+        }
+        $code = array_search($state, array_map('wc_strtoupper', $states), \true);
+        if (\false !== $code) {
+            return (string) $code;
+        }
+        $this->logger->debug(sprintf('Shipping callback: dropped the state "%1$s", which is unknown in %2$s.', $state, $country));
+        return '';
     }
 }
