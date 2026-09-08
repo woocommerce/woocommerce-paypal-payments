@@ -34,6 +34,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MerchantCountrySupport;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
@@ -114,6 +115,7 @@ class SdkV6Manager {
 	private MessageStyleMapper $message_style_mapper;
 	private MessagesEligibility $messages_eligibility;
 	private string $merchant_country;
+	private MerchantCountrySupport $merchant_country_support;
 
 	/**
 	 * Card brand icons ({type, title, url}); empty when "Show logos" is off.
@@ -192,7 +194,8 @@ class SdkV6Manager {
 		GooglePayConfig $google_pay_config,
 		ApplePayConfig $apple_pay_config,
 		FastlaneConfig $fastlane_config,
-		CardFieldStyles $card_field_styles
+		CardFieldStyles $card_field_styles,
+		MerchantCountrySupport $merchant_country_support
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -217,6 +220,7 @@ class SdkV6Manager {
 		$this->apple_pay_config            = $apple_pay_config;
 		$this->fastlane_config             = $fastlane_config;
 		$this->card_field_styles           = $card_field_styles;
+		$this->merchant_country_support    = $merchant_country_support;
 
 		$this->placements = array(
 			new MethodPlacement(
@@ -552,6 +556,10 @@ class SdkV6Manager {
 	 * The uncached answer for should_load_on_current_page().
 	 */
 	private function resolve_should_load(): bool {
+		if ( ! $this->merchant_country_support->is_supported() ) {
+			return false;
+		}
+
 		// Native PayPal Subscriptions (subscriptions_api mode) have no v6 path: v6
 		// can only carry a subscription by vaulting, which that mode disables. Hand
 		// the whole page back to the v5 stack, which creates the subscription via
