@@ -135,10 +135,16 @@ export class PayPalUiClassic extends PayPalUi {
 			: this.page.locator(
 					'#ppc-button-ppcp-card-button-gateway-v6 paypal-basic-card-button'
 			  );
+	/**
+	 * v6 excludes an inert, same-titled `about:blank` iframe the SDK also
+	 * renders alongside the real one - both share title="paypal_card_form".
+	 */
 	bcdcDetailsIframe = () =>
 		sdkVersion() === 'v5'
 			? this.bcdcIframeV5().frameLocator( 'iframe.zoid-visible' )
-			: this.page.frameLocator( 'iframe[title="paypal_card_form"]' );
+			: this.page.frameLocator(
+					'iframe[title="paypal_card_form"]:not([src="about:blank"])'
+			  );
 	bcdcNumberInput = () =>
 		this.bcdcDetailsIframe().locator( '#credit-card-number' );
 	bcdcExpirationInput = () =>
