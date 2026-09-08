@@ -180,6 +180,8 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Skip WooCommerce Inbox note registration during AJAX requests #4607
 * Fix - Remove the orphaned reCAPTCHA Inbox note and align its enabled checks #4634
 * Fix - Prevent Advanced Card Fields submission when Blocks checkout fields are invalid (author @marcofucito) #4435
+* Fix - Show the product button on variable products with no preselected attributes #4691
+* Fix - Fix negative tax_total when a discount is not reported by WooCommerce #4690
 
 = 4.1.2 - 2026-08-04 =
 * Enhancement - Advanced onboarding options for onboarding wizard #4496
