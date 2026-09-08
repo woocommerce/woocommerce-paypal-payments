@@ -357,6 +357,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\CardFieldStyles' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/CardFieldStyles.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\FastlaneConfig' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/FastlaneConfig.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\GooglePayConfig' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/GooglePayConfig.php',
+    'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MerchantCountrySupport' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/MerchantCountrySupport.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MessageStyleMapper' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/MessageStyleMapper.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MessagesEligibility' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/MessagesEligibility.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MethodRenderGate' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/MethodRenderGate.php',
