@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MerchantCountrySupport;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -46,6 +47,7 @@ class AddPaymentMethodManager {
 	private SettingsProvider $settings_provider;
 
 	private CardFieldStyles $card_field_styles;
+	private MerchantCountrySupport $merchant_country_support;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -55,16 +57,18 @@ class AddPaymentMethodManager {
 		bool $paypal_vaulting_enabled,
 		bool $card_vaulting_enabled,
 		SettingsProvider $settings_provider,
-		CardFieldStyles $card_field_styles
+		CardFieldStyles $card_field_styles,
+		MerchantCountrySupport $merchant_country_support
 	) {
-		$this->asset_getter            = $asset_getter;
-		$this->version                 = $version;
-		$this->environment             = $environment;
-		$this->context                 = $context;
-		$this->paypal_vaulting_enabled = $paypal_vaulting_enabled;
-		$this->card_vaulting_enabled   = $card_vaulting_enabled;
-		$this->settings_provider       = $settings_provider;
-		$this->card_field_styles       = $card_field_styles;
+		$this->asset_getter             = $asset_getter;
+		$this->version                  = $version;
+		$this->environment              = $environment;
+		$this->context                  = $context;
+		$this->paypal_vaulting_enabled  = $paypal_vaulting_enabled;
+		$this->card_vaulting_enabled    = $card_vaulting_enabled;
+		$this->settings_provider        = $settings_provider;
+		$this->card_field_styles        = $card_field_styles;
+		$this->merchant_country_support = $merchant_country_support;
 	}
 
 	/**
@@ -116,7 +120,8 @@ class AddPaymentMethodManager {
 	 * Whether the v6 save surfaces load on the current page.
 	 */
 	public function should_load_on_current_page(): bool {
-		return is_user_logged_in()
+		return $this->merchant_country_support->is_supported()
+			&& is_user_logged_in()
 			&& ( $this->paypal_vaulting_enabled || $this->card_vaulting_enabled )
 			&& $this->context->is_add_payment_method_page();
 	}

@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Endpoint\CartQuoteEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MerchantCountrySupport;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
@@ -118,6 +119,13 @@ return array(
 		};
 	},
 
+	'sdk-v6.merchant-country-support'   => static function ( ContainerInterface $container ): MerchantCountrySupport {
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		return new MerchantCountrySupport( $settings_provider->merchant_country() );
+	},
+
 	'sdk-v6.card-field-styles'          => static function (): CardFieldStyles {
 		return new CardFieldStyles();
 	},
@@ -178,7 +186,8 @@ return array(
 			$container->get( 'sdk-v6.google-pay-config' ),
 			$container->get( 'sdk-v6.apple-pay-config' ),
 			$container->get( 'sdk-v6.fastlane-config' ),
-			$container->get( 'sdk-v6.card-field-styles' )
+			$container->get( 'sdk-v6.card-field-styles' ),
+			$container->get( 'sdk-v6.merchant-country-support' )
 		);
 	},
 
@@ -198,7 +207,8 @@ return array(
 				&& $container->get( 'save-payment-methods.eligible' )
 				&& $settings_provider->save_card_details(),
 			$settings_provider,
-			$container->get( 'sdk-v6.card-field-styles' )
+			$container->get( 'sdk-v6.card-field-styles' ),
+			$container->get( 'sdk-v6.merchant-country-support' )
 		);
 	},
 
