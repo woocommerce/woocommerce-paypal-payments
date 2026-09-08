@@ -22,8 +22,11 @@ export class PayPalUiClassic extends PayPalUi {
 			'#ppc-button-ppcp-gateway, #ppc-button-ppcp-gateway-v6'
 		);
 
+	/** v5: dedicated Google Pay wrapper. v6: shared with every express method. */
 	googlePayGatewayContainer = () =>
-		this.page.locator( '#ppc-button-googlepay-container' );
+		this.page.locator(
+			'#ppc-button-googlepay-container, #ppc-button-ppcp-gateway-v6'
+		);
 
 	/** v5 (legacy): unified zoid iframe wrapping every funding-source button. */
 	payPalIframeV5 = () =>
@@ -132,15 +135,10 @@ export class PayPalUiClassic extends PayPalUi {
 			: this.page.locator(
 					'#ppc-button-ppcp-card-button-gateway-v6 paypal-basic-card-button'
 			  );
-	/**
-	 * v6 branch is a best-effort guess: PayPal's own hosted card-detail modal
-	 * is rendered by the remotely-loaded v6 web SDK and isn't visible in this
-	 * repo's source. Verify against a live v6 BCDC checkout before relying on it.
-	 */
 	bcdcDetailsIframe = () =>
 		sdkVersion() === 'v5'
 			? this.bcdcIframeV5().frameLocator( 'iframe.zoid-visible' )
-			: this.page.frameLocator( 'iframe.zoid-visible' );
+			: this.page.frameLocator( 'iframe[title="paypal_card_form"]' );
 	bcdcNumberInput = () =>
 		this.bcdcDetailsIframe().locator( '#credit-card-number' );
 	bcdcExpirationInput = () =>
