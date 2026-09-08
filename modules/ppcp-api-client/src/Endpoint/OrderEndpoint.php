@@ -194,6 +194,10 @@ class OrderEndpoint {
 					if ( $shipping_preference !== ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE ) {
 						// Shipping options are not allowed to be sent when not getting the address from PayPal.
 						unset( $data['shipping']['options'] );
+
+						if ( empty( $data['shipping'] ) ) {
+							unset( $data['shipping'] );
+						}
 					}
 
 					return $data;
