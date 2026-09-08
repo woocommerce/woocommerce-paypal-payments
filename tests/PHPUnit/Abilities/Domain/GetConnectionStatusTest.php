@@ -3,20 +3,40 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
-use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
+use Mockery;
+use WooCommerce\PayPalCommerce\Abilities\AbilityHandlers;
+use WooCommerce\PayPalCommerce\Abilities\AbilityNames;
+use WooCommerce\PayPalCommerce\Abilities\Handler\GetConnectionStatusHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WP_Error;
 
 /**
- * Unit tests for the GetConnectionStatus reference ability.
+ * Unit tests for the GetConnectionStatus ability shell.
  *
- * Covers the registration shape and the projection method's
- * secret-redaction contract. The full delegate→REST→envelope path is
- * exercised by the Phase V integration harness against a real WC 10.9
- * install.
+ * PCP-6418: the shell carries no logic anymore — WC's loader calls
+ * get_name()/get_registration_args() statically, so it can only ever expose
+ * the registered shape and bind execute_callback/permission_callback through
+ * the AbilityHandlers seam. All projection/redaction behaviour now lives in
+ * GetConnectionStatusHandlerTest.
+ *
+ * @covers \WooCommerce\PayPalCommerce\Abilities\Domain\GetConnectionStatus
  */
 class GetConnectionStatusTest extends TestCase
 {
+	public function setUp(): void
+	{
+		parent::setUp();
+
+		AbilityHandlers::set(array());
+	}
+
+	public function tearDown(): void
+	{
+		AbilityHandlers::set(array());
+
+		parent::tearDown();
+	}
+
 	public function test_get_name_uses_the_extension_namespace(): void
 	{
 		$this->assertSame(
@@ -26,22 +46,94 @@ class GetConnectionStatusTest extends TestCase
 		);
 	}
 
+	/**
+	 * GIVEN the AbilityNames constants are the single source of truth for the
+	 *       registered slugs
+	 * WHEN the shell's static get_name() is read
+	 * THEN it returns exactly AbilityNames::GET_CONNECTION_STATUS, so the
+	 * registered slug and the AbilityHandlers map key this class is looked up
+	 * under can never drift apart.
+	 */
+	public function test_get_name_matches_the_shared_ability_names_constant(): void
+	{
+		$this->assertSame(AbilityNames::GET_CONNECTION_STATUS, GetConnectionStatus::get_name());
+	}
+
+	/**
+	 * GIVEN a handler bound through the AbilityHandlers seam
+	 * WHEN the shell's execute_callback is invoked
+	 * THEN the call dispatches to that bound handler instance, with the input
+	 * forwarded — the shell has no static execute() of its own anymore.
+	 */
+	public function test_registration_args_bind_execute_callback_to_the_di_handler_instance(): void
+	{
+		$handler = Mockery::mock(GetConnectionStatusHandler::class);
+		$handler->shouldReceive('execute')
+			->once()
+			->with(array( 'foo' => 'bar' ))
+			->andReturn(array( 'merchant' => array() ));
+		AbilityHandlers::set(array( GetConnectionStatus::get_name() => $handler ));
+
+		$args = GetConnectionStatus::get_registration_args();
+
+		$this->assertIsCallable(
+			$args['execute_callback'],
+			'execute_callback must be invocable — the shell has no static execute() of its own anymore.'
+		);
+		$this->assertSame(
+			array( 'merchant' => array() ),
+			($args['execute_callback'])(array( 'foo' => 'bar' )),
+			'Invoking execute_callback must dispatch to the bound handler instance and forward its input.'
+		);
+	}
+
+	/**
+	 * GIVEN nothing has been bound yet (e.g. registration ran before AbilitiesModule::run())
+	 * WHEN the shell's execute_callback is invoked
+	 * THEN it returns a WP_Error instead of fataling on an invalid callable —
+	 * registration must never crash the site before wiring completes.
+	 */
+	public function test_execute_callback_is_still_callable_and_returns_an_error_when_nothing_is_bound(): void
+	{
+		$args = GetConnectionStatus::get_registration_args();
+
+		$this->assertIsCallable($args['execute_callback']);
+
+		$result = ($args['execute_callback'])();
+		$this->assertInstanceOf(WP_Error::class, $result);
+		$this->assertSame('woocommerce_paypal_payments_not_initialized', $result->get_error_code());
+	}
+
+	/**
+	 * GIVEN a permission callable bound through the AbilityHandlers seam
+	 * WHEN the shell's registration args are read
+	 * THEN permission_callback is exactly that bound callable — never a
+	 * hardcoded `array(AbilitiesRegistrar::class, 'can_manage_woocommerce')`
+	 * or an always-true shortcut — and it denies when the bound gate denies.
+	 */
+	public function test_registration_args_bind_permission_callback_to_the_bound_gate(): void
+	{
+		$permission = static function (): bool {
+			return false;
+		};
+		AbilityHandlers::set(array(), $permission);
+
+		$args = GetConnectionStatus::get_registration_args();
+
+		$this->assertSame($permission, $args['permission_callback']);
+		$this->assertNotSame('__return_true', $args['permission_callback']);
+		$this->assertFalse(
+			($args['permission_callback'])(),
+			'The shell must surface exactly the bound gate, including a denial, never bypass it.'
+		);
+	}
+
 	public function test_registration_args_describe_a_zero_arg_read(): void
 	{
 		$args = GetConnectionStatus::get_registration_args();
 
 		$this->assertSame(
-			array( GetConnectionStatus::class, 'execute' ),
-			$args['execute_callback'],
-			'execute_callback must point at the Domain class itself.'
-		);
-		$this->assertSame(
-			array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
-			$args['permission_callback'],
-			'permission_callback must point at the shared registrar helper, never at __return_true.'
-		);
-		$this->assertSame(
-			AbilitiesRegistrar::CATEGORY_SLUG,
+			AbilityNames::CATEGORY_SLUG,
 			$args['category'],
 			'Category must be the shared `woocommerce` slug owned by Woo Core.'
 		);
@@ -79,83 +171,5 @@ class GetConnectionStatusTest extends TestCase
 			$args['meta']['mcp']['public'],
 			'mcp.public must be true — the whole point is agent visibility.'
 		);
-	}
-
-	public function test_project_merchant_payload_strips_clientId_and_clientSecret(): void
-	{
-		$payload = array(
-			'success'  => true,
-			'data'     => array(),
-			'merchant' => array(
-				'isConnected'       => true,
-				'isSandbox'         => false,
-				'id'                => 'M3RCH4NT_ID',
-				'email'             => 'merchant@example.test',
-				'sellerType'        => 'BUSINESS',
-				'clientId'          => 'PUBLIC_LOOKING_BUT_SECRET_ID',
-				'clientSecret'      => 'CR3D3NT14L',
-				'isSendOnlyCountry' => false,
-			),
-		);
-
-		$result = GetConnectionStatus::project_merchant_payload($payload);
-
-		$this->assertIsArray($result);
-		$this->assertArrayNotHasKey('clientId', $result['merchant'], 'API client id leaks the OAuth identity — must be stripped.');
-		$this->assertArrayNotHasKey('clientSecret', $result['merchant'], 'API client secret is a credential — must be stripped.');
-
-		$this->assertSame('M3RCH4NT_ID', $result['merchant']['id']);
-		$this->assertSame('merchant@example.test', $result['merchant']['email']);
-		$this->assertTrue($result['merchant']['isConnected']);
-		$this->assertFalse($result['merchant']['isSandbox']);
-	}
-
-	public function test_project_merchant_payload_passes_features_through_when_present(): void
-	{
-		$payload = array(
-			'success'  => true,
-			'data'     => array(),
-			'merchant' => array( 'isConnected' => true ),
-			'features' => array( 'fastlane', 'pay_later' ),
-		);
-
-		$result = GetConnectionStatus::project_merchant_payload($payload);
-
-		$this->assertIsArray($result);
-		$this->assertSame(array( 'fastlane', 'pay_later' ), $result['features']);
-	}
-
-	public function test_project_merchant_payload_omits_features_when_absent(): void
-	{
-		$payload = array(
-			'success'  => true,
-			'data'     => array(),
-			'merchant' => array( 'isConnected' => false ),
-		);
-
-		$result = GetConnectionStatus::project_merchant_payload($payload);
-
-		$this->assertIsArray($result);
-		$this->assertArrayNotHasKey('features', $result);
-	}
-
-	// NOTE: envelope-failure redaction is now centralised in
-	// AbstractPpcpAbility::envelope_error_or_null() and covered by
-	// AbstractPpcpAbilityTest::test_envelope_error_or_null_redacts_message_and_drops_details.
-	// project_merchant_payload() now only handles the success-branch shape.
-
-	public function test_project_merchant_payload_handles_missing_merchant_subobject(): void
-	{
-		// Defensive: the endpoint should always return a merchant array, but
-		// the projection must not blow up if the shape ever drifts.
-		$payload = array(
-			'success' => true,
-			'data'    => array(),
-		);
-
-		$result = GetConnectionStatus::project_merchant_payload($payload);
-
-		$this->assertIsArray($result);
-		$this->assertSame(array(), $result['merchant']);
 	}
 }

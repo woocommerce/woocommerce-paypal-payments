@@ -12,8 +12,8 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
 use Automattic\WooCommerce\Abilities\AbilityDefinition;
-use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
+use WooCommerce\PayPalCommerce\Abilities\AbilityHandlers;
+use WooCommerce\PayPalCommerce\Abilities\AbilityNames;
 
 /**
  * Registers woocommerce-paypal-payments/get-connection-status.
@@ -27,39 +27,23 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
  */
 class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefinition {
 
-	/**
-	 * Backing REST route for the merchant payload.
-	 *
-	 * @var string
-	 */
-	private const REST_ROUTE = '/wc/v3/wc_paypal/common/merchant';
-
-	/**
-	 * Fields dropped before returning to the agent. clientId/clientSecret are
-	 * the OAuth API credentials (admin-only); an agent could log them verbatim.
-	 * The merchant `id`/email stay — agents need them to reason about the account.
-	 *
-	 * @var array<int, string>
-	 */
-	private const REDACTED_FIELDS = array( 'clientId', 'clientSecret' );
-
 	public static function get_name(): string {
-		return 'woocommerce-paypal-payments/get-connection-status';
+		return AbilityNames::GET_CONNECTION_STATUS;
 	}
 
 	public static function get_registration_args(): array {
 		return array(
 			'label'               => __( 'Get PayPal Payments connection status', 'woocommerce-paypal-payments' ),
 			'description'         => __( 'Returns the merchant PayPal connection state (connected, sandbox, merchant ID, email, seller type) for the current store. API credentials are intentionally redacted.', 'woocommerce-paypal-payments' ),
-			'category'            => self::CATEGORY_SLUG,
+			'category'            => AbilityNames::CATEGORY_SLUG,
 			'input_schema'        => array(
 				'type'                 => 'object',
 				'default'              => (object) array(),
 				'properties'           => array(),
 				'additionalProperties' => false,
 			),
-			'execute_callback'    => array( self::class, 'execute' ),
-			'permission_callback' => array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
+			'execute_callback'    => AbilityHandlers::callback( self::get_name() ),
+			'permission_callback' => AbilityHandlers::permission_callback(),
 			// output_schema omitted — the merchant shape is defined by the
 			// plugin's $merchant_info_map; the projection documents the contract.
 			'meta'                => array(
@@ -74,71 +58,5 @@ class GetConnectionStatus extends AbstractPpcpAbility implements AbilityDefiniti
 				),
 			),
 		);
-	}
-
-	/**
-	 * Delegate to CommonRestEndpoint::get_merchant_details (Shape 2) and
-	 * project to the agent-facing shape via {@see self::project_merchant_payload()}.
-	 *
-	 * @param mixed $input Unused; kept for the execute_callback signature.
-	 * @return array|\WP_Error
-	 */
-	public static function execute( $input = null ) {
-		unset( $input );
-
-		$response = self::delegate_to_rest_controller(
-			CommonRestEndpoint::class,
-			'GET',
-			self::REST_ROUTE
-		);
-
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		}
-
-		if ( ! is_array( $response ) ) {
-			return new \WP_Error(
-				'woocommerce_paypal_payments_unexpected_response',
-				__( 'Unexpected response shape from the merchant endpoint.', 'woocommerce-paypal-payments' )
-			);
-		}
-
-		// CommonRestEndpoint puts merchant/features at the envelope top level
-		// alongside `data`, so unwrap_envelope() (which extracts `data`) would
-		// drop them — use the failure-branch handler only.
-		$envelope_error = self::envelope_error_or_null( $response );
-		if ( $envelope_error instanceof \WP_Error ) {
-			return $envelope_error;
-		}
-
-		return self::project_merchant_payload( $response );
-	}
-
-	/**
-	 * Project the CommonRestEndpoint success response to the agent payload:
-	 * the merchant subobject (API credentials stripped) plus optional features.
-	 * Public so tests can assert redaction without a REST server.
-	 *
-	 * @param array $payload Decoded REST response array (success branch).
-	 * @return array Agent-facing payload.
-	 */
-	public static function project_merchant_payload( array $payload ): array {
-		$merchant = isset( $payload['merchant'] ) && is_array( $payload['merchant'] )
-			? $payload['merchant']
-			: array();
-
-		foreach ( self::REDACTED_FIELDS as $field ) {
-			unset( $merchant[ $field ] );
-		}
-
-		$result = array(
-			'merchant' => $merchant,
-		);
-
-		if ( isset( $payload['features'] ) ) {
-			$result['features'] = $payload['features'];
-		}
-
-		return $result;
 	}
 }

@@ -9,9 +9,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Abilities;
 
-use Throwable;
-use WooCommerce\PayPalCommerce\Abilities\Domain\AbstractPpcpAbility;
-use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -36,24 +33,43 @@ class AbilitiesModule implements ServiceModule, ExecutableModule {
 	/**
 	 * {@inheritDoc}
 	 *
-	 * Resolves the plugin's PSR-3 logger once and hands it to
-	 * AbstractPpcpAbility's static seam so runtime error paths flow through
-	 * wc_get_logger(); a NullLogger fallback keeps resolution failure from
-	 * breaking the abilities surface. AbilitiesRegistrar is a static
-	 * coordinator; Shape-3 abilities resolve backing services lazily at execute().
+	 * Binds each ability to its container-resolved handler, as a factory rather
+	 * than an instance: AbilityHandlers::callback() defers the factory to the
+	 * moment an ability is actually executed, so the backing endpoints are
+	 * never built on a request that merely registers the surface.
+	 *
+	 * The map is keyed by AbilityNames constants, never by
+	 * Domain\Get*::get_name(). Naming a Domain shell here would autoload it,
+	 * and each shell is declared `implements AbilityDefinition` — an interface
+	 * that only exists on WC 10.9+. Since run() fires on plugins_loaded, ahead
+	 * of both the feature flag and the AbilitiesLoader gate, that autoload
+	 * would fatal every request on every store below WC 10.9.
 	 *
 	 * @param ContainerInterface $c A services container instance.
 	 */
 	public function run( ContainerInterface $c ): bool {
-		try {
-			$logger = $c->get( 'woocommerce.logger.woocommerce' );
-		} catch ( Throwable $e ) {
-			$logger = new NullLogger();
-		}
+		$registrar = $c->get( 'abilities.registrar' );
+		assert( $registrar instanceof AbilitiesRegistrar );
 
-		AbstractPpcpAbility::set_logger( $logger );
+		AbilityHandlers::set(
+			array(
+				AbilityNames::GET_CONNECTION_STATUS => static function () use ( $c ) {
+					return $c->get( 'abilities.handler.get-connection-status' );
+				},
+				AbilityNames::GET_PAYMENT_METHODS   => static function () use ( $c ) {
+					return $c->get( 'abilities.handler.get-payment-methods' );
+				},
+				AbilityNames::GET_ORDER_TRACKING    => static function () use ( $c ) {
+					return $c->get( 'abilities.handler.get-order-tracking' );
+				},
+				AbilityNames::GET_PAYPAL_ORDER      => static function () use ( $c ) {
+					return $c->get( 'abilities.handler.get-paypal-order' );
+				},
+			),
+			array( $registrar, 'can_manage_woocommerce' )
+		);
 
-		AbilitiesRegistrar::init();
+		$registrar->init();
 
 		return true;
 	}
