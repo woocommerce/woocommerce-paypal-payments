@@ -134,7 +134,8 @@
     "@wordpress/url": "^4.40.0",
     "babel-plugin-explicit-exports-references": "^1.0.2",
     "eslint-import-resolver-webpack": "^0.13.10",
-    "jquery": "^3.7.1"
+    "jquery": "^3.7.1",
+    "otplib": "^13.5.0"
   },
   "overrides": {
     "@wordpress/scripts": {

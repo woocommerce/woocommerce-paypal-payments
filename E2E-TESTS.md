@@ -39,7 +39,7 @@ Detailed information about current test project can be found in [docs](./docs/RE
 
 	1.1 Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
 	
-	1.2 Set PayPal API keys and test credentials. See `.env.example`. For Google Pay transaction tests, make sure to also set `GOOGLE_PAY_EMAIL` and `GOOGLE_PAY_PASSWORD`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
+	1.2 Set PayPal API keys and test credentials. See `.env.example`. For Google Pay transaction tests, make sure to also set `GOOGLE_PAY_EMAIL`, `GOOGLE_PAY_PASSWORD`, and `GOOGLE_PAY_TOTP_SECRET`. The Google test account must have 2-Step Verification set up via an authenticator app (not SMS) — `GOOGLE_PAY_TOTP_SECRET` is that authenticator's secret, used to compute the current code locally instead of waiting on an unautomatable phone prompt. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
 
 2. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 
