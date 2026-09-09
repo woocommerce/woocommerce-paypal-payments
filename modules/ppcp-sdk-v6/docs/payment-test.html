@@ -7,6 +7,9 @@ Standalone harness for the PayPal Web SDK v6 flows, with no WordPress in the
 way. Sandbox only: it keeps the sandbox client ID and secret in localStorage and
 calls the PayPal API straight from the browser.
 
+The query string carries the configuration, so a URL describes a whole test case
+and a reload keeps the current setup.
+
 Layout of this file:
   1. Markup            - credentials gate, configuration bar, results
   2. Script - plumbing - logging, sections, credentials, form values
@@ -26,76 +29,83 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 <body>
 <!-- The flex container is this wrapper, not the body: see the styles. -->
 <div id='page'>
-<header>
-	<h1>PayPal Web SDK v6 test page</h1>
-	<small id='creds' hidden>
-		<code id='current-client-id'></code>
-		<button class='secondary outline' id='clear-credentials'>Clear</button>
-	</small>
-</header>
+	<header>
+		<h1>PayPal Web SDK v6 test page</h1>
+		<small id='creds' hidden>
+			<code id='current-client-id'></code>
+			<button class='secondary outline' id='clear-credentials'>Clear</button>
+		</small>
+	</header>
 
-<!-- Credentials gate: replaced by the workspace below once credentials exist -->
-<article id='credentials-panel'>
-	<h2>Sandbox credentials</h2>
-	<label>
-		Client ID
-		<input type='text' id='form-client-id' autocomplete='off'>
-	</label>
-	<label>
-		Client secret
-		<input type='password' id='form-client-secret' autocomplete='off'>
-	</label>
-	<button id='save-credentials'>Save and reload</button>
-</article>
+	<!-- Credentials gate: replaced by the workspace below once credentials exist -->
+	<article id='credentials-panel'>
+		<h2>Sandbox credentials</h2>
+		<label>
+			Client ID
+			<input type='text' id='form-client-id' autocomplete='off'>
+		</label>
+		<label>
+			Client secret
+			<input type='password' id='form-client-secret' autocomplete='off'>
+		</label>
+		<button id='save-credentials'>Save and reload</button>
+	</article>
 
-<div id='app' hidden>
+	<div id='app' hidden>
 
-	<!-- Configuration: set once, then run -->
-	<section id='config'>
-		<div class='group'>
-			<span class='caption'>Components</span>
-			<div id='component-list'></div>
-		</div>
+		<!-- Configuration: set once, then run -->
+		<section id='config'>
+			<div class='group'>
+				<span class='caption'>Components</span>
+				<div id='component-list'></div>
+			</div>
 
-		<div class='group'>
-			<span class='caption'>Transaction</span>
-			<div class='fields'>
-				<label for='currency'>Currency<input type='text' id='currency' value='USD'></label>
-				<label for='country'>Country<input type='text' id='country' value='US'></label>
-				<label for='amount'>Amount<input type='text' id='amount' value='10.00'></label>
-				<!-- The enum each option sends is on its title attribute, and in the log. -->
-				<label for='sca-method'>3D Secure<select id='sca-method'>
-					<option value=''>No 3D Secure</option>
-					<option value='SCA_WHEN_REQUIRED' title='SCA_WHEN_REQUIRED'>3DS when required</option>
-					<option value='SCA_ALWAYS' title='SCA_ALWAYS'>3DS always</option>
-				</select></label>
-				<label for='shipping'>Shipping<select id='shipping'>
-					<option value=''>No shipping</option>
-					<option value='collect'>Collect in the sheet</option>
-					<option value='prefill'>Collect and prefill</option>
-				</select></label>
+			<div class='group'>
+				<span class='caption'>Transaction</span>
+				<div class='fields'>
+					<label for='currency'>Currency<input type='text' id='currency' value='USD'></label>
+					<label for='country'>Country<input type='text' id='country' value='US'></label>
+					<label for='amount'>Amount<input type='text' id='amount' value='10.00'></label>
+					<!-- The enum each option sends is on its title attribute, and in the log. -->
+					<label for='sca-method'>3D Secure<select id='sca-method'>
+						<option value=''>No 3D Secure</option>
+						<option value='SCA_WHEN_REQUIRED' title='SCA_WHEN_REQUIRED'>3DS when required</option>
+						<option value='SCA_ALWAYS' title='SCA_ALWAYS'>3DS always</option>
+					</select></label>
+					<label for='shipping'>Shipping<select id='shipping'>
+						<option value=''>No shipping</option>
+						<option value='collect'>Collect in the sheet</option>
+						<option value='prefill'>Collect and prefill</option>
+					</select></label>
+				</div>
+			</div>
+
+			<div class='group cta'>
+				<button id='btn-create' disabled>Create buttons</button>
+				<small id='create-hint'>Select at least one component.</small>
+			</div>
+		</section>
+
+		<!-- What the collapsed configuration bar leaves visible -->
+		<section id='summary' hidden>
+			<span id='summary-text'></span>
+			<span id='run-status' aria-busy='true' hidden>Running</span>
+			<button class='secondary outline' id='btn-edit'>Edit</button>
+		</section>
+
+		<!-- Output: two independently scrolling panes filling the viewport -->
+		<div class='workspace'>
+			<div id='methods'></div>
+			<div id='log-pane'>
+				<div id='log-bar'>
+					<input type='search' id='log-filter' placeholder='Filter the log' autocomplete='off'>
+					<small id='log-count'></small>
+				</div>
+				<ol id='log'></ol>
 			</div>
 		</div>
 
-		<div class='group cta'>
-			<button id='btn-create' disabled>Create buttons</button>
-			<small id='create-hint'>Select at least one component.</small>
-		</div>
-	</section>
-
-	<!-- What the collapsed configuration bar leaves visible -->
-	<section id='summary' hidden>
-		<span id='summary-text'></span>
-		<button class='secondary outline' id='btn-edit'>Edit</button>
-	</section>
-
-	<!-- Output: two independently scrolling panes filling the viewport -->
-	<div class='workspace'>
-		<div id='methods'></div>
-		<div id='log'></div>
 	</div>
-
-</div>
 
 </div>
 
@@ -107,21 +117,22 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	const GOOGLE_SDK = 'https://pay.google.com/gp/p/js/pay.js';
 	const APPLE_SDK = 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 
-	// The only scope a client token carries when intent=sdk_init was ignored and
-	// a legacy vault token came back instead.
-	const LEGACY_SCOPE = 'vault/payment-tokens';
+	/*
+	 * The scope entries the SDK needs, and what each one pays for.
+	 *
+	 * A token minted without intent=sdk_init carries neither. createInstance()
+	 * still succeeds, then findEligibleMethods() answers 403 NOT_AUTHORIZED and
+	 * every button disappears at once.
+	 */
+	const SDK_SCOPES = {
+		'client-payments-eligibility': 'findEligibleMethods()',
+		'client_sdk_orders_api': 'a session\'s order calls',
+	};
 
 	// What a card field dispatches on itself. The names come from the card-fields
 	// bundle. focus and blur also arrive as plain DOM events on the same element.
 	const FIELD_EVENTS = [
-		'blur',
-		'cardtypechange',
-		'change',
-		'empty',
-		'focus',
-		'inputsubmit',
-		'notempty',
-		'validitychange',
+		'blur', 'cardtypechange', 'change', 'empty', 'focus', 'inputsubmit', 'notempty', 'validitychange',
 	];
 
 	/*
@@ -134,13 +145,38 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	 * The render functions are hoisted declarations, defined further down.
 	 */
 	const COMPONENTS = [
-		{ name: 'paypal-payments', title: 'PayPal', render: renderPayPal },
-		{ name: 'venmo-payments', title: 'Venmo', render: renderVenmo },
-		{ name: 'googlepay-payments', title: 'Google Pay', source: 'google_pay', render: renderGooglePay },
-		{ name: 'applepay-payments', title: 'Apple Pay', render: renderApplePay },
-		{ name: 'card-fields', title: 'Card Fields', source: 'card', render: renderCardFields },
-		{ name: 'paypal-guest-payments', title: 'Guest Payment', render: renderCardButton },
-		{ name: 'fastlane', title: 'Fastlane', source: 'card', render: renderFastlane },
+		{
+			name: 'paypal-payments',
+			title: 'PayPal',
+			render: renderPayPal,
+		}, {
+			name: 'venmo-payments',
+			title: 'Venmo',
+			render: renderVenmo,
+		}, {
+			name: 'googlepay-payments',
+			title: 'Google Pay',
+			source: 'google_pay',
+			render: renderGooglePay,
+		}, {
+			name: 'applepay-payments',
+			title: 'Apple Pay',
+			render: renderApplePay,
+		}, {
+			name: 'card-fields',
+			title: 'Card Fields',
+			source: 'card',
+			render: renderCardFields,
+		}, {
+			name: 'paypal-guest-payments',
+			title: 'Guest Payment',
+			render: renderCardButton,
+		}, {
+			name: 'fastlane',
+			title: 'Fastlane',
+			source: 'card',
+			render: renderFastlane,
+		},
 	];
 
 	const APPROVED_NEXT = 'The order is approved.';
@@ -160,19 +196,32 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 	// A signed wallet token is not usable, only its length is interesting.
 	function trimLongStrings( key, value ) {
-		return typeof value === 'string' && value.length > 200
-			? '[' + value.length + ' characters omitted]'
-			: value;
+		return typeof value === 'string' && value.length > 200 ? '[' + value.length + ' characters omitted]' : value;
+	}
+
+	// Within a line of the bottom counts as the bottom: a rounded scroll position
+	// rarely lands on the last pixel.
+	function atBottom( element ) {
+		return element.scrollHeight - element.scrollTop - element.clientHeight < 24;
 	}
 
 	function log( message, data, level ) {
 		const logger = document.getElementById( 'log' );
-		const line = document.createElement( 'div' );
+		const line = document.createElement( 'li' );
 		const label = document.createElement( 'span' );
 
+		// Read the position before the line goes in, while it still describes
+		// where the reader is rather than where the new line put them.
+		const pinned = atBottom( logger );
+
 		label.className = level || '';
-		label.textContent = '[' + new Date().toLocaleTimeString() + '] ' + message;
+		label.textContent = message;
 		line.appendChild( label );
+		line.tabIndex = -1;
+
+		// An explicit number, because a hidden line stops counting: a filter would
+		// otherwise renumber what is left from 1 and lose the position in the run.
+		line.value = logger.children.length + 1;
 
 		if ( undefined !== data ) {
 			const pre = document.createElement( 'pre' );
@@ -181,8 +230,50 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		}
 
 		logger.appendChild( line );
-		logger.scrollTop = logger.scrollHeight;
+
+		if ( logFilter() ) {
+			filterLog();
+		}
+
+		// Only from the bottom. A reader who scrolled up to study a payload stays
+		// where they are while the rest of the run arrives.
+		if ( pinned ) {
+			logger.scrollTop = logger.scrollHeight;
+		}
+
 		console.log( message, data );
+	}
+
+	function logFilter() {
+		return document.getElementById( 'log-filter' ).value.trim().toLowerCase();
+	}
+
+	/*
+	 * Hides the lines that do not hold the search text.
+	 *
+	 * A line matches on all of its own text, so a payload counts as much as the
+	 * label above it. The count says how much is hidden, because a filter that
+	 * matches nothing leaves an empty pane that looks like a broken run.
+	 */
+	function filterLog() {
+		const needle = logFilter();
+		const lines = document.querySelectorAll( '#log > li' );
+		let shown = 0;
+
+		lines.forEach( ( line ) => {
+			line.hidden = !! needle && -1 === line.textContent.toLowerCase().indexOf( needle );
+			shown += line.hidden ? 0 : 1;
+		} );
+
+		document.getElementById( 'log-count' ).textContent = needle
+			? shown + ' of ' + lines.length
+			: '';
+	}
+
+	// The configuration bar is collapsed during a run, so the summary row carries
+	// the busy state.
+	function setBusy( busy ) {
+		document.getElementById( 'run-status' ).hidden = ! busy;
 	}
 
 	// Wallets reject with plain objects rather than Errors, and those
@@ -312,6 +403,71 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		list.addEventListener( 'change', syncCreateButton );
 	}
 
+	/*
+	 * The configuration lives in the query string.
+	 *
+	 * A reload keeps the setup, and a URL describes a whole test, so one developer
+	 * can hand a case to another. The credentials stay in localStorage, because
+	 * they do not belong in a link.
+	 */
+	const URL_FIELDS = {
+		currency: 'currency',
+		country: 'country',
+		amount: 'amount',
+		sca: 'sca-method',
+		shipping: 'shipping',
+	};
+
+	function readUrlConfig() {
+		const params = new URLSearchParams( location.search );
+
+		Object.keys( URL_FIELDS ).forEach( ( key ) => {
+			const field = document.getElementById( URL_FIELDS[key] );
+			const value = params.get( key );
+
+			if ( null === value ) {
+				return;
+			}
+
+			// A select keeps its own default unless the value is one it offers.
+			const offered = 'SELECT' !== field.tagName
+				|| Array.from( field.options ).some( ( option ) => option.value === value );
+
+			if ( offered ) {
+				field.value = value;
+			}
+		} );
+
+		const wanted = ( params.get( 'components' ) || '' ).split( ',' );
+
+		document.querySelectorAll( '#component-list input' ).forEach( ( input ) => {
+			input.checked = -1 !== wanted.indexOf( input.dataset.component );
+		} );
+	}
+
+	function writeUrlConfig() {
+		const params = new URLSearchParams();
+		const components = selectedComponents();
+
+		Object.keys( URL_FIELDS ).forEach( ( key ) => {
+			const value = document.getElementById( URL_FIELDS[key] ).value.trim();
+
+			// An empty value is left out, so a default setup keeps a short URL.
+			if ( value ) {
+				params.set( key, value );
+			}
+		} );
+
+		if ( components.length ) {
+			params.set( 'components', components.join( ',' ) );
+		}
+
+		const query = params.toString();
+
+		// replaceState, so the back button does not walk back through keystrokes.
+		history.replaceState( null, '', location.pathname + ( query ? '?' + query : '' ) );
+	}
+
 	function selectedComponents() {
 		return Array.from( document.querySelectorAll( '#component-list input:checked' ) )
 			.map( ( input ) => input.dataset.component );
@@ -335,10 +491,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		const chosen = ( id ) => document.getElementById( id ).selectedOptions[0].textContent;
 
 		return [
-			values.countryCode,
-			values.amount + ' ' + values.currencyCode,
-			chosen( 'sca-method' ),
-			chosen( 'shipping' ),
+			values.countryCode, values.amount + ' ' + values.currencyCode, chosen( 'sca-method' ), chosen( 'shipping' ),
 		].join( ' | ' );
 	}
 
@@ -422,20 +575,30 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		return postToken( 'grant_type=client_credentials' );
 	}
 
+	/*
+	 * Reports the scope, and names the entries the SDK reads.
+	 *
+	 * The API returns one space-separated string, which is how OAuth 2 defines a
+	 * scope. The log splits it because the entries are long. Each entry is a
+	 * capability the token carries, and PayPal writes most of them as a URI.
+	 */
 	function reportScope( token ) {
-		const scope = token.scope || '';
+		const scopes = (token.scope || '').trim().split( /\s+/ ).filter( Boolean );
 
-		log( 'Client token scope, expires in ' + token.expires_in + 's', scope );
+		log( 'Client token scope, ' + scopes.length + ' entries, expires in ' + token.expires_in + 's', scopes );
 
-		if ( scope.indexOf( LEGACY_SCOPE ) !== -1 && scope.trim().split( /\s+/ ).length <= 2 ) {
-			log( 'This is a legacy vault token: intent=sdk_init was ignored. createInstance() will still succeed, then findEligibleMethods() will fail with 403 NOT_AUTHORIZED and every button will disappear at once. Onboard through OAuth instead of manual API keys, or use a different sandbox merchant.', undefined, 'err' );
+		const missing = Object.keys( SDK_SCOPES )
+			.filter( ( name ) => ! scopes.some( ( entry ) => entry.indexOf( name ) !== -1 ) );
 
-			return false;
+		if ( ! missing.length ) {
+			log( 'The token carries both entries the SDK reads: ' + Object.keys( SDK_SCOPES ).join( ' and ' ) + '.', undefined, 'ok' );
+
+			return true;
 		}
 
-		log( 'Scope looks like an sdk_init token.', undefined, 'ok' );
+		log( 'The token has no ' + missing.map( ( name ) => name + ' entry (needed by ' + SDK_SCOPES[name] + ')' ).join( ', and no ' ) + '. This is what a vault token looks like, so intent=sdk_init was ignored. Onboard through OAuth instead of manual API keys, or use a different sandbox merchant.', undefined, 'err' );
 
-		return true;
+		return false;
 	}
 
 	// createInstance() rejects when the fastlane component is requested without one.
@@ -462,8 +625,8 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		const cta = document.getElementById( 'btn-create' );
 
 		collapseConfig( true );
+		setBusy( true );
 		cta.disabled = true;
-		cta.setAttribute( 'aria-busy', 'true' );
 		document.getElementById( 'log' ).innerHTML = '';
 		document.getElementById( 'methods' ).innerHTML = '';
 		state.sdkInstance = null;
@@ -494,7 +657,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 			log( 'Done.', undefined, 'ok' );
 		} finally {
-			cta.removeAttribute( 'aria-busy' );
+			setBusy( false );
 			syncCreateButton();
 		}
 	}
@@ -528,8 +691,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			logCall( 'createInstance()', args );
 
 			state.sdkInstance = await window.paypal.createInstance( {
-				clientToken: clientToken.access_token,
-				...args,
+				clientToken: clientToken.access_token, ...args,
 			} );
 
 			logResult( 'createInstance()' );
@@ -543,10 +705,18 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	}
 
 	async function checkEligibility() {
-		const { currencyCode, countryCode, amount } = transaction();
+		const {
+			currencyCode,
+			countryCode,
+			amount,
+		} = transaction();
 
 		try {
-			logCall( 'findEligibleMethods()', { currencyCode, countryCode, amount } );
+			logCall( 'findEligibleMethods()', {
+				currencyCode,
+				countryCode,
+				amount,
+			} );
 
 			const methods = await state.sdkInstance.findEligibleMethods( {
 				currencyCode: currencyCode,
@@ -615,7 +785,10 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	 * ========================================================================== */
 
 	async function createOrder( paymentSource ) {
-		const { currencyCode, amount } = transaction();
+		const {
+			currencyCode,
+			amount,
+		} = transaction();
 		const accessToken = await mintAccessToken();
 
 		const body = {
@@ -740,9 +913,39 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	// Countries this pretend store ships to, and what it charges. An address
 	// outside the table gets no rates, which is what makes a sheet reject it.
 	const SHIPPING_RATES = {
-		US: [ { id: 'standard', label: 'Standard', cost: '5.00' }, { id: 'express', label: 'Express', cost: '15.00' } ],
-		DE: [ { id: 'standard', label: 'Standard', cost: '7.50' }, { id: 'express', label: 'Express', cost: '20.00' } ],
-		GB: [ { id: 'standard', label: 'Standard', cost: '6.00' }, { id: 'express', label: 'Express', cost: '18.00' } ],
+		US: [
+			{
+				id: 'standard',
+				label: 'Standard',
+				cost: '5.00',
+			}, {
+				id: 'express',
+				label: 'Express',
+				cost: '15.00',
+			},
+		],
+		DE: [
+			{
+				id: 'standard',
+				label: 'Standard',
+				cost: '7.50',
+			}, {
+				id: 'express',
+				label: 'Express',
+				cost: '20.00',
+			},
+		],
+		GB: [
+			{
+				id: 'standard',
+				label: 'Standard',
+				cost: '6.00',
+			}, {
+				id: 'express',
+				label: 'Express',
+				cost: '18.00',
+			},
+		],
 	};
 
 	/*
@@ -781,15 +984,13 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	 * one round trip answers both "what does it cost" and "what can they pick".
 	 */
 	async function quoteShipping( countryCode, rateId ) {
-		const options = SHIPPING_RATES[( countryCode || '' ).toUpperCase()] || [];
+		const options = SHIPPING_RATES[(countryCode || '').toUpperCase()] || [];
 
 		// The prefilled rate outranks the first option in the list: Google's
 		// INITIALIZE callback arrives with nothing selected yet, and answering it
 		// with options[0] would undo the pre-selection the request just made.
 		const fallback = prefillsShipping() ? PREFILL_RATE : null;
-		const selected = options.find( ( option ) => option.id === rateId )
-			|| options.find( ( option ) => option.id === fallback )
-			|| options[0];
+		const selected = options.find( ( option ) => option.id === rateId ) || options.find( ( option ) => option.id === fallback ) || options[0];
 		const subtotal = parseFloat( transaction().amount ) || 0;
 		const shippingFee = selected ? parseFloat( selected.cost ) : 0;
 
@@ -799,7 +1000,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			subtotal: subtotal.toFixed( 2 ),
 			shippingFee: shippingFee.toFixed( 2 ),
 			tax: '0.00',
-			total: ( subtotal + shippingFee ).toFixed( 2 ),
+			total: (subtotal + shippingFee).toFixed( 2 ),
 		};
 
 		logStore( 'priced ' + options.length + ' rate(s) for ' + (countryCode || 'an unknown country'), quote );
@@ -816,7 +1017,10 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 	function formatCost( cost, currencyCode ) {
 		try {
-			return new Intl.NumberFormat( undefined, { style: 'currency', currency: currencyCode } ).format( parseFloat( cost ) );
+			return new Intl.NumberFormat( undefined, {
+				style: 'currency',
+				currency: currencyCode,
+			} ).format( parseFloat( cost ) );
 		} catch ( error ) {
 			// An unknown currency code must not take the sheet down with it.
 			return cost + ' ' + currencyCode;
@@ -959,7 +1163,11 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	}
 
 	async function payWithGooglePay( client, session, config, component ) {
-		const { currencyCode, countryCode, amount } = transaction();
+		const {
+			currencyCode,
+			countryCode,
+			amount,
+		} = transaction();
 
 		const request = {
 			apiVersion: 2,
@@ -972,8 +1180,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 				totalPriceStatus: 'FINAL',
 				totalPrice: amount,
 			},
-			emailRequired: true,
-			...googleShippingRequest(),
+			emailRequired: true, ...googleShippingRequest(),
 		};
 
 		try {
@@ -988,16 +1195,15 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 			const orderId = await createOrder( component.source );
 
-			logCall( 'confirmOrder()', { orderId: orderId, paymentMethodData: '(from the sheet)' } );
+			logCall( 'confirmOrder()', {
+				orderId: orderId,
+				paymentMethodData: '(from the sheet)',
+			} );
 
-			await reportConfirmation(
-				await session.confirmOrder( {
-					orderId: orderId,
-					paymentMethodData: paymentData.paymentMethodData,
-				} ),
-				session,
-				orderId,
-			);
+			await reportConfirmation( await session.confirmOrder( {
+				orderId: orderId,
+				paymentMethodData: paymentData.paymentMethodData,
+			} ), session, orderId );
 		} catch ( error ) {
 			if ( error && error.statusCode === 'CANCELED' ) {
 				log( 'loadPaymentData() rejected with CANCELED. The buyer closed the sheet.', undefined, 'warn' );
@@ -1035,11 +1241,11 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 			request.shippingOptionParameters = {
 				defaultSelectedOptionId: PREFILL_RATE,
-				shippingOptions: rates.map( ( option ) => ( {
+				shippingOptions: rates.map( ( option ) => ({
 					id: option.id,
 					label: option.label,
 					description: formatCost( option.cost, transaction().currencyCode ),
-				} ) ),
+				}) ),
 			};
 
 			log( 'The request pre-selects the rate "' + PREFILL_RATE + '". It cannot pre-set the address: Google offers only the addresses in the buyer\'s own account.', undefined, 'warn' );
@@ -1049,7 +1255,10 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	}
 
 	function googleShippingCallbacks() {
-		const { currencyCode, countryCode } = transaction();
+		const {
+			currencyCode,
+			countryCode,
+		} = transaction();
 
 		// Google rejects newShippingOptionParameters on a SHIPPING_OPTION
 		// trigger: the shopper is picking from the list it already has.
@@ -1059,10 +1268,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			onPaymentDataChanged: async ( paymentData ) => {
 				logEvent( 'onPaymentDataChanged (' + paymentData.callbackTrigger + ')', paymentData );
 
-				const quote = await quoteShipping(
-					paymentData.shippingAddress ? paymentData.shippingAddress.countryCode : countryCode,
-					resolveRateId( paymentData.shippingOptionData ? paymentData.shippingOptionData.id : null ),
-				);
+				const quote = await quoteShipping( paymentData.shippingAddress ? paymentData.shippingAddress.countryCode : countryCode, resolveRateId( paymentData.shippingOptionData ? paymentData.shippingOptionData.id : null ) );
 
 				if ( ! quote.options.length ) {
 					log( 'The test store has no rate for that address. The sheet stays open.', undefined, 'warn' );
@@ -1091,13 +1297,12 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 				if ( optionListTriggers.indexOf( paymentData.callbackTrigger ) !== -1 ) {
 					update.newShippingOptionParameters = {
-						defaultSelectedOptionId: quote.selectedId,
-						// Stripped to the three keys Google accepts: it throws on any other.
-						shippingOptions: quote.options.map( ( option ) => ( {
+						defaultSelectedOptionId: quote.selectedId, // Stripped to the three keys Google accepts: it throws on any other.
+						shippingOptions: quote.options.map( ( option ) => ({
 							id: option.id,
 							label: option.label,
 							description: formatCost( option.cost, currencyCode ),
-						} ) ),
+						}) ),
 					};
 				}
 
@@ -1155,26 +1360,26 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	}
 
 	function payWithApplePay( session, config, component ) {
-		const { currencyCode, countryCode, amount } = transaction();
+		const {
+			currencyCode,
+			countryCode,
+			amount,
+		} = transaction();
 
 		const request = {
 			countryCode: countryCode,
 			currencyCode: currencyCode,
 			merchantCapabilities: config.merchantCapabilities,
-			supportedNetworks: config.supportedNetworks,
-			// postalAddress alone for billing: Apple never returns a billing email
+			supportedNetworks: config.supportedNetworks, // postalAddress alone for billing: Apple never returns a billing email
 			// or phone. Shipping still asks for both, with the address only where
 			// the sheet prices it. Mirrors applePayRequest.js.
 			requiredBillingContactFields: [ 'postalAddress' ],
-			requiredShippingContactFields: collectsShipping()
-				? [ 'postalAddress', 'email', 'phone' ]
-				: [ 'email', 'phone' ],
+			requiredShippingContactFields: collectsShipping() ? [ 'postalAddress', 'email', 'phone' ] : [ 'email', 'phone' ],
 			total: {
 				label: 'SDK v6 test page',
 				amount: amount,
 				type: 'final',
-			},
-			...appleShippingRequest(),
+			}, ...appleShippingRequest(),
 		};
 
 		logCall( 'new ApplePaySession( 4, request )', request );
@@ -1203,17 +1408,17 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			try {
 				const orderId = await createOrder( component.source );
 
-				logCall( 'confirmOrder()', { orderId: orderId, token: '(from the sheet)', billingContact: event.payment.billingContact } );
+				logCall( 'confirmOrder()', {
+					orderId: orderId,
+					token: '(from the sheet)',
+					billingContact: event.payment.billingContact,
+				} );
 
-				await reportConfirmation(
-					await session.confirmOrder( {
-						orderId: orderId,
-						token: event.payment.token,
-						billingContact: event.payment.billingContact,
-					} ),
-					session,
-					orderId,
-				);
+				await reportConfirmation( await session.confirmOrder( {
+					orderId: orderId,
+					token: event.payment.token,
+					billingContact: event.payment.billingContact,
+				} ), session, orderId );
 
 				native.completePayment( { status: window.ApplePaySession.STATUS_SUCCESS } );
 			} catch ( error ) {
@@ -1266,12 +1471,12 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 		if ( prefillsShipping() ) {
 			const rates = SHIPPING_RATES[PREFILL_CONTACT.countryCode];
-			const methods = rates.map( ( option ) => ( {
+			const methods = rates.map( ( option ) => ({
 				label: option.label,
 				detail: '',
 				amount: option.cost,
 				identifier: option.id,
-			} ) );
+			}) );
 			const preferredAt = methods.findIndex( ( method ) => method.identifier === PREFILL_RATE );
 
 			if ( preferredAt > 0 ) {
@@ -1308,12 +1513,14 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 				// Apple rejects a completion with no total at all, so the last
 				// priced one is carried and the error goes against the address.
 				const rejection = {
-					newTotal: { label: 'SDK v6 test page', type: 'pending', amount: quote.subtotal },
+					newTotal: {
+						label: 'SDK v6 test page',
+						type: 'pending',
+						amount: quote.subtotal,
+					},
 					newLineItems: [],
 					newShippingMethods: [],
-					errors: typeof window.ApplePayError === 'function'
-						? [ new window.ApplePayError( 'shippingContactInvalid', 'postalAddress', 'We do not ship to that address.' ) ]
-						: [],
+					errors: typeof window.ApplePayError === 'function' ? [ new window.ApplePayError( 'shippingContactInvalid', 'postalAddress', 'We do not ship to that address.' ) ] : [],
 				};
 
 				logReply( name, rejection );
@@ -1324,22 +1531,33 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 			// The selected method goes first: Apple presents the head of the list
 			// as chosen.
-			const methods = quote.options.map( ( option ) => ( {
+			const methods = quote.options.map( ( option ) => ({
 				label: option.label,
 				detail: '',
 				amount: option.cost,
 				identifier: option.id,
-			} ) );
+			}) );
 			const selectedAt = methods.findIndex( ( method ) => method.identifier === quote.selectedId );
 			if ( selectedAt > 0 ) {
 				methods.unshift( methods.splice( selectedAt, 1 )[0] );
 			}
 
 			const update = {
-				newTotal: { label: 'SDK v6 test page', type: 'final', amount: quote.total },
+				newTotal: {
+					label: 'SDK v6 test page',
+					type: 'final',
+					amount: quote.total,
+				},
 				newLineItems: [
-					{ label: 'Subtotal', amount: quote.subtotal, type: 'final' },
-					{ label: 'Shipping', amount: quote.shippingFee, type: 'final' },
+					{
+						label: 'Subtotal',
+						amount: quote.subtotal,
+						type: 'final',
+					}, {
+						label: 'Shipping',
+						amount: quote.shippingFee,
+						type: 'final',
+					},
 				],
 				newShippingMethods: methods,
 			};
@@ -1351,20 +1569,12 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		native.onshippingcontactselected = ( event ) => {
 			logEvent( 'onshippingcontactselected', event.shippingContact );
 			country = event.shippingContact ? event.shippingContact.countryCode : null;
-			respond(
-				'onshippingcontactselected',
-				( update ) => native.completeShippingContactSelection( update ),
-				null,
-			);
+			respond( 'onshippingcontactselected', ( update ) => native.completeShippingContactSelection( update ), null );
 		};
 
 		native.onshippingmethodselected = ( event ) => {
 			logEvent( 'onshippingmethodselected', event.shippingMethod );
-			respond(
-				'onshippingmethodselected',
-				( update ) => native.completeShippingMethodSelection( update ),
-				event.shippingMethod ? event.shippingMethod.identifier : null,
-			);
+			respond( 'onshippingmethodselected', ( update ) => native.completeShippingMethodSelection( update ), event.shippingMethod ? event.shippingMethod.identifier : null );
 		};
 	}
 
@@ -1390,9 +1600,16 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		const cardSession = state.sdkInstance.createCardFieldsOneTimePaymentSession();
 
 		[
-			{ type: 'number', placeholder: 'Card number' },
-			{ type: 'expiry', placeholder: 'MM/YY' },
-			{ type: 'cvv', placeholder: 'CVV' },
+			{
+				type: 'number',
+				placeholder: 'Card number',
+			}, {
+			type: 'expiry',
+			placeholder: 'MM/YY',
+		}, {
+			type: 'cvv',
+			placeholder: 'CVV',
+		},
 		].forEach( ( field ) => {
 			const holder = document.createElement( 'div' );
 			const element = cardSession.createCardFieldsComponent( field );
@@ -1483,11 +1700,14 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			logEvent( 'bcdc-click, the element\'s own event instead of a click' );
 
 			try {
-				logCall( 'start()', { presentationMode: 'auto', targetElement: 'paypal-basic-card-button' } );
-				await session.start(
-					{ presentationMode: 'auto', targetElement: button },
-					orderPayload( component.source ),
-				);
+				logCall( 'start()', {
+					presentationMode: 'auto',
+					targetElement: 'paypal-basic-card-button',
+				} );
+				await session.start( {
+					presentationMode: 'auto',
+					targetElement: button,
+				}, orderPayload( component.source ) );
 			} catch ( error ) {
 				logError( 'Card button payment failed:', error );
 			}
@@ -1667,6 +1887,14 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 	if ( initCredentials() ) {
 		renderComponentPicker();
+		readUrlConfig();
+		syncCreateButton();
+
+		// One listener for the whole bar: an input event covers the text fields,
+		// the selects and the checkboxes alike.
+		document.getElementById( 'config' ).addEventListener( 'input', writeUrlConfig );
+
+		document.getElementById( 'log-filter' ).addEventListener( 'input', filterLog );
 		document.getElementById( 'btn-create' ).addEventListener( 'click', createButtons );
 		document.getElementById( 'btn-edit' ).addEventListener( 'click', () => collapseConfig( false ) );
 		log( 'Ready. Select the components to test, then choose "Create buttons".' );
@@ -1858,8 +2086,6 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 	.workspace {
 		display: grid;
-		/* Fixed px, not rem: the column has to clear the 240px minimum Google's
-		   own stylesheet puts on its button, whatever the root font size is. */
 		grid-template-columns: 288px minmax(0, 1fr);
 		gap: .75rem;
 		flex: 1 1 auto;
@@ -1867,12 +2093,54 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	}
 
 	#methods,
-	#log {
-		overflow-y: auto;
+	#log-pane {
 		padding: .75rem 1rem;
 		border: 1px solid var(--pico-muted-border-color);
 		border-radius: var(--pico-border-radius);
 		background: var(--pico-card-background-color);
+	}
+
+	#methods {
+		overflow-y: auto;
+	}
+
+	/* The filter stays put and the list scrolls under it. */
+	#log-pane {
+		display: flex;
+		flex-direction: column;
+		gap: .5rem;
+		min-height: 0;
+	}
+
+	/* Two explicit tracks: the field takes the room, the count takes its text. */
+	#log-bar {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		gap: .5rem;
+		flex: 0 0 auto;
+	}
+
+	/* Pico gives a search input its own padding for the magnifier, so only the
+	   width and the margin are set here. */
+	#log-filter {
+		width: 100%;
+		margin: 0;
+		/* Block only, so Pico keeps the room it reserves for the magnifier. */
+		padding-block: .3rem;
+		height: auto;
+		font-size: .75rem;
+	}
+
+	#log-count {
+		white-space: nowrap;
+		color: var(--pico-muted-color);
+		font-size: .7rem;
+	}
+
+	#run-status {
+		font-size: .75rem;
+		color: var(--pico-muted-color);
 	}
 
 	/* A list of controls, separated by a rule rather than boxed individually. */
@@ -1921,20 +2189,50 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	}
 
 	#log {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-y: auto;
+		margin: 0;
 		font-family: var(--pico-font-family-monospace);
 		font-size: .72rem;
 		line-height: 1.5;
-	}
+		padding-left: 1rem;
 
-	#log > div {
-		padding: .2rem 0;
-		border-bottom: 1px solid var(--pico-muted-border-color);
-		word-break: break-word;
-	}
+		li {
+			opacity: 0.9;
+			padding: .25rem;
+			border-bottom: 1px solid var(--pico-muted-border-color);
+			word-break: break-word;
+			margin: 0 0 0 1.5em;
+			transition: background-color 0.5s, opacity 0.25s;
 
-	#log pre {
-		margin: .3rem 0 .3rem .75rem;
-		font-size: .68rem;
+			pre {
+				opacity: 0.9;
+				margin: .25rem .25rem .25rem .75rem;
+				font-size: .68rem;
+				transition: background-color 0.5s, opacity 0.25s;
+			}
+
+			&:hover {
+				background-color: var(--pico-code-background-color);
+
+				&, pre {
+					opacity: 1;
+				}
+			}
+
+			&:focus {
+				opacity: 1;
+
+				&, pre {
+					background-color: var(--pico-mark-background-color);
+				}
+			}
+
+			&::marker {
+				font-size: 0.75em;
+			}
+		}
 	}
 
 	/* Least-used control on the page: truncated rather than given a row. */
@@ -1982,35 +2280,35 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		}
 
 		#summary {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		flex: 0 0 auto;
-		padding: .4rem 1rem;
-		border: 1px solid var(--pico-muted-border-color);
-		border-radius: var(--pico-border-radius);
-		background: var(--pico-card-background-color);
-		font-size: .8rem;
-	}
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			flex: 0 0 auto;
+			padding: .4rem 1rem;
+			border: 1px solid var(--pico-muted-border-color);
+			border-radius: var(--pico-border-radius);
+			background: var(--pico-card-background-color);
+			font-size: .8rem;
+		}
 
-	#btn-edit {
-		font-size: inherit;
-		width: auto;
-		margin: 0 0 0 auto;
-	}
+		#btn-edit {
+			font-size: inherit;
+			width: auto;
+			margin: 0 0 0 auto;
+		}
 
-	/* Pico's button padding is in rem, so a smaller font alone does not bring
-	   these two down to the height of the single-line rows they sit in. */
-	#btn-edit,
-	#clear-credentials {
-		padding: .2rem .8rem;
-	}
+		/* Pico's button padding is in rem, so a smaller font alone does not bring
+		   these two down to the height of the single-line rows they sit in. */
+		#btn-edit,
+		#clear-credentials {
+			padding: .2rem .8rem;
+		}
 
-	.workspace {
+		.workspace {
 			grid-template-columns: minmax(0, 1fr);
 		}
 
-		#log {
+		#log-pane {
 			height: 30rem;
 		}
 	}
