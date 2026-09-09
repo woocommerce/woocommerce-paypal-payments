@@ -16,7 +16,6 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
-use WooCommerce\PayPalCommerce\SdkV6\Helper\MerchantCountrySupport;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
@@ -208,8 +207,7 @@ class SdkV6ManagerTest extends TestCase
 	        $this->google_pay_config,
 	        $this->apple_pay_config,
 	        $this->fastlane_config,
-	        $this->card_field_styles,
-	        new MerchantCountrySupport($merchant_country)
+	        $this->card_field_styles
         );
     }
 
