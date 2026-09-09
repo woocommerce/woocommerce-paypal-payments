@@ -17,6 +17,7 @@ import { ApmHostedCheckout } from './apm-hosted-checkout';
 // TODO: get resolution about OXXO voucher popup
 // import { OxxoVoucherPopup } from './oxxo-voucher-popup';
 import { PayPalApi } from '../paypal-api';
+import { sdkVersion } from '../helpers/sdk-version.helper';
 
 /**
  * Class for common dashboard locators, actions, assertions
@@ -49,29 +50,47 @@ export class PayPalUi {
 		this.page.locator(
 			'.wc-block-components-express-payment__event-buttons'
 		);
-	blockSmartButtonListItem = () =>
-		this.payPalButtonsBlockContainer().locator(
-			'li[id^="express-payment-method-"]'
-		);
-	payPalIframe = () =>
+	/** v5 (legacy): unified zoid iframe for My Account and checkout pages. */
+	payPalIframeV5 = () =>
 		this.page.frameLocator(
-			// unified selector for My Account and checkout pages
 			'#express-payment-method-ppcp-gateway-paypal .component-frame'
 		);
 	payPalButton = () =>
-		this.payPalIframe().locator( `[data-funding-source="paypal"]` );
+		sdkVersion() === 'v5'
+			? this.payPalIframeV5().locator( '[data-funding-source="paypal"]' )
+			: this.page.locator(
+					'#express-payment-method-ppcp-gateway-paypal paypal-button, #ppc-button-ppcp-gateway-v6 paypal-button, #ppc-button-ppcp-gateway-save-payment-method paypal-button'
+			  );
+	/**
+	 * [Temporary] The express PayPal button on a native PayPal Subscription checkout
+	 * (SubscriptionHelper::resolve_subscription_mode() === subscriptions_api:
+	 * "Save PayPal and Venmo" is off and the cart holds a subscription).
+	 * SdkV6Manager::is_native_paypal_subscription_page() withholds the v6
+	 * module on such pages unconditionally, so unlike payPalButton() this
+	 * never depends on sdkVersion() / the sitewide v6 flag.
+	 */
+	nativeSubscriptionPayPalButton = () =>
+		this.payPalIframeV5().locator( '[data-funding-source="paypal"]' );
 	payLaterButton = () =>
-		this.page
-			.frameLocator(
-				'#express-payment-method-ppcp-gateway-paylater .component-frame'
-			)
-			.locator( `[data-funding-source="paylater"]` );
+		sdkVersion() === 'v5'
+			? this.page
+					.frameLocator(
+						'#express-payment-method-ppcp-gateway-paylater .component-frame'
+					)
+					.locator( '[data-funding-source="paylater"]' )
+			: this.page.locator(
+					'#express-payment-method-ppcp-gateway-paylater paypal-pay-later-button, #ppc-button-ppcp-gateway-v6 paypal-pay-later-button'
+			  );
 	venmoButton = () =>
-		this.page
-			.frameLocator(
-				'#express-payment-method-ppcp-gateway-venmo .component-frame'
-			)
-			.locator( `[data-funding-source="venmo"]` );
+		sdkVersion() === 'v5'
+			? this.page
+					.frameLocator(
+						'#express-payment-method-ppcp-gateway-venmo .component-frame'
+					)
+					.locator( '[data-funding-source="venmo"]' )
+			: this.page.locator(
+					'#express-payment-method-ppcp-gateway-venmo venmo-button, #ppc-button-ppcp-gateway-v6 venmo-button'
+			  );
 
 	googlePayButton = () =>
 		this.page
@@ -87,22 +106,13 @@ export class PayPalUi {
 		this.page.locator(
 			'#radio-control-wc-payment-method-options-ppcp-gateway__label'
 		);
-	payPalButtonMoreOptions = () =>
-		this.payPalIframe().locator( '[aria-label="More options"]' );
 	payPalVaultedGateway = () =>
 		this.paymentOptionsContainers().filter( {
 			hasText: 'Saved token for ppcp-gateway',
 		} );
 	payPalVaultComponent = () =>
 		this.page.locator( '#ppcp-vault-component' );
-	payPalVaultIframe = () =>
-		this.payPalVaultComponent()
-			.frameLocator(
-				'iframe[name^="__zoid__paypal_saved_payment_methods"]'
-			);
 
-	payLaterMessageIframe = () =>
-		this.page.frameLocator( 'iframe[title^="PayPal Message"]' );
 	payLaterMessageContainer = () =>
 		this.page.locator( 'iframe[title^="PayPal Message"]' ).first();
 
@@ -158,30 +168,50 @@ export class PayPalUi {
 			has: this.acdcGateway(),
 		} );
 	acdcCardholderNameInput = () =>
-		this.acdcContainer()
-			.frameLocator(
-				'[id^="zoid-paypal-card-name-field"] iframe[name^="__zoid__paypal_card_name_field__"]'
-			)
-			.locator( 'input.card-field-name' );
+		sdkVersion() === 'v5'
+			? this.acdcContainer()
+					.frameLocator(
+						'[id^="zoid-paypal-card-name-field"] iframe[name^="__zoid__paypal_card_name_field__"]'
+					)
+					.locator( 'input.card-field-name' )
+			: this.acdcContainer().locator(
+					'.ppcp-sdk-v6-card-field--name input'
+			  );
 	acdcCardNumberInput = () =>
-		this.acdcContainer()
-			.frameLocator(
-				'[id^="zoid-paypal-card-number-field"] iframe[name^="__zoid__paypal_card_number_field__"]'
-			)
-			.locator( 'input.card-field-number' );
+		sdkVersion() === 'v5'
+			? this.acdcContainer()
+					.frameLocator(
+						'[id^="zoid-paypal-card-number-field"] iframe[name^="__zoid__paypal_card_number_field__"]'
+					)
+					.locator( 'input.card-field-number' )
+			: this.acdcContainer()
+					.locator( '.ppcp-sdk-v6-card-field--number' )
+					.frameLocator( 'iframe[title="Number PayPal Card Field"]' )
+					.locator( 'input' );
 	acdcCardExpirationInput = () =>
-		this.acdcContainer()
-			.frameLocator(
-				'[id^="zoid-paypal-card-expiry-field"] iframe[name^="__zoid__paypal_card_expiry_field__"]'
-			)
-			.locator( 'input.card-field-expiry' );
+		sdkVersion() === 'v5'
+			? this.acdcContainer()
+					.frameLocator(
+						'[id^="zoid-paypal-card-expiry-field"] iframe[name^="__zoid__paypal_card_expiry_field__"]'
+					)
+					.locator( 'input.card-field-expiry' )
+			: this.acdcContainer()
+					.locator( '.ppcp-sdk-v6-card-field--expiry' )
+					.frameLocator( 'iframe[title="Expiry PayPal Card Field"]' )
+					.locator( 'input' );
 	acdcCardCvvInput = () =>
-		this.acdcContainer()
-			.frameLocator(
-				'[id^="zoid-paypal-card-cvv-field"] iframe[name^="__zoid__paypal_card_cvv_field__"]'
-			)
-			.locator( 'input.card-field-cvv' );
-	acdcSaveToAccountCheckbox = () => this.page.locator( '#save' );
+		sdkVersion() === 'v5'
+			? this.acdcContainer()
+					.frameLocator(
+						'[id^="zoid-paypal-card-cvv-field"] iframe[name^="__zoid__paypal_card_cvv_field__"]'
+					)
+					.locator( 'input.card-field-cvv' )
+			: this.acdcContainer()
+					.locator( '.ppcp-sdk-v6-card-field--cvv' )
+					.frameLocator( 'iframe[title="Cvv PayPal Card Field"]' )
+					.locator( 'input' );
+	acdcSaveToAccountCheckbox = () =>
+		this.acdcContainer().locator( 'input[type="checkbox"]' );
 	acdcSavedCard = ( card: WooCommerce.CreditCard ) =>
 		this.paymentOptionsContainers().filter( {
 			hasText: `${ card.card_type } ending in ${ getLast4CardDigits(
@@ -207,7 +237,7 @@ export class PayPalUi {
 	/** Host element with paypal-buttons-label-* and paypal-buttons-layout-* classes (block cart/checkout). */
 	payPalButtonsHostElement = () =>
 		this.page.locator(
-			'#express-payment-method-ppcp-gateway-paypal .paypal-buttons'
+			'#express-payment-method-ppcp-gateway-paypal .paypal-buttons, #express-payment-method-ppcp-gateway-paypal paypal-button'
 		);
 	
 	puiGateway = () =>
@@ -232,6 +262,8 @@ export class PayPalUi {
 	isClassicCheckoutPage = () =>
 		this.page.url().includes( '/classic-checkout/' ) &&
 		! this.isPayForOrderPage();
+	isAddPaymentMethodPage = () =>
+		this.page.url().includes( '/add-payment-method/' );
 
 	// Actions
 
@@ -258,6 +290,42 @@ export class PayPalUi {
 					await clickToContinue.waitFor( {
 						state: 'visible',
 					} );
+					await clickToContinue.click();
+				} catch {
+					// popup opened directly (normal case)
+				}
+			} )(),
+		] );
+
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new PayPalPopup( popup );
+	}
+
+	/**
+	 * [Temporary] Clicks PayPal button to open popup - native PayPal Subscription checkout
+	 * variant (see nativeSubscriptionPayPalButton()). Temporary duplicate of
+	 * openPayPalPopup() with the locator swapped; consolidate once there's a
+	 * single reliable way to pick the right button for both cases.
+	 */
+	async openPayPalSubscriptionPopup(): Promise< PayPalPopup > {
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
+		await expect(
+			this.nativeSubscriptionPayPalButton(),
+			'Assert PayPal button is visible'
+		).toBeVisible();
+		await this.nativeSubscriptionPayPalButton().click();
+		// Popup opens directly or PayPal shows "Click to Continue" overlay
+		await Promise.race( [
+			popupPromise,
+			( async () => {
+				try {
+					const clickToContinue = this.page.getByRole( 'link', {
+						name: 'Click to Continue',
+					} );
+					await clickToContinue.waitFor( { state: 'visible' } );
 					await clickToContinue.click();
 				} catch {
 					// popup opened directly (normal case)
@@ -331,13 +399,15 @@ export class PayPalUi {
 	 * @param data.payment
 	 * @param data.merchant
 	 * @param data.customer
+	 * @param data.isPayPalSubscription
 	 */
 	makePayment = async ( data: {
 		payment: Pcp.Payment;
 		merchant?: Pcp.Merchant;
 		customer?: ShopOrder[ 'customer' ];
+		isPayPalSubscription?: boolean;
 	} ) => {
-		const { payment, merchant, customer } = data;
+		const { payment, merchant, customer, isPayPalSubscription } = data;
 		const { gateway, payPalAccount } = payment;
 		const { shortcut } = gateway;
 		let popup: PayPalPopup;
@@ -350,9 +420,16 @@ export class PayPalUi {
 					break;
 				}
 
-				popup = await this.openPayPalPopup();
+				popup = isPayPalSubscription
+					? await this.openPayPalSubscriptionPopup()
+					: await this.openPayPalPopup();
 				// pay with given PayPal account
 				await popup.completePayPalPayment( payPalAccount );
+				// PayPal popap occasionally shows "Try again" error need to assert the hang
+				await expect(
+					this.page,
+					'Assert redirected to order received page after PayPal payment'
+				).toHaveURL( /order-received/, { timeout: 30_000 } );
 				break;
 
 			case 'paylater':
@@ -389,11 +466,7 @@ export class PayPalUi {
 				break;
 
 			case 'card':
-				if ( gateway.id === 'ppcp-card-button-gateway' ) {
-					await this.completeBcdcPayment( payment.card, customer );
-					break;
-				}
-				await this.completeBcdcFundingSourcePayment( payment.card );
+				await this.completeBcdcPayment( payment.card, customer );
 				break;
 
 			case 'pay_upon_invoice':
@@ -676,13 +749,6 @@ export class PayPalUi {
 			`TODO: completeBcdcPayment for block pages ${ args.length }`
 		);
 
-	completeBcdcFundingSourcePayment = async ( ...args ) =>
-		console.log(
-			`TODO: completeBcdcFundingSourcePayment for block pages ${ args.length }`
-		);
-
-	
-
 	/**
 	 * Completes payment with Pay upon Invoice (vaulting disabled)
 	 *
@@ -771,10 +837,6 @@ export class PayPalUi {
 					this.payPalButton(),
 					'Assert PayPal button is visible'
 				).toBeVisible();
-				// TODO: Confirm if PayPal button wallet view is supposed to be deprecated
-				// await expect
-				// 	.soft( this.payPalButtonMoreOptions() )
-				// 	.toBeVisible();
 				break;
 
 			case 'acdc':

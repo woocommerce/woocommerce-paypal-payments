@@ -60,7 +60,11 @@ const payPalRenewal: ShopOrder[] = [
 	{
 		title: 'PCP-2048 | PayPal subscription - Order renewal @Critical',
 		...orders.default,
-		payment: payments.payPal,
+		payment: {
+			...payments.payPal,
+			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
+			isPayPalSubscription: true,
+		},
 		merchant,
 		customer,
 		products: [ products.subscriptionPayPal ],
@@ -72,7 +76,11 @@ const payPalFreeTrialRenewal: ShopOrder[] = [
 	{
 		title: 'PCP-4915 | PayPal subscription - Free trial order renewal',
 		...orders.default,
-		payment: payments.payPal,
+		payment: {
+			...payments.payPal,
+			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
+			isPayPalSubscription: true,
+		},
 		merchant,
 		customer,
 		products: [ products.subscriptionPayPalFreeTrial ],

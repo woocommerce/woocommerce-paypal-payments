@@ -42,7 +42,7 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 				await checkout.completeCheckoutDetails( testOrder );
 				await checkout.payPalUi.makePayment( { merchant, payment } );
 			} );
-				
+
 			let orderId: number;
 			let payPalPaymentDetails: PayPalPaymentDetails;
 
@@ -56,24 +56,9 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 					return;
 				}
 
-				// TEMPORARY diagnostic for the ngrok webhook-delivery investigation.
-				// Confirms whether PayPal generated a webhook event for this order
-				// at all, independent of whether the tunnel could receive it.
-				if ( isAsyncCaptureGateway ) {
-					const paypalOrderId = await payPalApi.getOrderIdFromWooCommerce(
-						await wooCommerceApi.getOrder( orderId )
-					);
-					if ( paypalOrderId ) {
-						await payPalApi.logWebhookEventsForResource(
-							merchant,
-							paypalOrderId
-						);
-					}
-				}
-
 				await waitForOrderStatus( wooCommerceApi, orderId, {
 					expectedStatus: orderStatus,
-					timeout: isAsyncCaptureGateway ? 3 * 60_000 : undefined,
+					timeout: isAsyncCaptureGateway ? 2.5 * 60_000 : undefined,
 				} );
 				const transactionId =
 						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;

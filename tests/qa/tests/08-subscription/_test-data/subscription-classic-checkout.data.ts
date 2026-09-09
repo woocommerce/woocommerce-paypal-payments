@@ -92,6 +92,7 @@ const payPalGuest: ShopOrder[] = [
 		payment: {
 			...payments.payPal,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
+			isPayPalSubscription: true,
 		},
 		merchant,
 		customer: guest,
@@ -103,6 +104,7 @@ const payPalGuest: ShopOrder[] = [
 		payment: {
 			...payments.payPal,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
+			isPayPalSubscription: true,
 		},
 		merchant,
 		customer: guest,
@@ -117,6 +119,7 @@ const payPalCustomer: ShopOrder[] = [
 		payment: {
 			...payments.payPal,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
+			isPayPalSubscription: true,
 		},
 		merchant,
 		customer,
@@ -128,6 +131,7 @@ const payPalCustomer: ShopOrder[] = [
 		payment: {
 			...payments.payPal,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
+			isPayPalSubscription: true,
 		},
 		merchant,
 		customer,

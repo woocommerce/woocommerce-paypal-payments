@@ -3,7 +3,6 @@
  */
 import { PcpAdminPage } from './pcp-admin-page';
 import urls from '../urls';
-import { Pcp } from '../../resources';
 
 export class PcpPaymentMethods extends PcpAdminPage {
 	url = urls.admin.pcp.paymentMethods;
@@ -51,24 +50,6 @@ export class PcpPaymentMethods extends PcpAdminPage {
 	modalCloseButton = () =>
 		this.modalWindow().locator( 'button[aria-label="Close"]' );
 	modalTitle = () => this.modalWindow().locator( '.ppcp-r-modal__title' );
-	modalCheckoutPageTitleInput = () =>
-		this.modalWindow().getByRole( 'textbox', {
-			name: 'Checkout page title',
-		} );
-	modalCheckoutPageDescriptionInput = () =>
-		this.modalWindow().getByRole( 'textbox', {
-			name: 'Checkout page description',
-		} );
-	modalPayPalShowLogoToggle = () =>
-		this.modalWindow().getByLabel( 'Show logo' );
-	modalAcdc3dSecureRadio = ( label: Pcp.Admin.PaymentMethods.ThreeDSecure ) =>
-		this.modalWindow().getByLabel( label );
-	modalFastlaneDisplayCardholderNameToggle = () =>
-		this.modalWindow().getByLabel( 'Display cardholder name' );
-	modalFastlaneDisplayFastlaneWatermarkToggle = () =>
-		this.modalWindow().getByLabel( 'Display Fastlane Watermark' );
-	modalSaveChangesButton = () =>
-		this.modalWindow().getByRole( 'button', { name: 'Save changes' } );
 
 	// Actions
 
