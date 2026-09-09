@@ -21,7 +21,6 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
-use WooCommerce\PayPalCommerce\SdkV6\Helper\MerchantCountrySupport;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -42,8 +41,7 @@ class AddPaymentMethodManager
     private bool $card_vaulting_enabled;
     private SettingsProvider $settings_provider;
     private CardFieldStyles $card_field_styles;
-    private MerchantCountrySupport $merchant_country_support;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, Context $context, bool $paypal_vaulting_enabled, bool $card_vaulting_enabled, SettingsProvider $settings_provider, CardFieldStyles $card_field_styles, MerchantCountrySupport $merchant_country_support)
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, Context $context, bool $paypal_vaulting_enabled, bool $card_vaulting_enabled, SettingsProvider $settings_provider, CardFieldStyles $card_field_styles)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -53,7 +51,6 @@ class AddPaymentMethodManager
         $this->card_vaulting_enabled = $card_vaulting_enabled;
         $this->settings_provider = $settings_provider;
         $this->card_field_styles = $card_field_styles;
-        $this->merchant_country_support = $merchant_country_support;
     }
     /**
      * Enqueues the add-payment-method bootstrap script.
@@ -83,7 +80,7 @@ class AddPaymentMethodManager
      */
     public function should_load_on_current_page(): bool
     {
-        return $this->merchant_country_support->is_supported() && is_user_logged_in() && ($this->paypal_vaulting_enabled || $this->card_vaulting_enabled) && $this->context->is_add_payment_method_page();
+        return is_user_logged_in() && ($this->paypal_vaulting_enabled || $this->card_vaulting_enabled) && $this->context->is_add_payment_method_page();
     }
     /**
      * The configuration data for the add-payment-method bootstrap script.
