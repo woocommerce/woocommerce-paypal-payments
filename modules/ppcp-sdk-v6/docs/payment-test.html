@@ -111,6 +111,19 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	// a legacy vault token came back instead.
 	const LEGACY_SCOPE = 'vault/payment-tokens';
 
+	// What a card field dispatches on itself. The names come from the card-fields
+	// bundle. focus and blur also arrive as plain DOM events on the same element.
+	const FIELD_EVENTS = [
+		'blur',
+		'cardtypechange',
+		'change',
+		'empty',
+		'focus',
+		'inputsubmit',
+		'notempty',
+		'validitychange',
+	];
+
 	/*
 	 * One entry per requestable component, in render order.
 	 *
@@ -130,6 +143,8 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		{ name: 'fastlane', title: 'Fastlane', source: 'card', render: renderFastlane },
 	];
 
+	const APPROVED_NEXT = 'The order is approved.';
+
 	const clientId = localStorage.getItem( 'PPCP_V6_CLIENT_ID' ) || '';
 	const clientSecret = localStorage.getItem( 'PPCP_V6_CLIENT_SECRET' ) || '';
 
@@ -143,6 +158,13 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	 * PLUMBING
 	 * ========================================================================== */
 
+	// A signed wallet token is not usable, only its length is interesting.
+	function trimLongStrings( key, value ) {
+		return typeof value === 'string' && value.length > 200
+			? '[' + value.length + ' characters omitted]'
+			: value;
+	}
+
 	function log( message, data, level ) {
 		const logger = document.getElementById( 'log' );
 		const line = document.createElement( 'div' );
@@ -154,7 +176,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 		if ( undefined !== data ) {
 			const pre = document.createElement( 'pre' );
-			pre.textContent = typeof data === 'string' ? data : JSON.stringify( data, null, 2 );
+			pre.textContent = typeof data === 'string' ? data : JSON.stringify( data, trimLongStrings, 2 );
 			line.appendChild( pre );
 		}
 
@@ -163,9 +185,47 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		console.log( message, data );
 	}
 
+	// Wallets reject with plain objects rather than Errors, and those
+	// have no message to print, so the whole object goes to the log instead.
 	function logError( message, error ) {
-		log( message + ' ' + (error && error.message ? error.message : error), undefined, 'err' );
+		if ( error && error.message ) {
+			log( message + ' ' + error.message, undefined, 'err' );
+		} else {
+			log( message, error, 'err' );
+		}
+
 		console.error( message, error );
+	}
+
+	/*
+	 * Every line names who acted, so a reader can follow the exchange:
+	 *
+	 *   SDK call    this page calls the SDK, or a wallet API
+	 *   SDK result  the value that call returned
+	 *   SDK event   the SDK, or a payment sheet, calls this page
+	 *   Reply       the value this page returns from an event handler
+	 *   Test store  this page acting as the store server
+	 *
+	 * A line with none of those prefixes is a remark about the flow.
+	 */
+	function logCall( name, data ) {
+		log( 'SDK call: ' + name, data );
+	}
+
+	function logResult( name, data ) {
+		log( 'SDK result: ' + name, data, 'ok' );
+	}
+
+	function logEvent( name, data, level ) {
+		log( 'SDK event: ' + name, data, level );
+	}
+
+	function logReply( name, data ) {
+		log( 'Reply to ' + name, data );
+	}
+
+	function logStore( message, data ) {
+		log( 'Test store: ' + message, data );
 	}
 
 	// One captioned row per selected component, in the methods pane.
@@ -458,17 +518,21 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 				throw new Error( 'window.paypal.createInstance not found after the script load.' );
 			}
 
-			log( 'Creating the instance...', components );
-
-			state.sdkInstance = await window.paypal.createInstance( {
-				clientToken: clientToken.access_token,
+			const args = {
 				components: components,
 				pageType: 'checkout',
 				locale: 'en-US',
 				clientMetadataId: clientMetadataId(),
+			};
+
+			logCall( 'createInstance()', args );
+
+			state.sdkInstance = await window.paypal.createInstance( {
+				clientToken: clientToken.access_token,
+				...args,
 			} );
 
-			log( 'Instance created.', undefined, 'ok' );
+			logResult( 'createInstance()' );
 
 			return true;
 		} catch ( error ) {
@@ -482,7 +546,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		const { currencyCode, countryCode, amount } = transaction();
 
 		try {
-			log( 'Calling findEligibleMethods()...', { currencyCode, countryCode, amount } );
+			logCall( 'findEligibleMethods()', { currencyCode, countryCode, amount } );
 
 			const methods = await state.sdkInstance.findEligibleMethods( {
 				currencyCode: currencyCode,
@@ -496,7 +560,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 					report[method] = isEligible( methods, method );
 				} );
 
-			log( 'Eligibility', report, 'ok' );
+			logResult( 'findEligibleMethods()', report );
 
 			return methods;
 		} catch ( error ) {
@@ -573,7 +637,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			body.payment_source[paymentSource] = { attributes: { verification: { method: sca } } };
 		}
 
-		log( 'Creating the PayPal order...', body );
+		logStore( 'POST /v2/checkout/orders', body );
 
 		const response = await fetch( SANDBOX_API + '/v2/checkout/orders', {
 			method: 'POST',
@@ -591,7 +655,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			throw new Error( 'Order creation failed (' + response.status + '): ' + JSON.stringify( json ) );
 		}
 
-		log( 'Order created: ' + json.id, undefined, 'ok' );
+		logStore( 'order ' + json.id + ' created.' );
 
 		return json.id;
 	}
@@ -602,9 +666,27 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		return { orderId: await createOrder( paymentSource ) };
 	}
 
-	function reportApproval( data ) {
-		log( 'SDK event: onApprove', data, 'ok' );
-		log( 'Approved. An integration would capture the order server-side from here.' );
+	/*
+	 * The handlers every PayPal-run session accepts.
+	 *
+	 * onShippingAddressChange and onShippingOptionsChange are accepted as well.
+	 * They are left unset because each one has to answer with a repriced order,
+	 * and PayPal shows its own shipping step as soon as either is present.
+	 */
+	function sessionHandlers( method ) {
+		return {
+			onApprove: reportApproval( method ),
+			onComplete: ( data ) => logEvent( 'onComplete (' + method + ')', data ),
+			onCancel: ( data ) => logEvent( 'onCancel (' + method + ')', data, 'warn' ),
+			onError: ( error ) => logError( 'SDK event: onError (' + method + ') -', error ),
+		};
+	}
+
+	function reportApproval( method ) {
+		return ( data ) => {
+			logEvent( 'onApprove (' + method + ')', data );
+			log( APPROVED_NEXT );
+		};
 	}
 
 	/*
@@ -612,22 +694,30 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	 * both nesting and vocabulary, so this mirrors sessionPayment.js.
 	 */
 	async function reportConfirmation( result, session, orderId ) {
-		log( 'confirmOrder() result', result );
+		logResult( 'confirmOrder()', result );
 
 		const payment = (result && result.approveApplePayPayment) || result;
 		const status = payment && (payment.status || payment.state);
 
 		if ( status === 'APPROVED' || status === 'succeeded' ) {
-			log( 'Approved. An integration would capture the order server-side from here.', undefined, 'ok' );
+			log( APPROVED_NEXT, undefined, 'ok' );
 		} else if ( status === 'PAYER_ACTION_REQUIRED' ) {
-			log( '3D Secure challenge required, calling initiatePayerAction()...', undefined, 'warn' );
-			log( 'Payer action finished.', await session.initiatePayerAction( { orderId: orderId } ), 'ok' );
-			log( 'The SDK offers no re-confirm after this: read the order server-side to learn the outcome.' );
+			log( 'The order needs a 3D Secure challenge.', undefined, 'warn' );
+
+			// Only the Google Pay session carries this method. Apple Pay sends no
+			// contingency, so its own session has no way to run a challenge.
+			if ( typeof session.initiatePayerAction !== 'function' ) {
+				log( 'This session has no initiatePayerAction(). The challenge cannot run here.', undefined, 'err' );
+			} else {
+				logCall( 'initiatePayerAction()', { orderId: orderId } );
+				logResult( 'initiatePayerAction()', await session.initiatePayerAction( { orderId: orderId } ) );
+				log( 'The SDK offers no re-confirm after this. Read the order on the server to learn the outcome.' );
+			}
 		} else {
 			log( 'Not approved, status "' + status + '". No order would be created.', undefined, 'err' );
 		}
 
-		log( '========== end of payment' );
+		log( '---------- end of the payment attempt' );
 	}
 
 	/* ==========================================================================
@@ -712,7 +802,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			total: ( subtotal + shippingFee ).toFixed( 2 ),
 		};
 
-		log( 'Shipping quote for ' + (countryCode || 'unknown country'), quote );
+		logStore( 'priced ' + options.length + ' rate(s) for ' + (countryCode || 'an unknown country'), quote );
 		lastQuote = quote;
 
 		return quote;
@@ -775,11 +865,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			return;
 		}
 
-		const session = state.sdkInstance[spec.factory]( {
-			onApprove: reportApproval,
-			onCancel: () => log( 'SDK event: onCancel (' + spec.method + ')', undefined, 'warn' ),
-			onError: ( error ) => logError( 'SDK event: onError (' + spec.method + ')', error ),
-		} );
+		const session = state.sdkInstance[spec.factory]( sessionHandlers( spec.method ) );
 
 		const button = document.createElement( spec.tagName );
 		button.setAttribute( 'type', 'pay' );
@@ -787,6 +873,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 		button.addEventListener( 'click', async () => {
 			try {
+				logCall( 'start()', { presentationMode: 'auto' } );
 				await session.start( { presentationMode: 'auto' }, orderPayload( component.source ) );
 			} catch ( error ) {
 				logError( spec.method + ' payment failed:', error );
@@ -819,9 +906,11 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 		// Used as returned, without formatConfigForPaymentRequest(): that helper
 		// renames a key this config does not have and breaks isReadyToPay.
+		logCall( 'getGooglePayConfig()' );
+
 		const [ , config ] = await Promise.all( [ loadScript( GOOGLE_SDK ), session.getGooglePayConfig() ] );
 
-		log( 'Google Pay session config', config );
+		logResult( 'getGooglePayConfig()', config );
 
 		if ( ! window.google || ! window.google.payments ) {
 			throw new Error( 'Google Pay global not found after the script load.' );
@@ -836,11 +925,15 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 		const client = new window.google.payments.api.PaymentsClient( clientOptions );
 
+		logCall( 'isReadyToPay()' );
+
 		const ready = await client.isReadyToPay( {
 			apiVersion: 2,
 			apiVersionMinor: 0,
 			allowedPaymentMethods: config.allowedPaymentMethods,
 		} );
+
+		logResult( 'isReadyToPay()', ready );
 
 		if ( ! ready.result ) {
 			note( box, 'Google Pay is not available in this browser.' );
@@ -868,27 +961,34 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	async function payWithGooglePay( client, session, config, component ) {
 		const { currencyCode, countryCode, amount } = transaction();
 
-		try {
-			const paymentData = await client.loadPaymentData( {
-				apiVersion: 2,
-				apiVersionMinor: 0,
-				allowedPaymentMethods: config.allowedPaymentMethods,
-				merchantInfo: config.merchantInfo,
-				transactionInfo: {
-					countryCode: countryCode,
-					currencyCode: currencyCode,
-					totalPriceStatus: 'FINAL',
-					totalPrice: amount,
-				},
-				emailRequired: true,
-				...googleShippingRequest(),
-			} );
+		const request = {
+			apiVersion: 2,
+			apiVersionMinor: 0,
+			allowedPaymentMethods: config.allowedPaymentMethods,
+			merchantInfo: config.merchantInfo,
+			transactionInfo: {
+				countryCode: countryCode,
+				currencyCode: currencyCode,
+				totalPriceStatus: 'FINAL',
+				totalPrice: amount,
+			},
+			emailRequired: true,
+			...googleShippingRequest(),
+		};
 
-			log( 'Sheet authorised, payment data received.', paymentData );
+		try {
+			logCall( 'loadPaymentData()', request );
+
+			// The sheet reports the authorisation by resolving this promise. Google
+			// offers an onPaymentAuthorized event instead, but only for a request
+			// that lists PAYMENT_AUTHORIZATION in callbackIntents.
+			const paymentData = await client.loadPaymentData( request );
+
+			logResult( 'loadPaymentData()', paymentData );
 
 			const orderId = await createOrder( component.source );
 
-			log( 'Confirming the order with the wallet token...' );
+			logCall( 'confirmOrder()', { orderId: orderId, paymentMethodData: '(from the sheet)' } );
 
 			await reportConfirmation(
 				await session.confirmOrder( {
@@ -900,7 +1000,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			);
 		} catch ( error ) {
 			if ( error && error.statusCode === 'CANCELED' ) {
-				log( 'Buyer dismissed the sheet.', undefined, 'warn' );
+				log( 'loadPaymentData() rejected with CANCELED. The buyer closed the sheet.', undefined, 'warn' );
 
 				return;
 			}
@@ -942,7 +1042,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 				} ) ),
 			};
 
-			log( 'Google Pay: rate "' + PREFILL_RATE + '" pre-selected. The initial address is ignored, Google has no field for one.', undefined, 'warn' );
+			log( 'The request pre-selects the rate "' + PREFILL_RATE + '". It cannot pre-set the address: Google offers only the addresses in the buyer\'s own account.', undefined, 'warn' );
 		}
 
 		return request;
@@ -957,7 +1057,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 		return {
 			onPaymentDataChanged: async ( paymentData ) => {
-				log( 'SDK event: onPaymentDataChanged, trigger ' + paymentData.callbackTrigger );
+				logEvent( 'onPaymentDataChanged (' + paymentData.callbackTrigger + ')', paymentData );
 
 				const quote = await quoteShipping(
 					paymentData.shippingAddress ? paymentData.shippingAddress.countryCode : countryCode,
@@ -965,15 +1065,19 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 				);
 
 				if ( ! quote.options.length ) {
-					log( 'No rates for that address, the sheet stays open.', undefined, 'warn' );
+					log( 'The test store has no rate for that address. The sheet stays open.', undefined, 'warn' );
 
-					return {
+					const rejection = {
 						error: {
 							reason: 'SHIPPING_ADDRESS_UNSERVICEABLE',
 							intent: 'SHIPPING_ADDRESS',
 							message: 'We do not ship to that address.',
 						},
 					};
+
+					logReply( 'onPaymentDataChanged', rejection );
+
+					return rejection;
 				}
 
 				const update = {
@@ -996,6 +1100,8 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 						} ) ),
 					};
 				}
+
+				logReply( 'onPaymentDataChanged', update );
 
 				return update;
 			},
@@ -1027,9 +1133,14 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		await loadScript( APPLE_SDK );
 
 		const session = state.sdkInstance.createApplePayOneTimePaymentSession();
-		const config = await session.getApplePayConfig();
 
-		log( 'Apple Pay config', config );
+		// config(), as in wallets/applePay.js. getApplePayConfig is the name of the
+		// GraphQL operation behind it, and no member of the session carries it.
+		logCall( 'config()' );
+
+		const config = await session.config();
+
+		logResult( 'config()', config );
 
 		const button = document.createElement( 'apple-pay-button' );
 		button.setAttribute( 'buttonstyle', 'black' );
@@ -1046,7 +1157,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	function payWithApplePay( session, config, component ) {
 		const { currencyCode, countryCode, amount } = transaction();
 
-		const native = new window.ApplePaySession( 4, {
+		const request = {
 			countryCode: countryCode,
 			currencyCode: currencyCode,
 			merchantCapabilities: config.merchantCapabilities,
@@ -1064,14 +1175,19 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 				type: 'final',
 			},
 			...appleShippingRequest(),
-		} );
+		};
+
+		logCall( 'new ApplePaySession( 4, request )', request );
+
+		const native = new window.ApplePaySession( 4, request );
 
 		if ( collectsShipping() ) {
 			attachAppleShipping( native );
 		}
 
 		native.onvalidatemerchant = ( event ) => {
-			log( 'SDK event: onvalidatemerchant' );
+			logEvent( 'onvalidatemerchant', { validationURL: event.validationURL } );
+			logCall( 'validateMerchant()', { validationUrl: event.validationURL } );
 
 			session.validateMerchant( { validationUrl: event.validationURL } )
 				.then( ( payload ) => native.completeMerchantValidation( payload.merchantSession ) )
@@ -1082,8 +1198,12 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		};
 
 		native.onpaymentauthorized = async ( event ) => {
+			logEvent( 'onpaymentauthorized', event.payment );
+
 			try {
 				const orderId = await createOrder( component.source );
+
+				logCall( 'confirmOrder()', { orderId: orderId, token: '(from the sheet)', billingContact: event.payment.billingContact } );
 
 				await reportConfirmation(
 					await session.confirmOrder( {
@@ -1102,8 +1222,26 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			}
 		};
 
-		native.oncancel = () => log( 'SDK event: oncancel', undefined, 'warn' );
-		native.onpaymentmethodselected = ( event ) => log( 'SDK event: onpaymentmethodselected', event.paymentMethod );
+		native.oncancel = () => logEvent( 'oncancel', undefined, 'warn' );
+
+		// Apple holds the sheet until this handler answers, even when the total
+		// does not change, so the last priced total goes back unchanged.
+		native.onpaymentmethodselected = ( event ) => {
+			logEvent( 'onpaymentmethodselected', event.paymentMethod );
+
+			const update = {
+				newTotal: {
+					label: 'SDK v6 test page',
+					type: 'final',
+					amount: lastQuote ? lastQuote.total : amount,
+				},
+			};
+
+			logReply( 'onpaymentmethodselected', update );
+			native.completePaymentMethodSelection( update );
+		};
+
+		logCall( 'begin()' );
 		native.begin();
 	}
 
@@ -1145,7 +1283,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			request.shippingContact = PREFILL_CONTACT;
 			request.shippingMethods = methods;
 
-			log( 'Apple Pay: address and rate "' + PREFILL_RATE + '" both pre-selected.', undefined, 'ok' );
+			log( 'The request pre-selects both the address and the rate "' + PREFILL_RATE + '".', undefined, 'ok' );
 		}
 
 		return request;
@@ -1161,22 +1299,25 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	function attachAppleShipping( native ) {
 		let country = null;
 
-		async function respond( complete, rateId ) {
+		async function respond( name, complete, rateId ) {
 			const quote = await quoteShipping( country, rateId );
 
 			if ( ! quote.options.length ) {
-				log( 'No rates for that address, the sheet stays open.', undefined, 'warn' );
+				log( 'The test store has no rate for that address. The sheet stays open.', undefined, 'warn' );
 
 				// Apple rejects a completion with no total at all, so the last
 				// priced one is carried and the error goes against the address.
-				complete( {
+				const rejection = {
 					newTotal: { label: 'SDK v6 test page', type: 'pending', amount: quote.subtotal },
 					newLineItems: [],
 					newShippingMethods: [],
 					errors: typeof window.ApplePayError === 'function'
 						? [ new window.ApplePayError( 'shippingContactInvalid', 'postalAddress', 'We do not ship to that address.' ) ]
 						: [],
-				} );
+				};
+
+				logReply( name, rejection );
+				complete( rejection );
 
 				return;
 			}
@@ -1194,25 +1335,33 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 				methods.unshift( methods.splice( selectedAt, 1 )[0] );
 			}
 
-			complete( {
+			const update = {
 				newTotal: { label: 'SDK v6 test page', type: 'final', amount: quote.total },
 				newLineItems: [
 					{ label: 'Subtotal', amount: quote.subtotal, type: 'final' },
 					{ label: 'Shipping', amount: quote.shippingFee, type: 'final' },
 				],
 				newShippingMethods: methods,
-			} );
+			};
+
+			logReply( name, update );
+			complete( update );
 		}
 
 		native.onshippingcontactselected = ( event ) => {
-			log( 'SDK event: onshippingcontactselected' );
+			logEvent( 'onshippingcontactselected', event.shippingContact );
 			country = event.shippingContact ? event.shippingContact.countryCode : null;
-			respond( ( update ) => native.completeShippingContactSelection( update ), null );
+			respond(
+				'onshippingcontactselected',
+				( update ) => native.completeShippingContactSelection( update ),
+				null,
+			);
 		};
 
 		native.onshippingmethodselected = ( event ) => {
-			log( 'SDK event: onshippingmethodselected' );
+			logEvent( 'onshippingmethodselected', event.shippingMethod );
 			respond(
+				'onshippingmethodselected',
 				( update ) => native.completeShippingMethodSelection( update ),
 				event.shippingMethod ? event.shippingMethod.identifier : null,
 			);
@@ -1226,6 +1375,10 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	 *   createCardFieldsComponent() returns the element itself rather than
 	 *   something with a render() method, so each field is appended directly.
 	 *   The fields fill their container, which therefore needs its own height.
+	 *
+	 *   The session takes no handlers. Each field element dispatches its own
+	 *   CustomEvents instead, and submit() reports the payment outcome, the 3D
+	 *   Secure popup included, in its own result.
 	 *
 	 * ========================================================================== */
 
@@ -1242,26 +1395,36 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			{ type: 'cvv', placeholder: 'CVV' },
 		].forEach( ( field ) => {
 			const holder = document.createElement( 'div' );
+			const element = cardSession.createCardFieldsComponent( field );
 
 			holder.className = 'card-field';
-			holder.appendChild( cardSession.createCardFieldsComponent( field ) );
+			holder.appendChild( element );
 			box.appendChild( holder );
+
+			FIELD_EVENTS.forEach( ( name ) => {
+				element.addEventListener( name, ( event ) => logEvent( name + ' (' + field.type + ')', event.detail ) );
+			} );
 		} );
 
 		const pay = document.createElement( 'button' );
 		pay.textContent = 'Pay with card';
 		pay.addEventListener( 'click', async () => {
 			try {
-				const result = await cardSession.submit( await createOrder( component.source ) );
+				const orderId = await createOrder( component.source );
 
-				log( 'submit() result', result );
+				logCall( 'submit()', orderId );
+
+				const result = await cardSession.submit( orderId );
+
+				logResult( 'submit()', result );
 
 				if ( result.state === 'succeeded' ) {
-					log( 'Card approved. liabilityShift: ' + (result.data && result.data.liabilityShift), undefined, 'ok' );
+					log( 'The card is approved. liabilityShift: ' + (result.data && result.data.liabilityShift), undefined, 'ok' );
+					log( APPROVED_NEXT );
 				} else if ( result.state === 'canceled' ) {
-					log( 'Buyer closed the 3D Secure challenge, retry is allowed.', undefined, 'warn' );
+					log( 'The buyer closed the 3D Secure challenge. A retry is allowed.', undefined, 'warn' );
 				} else {
-					log( 'Card submission failed.', result.data, 'err' );
+					log( 'The card submission failed.', result.data, 'err' );
 				}
 			} catch ( error ) {
 				logError( 'Card payment failed:', error );
@@ -1301,11 +1464,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			return;
 		}
 
-		const session = state.sdkInstance.createPayPalGuestOneTimePaymentSession( {
-			onApprove: reportApproval,
-			onCancel: () => log( 'SDK event: onCancel (card button)', undefined, 'warn' ),
-			onError: ( error ) => logError( 'SDK event: onError (card button)', error ),
-		} );
+		const session = state.sdkInstance.createPayPalGuestOneTimePaymentSession( sessionHandlers( 'card button' ) );
 
 		const container = document.createElement( 'paypal-basic-card-container' );
 		const button = document.createElement( 'paypal-basic-card-button' );
@@ -1321,7 +1480,10 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		}
 
 		button.addEventListener( 'bcdc-click', async () => {
+			logEvent( 'bcdc-click, the element\'s own event instead of a click' );
+
 			try {
+				logCall( 'start()', { presentationMode: 'auto', targetElement: 'paypal-basic-card-button' } );
 				await session.start(
 					{ presentationMode: 'auto', targetElement: button },
 					orderPayload( component.source ),
@@ -1349,14 +1511,16 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 	 * ========================================================================== */
 
 	async function renderFastlane( box ) {
-		log( 'Calling createFastlane()...' );
+		const args = {
+			locale: 'en_us',
+			cardOptions: {},
+			shippingAddressOptions: {},
+		};
+
+		logCall( 'createFastlane()', args );
 
 		try {
-			state.fastlane = await state.sdkInstance.createFastlane( {
-				locale: 'en_us',
-				cardOptions: {},
-				shippingAddressOptions: {},
-			} );
+			state.fastlane = await state.sdkInstance.createFastlane( args );
 		} catch ( error ) {
 			logError( 'createFastlane() failed:', error );
 			log( 'Check that Fastlane is enabled for this sandbox account, and that clientMetadataId was passed to createInstance().', undefined, 'warn' );
@@ -1372,7 +1536,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			members[name] = typeof state.fastlane[name];
 		} );
 
-		log( 'Fastlane members', members, 'ok' );
+		logResult( 'createFastlane()', members );
 
 		const missing = expected.filter( ( name ) => ! state.fastlane[name] );
 		if ( missing.length ) {
@@ -1416,10 +1580,12 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		}
 
 		try {
+			logCall( 'FastlaneWatermarkComponent()', { includeAdditionalInfo: true } );
+
 			const watermark = await state.fastlane.FastlaneWatermarkComponent( { includeAdditionalInfo: true } );
 
 			await watermark.render( '#fastlane-watermark' );
-			log( 'Watermark rendered.', undefined, 'ok' );
+			log( 'The watermark is rendered.', undefined, 'ok' );
 		} catch ( error ) {
 			logError( 'Watermark render failed:', error );
 		}
@@ -1431,6 +1597,8 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		}
 
 		try {
+			logCall( 'FastlaneCardComponent()', {} );
+
 			state.cardComponent = await state.fastlane.FastlaneCardComponent( {} );
 			await state.cardComponent.render( '#fastlane-card' );
 
@@ -1440,7 +1608,7 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 			token.addEventListener( 'click', getPaymentToken );
 			box.appendChild( token );
 
-			log( 'Card component rendered.', undefined, 'ok' );
+			log( 'The card component is rendered.', undefined, 'ok' );
 		} catch ( error ) {
 			logError( 'Card component render failed:', error );
 			log( 'An unregistered custom element renders 0x0 with no console error. Check customElements.get("fastlane") in the console.', undefined, 'warn' );
@@ -1455,26 +1623,28 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 		}
 
 		try {
-			log( 'Looking up ' + email + '...' );
+			logCall( 'identity.lookupCustomerByEmail()', email );
 
 			const lookup = await state.fastlane.identity.lookupCustomerByEmail( email );
-			log( 'lookupCustomerByEmail()', lookup );
+
+			logResult( 'identity.lookupCustomerByEmail()', lookup );
 
 			if ( ! lookup || ! lookup.customerContextId ) {
-				log( 'No Fastlane profile. This buyer is a guest.', undefined, 'warn' );
+				log( 'There is no Fastlane profile for that address. This buyer is a guest.', undefined, 'warn' );
 
 				return;
 			}
 
-			log( 'Profile found, triggering authentication...' );
+			logCall( 'identity.triggerAuthenticationFlow()', lookup.customerContextId );
 
 			const auth = await state.fastlane.identity.triggerAuthenticationFlow( lookup.customerContextId );
-			log( 'triggerAuthenticationFlow()', auth );
+
+			logResult( 'identity.triggerAuthenticationFlow()', auth );
 
 			if ( auth && auth.authenticationState === 'succeeded' ) {
-				log( 'Authenticated. The member experience would render now.', undefined, 'ok' );
+				log( 'The buyer is authenticated. The member experience renders here.', undefined, 'ok' );
 			} else {
-				log( 'Not authenticated. The guest experience would render.', undefined, 'warn' );
+				log( 'The buyer is not authenticated. The guest experience renders here.', undefined, 'warn' );
 			}
 		} catch ( error ) {
 			logError( 'Customer lookup failed:', error );
@@ -1483,8 +1653,9 @@ See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
 
 	async function getPaymentToken() {
 		try {
-			log( 'getPaymentToken()', await state.cardComponent.getPaymentToken( {} ), 'ok' );
-			log( 'A single-use token, valid about three hours. It goes on the order as payment_source.card.single_use_token.' );
+			logCall( 'getPaymentToken()', {} );
+			logResult( 'getPaymentToken()', await state.cardComponent.getPaymentToken( {} ) );
+			log( 'The token is single-use and lasts about three hours. It goes on the order as payment_source.card.single_use_token.' );
 		} catch ( error ) {
 			logError( 'getPaymentToken() failed:', error );
 		}
