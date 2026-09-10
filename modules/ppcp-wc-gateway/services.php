@@ -115,7 +115,6 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.shop.country' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
-			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'wc-payment-tokens.wc-payment-tokens' ),
 			$container->get( 'wcgateway.asset_getter' ),
@@ -240,8 +239,7 @@ return array(
 			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.factory.paypal-checkout-url' ),
-			$container->get( 'wcgateway.place-order-button-text' )
+			$container->get( 'api.factory.paypal-checkout-url' )
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
@@ -783,35 +781,6 @@ return array(
 			false
 		);
 	},
-	/**
-	 * An override for the standard "Place order" button label, empty by default.
-	 *
-	 * The plugin no longer renames the button: the label belongs to WooCommerce, and a
-	 * PayPal-specific one misdescribes the funding sources that do not return to PayPal.
-	 * Consumers must treat an empty string as "leave the button alone".
-	 */
-	'wcgateway.place-order-button-text'                    => function ( ContainerInterface $container ): string {
-		return (string) apply_filters_deprecated(
-			'woocommerce_paypal_payments_place_order_button_text',
-			array( '' ),
-			'4.1.4',
-			'woocommerce_order_button_text'
-		);
-	},
-	/**
-	 * An override for the description shown beside the "Place order" button, empty by default.
-	 *
-	 * Dropped along with the button label it described. Consumers must treat an empty
-	 * string as "render no description".
-	 */
-	'wcgateway.place-order-button-description'             => function ( ContainerInterface $container ): string {
-		return (string) apply_filters_deprecated(
-			'woocommerce_paypal_payments_place_order_button_description',
-			array( '' ),
-			'4.1.4'
-		);
-	},
-
 	'wcgateway.helper.vaulting-scope'                      => static function ( ContainerInterface $container ): bool {
 		try {
 			$token = $container->get( 'api.bearer' )->bearer();
