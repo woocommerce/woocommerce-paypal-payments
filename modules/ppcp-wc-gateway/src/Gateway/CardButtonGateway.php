@@ -101,9 +101,8 @@ class CardButtonGateway extends \WC_Payment_Gateway
      * @param Environment             $environment The environment.
      * @param LoggerInterface         $logger  The logger.
      * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
-     * @param string                  $place_order_button_text An override for the "Place order" button label, empty to leave WooCommerce's own.
      */
-    public function __construct(OrderProcessor $order_processor, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, bool $default_enabled, Environment $environment, LoggerInterface $logger, callable $paypal_checkout_url_factory, string $place_order_button_text)
+    public function __construct(OrderProcessor $order_processor, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, bool $default_enabled, Environment $environment, LoggerInterface $logger, callable $paypal_checkout_url_factory)
     {
         $this->id = self::ID;
         $this->order_processor = $order_processor;
@@ -116,7 +115,6 @@ class CardButtonGateway extends \WC_Payment_Gateway
         $this->onboarded = $is_connected;
         $this->logger = $logger;
         $this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
-        $this->order_button_text = $place_order_button_text;
         $default_support = array('products', 'refunds');
         $this->supports = array_merge($default_support, apply_filters('woocommerce_paypal_payments_card_button_gateway_supports', array()));
         $this->method_title = __('Standard Card Button', 'woocommerce-paypal-payments');

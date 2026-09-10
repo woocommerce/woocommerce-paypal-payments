@@ -98,7 +98,7 @@ return array(
         return WC();
     },
     'wcgateway.paypal-gateway' => static function (ContainerInterface $container): PayPalGateway {
-        return new PayPalGateway($container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $container->get('settings.settings-provider'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.shop.country'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.place-order-button-text'), $container->get('api.endpoint.payment-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.settings.admin-settings-enabled'), $container->get('wcgateway.endpoint.capture-paypal-payment'), $container->get('api.endpoint.order'), $container->get('button.helper.context'));
+        return new PayPalGateway($container->get('wcgateway.funding-source.renderer'), $container->get('wcgateway.order-processor'), $container->get('settings.settings-provider'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.shop.country'), $container->get('api.factory.paypal-checkout-url'), $container->get('api.endpoint.payment-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wcgateway.asset_getter'), $container->get('wcgateway.settings.admin-settings-enabled'), $container->get('wcgateway.endpoint.capture-paypal-payment'), $container->get('api.endpoint.order'), $container->get('button.helper.context'));
     },
     'wcgateway.credit-card-gateway' => static function (ContainerInterface $container): CreditCardGateway {
         return new CreditCardGateway($container->get('wcgateway.order-processor'), $container->get('wcgateway.settings'), $container->get('wcgateway.configuration.card-configuration'), $container->get('wcgateway.credit-card-icons'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('api.endpoint.payments'), $container->get('settings.environment'), $container->get('api.endpoint.order'), $container->get('wcgateway.endpoint.capture-card-payment'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('woocommerce.logger.woocommerce'));
@@ -137,7 +137,7 @@ return array(
         return $icons_with_label;
     },
     'wcgateway.card-button-gateway' => static function (ContainerInterface $container): CardButtonGateway {
-        return new CardButtonGateway($container->get('wcgateway.order-processor'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('wcgateway.settings.allow_card_button_gateway.default'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.factory.paypal-checkout-url'), $container->get('wcgateway.place-order-button-text'));
+        return new CardButtonGateway($container->get('wcgateway.order-processor'), $container->get('session.handler'), $container->get('wcgateway.processor.refunds'), $container->get('settings.flag.is-connected'), $container->get('wcgateway.transaction-url-provider'), $container->get('wc-subscriptions.helper'), $container->get('wcgateway.settings.allow_card_button_gateway.default'), $container->get('settings.environment'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.factory.paypal-checkout-url'));
     },
     'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {
         $settings_provider = $container->get('settings.settings-provider');
@@ -382,25 +382,6 @@ return array(
          * Whether to use the standard "Place order" button with redirect to PayPal instead of the PayPal smart buttons.
          */
         return apply_filters('woocommerce_paypal_payments_use_place_order_button', \false);
-    },
-    /**
-     * An override for the standard "Place order" button label, empty by default.
-     *
-     * The plugin no longer renames the button: the label belongs to WooCommerce, and a
-     * PayPal-specific one misdescribes the funding sources that do not return to PayPal.
-     * Consumers must treat an empty string as "leave the button alone".
-     */
-    'wcgateway.place-order-button-text' => function (ContainerInterface $container): string {
-        return (string) apply_filters_deprecated('woocommerce_paypal_payments_place_order_button_text', array(''), '4.1.4', 'woocommerce_order_button_text');
-    },
-    /**
-     * An override for the description shown beside the "Place order" button, empty by default.
-     *
-     * Dropped along with the button label it described. Consumers must treat an empty
-     * string as "render no description".
-     */
-    'wcgateway.place-order-button-description' => function (ContainerInterface $container): string {
-        return (string) apply_filters_deprecated('woocommerce_paypal_payments_place_order_button_description', array(''), '4.1.4');
     },
     'wcgateway.helper.vaulting-scope' => static function (ContainerInterface $container): bool {
         try {

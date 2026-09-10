@@ -196,7 +196,7 @@ return array(
             // because extensions.php swaps in DisabledSmartButton on v6's pages.
             $can_vault = $settings_provider->save_paypal_and_venmo() && (bool) $container->get('button.client_id');
             $usable_for_cart = !$subscription_helper->cart_contains_subscription() || $can_vault;
-            return array('enabled' => $offer_method && $usable_for_cart, 'text' => (string) $container->get('wcgateway.place-order-button-text'), 'description' => (string) $container->get('wcgateway.place-order-button-description'));
+            return array('enabled' => $offer_method && $usable_for_cart);
         };
     },
     'sdk-v6.blocks.payment-method' => static function (ContainerInterface $container): V6PaymentMethod {

@@ -163,7 +163,6 @@ class PayPalGateway extends \WC_Payment_Gateway
      * @param LoggerInterface          $logger The logger.
      * @param string                   $api_shop_country The api shop country.
      * @param callable(string):string  $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
-     * @param string                   $place_order_button_text An override for the "Place order" button label, empty to leave WooCommerce's own.
      * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
      * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens.
      * @param AssetGetter              $asset_getter
@@ -172,7 +171,7 @@ class PayPalGateway extends \WC_Payment_Gateway
      * @param OrderEndpoint            $order_endpoint The order endpoint.
      * @param Context                  $context The context helper.
      */
-    public function __construct(FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, SettingsProvider $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, Environment $environment, LoggerInterface $logger, string $api_shop_country, callable $paypal_checkout_url_factory, string $place_order_button_text, PaymentTokensEndpoint $payment_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled, CapturePayPalPayment $capture_paypal_payment, OrderEndpoint $order_endpoint, Context $context)
+    public function __construct(FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, SettingsProvider $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, Environment $environment, LoggerInterface $logger, string $api_shop_country, callable $paypal_checkout_url_factory, PaymentTokensEndpoint $payment_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled, CapturePayPalPayment $capture_paypal_payment, OrderEndpoint $order_endpoint, Context $context)
     {
         $this->id = self::ID;
         $this->funding_source_renderer = $funding_source_renderer;
@@ -187,7 +186,6 @@ class PayPalGateway extends \WC_Payment_Gateway
         $this->logger = $logger;
         $this->api_shop_country = $api_shop_country;
         $this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
-        $this->order_button_text = $place_order_button_text;
         $this->payment_tokens_endpoint = $payment_tokens_endpoint;
         $this->wc_payment_tokens = $wc_payment_tokens;
         $this->icon = apply_filters('woocommerce_paypal_payments_paypal_gateway_icon', $asset_getter->get_static_asset_url('images/paypal.svg'));
