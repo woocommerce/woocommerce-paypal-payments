@@ -244,5 +244,10 @@ export default defineConfig< BaseExtend >( {
 			dependencies: [ 'setup-subscription' ],
 			testMatch: /08-subscription\/.*\.spec\.ts/,
 		},
+		{
+			name: 'shard:transaction-international',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /05-transactions\/international\/.*\.spec\.ts/,
+		},
 	],
 } );

@@ -25,6 +25,7 @@ on:
           - shard:refund
           - shard:vaulting
           - shard:subscription
+          - shard:transaction-international
           - stress
       XRAY_TEST_EXEC_KEY:
         description: 'Xray Test Execution Key'
@@ -85,6 +86,7 @@ jobs:
             refund
             vaulting
             subscription
+            transaction-international
           )
 
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'

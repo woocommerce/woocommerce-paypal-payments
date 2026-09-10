@@ -64,6 +64,9 @@
     "e2e:test:shard:subscription:smoke": "npx playwright test --project \"shard:subscription\" --grep \"@Smoke\"",
     "e2e:test:shard:subscription:critical": "npx playwright test --project \"shard:subscription\" --grep \"@Critical\"",
 
+    "e2e:test:shard:transaction-international": "npx playwright test --project \"shard:transaction-international\"",
+    "e2e:test:shard:transaction-international:smoke": "npx playwright test --project \"shard:transaction-international\" --grep \"@Smoke\"",
+
     "e2e:test:stress": "npx playwright test --project \"stress\"",
 
     "e2e:env:reset": "npx playwright test --project \"setup\" --grep \"env:reset;\"",

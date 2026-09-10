@@ -37,6 +37,16 @@ const acdc: Pcp.Payment = {
 	card: cards.mastercard,
 };
 
+const acdcVisa: Pcp.Payment = {
+	gateway: gateways.acdc,
+	card: cards.visa,
+};
+
+const acdcVisa2: Pcp.Payment = {
+	gateway: gateways.acdc,
+	card: cards.visa2,
+};
+
 const acdc3ds: Pcp.Payment = {
 	gateway: gateways.acdc3ds,
 	card: cards.visa3ds,
@@ -78,6 +88,8 @@ export const payments = {
 	oxxo,
 	venmo,
 	acdc,
+	acdcVisa,
+	acdcVisa2,
 	acdc3ds,
 	fastlaneGary,
 	fastlaneRyan,
