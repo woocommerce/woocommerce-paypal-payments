@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MerchantCountrySupport;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -40,7 +41,8 @@ class AddPaymentMethodManagerTest extends TestCase
 
     private function createTestee(
         bool $paypal_vaulting_enabled = false,
-        bool $card_vaulting_enabled = false
+        bool $card_vaulting_enabled = false,
+        string $merchant_country = 'US'
     ): AddPaymentMethodManager {
         return new AddPaymentMethodManager(
             $this->asset_getter,
@@ -50,7 +52,8 @@ class AddPaymentMethodManagerTest extends TestCase
             $paypal_vaulting_enabled,
             $card_vaulting_enabled,
             $this->settings_provider,
-            $this->card_field_styles
+            $this->card_field_styles,
+            new MerchantCountrySupport($merchant_country)
         );
     }
 

@@ -12,6 +12,8 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\when;
 
@@ -25,6 +27,8 @@ class PayPalPaymentMethodTest extends TestCase
     private $cancellation_view;
     private $session_handler;
     private $subscription_helper;
+    private $free_trial_helper;
+    private $wc_payment_tokens;
 
     public function setUp(): void
     {
@@ -38,6 +42,8 @@ class PayPalPaymentMethodTest extends TestCase
         $this->cancellation_view   = Mockery::mock(CancelView::class);
         $this->session_handler     = Mockery::mock(SessionHandler::class);
         $this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $this->free_trial_helper   = Mockery::mock(FreeTrialSubscriptionHelper::class);
+        $this->wc_payment_tokens   = Mockery::mock(WooCommercePaymentTokens::class);
 
         $this->gateway->id          = PayPalGateway::ID;
         $this->gateway->title       = 'PayPal';
@@ -46,6 +52,11 @@ class PayPalPaymentMethodTest extends TestCase
         $this->gateway->shouldReceive('get_description')->andReturn('Pay with PayPal');
 
         $this->session_handler->shouldReceive('funding_source')->andReturn('paypal');
+
+        // Not exercising free-trial gating by default: no cart is a free-trial cart, and
+        // no user is logged in, unless a test overrides these.
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
+        when('get_current_user_id')->justReturn(0);
 
         when('wp_create_nonce')->justReturn('nonce');
 
@@ -81,7 +92,9 @@ class PayPalPaymentMethodTest extends TestCase
             $use_place_order,
             'Place order',
             'Pay with PayPal',
-            array()
+            array(),
+            $this->free_trial_helper,
+            $this->wc_payment_tokens
         );
     }
 
@@ -188,6 +201,75 @@ class PayPalPaymentMethodTest extends TestCase
                 'assert_smart_buttons_disabled'   => true,
             ),
         );
+    }
+
+    /**
+     * GIVEN a free-trial subscription cart and a logged-in customer with no saved PayPal
+     *      or Venmo account
+     * WHEN get_payment_method_data() is called
+     * THEN the standard "Place order" row is disabled, since it would otherwise fail with
+     *      "No saved PayPal account"
+     */
+    public function testPlaceOrderDisabledForFreeTrialCartWithoutSavedPaypalToken(): void
+    {
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
+        $this->subscription_helper->shouldReceive('accept_manual_renewals')->andReturn(false);
+        $this->plugin_settings->shouldReceive('can_save_vault_token')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(true);
+        when('get_current_user_id')->justReturn(7);
+        $this->wc_payment_tokens->shouldReceive('has_paypal_or_venmo_token')->with(7)->andReturn(false);
+
+        $testee = $this->createTestee(array(), true, false);
+        $data   = $testee->get_payment_method_data();
+
+        $this->assertFalse($data['placeOrderEnabled']);
+    }
+
+    /**
+     * GIVEN a free-trial subscription cart and a logged-in customer who already has a
+     *      saved PayPal or Venmo account
+     * WHEN get_payment_method_data() is called
+     * THEN the standard "Place order" row stays enabled, since the saved account lets the
+     *      free-trial vaulting flow succeed
+     */
+    public function testPlaceOrderEnabledForFreeTrialCartWithSavedPaypalToken(): void
+    {
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
+        $this->subscription_helper->shouldReceive('accept_manual_renewals')->andReturn(false);
+        $this->plugin_settings->shouldReceive('can_save_vault_token')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(true);
+        when('get_current_user_id')->justReturn(7);
+        $this->wc_payment_tokens->shouldReceive('has_paypal_or_venmo_token')->with(7)->andReturn(true);
+
+        $testee = $this->createTestee(array(), true, false);
+        $data   = $testee->get_payment_method_data();
+
+        $this->assertTrue($data['placeOrderEnabled']);
+    }
+
+    /**
+     * GIVEN a free-trial subscription cart and a guest (no logged-in customer, so no saved
+     *      payment tokens can exist for them)
+     * WHEN get_payment_method_data() is called
+     * THEN the standard "Place order" row is disabled
+     * AND no payment-token lookup is attempted, since a guest cannot have one
+     */
+    public function testPlaceOrderDisabledForFreeTrialCartWhenGuest(): void
+    {
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
+        $this->subscription_helper->shouldReceive('accept_manual_renewals')->andReturn(false);
+        $this->plugin_settings->shouldReceive('can_save_vault_token')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(true);
+        when('get_current_user_id')->justReturn(0);
+        $this->wc_payment_tokens->shouldNotReceive('has_paypal_or_venmo_token');
+
+        $testee = $this->createTestee(array(), true, false);
+        $data   = $testee->get_payment_method_data();
+
+        $this->assertFalse($data['placeOrderEnabled']);
     }
 
     /**
