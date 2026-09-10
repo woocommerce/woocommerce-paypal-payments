@@ -78,20 +78,20 @@ if ( blockEnabled ) {
 			},
 			// The label belongs to WooCommerce, so it is only set when a filter
 			// supplies an override.
-			...( config.placeOrderButtonText
-				? { placeOrderButtonLabel: config.placeOrderButtonText }
+			...( config.placeOrderButtonLabel
+				? { placeOrderButtonLabel: config.placeOrderButtonLabel }
 				: {} ),
 		} );
 
 		// The Checkout Actions block reads the label through this filter rather than
 		// the property above, so an override has to be applied in both places.
-		if ( config.placeOrderButtonText ) {
+		if ( config.placeOrderButtonLabel ) {
 			const { registerCheckoutFilters } = window.wc.blocksCheckout;
 			registerCheckoutFilters( config.id, {
 				placeOrderButtonLabel: ( value ) => {
 					const store = window.wp?.data?.select( 'wc/store/payment' );
 					if ( store?.getActivePaymentMethod() === config.id ) {
-						return config.placeOrderButtonText;
+						return config.placeOrderButtonLabel;
 					}
 					return value;
 				},
