@@ -145,12 +145,8 @@ if ( config && config.page_context && config.continuation ) {
 		edit: createElement( V6EditorPreview, {
 			fundingSource: FundingSources.PAYPAL,
 		} ),
-		// Set explicitly so the button never reads "Proceed to PayPal", which
-		// would tell the buyer they are heading back to PayPal.
-		placeOrderButtonLabel: __(
-			'Place order',
-			'woocommerce-paypal-payments'
-		),
+		// No placeOrderButtonLabel: nothing renames the button any more, so
+		// WooCommerce's own label stands.
 		canMakePayment: () => true,
 		supports: {
 			// v5's ppcp-gateway is unregistered here, so a dropped method
@@ -467,13 +463,17 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 		rowProps = {
 			content: createElement( PayPalPlaceOrderContent, {
 				description: config.description,
-				placeOrderButtonDescription: config.place_order.description,
+				placeOrderButtonDescription: config.placeOrderButtonDescription,
 			} ),
-			placeOrderButtonLabel: config.place_order.text,
 			// Gone on a zero-total cart that needs no payment method, but kept
 			// on a subscription cart, which needs one even at $0.
 			canMakePayment: ( { cartTotals } = {} ) =>
 				regularRowAllowedForCart( cartTotals ),
+			// The label belongs to WooCommerce, so it is only set when a filter
+			// supplies an override.
+			...( config.placeOrderButtonLabel
+				? { placeOrderButtonLabel: config.placeOrderButtonLabel }
+				: {} ),
 		};
 	} else {
 		rowProps = {
@@ -506,9 +506,9 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 	} );
 
 	// placeOrderButtonLabel above is not honoured on its own by the Checkout
-	// Actions block, which reads the label through this filter instead. Same
-	// belt-and-braces pair as v5.
-	if ( placeOrderEnabled ) {
+	// Actions block, which reads the label through this filter instead, so an
+	// override has to be applied in both places. Same belt-and-braces pair as v5.
+	if ( placeOrderEnabled && config.placeOrderButtonLabel ) {
 		const placeOrderButtonLabel = ( defaultLabel ) => {
 			const payment = window.wp?.data?.select( 'wc/store/payment' );
 
@@ -516,7 +516,7 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 				return defaultLabel;
 			}
 
-			return config.place_order.text;
+			return config.placeOrderButtonLabel;
 		};
 
 		window.wc?.blocksCheckout?.registerCheckoutFilters?.(

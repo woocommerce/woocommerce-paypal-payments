@@ -159,8 +159,6 @@ class V6PaymentMethodTest extends TestCase
         $place_order_data    = static function () use (&$cartHasSubscription): array {
             return [
                 'enabled'     => ! $cartHasSubscription,
-                'text'        => 'Place order',
-                'description' => '',
             ];
         };
 
@@ -170,8 +168,6 @@ class V6PaymentMethodTest extends TestCase
         $this->assertSame(
             [
                 'enabled'     => true,
-                'text'        => 'Place order',
-                'description' => '',
             ],
             $firstCallData['place_order']
         );
@@ -181,8 +177,6 @@ class V6PaymentMethodTest extends TestCase
         $this->assertSame(
             [
                 'enabled'     => false,
-                'text'        => 'Place order',
-                'description' => '',
             ],
             $secondCallData['place_order']
         );

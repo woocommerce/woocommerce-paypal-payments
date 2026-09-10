@@ -398,7 +398,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	);
 
 	/**
-	 * Hides the native WC "Proceed to PayPal" button while the PayPal gateway
+	 * Hides the native WC place order button while the PayPal gateway
 	 * is selected with a NEW payment method — the v6 PayPal buttons stand in for
 	 * it — and restores it for cards, saved PayPal tokens (charged via Place
 	 * Order), and every other method. The v6 express button is hidden for a saved

@@ -280,9 +280,7 @@ return array(
 			$usable_for_cart = ! $subscription_helper->cart_contains_subscription() || $can_vault;
 
 			return array(
-				'enabled'     => $offer_method && $usable_for_cart,
-				'text'        => (string) $container->get( 'wcgateway.place-order-button-text' ),
-				'description' => (string) $container->get( 'wcgateway.place-order-button-description' ),
+				'enabled' => $offer_method && $usable_for_cart,
 			);
 		};
 	},
