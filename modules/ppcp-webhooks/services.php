@@ -33,6 +33,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenDeleted;
+use WooCommerce\PayPalCommerce\Webhooks\OwnWebhookResolver;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 return array(
@@ -51,7 +52,13 @@ return array(
 			$last_webhook_storage,
 			$container->get( 'webhook.status.simulation' ),
 			$container->get( 'webhook.orchestration' ),
-			$logger
+			$logger,
+			$container->get( 'webhook.own-resolver' )
+		);
+	},
+	'webhook.own-resolver'                    => static function ( ContainerInterface $container ): OwnWebhookResolver {
+		return new OwnWebhookResolver(
+			$container->get( 'webhook.endpoint.controller' )
 		);
 	},
 	'webhook.orchestration'                   => static function ( ContainerInterface $container ): WebhookOrchestrator {

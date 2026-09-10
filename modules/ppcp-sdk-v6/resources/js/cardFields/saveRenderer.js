@@ -16,6 +16,10 @@ import { loadSdkV6 } from '../sdkLoader';
 import { postJson } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 import { navigation } from '../utils/navigation';
+import {
+	CARD_SAVE_DECLINE_MESSAGE,
+	userFacingError,
+} from '../utils/cardDeclineMessages';
 
 const FIELD_TYPES = [ 'number', 'expiry', 'cvv', 'name' ];
 
@@ -120,7 +124,7 @@ export function initCardSaveFields( config ) {
 				return;
 			}
 			if ( result.state !== 'succeeded' ) {
-				throw new Error( 'Card could not be saved.' );
+				throw userFacingError( CARD_SAVE_DECLINE_MESSAGE );
 			}
 
 			await postJson( config.ajax.create_payment_token, {

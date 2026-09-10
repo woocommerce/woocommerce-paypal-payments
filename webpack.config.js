@@ -71,6 +71,7 @@ const modulesAssets = {
 		'js/checkout-block.js',
 		'js/boot-add-payment-method.js',
 		'css/gateway.scss',
+		'css/checkout-block.scss',
 	],
 	'ppcp-settings': [ 'js/index.js', 'css/styles.scss' ],
 	'ppcp-wc-gateway': [

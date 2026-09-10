@@ -22,3 +22,20 @@
 		width: 100%;
 	}
 }
+
+// Gating the express stack until the product form is ready to be purchased
+// (e.g. a variable product with no variation selected). The wrapper carries
+// this class from ButtonDisabler; the grayscale dims the whole stack and
+// pointer-events blocks every button so the click lands on the wrapper, whose
+// handler routes it to WooCommerce's native "select your options" validation.
+// v5 ships the same rule in ppcp-button's gateway.css, but that stylesheet is
+// not enqueued on v6 pages, so it is repeated here for the v6 stack.
+.ppcp-disabled {
+	cursor: not-allowed;
+	-webkit-filter: grayscale(100%);
+	filter: grayscale(100%);
+
+	* {
+		pointer-events: none;
+	}
+}

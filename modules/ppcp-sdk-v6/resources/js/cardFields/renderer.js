@@ -24,6 +24,11 @@ import {
 import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 import { isFreeTrialCart } from '../utils/freeTrial';
+import {
+	CARD_DECLINE_MESSAGE,
+	CARD_SAVE_DECLINE_MESSAGE,
+	userFacingError,
+} from '../utils/cardDeclineMessages';
 
 const FIELD_TYPES = [ 'number', 'expiry', 'cvv' ];
 
@@ -230,7 +235,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 					return;
 				}
 				if ( saveResult.state !== 'succeeded' ) {
-					throw new Error( 'Card could not be saved.' );
+					throw userFacingError( CARD_SAVE_DECLINE_MESSAGE );
 				}
 
 				await exchangeSetupToken( config, setupTokenId );
@@ -258,7 +263,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 			}
 
 			if ( result.state !== 'succeeded' ) {
-				throw new Error( 'Card payment failed.' );
+				throw userFacingError( CARD_DECLINE_MESSAGE );
 			}
 
 			await approveCardOrder( config, orderId );

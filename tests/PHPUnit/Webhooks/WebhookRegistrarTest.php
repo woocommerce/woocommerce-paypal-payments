@@ -74,7 +74,8 @@ class WebhookRegistrarTest extends TestCase
 			$this->last_webhook_event_storage,
 			$this->webhook_simulation,
 			$this->webhook_orchestrator,
-			$this->logger
+			$this->logger,
+			new OwnWebhookResolver($this->incoming_webhook_endpoint)
 		);
 	}
 

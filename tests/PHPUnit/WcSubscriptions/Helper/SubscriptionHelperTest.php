@@ -7,6 +7,7 @@ use Mockery;
 use WC_Order;
 use WC_Subscription;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use function Brain\Monkey\Filters\expectApplied;
@@ -310,5 +311,135 @@ class SubscriptionHelperTest extends TestCase
 		$helper->shouldReceive('cart_contains_renewal')->andReturn($cart_contains_renewal);
 
 		return $helper;
+	}
+
+	/**
+	 * GIVEN the cart does not contain a subscription
+	 * WHEN subscription_cart_processable() is called
+	 * THEN it returns true without resolving the subscription mode or checking button eligibility,
+	 *      since a non-subscription cart is always processable
+	 */
+	public function test_subscription_cart_processable_returns_true_when_cart_has_no_subscription(): void {
+		$settings_provider = Mockery::mock( SettingsProvider::class );
+
+		$helper = Mockery::mock( SubscriptionHelper::class )->makePartial();
+		$helper->shouldReceive( 'cart_contains_subscription' )->andReturn( false );
+		$helper->shouldNotReceive( 'resolve_subscription_mode' );
+		$helper->shouldNotReceive( 'paypal_subscription_button_allowed' );
+
+		$this->assertTrue( $helper->subscription_cart_processable( $settings_provider ) );
+	}
+
+	/**
+	 * GIVEN a subscription is in the cart
+	 * WHEN subscription_cart_processable() is called
+	 * THEN it resolves whether PayPal Subscriptions mode applies and whether a vault token can be
+	 *      saved, then defers the final decision to paypal_subscription_button_allowed()
+	 * AND a vault token can only be saved when both a connected merchant (client_id) and
+	 *     "Save PayPal and Venmo" are present - one without the other keeps it un-savable
+	 *
+	 * @dataProvider subscription_cart_processable_wiring_provider
+	 */
+	public function test_subscription_cart_processable_wires_mode_and_vault_token_signals(
+		string $resolved_mode,
+		bool $save_paypal_and_venmo,
+		string $client_id,
+		bool $expected_is_paypal_subscription,
+		bool $expected_can_save_vault_token,
+		bool $button_allowed_result
+	): void {
+		$settings_provider = Mockery::mock( SettingsProvider::class );
+		$settings_provider->allows( 'save_paypal_and_venmo' )->andReturn( $save_paypal_and_venmo );
+		$settings_provider->allows( 'merchant_data' )->andReturn(
+			new MerchantConnectionDTO( false, $client_id, '', '' )
+		);
+
+		$helper = Mockery::mock( SubscriptionHelper::class )->makePartial();
+		$helper->shouldReceive( 'cart_contains_subscription' )->andReturn( true );
+		$helper->shouldReceive( 'resolve_subscription_mode' )
+			->with( $settings_provider )
+			->andReturn( $resolved_mode );
+		$helper->shouldReceive( 'paypal_subscription_button_allowed' )
+			->with( $expected_is_paypal_subscription, $expected_can_save_vault_token )
+			->andReturn( $button_allowed_result );
+
+		$this->assertSame(
+			$button_allowed_result,
+			$helper->subscription_cart_processable( $settings_provider )
+		);
+	}
+
+	public function subscription_cart_processable_wiring_provider(): array {
+		return array(
+			'vaulting mode with vaulting enabled and connected merchant allows the button' => array(
+				SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING,
+				true,
+				'client-id-123',
+				false,
+				true,
+				true,
+			),
+			'subscriptions API mode with a PayPal plan allows the button'                  => array(
+				SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS,
+				false,
+				'',
+				true,
+				false,
+				true,
+			),
+			'subscriptions API mode without a plan and vaulting disabled hides the button' => array(
+				SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS,
+				false,
+				'',
+				true,
+				false,
+				false,
+			),
+			'manual-renewal-only subscription allows the button'                           => array(
+				SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED,
+				false,
+				'',
+				false,
+				false,
+				true,
+			),
+			'vaulting enabled but no connected merchant keeps the vault token un-savable'   => array(
+				SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING,
+				true,
+				'',
+				false,
+				false,
+				false,
+			),
+		);
+	}
+
+	/**
+	 * GIVEN a subscription requiring a PayPal plan is in the cart
+	 * AND no PayPal plan is linked to the product
+	 * AND vaulting ("Save PayPal and Venmo") is disabled
+	 * WHEN subscription_cart_processable() runs end-to-end (mode resolution and button
+	 *      eligibility are not stubbed)
+	 * THEN it returns false, so the PayPal gateway is hidden instead of shown disabled
+	 */
+	public function test_subscription_cart_processable_end_to_end_hides_gateway_when_vaulting_disabled_and_no_plan(): void {
+		expectApplied( 'woocommerce_paypal_payments_subscription_mode_disabled' )
+			->once()
+			->with( false )
+			->andReturn( false );
+
+		$settings_provider = Mockery::mock( SettingsProvider::class );
+		$settings_provider->allows( 'save_paypal_and_venmo' )->andReturn( false );
+		$settings_provider->allows( 'merchant_data' )->andReturn(
+			new MerchantConnectionDTO( false, '', '', '' )
+		);
+
+		$helper = Mockery::mock( SubscriptionHelper::class )->makePartial();
+		$helper->shouldReceive( 'cart_contains_subscription' )->andReturn( true );
+		$helper->shouldReceive( 'plugin_is_active' )->andReturn( true );
+		$helper->shouldReceive( 'accept_manual_renewals' )->andReturn( false );
+		$helper->shouldReceive( 'checkout_subscription_product_allowed' )->andReturn( false );
+
+		$this->assertFalse( $helper->subscription_cart_processable( $settings_provider ) );
 	}
 }

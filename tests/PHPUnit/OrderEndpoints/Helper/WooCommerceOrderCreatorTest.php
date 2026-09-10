@@ -5,10 +5,12 @@ namespace WooCommerce\PayPalCommerce\OrderEndpoints\Helper;
 
 use Mockery;
 use ReflectionMethod;
+use WC_Customer;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
@@ -17,6 +19,7 @@ use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
 
@@ -158,6 +161,209 @@ class WooCommerceOrderCreatorTest extends TestCase {
 		$method->setAccessible( true );
 
 		$method->invoke( $sut, $wc_order, $cart_data, null, null );
+
+		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN a PayPal order with no payer or shipping information
+	 * AND an empty cart carrying a known cart hash
+	 * WHEN create_from_paypal_order() builds the WC order
+	 * THEN the resulting WC order's cart hash is set to the cart's hash
+	 *      so the PayPal subscription replay guard can compare it later
+	 */
+	public function test_create_from_paypal_order_sets_cart_hash_from_cart_data(): void {
+		$cart_data = new CartData( array(), array(), false, 0, 'expected-cart-hash' );
+
+		$order = Mockery::mock( Order::class );
+		$order->shouldReceive( 'payer' )->andReturn( null );
+		$order->shouldReceive( 'purchase_units' )->andReturn( array() );
+
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'set_payment_method' )->once()->with( PayPalGateway::ID );
+		$wc_order->shouldReceive( 'calculate_totals' )->twice();
+		$wc_order->shouldReceive( 'set_cart_hash' )->once()->with( 'expected-cart-hash' );
+		$wc_order->shouldReceive( 'save' )->once();
+
+		expect( 'wc_create_order' )->once()->andReturn( $wc_order );
+
+		$current_user     = new \stdClass();
+		$current_user->ID = 0;
+		expect( 'wp_get_current_user' )->once()->andReturn( $current_user );
+
+		$wc_customer_holder           = new \stdClass();
+		$wc_customer_holder->customer = null;
+		expect( 'WC' )->once()->andReturn( $wc_customer_holder );
+
+		expect( 'apply_filters' )
+			->once()
+			->with(
+				'woocommerce_paypal_payments_order_creator_get_shipping',
+				null,
+				$order,
+				null
+			)
+			->andReturn( null );
+
+		expect( 'do_action' )
+			->once()
+			->with(
+				'woocommerce_paypal_payments_woocommerce_order_created_from_cart',
+				$wc_order,
+				$cart_data
+			);
+
+		$session_handler = Mockery::mock( SessionHandler::class );
+		$session_handler->shouldReceive( 'funding_source' )->once()->andReturn( null );
+
+		$sut = new WooCommerceOrderCreator(
+			Mockery::mock( FundingSourceRenderer::class ),
+			$session_handler,
+			Mockery::mock( SubscriptionHelper::class ),
+			Mockery::mock( CartDataFactory::class ),
+			Mockery::mock( ShippingFactory::class ),
+			Mockery::mock( PayerFactory::class )
+		);
+
+		$result = $sut->create_from_paypal_order( $order, $cart_data );
+
+		$this->assertSame( $wc_order, $result );
+	}
+
+	/**
+	 * GIVEN shipping is not required and PayPal returned no purchase-unit shipping
+	 * AND the PayPal payer carries only an email address (no billing address)
+	 * AND the logged-in WooCommerce customer has a saved billing address
+	 * WHEN configure_addresses() is invoked via reflection
+	 * THEN the order's billing address is set from the customer's saved billing
+	 *      fields instead of being left empty
+	 * AND no shipping address is set
+	 */
+	public function test_configure_addresses_falls_back_to_customer_billing_when_payer_has_no_address(): void {
+		$payer = Mockery::mock( Payer::class );
+		$payer->shouldReceive( 'address' )->andReturn( null );
+		$payer->shouldReceive( 'name' )->andReturn( null );
+		$payer->shouldReceive( 'phone' )->andReturn( null );
+		$payer->shouldReceive( 'email_address' )->andReturn( 'payer@example.com' );
+
+		$wc_customer = Mockery::mock( WC_Customer::class );
+		$wc_customer->shouldReceive( 'get_email' )->andReturn( 'john@example.com' );
+		$wc_customer->shouldReceive( 'get_billing_address_1' )->andReturn( '123 Main St' );
+		$wc_customer->shouldReceive( 'get_billing_address_2' )->andReturn( '' );
+		$wc_customer->shouldReceive( 'get_billing_first_name' )->andReturn( 'John' );
+		$wc_customer->shouldReceive( 'get_billing_last_name' )->andReturn( 'Doe' );
+		$wc_customer->shouldReceive( 'get_billing_city' )->andReturn( 'NYC' );
+		$wc_customer->shouldReceive( 'get_billing_state' )->andReturn( 'NY' );
+		$wc_customer->shouldReceive( 'get_billing_postcode' )->andReturn( '10001' );
+		$wc_customer->shouldReceive( 'get_billing_country' )->andReturn( 'US' );
+		$wc_customer->shouldReceive( 'get_billing_email' )->andReturn( 'john@example.com' );
+		$wc_customer->shouldReceive( 'get_billing_phone' )->andReturn( '5551234' );
+
+		$wc_customer_holder           = new \stdClass();
+		$wc_customer_holder->customer = $wc_customer;
+		expect( 'WC' )->andReturn( $wc_customer_holder );
+
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'set_billing_address' )
+			->once()
+			->with(
+				array(
+					'email'      => 'john@example.com',
+					'first_name' => 'John',
+					'last_name'  => 'Doe',
+					'address_1'  => '123 Main St',
+					'address_2'  => '',
+					'city'       => 'NYC',
+					'state'      => 'NY',
+					'postcode'   => '10001',
+					'country'    => 'US',
+					'phone'      => '5551234',
+				)
+			);
+		$wc_order->shouldReceive( 'set_shipping_address' )->never();
+		$wc_order->shouldReceive( 'calculate_totals' )->once();
+
+		$sut = new WooCommerceOrderCreator(
+			Mockery::mock( FundingSourceRenderer::class ),
+			Mockery::mock( SessionHandler::class ),
+			Mockery::mock( SubscriptionHelper::class ),
+			Mockery::mock( CartDataFactory::class ),
+			Mockery::mock( ShippingFactory::class ),
+			Mockery::mock( PayerFactory::class )
+		);
+
+		$method = new ReflectionMethod( WooCommerceOrderCreator::class, 'configure_addresses' );
+		$method->setAccessible( true );
+
+		$method->invoke( $sut, $wc_order, $payer, null, false );
+
+		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN shipping is not required
+	 * AND the PayPal payer already carries a valid billing address
+	 * AND the logged-in WooCommerce customer also has a saved billing address
+	 * WHEN configure_addresses() is invoked via reflection
+	 * THEN the order's billing address is set from the PayPal payer's address
+	 * AND the customer's saved billing address is not used to overwrite it
+	 */
+	public function test_configure_addresses_keeps_payer_billing_address_when_present(): void {
+		$address = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Entity\Address::class );
+		$address->shouldReceive( 'address_line_1' )->andReturn( '456 Payer Ave' );
+		$address->shouldReceive( 'address_line_2' )->andReturn( '' );
+		$address->shouldReceive( 'admin_area_2' )->andReturn( 'LA' );
+		$address->shouldReceive( 'admin_area_1' )->andReturn( 'CA' );
+		$address->shouldReceive( 'postal_code' )->andReturn( '90001' );
+		$address->shouldReceive( 'country_code' )->andReturn( 'US' );
+
+		$payer = Mockery::mock( Payer::class );
+		$payer->shouldReceive( 'address' )->andReturn( $address );
+		$payer->shouldReceive( 'name' )->andReturn( null );
+		$payer->shouldReceive( 'phone' )->andReturn( null );
+		$payer->shouldReceive( 'email_address' )->andReturn( 'payer@example.com' );
+
+		$wc_customer = Mockery::mock( WC_Customer::class );
+		$wc_customer->shouldReceive( 'get_email' )->andReturn( '' );
+		$wc_customer->shouldReceive( 'get_billing_address_1' )->never();
+
+		$wc_customer_holder           = new \stdClass();
+		$wc_customer_holder->customer = $wc_customer;
+		expect( 'WC' )->andReturn( $wc_customer_holder );
+
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'set_billing_address' )
+			->once()
+			->with(
+				array(
+					'email'      => 'payer@example.com',
+					'first_name' => '',
+					'last_name'  => '',
+					'address_1'  => '456 Payer Ave',
+					'address_2'  => '',
+					'city'       => 'LA',
+					'state'      => 'CA',
+					'postcode'   => '90001',
+					'country'    => 'US',
+					'phone'      => '',
+				)
+			);
+		$wc_order->shouldReceive( 'set_shipping_address' )->never();
+		$wc_order->shouldReceive( 'calculate_totals' )->once();
+
+		$sut = new WooCommerceOrderCreator(
+			Mockery::mock( FundingSourceRenderer::class ),
+			Mockery::mock( SessionHandler::class ),
+			Mockery::mock( SubscriptionHelper::class ),
+			Mockery::mock( CartDataFactory::class ),
+			Mockery::mock( ShippingFactory::class ),
+			Mockery::mock( PayerFactory::class )
+		);
+
+		$method = new ReflectionMethod( WooCommerceOrderCreator::class, 'configure_addresses' );
+		$method->setAccessible( true );
+
+		$method->invoke( $sut, $wc_order, $payer, null, false );
 
 		$this->addToAssertionCount( 1 );
 	}

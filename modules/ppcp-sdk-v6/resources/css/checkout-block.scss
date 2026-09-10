@@ -1,0 +1,19 @@
+// Widths for the express buttons on block pages.
+//
+// The v6 button Web Components are inline-block boxes of a fixed 225px, which
+// fits neither layout WooCommerce Blocks gives them: they under-fill the cart
+// block's column and overflow the checkout block's grid cell, clipping the
+// label. The wallets size themselves through the SDK and need nothing here.
+//
+// gateway.scss carries the same rule for the classic stack and the mini cart.
+// This file exists because SdkV6Manager::enqueue() deliberately skips block
+// pages, so their assets ship from V6PaymentMethod instead.
+
+.wc-block-components-express-payment__event-buttons {
+	paypal-button,
+	venmo-button,
+	paypal-pay-later-button {
+		display: block;
+		width: 100%;
+	}
+}

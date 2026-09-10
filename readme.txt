@@ -2,9 +2,9 @@
 Contributors: paypal, woocommerce, automattic, syde
 Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 4.1.2
+Stable tag: 4.1.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,28 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
+
+= 4.1.3 - XXXX-XX-XX =
+* Enhancement - PayPal JS SDK v6 is now the default for new store setups, moving PayPal buttons, Apple Pay, Google Pay, Advanced Card Fields, Fastlane, Pay Later messaging and vaulting subscriptions onto the new integration; existing stores remain on SDK v5 with this version #4641
+* Enhancement - Add filter hooks to customize the payment method title and allow payment method icons #4586
+* Enhancement - Clearer, customer-friendly decline messages for 3D Secure rejections #4573
+* Enhancement - First-party WooCommerce plugin detection for product customizations #4552
+* Enhancement - Allow Pay Later to remain available when vaulting is enabled #4611
+* Enhancement - Improve manual-renewal-only subscription scenarios #4621
+* Enhancement - Exclude connection details from Blueprint exports by default #4647
+* Fix - Apple Pay shown under the PayPal gateway when a vaulting subscription is in the cart #4546
+* Fix - Prevent Vault API calls made with an empty customer ID #4567
+* Fix - Keep recoverable PAYER_ACTION_REQUIRED orders from failing prematurely #4569
+* Fix - Retain the shopper's checkout data when returning from PayPal on mobile #4649
+* Fix - PayPal gateway missing on Block Checkout when WooCommerce Subscriptions automatic renewals are enabled #4659
+* Fix - Webhook registration hitting the wrong API host right after onboarding #4669
+* Fix - Give the Pay upon Invoice phone field its own ID #4666
+* Fix - Stop polling the merchant-integrations endpoint on every cron run #4640
+* Fix - Skip WooCommerce Inbox note registration during AJAX requests #4607
+* Fix - Remove the orphaned reCAPTCHA Inbox note and align its enabled checks #4634
+* Fix - Prevent Advanced Card Fields submission when Blocks checkout fields are invalid (author @marcofucito) #4435
+* Fix - Show the product button on variable products with no preselected attributes #4691
+* Fix - Fix negative tax_total when a discount is not reported by WooCommerce #4690
 
 = 4.1.2 - 2026-08-04 =
 * Enhancement - Advanced onboarding options for onboarding wizard #4496

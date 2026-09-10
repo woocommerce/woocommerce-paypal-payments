@@ -622,4 +622,54 @@ class SettingsProviderTest extends TestCase {
 			],
 		];
 	}
+
+	/**
+	 * GIVEN a merchant connection with or without a client ID, and vaulting ("Save PayPal
+	 *      and Venmo") on or off
+	 * WHEN can_save_vault_token() is called
+	 * THEN a vault token can only be saved when the merchant is connected (has a client ID)
+	 *      and vaulting is enabled
+	 *
+	 * @dataProvider can_save_vault_token_provider
+	 */
+	public function test_can_save_vault_token(
+		string $client_id,
+		bool $save_paypal_and_venmo,
+		bool $expected
+	): void {
+		$this->general_settings
+			->shouldReceive( 'get_merchant_data' )
+			->andReturn( new MerchantConnectionDTO( true, $client_id, '', '' ) );
+
+		$this->settings_model
+			->shouldReceive( 'get_save_paypal_and_venmo' )
+			->andReturn( $save_paypal_and_venmo );
+
+		$this->assertSame( $expected, $this->provider->can_save_vault_token() );
+	}
+
+	public function can_save_vault_token_provider(): array {
+		return [
+			'connected merchant, vaulting on'      => [
+				'client_id'             => 'client-id',
+				'save_paypal_and_venmo' => true,
+				'expected'              => true,
+			],
+			'connected merchant, vaulting off'     => [
+				'client_id'             => 'client-id',
+				'save_paypal_and_venmo' => false,
+				'expected'              => false,
+			],
+			'unconnected merchant, vaulting on'    => [
+				'client_id'             => '',
+				'save_paypal_and_venmo' => true,
+				'expected'              => false,
+			],
+			'unconnected merchant, vaulting off'   => [
+				'client_id'             => '',
+				'save_paypal_and_venmo' => false,
+				'expected'              => false,
+			],
+		];
+	}
 }
