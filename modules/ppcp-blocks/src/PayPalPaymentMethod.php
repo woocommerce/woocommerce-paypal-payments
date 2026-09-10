@@ -139,8 +139,8 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * @param SubscriptionHelper            $subscription_helper The subscription helper.
 	 * @param bool                          $add_place_order_method Whether to create a non-express method with the standard "Place order" button.
 	 * @param bool                          $use_place_order Whether to use the standard "Place order" button instead of PayPal buttons.
-	 * @param string                        $place_order_button_text The text for the standard "Place order" button.
-	 * @param string                        $place_order_button_description The text for additional "Place order" description.
+	 * @param string                        $place_order_button_text An override for the "Place order" button label, empty to leave WooCommerce's own.
+	 * @param string                        $place_order_button_description An override description shown beside the button, empty to render none.
 	 * @param array                         $all_funding_sources All existing funding sources for PayPal buttons.
 	 */
 	public function __construct(
