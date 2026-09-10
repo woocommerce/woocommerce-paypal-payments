@@ -175,6 +175,15 @@ class V6PaymentMethod extends AbstractPaymentMethodType {
 			}
 		}
 
-		return $data;
+		/**
+		 * Filters the payment method data handed to the v6 block checkout.
+		 *
+		 * The place order button label and its description are WooCommerce's, so the
+		 * plugin no longer sets them. Add `placeOrderButtonLabel` here to rename the
+		 * button, or `placeOrderButtonDescription` to render text beneath it.
+		 *
+		 * @param array $data The payment method data.
+		 */
+		return (array) apply_filters( 'woocommerce_paypal_payments_blocks_payment_method_data', $data );
 	}
 }

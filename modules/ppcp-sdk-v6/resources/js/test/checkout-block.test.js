@@ -301,29 +301,17 @@ describe( 'checkout-block', () => {
 			test( 'registers ppcp-gateway as a regular payment method even with no vault component', () => {
 				loadCheckoutBlock(
 					baseConfig( {
-						place_order: { enabled: true, text: 'Complete order' },
+						place_order: { enabled: true },
 					} )
 				);
 
 				expect( regularCallFor( 'ppcp-gateway' ) ).toBeDefined();
 			} );
 
-			test( 'uses place_order.text as the placeOrderButtonLabel', () => {
-				loadCheckoutBlock(
-					baseConfig( {
-						place_order: { enabled: true, text: 'Complete order' },
-					} )
-				);
-
-				expect(
-					regularCallFor( 'ppcp-gateway' ).placeOrderButtonLabel
-				).toBe( 'Complete order' );
-			} );
-
 			test( 'does not show saved cards when the vault component is not eligible', () => {
 				loadCheckoutBlock(
 					baseConfig( {
-						place_order: { enabled: true, text: 'Complete order' },
+						place_order: { enabled: true },
 					} )
 				);
 
@@ -354,7 +342,7 @@ describe( 'checkout-block', () => {
 			] )( '$name', ( { hasSubscriptions, totalPrice, expected } ) => {
 				loadCheckoutBlock(
 					baseConfig( {
-						place_order: { enabled: true, text: 'Complete order' },
+						place_order: { enabled: true },
 						has_subscriptions: hasSubscriptions,
 						amount: '10.00',
 					} )
@@ -401,7 +389,7 @@ describe( 'checkout-block', () => {
 			loadCheckoutBlock(
 				baseConfig( {
 					id: 'ppcp-gateway-custom',
-					place_order: { enabled: true, text: 'Complete order' },
+					place_order: { enabled: true },
 				} )
 			);
 
@@ -419,7 +407,7 @@ describe( 'checkout-block', () => {
 			loadCheckoutBlock(
 				baseConfig( {
 					continuation: { funding_source: 'paypal' },
-					place_order: { enabled: true, text: 'Complete order' },
+					place_order: { enabled: true },
 					vault_component: { is_eligible: true },
 				} )
 			);
@@ -452,7 +440,7 @@ describe( 'checkout-block', () => {
 
 		test( 'leaves the label alone when no override is filtered in', () => {
 			loadCheckoutBlock(
-				baseConfig( { place_order: { enabled: true, text: '' } } )
+				baseConfig( { place_order: { enabled: true } } )
 			);
 
 			expect( regularCallFor( 'ppcp-gateway' ) ).not.toHaveProperty(
@@ -464,7 +452,8 @@ describe( 'checkout-block', () => {
 		test( 'applies a filtered override to both the registration and the checkout filter', () => {
 			loadCheckoutBlock(
 				baseConfig( {
-					place_order: { enabled: true, text: 'Complete order' },
+					place_order: { enabled: true },
+					placeOrderButtonLabel: 'Complete order',
 				} )
 			);
 
@@ -488,7 +477,8 @@ describe( 'checkout-block', () => {
 			loadCheckoutBlock(
 				baseConfig( {
 					continuation: { funding_source: 'venmo' },
-					place_order: { enabled: true, text: 'Complete order' },
+					place_order: { enabled: true },
+					placeOrderButtonLabel: 'Complete order',
 				} )
 			);
 

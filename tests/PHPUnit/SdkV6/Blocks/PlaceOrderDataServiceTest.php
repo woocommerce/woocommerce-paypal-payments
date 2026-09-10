@@ -39,8 +39,6 @@ class PlaceOrderDataServiceTest extends TestCase
             [
                 'settings.settings-provider' => $settings_provider,
                 'wc-subscriptions.helper' => $subscription_helper,
-                'wcgateway.place-order-button-text' => 'Place order',
-                'wcgateway.place-order-button-description' => 'Pay with PayPal.',
                 'button.client_id' => '',
             ],
             $config
@@ -78,29 +76,19 @@ class PlaceOrderDataServiceTest extends TestCase
     /**
      * GIVEN a non-subscription cart and no filter callback overriding the default
      * WHEN the place-order data provider is resolved
-     * THEN it reports the row enabled, with the configured button text and description
+     * THEN it reports the row enabled, and carries no button copy of its own
      */
-    public function testHappyPathOffersThePlaceOrderRowWithConfiguredCopy(): void
+    public function testHappyPathOffersThePlaceOrderRow(): void
     {
         expectApplied(self::FILTER)->once()->with(true)->andReturnFirstArg();
 
         $place_order_data = $this->resolveService(
-            [
-                'wcgateway.place-order-button-text' => 'Pay via PayPal',
-                'wcgateway.place-order-button-description' => 'Redirects to PayPal to complete payment.',
-            ],
+            [],
             $this->settingsProviderThatCanVault(false),
             $this->subscriptionHelperWithCart(false)
         );
 
-        $this->assertSame(
-            [
-                'enabled' => true,
-                'text' => 'Pay via PayPal',
-                'description' => 'Redirects to PayPal to complete payment.',
-            ],
-            $place_order_data()
-        );
+        $this->assertSame(['enabled' => true], $place_order_data());
     }
 
     /**
@@ -213,41 +201,6 @@ class PlaceOrderDataServiceTest extends TestCase
         );
 
         $this->assertTrue($place_order_data()['enabled']);
-    }
-
-    /**
-     * GIVEN the place-order data provider was already resolved from the container
-     * WHEN the button text and description services answer differently on a second
-     *      call
-     * THEN each call returns the copy current at that moment, proving both are read
-     *      inside the closure rather than captured once at resolution time
-     */
-    public function testTextAndDescriptionAreResolvedPerCall(): void
-    {
-        expectApplied(self::FILTER)->twice()->with(true)->andReturnFirstArg();
-
-        $settings_provider = $this->settingsProviderThatCanVault(false);
-        $subscription_helper = $this->subscriptionHelperWithCart(false);
-
-        $container = Mockery::mock(ContainerInterface::class);
-        $container->shouldReceive('get')->with('settings.settings-provider')->andReturn($settings_provider);
-        $container->shouldReceive('get')->with('wc-subscriptions.helper')->andReturn($subscription_helper);
-        $container->shouldReceive('get')->with('button.client_id')->andReturn('');
-        $container->shouldReceive('get')->with('wcgateway.place-order-button-text')
-            ->andReturn('First text', 'Second text');
-        $container->shouldReceive('get')->with('wcgateway.place-order-button-description')
-            ->andReturn('First description', 'Second description');
-
-        $services = require ROOT_DIR . '/modules/ppcp-sdk-v6/services.php';
-        $place_order_data = $services['sdk-v6.blocks.place-order-data']($container);
-
-        $first = $place_order_data();
-        $second = $place_order_data();
-
-        $this->assertSame('First text', $first['text']);
-        $this->assertSame('First description', $first['description']);
-        $this->assertSame('Second text', $second['text']);
-        $this->assertSame('Second description', $second['description']);
     }
 
     /**

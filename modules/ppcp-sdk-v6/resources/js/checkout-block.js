@@ -463,7 +463,7 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 		rowProps = {
 			content: createElement( PayPalPlaceOrderContent, {
 				description: config.description,
-				placeOrderButtonDescription: config.place_order.description,
+				placeOrderButtonDescription: config.placeOrderButtonDescription,
 			} ),
 			// Gone on a zero-total cart that needs no payment method, but kept
 			// on a subscription cart, which needs one even at $0.
@@ -471,8 +471,8 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 				regularRowAllowedForCart( cartTotals ),
 			// The label belongs to WooCommerce, so it is only set when a filter
 			// supplies an override.
-			...( config.place_order.text
-				? { placeOrderButtonLabel: config.place_order.text }
+			...( config.placeOrderButtonLabel
+				? { placeOrderButtonLabel: config.placeOrderButtonLabel }
 				: {} ),
 		};
 	} else {
@@ -508,7 +508,7 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 	// placeOrderButtonLabel above is not honoured on its own by the Checkout
 	// Actions block, which reads the label through this filter instead, so an
 	// override has to be applied in both places. Same belt-and-braces pair as v5.
-	if ( placeOrderEnabled && config.place_order.text ) {
+	if ( placeOrderEnabled && config.placeOrderButtonLabel ) {
 		const placeOrderButtonLabel = ( defaultLabel ) => {
 			const payment = window.wp?.data?.select( 'wc/store/payment' );
 
@@ -516,7 +516,7 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 				return defaultLabel;
 			}
 
-			return config.place_order.text;
+			return config.placeOrderButtonLabel;
 		};
 
 		window.wc?.blocksCheckout?.registerCheckoutFilters?.(
