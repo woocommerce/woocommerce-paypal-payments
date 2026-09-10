@@ -116,7 +116,7 @@ class CardButtonGateway extends \WC_Payment_Gateway
         $this->onboarded = $is_connected;
         $this->logger = $logger;
         $this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
-        $this->order_button_text = $place_order_button_text ?: null;
+        $this->order_button_text = $place_order_button_text;
         $default_support = array('products', 'refunds');
         $this->supports = array_merge($default_support, apply_filters('woocommerce_paypal_payments_card_button_gateway_supports', array()));
         $this->method_title = __('Standard Card Button', 'woocommerce-paypal-payments');

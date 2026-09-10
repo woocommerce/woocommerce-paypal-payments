@@ -187,7 +187,7 @@ class PayPalGateway extends \WC_Payment_Gateway
         $this->logger = $logger;
         $this->api_shop_country = $api_shop_country;
         $this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
-        $this->order_button_text = $place_order_button_text ?: null;
+        $this->order_button_text = $place_order_button_text;
         $this->payment_tokens_endpoint = $payment_tokens_endpoint;
         $this->wc_payment_tokens = $wc_payment_tokens;
         $this->icon = apply_filters('woocommerce_paypal_payments_paypal_gateway_icon', $asset_getter->get_static_asset_url('images/paypal.svg'));
