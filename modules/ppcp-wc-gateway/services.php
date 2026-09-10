@@ -783,22 +783,32 @@ return array(
 			false
 		);
 	},
+	/**
+	 * An override for the standard "Place order" button label, empty by default.
+	 *
+	 * The plugin no longer renames the button: the label belongs to WooCommerce, and a
+	 * PayPal-specific one misdescribes the funding sources that do not return to PayPal.
+	 * Consumers must treat an empty string as "leave the button alone".
+	 */
 	'wcgateway.place-order-button-text'                    => function ( ContainerInterface $container ): string {
-		/**
-		 * The text for the standard "Place order" button, when the "Place order" button mode is enabled.
-		 */
-		return apply_filters(
+		return (string) apply_filters_deprecated(
 			'woocommerce_paypal_payments_place_order_button_text',
-			__( 'Proceed to PayPal', 'woocommerce-paypal-payments' )
+			array( '' ),
+			'4.1.4',
+			'woocommerce_order_button_text'
 		);
 	},
+	/**
+	 * An override for the description shown beside the "Place order" button, empty by default.
+	 *
+	 * Dropped along with the button label it described. Consumers must treat an empty
+	 * string as "render no description".
+	 */
 	'wcgateway.place-order-button-description'             => function ( ContainerInterface $container ): string {
-		/**
-		 * The text for additional description, when the "Place order" button mode is enabled.
-		 */
-		return apply_filters(
+		return (string) apply_filters_deprecated(
 			'woocommerce_paypal_payments_place_order_button_description',
-			__( 'Clicking "Proceed to PayPal" will redirect you to PayPal to complete your purchase.', 'woocommerce-paypal-payments' )
+			array( '' ),
+			'4.1.4'
 		);
 	},
 
