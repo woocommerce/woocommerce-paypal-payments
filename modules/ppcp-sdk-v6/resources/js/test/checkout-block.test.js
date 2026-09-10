@@ -3,6 +3,7 @@ import { checkEligibility } from '../eligibility';
 
 const mockRegisterExpressPaymentMethod = jest.fn();
 const mockRegisterPaymentMethod = jest.fn();
+const mockRegisterCheckoutFilters = jest.fn();
 // virtual: webpack resolves this to the wc.wcBlocksRegistry global, so there is
 // no package under node_modules for Jest to find.
 jest.mock(
@@ -82,6 +83,9 @@ function loadCheckoutBlock( config ) {
 		wcSettings: {
 			getSetting: ( key ) =>
 				key === 'paymentMethodData' ? { 'ppcp-sdk-v6': config } : undefined,
+		},
+		blocksCheckout: {
+			registerCheckoutFilters: mockRegisterCheckoutFilters,
 		},
 	};
 	jest.isolateModules( () => {
@@ -426,6 +430,72 @@ describe( 'checkout-block', () => {
 			expect( calls[ 0 ].supports.features ).toContain(
 				'ppcp_continuation'
 			);
+		} );
+	} );
+
+	/**
+	 * The place order button is WooCommerce's, so nothing here renames it. An
+	 * override only arrives when a merchant filters one in, and then it has to
+	 * reach both the registration property and the Checkout Actions filter.
+	 */
+	describe( 'place order button label', () => {
+		/**
+		 * The filters registered for one namespace.
+		 *
+		 * @param {string} namespace - The registerCheckoutFilters namespace.
+		 * @return {Object|undefined} The filters object, or undefined when none registered.
+		 */
+		const filtersFor = ( namespace ) =>
+			mockRegisterCheckoutFilters.mock.calls.find(
+				( [ ns ] ) => ns === namespace
+			)?.[ 1 ];
+
+		test( 'leaves the label alone when no override is filtered in', () => {
+			loadCheckoutBlock(
+				baseConfig( { place_order: { enabled: true, text: '' } } )
+			);
+
+			expect( regularCallFor( 'ppcp-gateway' ) ).not.toHaveProperty(
+				'placeOrderButtonLabel'
+			);
+			expect( filtersFor( 'ppcp-gateway' ) ).toBeUndefined();
+		} );
+
+		test( 'applies a filtered override to both the registration and the checkout filter', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					place_order: { enabled: true, text: 'Complete order' },
+				} )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-gateway' ).placeOrderButtonLabel
+			).toBe( 'Complete order' );
+
+			const payment = { getActivePaymentMethod: () => 'ppcp-gateway' };
+			window.wp = { data: { select: () => payment } };
+
+			expect(
+				filtersFor( 'ppcp-gateway' ).placeOrderButtonLabel(
+					'Place order'
+				)
+			).toBe( 'Complete order' );
+
+			delete window.wp;
+		} );
+
+		test( 'leaves the label alone in continuation mode', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					continuation: { funding_source: 'venmo' },
+					place_order: { enabled: true, text: 'Complete order' },
+				} )
+			);
+
+			expect( regularCallFor( 'ppcp-gateway' ) ).not.toHaveProperty(
+				'placeOrderButtonLabel'
+			);
+			expect( filtersFor( 'ppcp-gateway' ) ).toBeUndefined();
 		} );
 	} );
 } );
