@@ -116,7 +116,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 * @param Environment             $environment The environment.
 	 * @param LoggerInterface         $logger  The logger.
 	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
-	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
+	 * @param string                  $place_order_button_text An override for the "Place order" button label, empty to leave WooCommerce's own.
 	 */
 	public function __construct(
 		OrderProcessor $order_processor,
