@@ -199,7 +199,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param LoggerInterface          $logger The logger.
 	 * @param string                   $api_shop_country The api shop country.
 	 * @param callable(string):string  $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
-	 * @param string                   $place_order_button_text The text for the standard "Place order" button.
+	 * @param string                   $place_order_button_text An override for the "Place order" button label, empty to leave WooCommerce's own.
 	 * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens.
 	 * @param AssetGetter              $asset_getter
@@ -243,7 +243,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->logger                      = $logger;
 		$this->api_shop_country            = $api_shop_country;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
-		$this->order_button_text           = $place_order_button_text;
+		$this->order_button_text           = $place_order_button_text ?: null;
 		$this->payment_tokens_endpoint     = $payment_tokens_endpoint;
 		$this->wc_payment_tokens           = $wc_payment_tokens;
 		$this->icon                        = apply_filters( 'woocommerce_paypal_payments_paypal_gateway_icon', $asset_getter->get_static_asset_url( 'images/paypal.svg' ) );
