@@ -6,6 +6,7 @@ import FormValidator from '@ppcp-button/Helper/FormValidator';
 import ErrorHandler from '@ppcp-button/ErrorHandler';
 import widgetBuilder from '@ppcp-button/Renderer/WidgetBuilder';
 import PaymentButton from '@ppcp-button/Renderer/PaymentButton';
+import { describeError } from '@ppcp-button/Helper/FrontendLog';
 import {
 	PaymentContext,
 	PaymentMethods,
@@ -347,7 +348,12 @@ class ApplePayButton extends PaymentButton {
 				this.transactionInfo = transactionInfo;
 			} )
 			.catch( ( error ) => {
-				console.error( 'Failed to get transaction info:', error );
+				// The button reinits with the previous total, so a stale sheet
+				// is the visible symptom.
+				this.reportFailure(
+					'transaction-info-failed',
+					describeError( error )
+				);
 			} );
 
 		super.reinit();
@@ -373,6 +379,10 @@ class ApplePayButton extends PaymentButton {
 			this.isEligible = !! this.#applePayConfig.isEligible;
 		} catch ( error ) {
 			this.isEligible = false;
+			this.reportFailure(
+				'eligibility-check-failed',
+				describeError( error )
+			);
 		}
 	}
 
@@ -395,6 +405,13 @@ class ApplePayButton extends PaymentButton {
 		session.onvalidatemerchant = this.onValidateMerchant( session );
 		session.onpaymentauthorized = this.onPaymentAuthorized( session );
 
+		// TEMP wallet diagnostics: remove before release.
+		// Apple never reported a dismissal anywhere, so an abandoned sheet and
+		// an unanswered one looked identical.
+		session.oncancel = () => {
+			this.reportEvent( 'sheet-cancelled', `context=${ this.context }` );
+		};
+
 		/**
 		 * This starts the merchant validation process and displays the payment sheet
 		 * {@see https://developer.apple.com/documentation/apple_pay_on_the_web/applepaysession/1778001-begin}
@@ -403,6 +420,12 @@ class ApplePayButton extends PaymentButton {
 		 * {@see https://applepaydemo.apple.com/apple-pay-js-api}
 		 */
 		session.begin();
+
+		// TEMP wallet diagnostics: remove before release.
+		this.reportEvent(
+			'sheet-opened',
+			`context=${ this.context } total=${ paymentRequest?.total?.amount } ${ paymentRequest?.currencyCode } shipping=${ this.requiresShipping }`
+		);
 
 		return session;
 	}
@@ -495,7 +518,18 @@ class ApplePayButton extends PaymentButton {
 	async onButtonClick() {
 		this.log( 'onButtonClick' );
 
-		const paymentRequest = this.paymentRequest();
+		let paymentRequest;
+
+		try {
+			paymentRequest = this.paymentRequest();
+		} catch ( error ) {
+			// Thrown before a session exists, so there is no sheet to abort.
+			this.reportFailure(
+				'payment-request-failed',
+				describeError( error )
+			);
+			return;
+		}
 
 		// Do this on another place like on create order endpoint handler.
 		window.ppcpFundingSource = 'apple_pay';
@@ -516,7 +550,7 @@ class ApplePayButton extends PaymentButton {
 
 				this.updateRequestDataWithForm( paymentRequest );
 			} catch ( error ) {
-				console.error( error );
+				this.reportFailure( 'form-data-failed', describeError( error ) );
 			}
 
 			this.log( '=== paymentRequest', paymentRequest );
@@ -540,11 +574,22 @@ class ApplePayButton extends PaymentButton {
 						jQuery( document.body ).trigger( 'checkout_error', [
 							errorHandler.currentHtml(),
 						] );
+						this.reportFailure(
+							'checkout-validation-abort',
+							`errors=${ errors.length }`
+						);
 						session.abort();
 						return;
 					}
 				} catch ( error ) {
-					console.error( error );
+					// Falling through would leave the sheet up on data nobody
+					// validated.
+					this.reportFailure(
+						'form-validation-failed',
+						describeError( error )
+					);
+					session.abort();
+					return;
 				}
 			}
 			return;
@@ -756,10 +801,16 @@ class ApplePayButton extends PaymentButton {
 						validateResult.merchantSession
 					);
 
+					// TEMP wallet diagnostics: remove before release.
+					this.reportEvent( 'merchant-validated' );
+
 					this.adminValidation( true );
 				} )
 				.catch( ( validateError ) => {
-					console.error( validateError );
+					this.reportFailure(
+						'merchant-validation-failed',
+						describeError( validateError )
+					);
 					this.adminValidation( false );
 					this.log( 'onvalidatemerchant session abort' );
 					session.abort();
@@ -781,32 +832,54 @@ class ApplePayButton extends PaymentButton {
 				data,
 				success: ( applePayShippingMethodUpdate ) => {
 					this.log( 'onshippingmethodselected ok' );
-					const response = applePayShippingMethodUpdate.data;
-					if ( applePayShippingMethodUpdate.success === false ) {
-						response.errors = createAppleErrors( response.errors );
-					}
-					this.#selectedShippingMethod = event.shippingMethod;
 
-					// Sort the response shipping methods, so that the selected shipping method is
-					// the first one.
-					response.newShippingMethods =
-						response.newShippingMethods.sort( ( a ) => {
-							if (
-								a.label === this.#selectedShippingMethod.label
-							) {
-								return -1;
-							}
-							return 1;
-						} );
+					// A 200 whose body is not the expected envelope throws in
+					// here, and an unanswered sheet only dies on Apple's timeout.
+					try {
+						const response = applePayShippingMethodUpdate.data;
+						if ( applePayShippingMethodUpdate.success === false ) {
+							response.errors = createAppleErrors(
+								response.errors
+							);
+						}
+						this.#selectedShippingMethod = event.shippingMethod;
 
-					if ( applePayShippingMethodUpdate.success === false ) {
-						response.errors = createAppleErrors( response.errors );
+						// Sort the response shipping methods, so that the selected shipping method is
+						// the first one.
+						response.newShippingMethods =
+							response.newShippingMethods.sort( ( a ) => {
+								if (
+									a.label ===
+									this.#selectedShippingMethod.label
+								) {
+									return -1;
+								}
+								return 1;
+							} );
+
+						// TEMP wallet diagnostics: remove before release.
+						this.reportEvent(
+							'shipping-method-selected',
+							`id=${ event.shippingMethod?.identifier }`
+						);
+
+						session.completeShippingMethodSelection( response );
+					} catch ( error ) {
+						this.reportFailure(
+							'shipping-method-invalid-response',
+							`${ describeError( error ) } keys=${ Object.keys(
+								applePayShippingMethodUpdate ?? {}
+							).join( ',' ) }`
+						);
+						session.abort();
 					}
-					session.completeShippingMethodSelection( response );
 				},
 				error: ( jqXHR, textStatus, errorThrown ) => {
-					this.log( 'onshippingmethodselected error', textStatus );
-					console.warn( textStatus, errorThrown );
+					// Apple words an aborted sheet exactly like a buyer's dismissal.
+					this.reportFailure(
+						'shipping-method-abort',
+						`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
+					);
 					session.abort();
 				},
 			} );
@@ -829,20 +902,45 @@ class ApplePayButton extends PaymentButton {
 				data,
 				success: ( applePayShippingContactUpdate ) => {
 					this.log( 'onshippingcontactselected ok' );
-					const response = applePayShippingContactUpdate.data;
-					this.#updatedContactInfo = event.shippingContact;
-					if ( applePayShippingContactUpdate.success === false ) {
-						response.errors = createAppleErrors( response.errors );
+
+					// A 200 whose body is not the expected envelope throws in
+					// here, and an unanswered sheet only dies on Apple's timeout.
+					try {
+						const response = applePayShippingContactUpdate.data;
+						this.#updatedContactInfo = event.shippingContact;
+						if ( applePayShippingContactUpdate.success === false ) {
+							response.errors = createAppleErrors(
+								response.errors
+							);
+						}
+						if ( response.newShippingMethods ) {
+							this.#selectedShippingMethod =
+								response.newShippingMethods[ 0 ];
+						}
+
+						// TEMP wallet diagnostics: remove before release.
+						this.reportEvent(
+							'shipping-contact-selected',
+							`country=${ event.shippingContact?.countryCode } postal=${ event.shippingContact?.postalCode }`
+						);
+
+						session.completeShippingContactSelection( response );
+					} catch ( error ) {
+						this.reportFailure(
+							'shipping-contact-invalid-response',
+							`${ describeError( error ) } keys=${ Object.keys(
+								applePayShippingContactUpdate ?? {}
+							).join( ',' ) }`
+						);
+						session.abort();
 					}
-					if ( response.newShippingMethods ) {
-						this.#selectedShippingMethod =
-							response.newShippingMethods[ 0 ];
-					}
-					session.completeShippingContactSelection( response );
 				},
 				error: ( jqXHR, textStatus, errorThrown ) => {
-					this.log( 'onshippingcontactselected error', textStatus );
-					console.warn( textStatus, errorThrown );
+					// Apple words an aborted sheet exactly like a buyer's dismissal.
+					this.reportFailure(
+						'shipping-contact-abort',
+						`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
+					);
 					session.abort();
 				},
 			} );
@@ -930,6 +1028,9 @@ class ApplePayButton extends PaymentButton {
 		return async ( event ) => {
 			this.log( 'onpaymentauthorized call' );
 
+			// TEMP wallet diagnostics: remove before release.
+			this.reportEvent( 'payment-authorized' );
+
 			const processInWooAndCapture = async ( data ) => {
 				return new Promise( ( resolve, reject ) => {
 					try {
@@ -978,20 +1079,53 @@ class ApplePayButton extends PaymentButton {
 								resolve( authorizationResult );
 							},
 							error: ( jqXHR, textStatus, errorThrown ) => {
-								this.log(
-									'onpaymentauthorized error',
-									textStatus
+								this.reportFailure(
+									'capture-request-failed',
+									`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
 								);
-								reject( new Error( errorThrown ) );
+								reject(
+									new Error(
+										errorThrown ||
+											`HTTP ${ jqXHR.status } ${ textStatus }`
+									)
+								);
 							},
 						} );
 					} catch ( error ) {
-						this.error( 'onpaymentauthorized catch', error );
+						// Without the reject the awaited promise never settles
+						// and the sheet spins until Apple gives up.
+						this.reportFailure(
+							'capture-exception',
+							describeError( error )
+						);
+						reject( error );
 					}
 				} );
 			};
 
-			const id = await this.contextHandler.createOrder();
+			let id;
+
+			try {
+				id = await this.contextHandler.createOrder();
+			} catch ( error ) {
+				this.reportFailure(
+					'create-order-failed',
+					describeError( error )
+				);
+				session.completePayment( ApplePaySession.STATUS_FAILURE );
+				session.abort();
+				return;
+			}
+
+			if ( ! id ) {
+				this.reportFailure( 'create-order-failed', 'no order id' );
+				session.completePayment( ApplePaySession.STATUS_FAILURE );
+				session.abort();
+				return;
+			}
+
+			// TEMP wallet diagnostics: remove before release.
+			this.reportEvent( 'order-created', `order_id=${ id }` );
 
 			this.log(
 				'onpaymentauthorized paypal order ID',
@@ -1012,6 +1146,12 @@ class ApplePayButton extends PaymentButton {
 				this.log(
 					'onpaymentauthorized confirmOrderResponse',
 					confirmOrderResponse
+				);
+
+				// TEMP wallet diagnostics: remove before release.
+				this.reportEvent(
+					'order-confirmed',
+					`status=${ confirmOrderResponse?.approveApplePayPayment?.status }`
 				);
 
 				if (
@@ -1051,15 +1191,17 @@ class ApplePayButton extends PaymentButton {
 								);
 
 								if ( ! approveFailed ) {
-									this.log(
-										'onpaymentauthorized approveOrder OK'
+									// TEMP wallet diagnostics: remove before release.
+									this.reportEvent(
+										'payment-completed',
+										'branch=context-handler'
 									);
 									session.completePayment(
 										ApplePaySession.STATUS_SUCCESS
 									);
 								} else {
-									this.error(
-										'onpaymentauthorized approveOrder FAIL'
+									this.reportFailure(
+										'approve-order-failed'
 									);
 									session.completePayment(
 										ApplePaySession.STATUS_FAILURE
@@ -1081,38 +1223,58 @@ class ApplePayButton extends PaymentButton {
 								if (
 									authorizationResult.result === 'success'
 								) {
+									// TEMP wallet diagnostics: remove before release.
+									this.reportEvent(
+										'payment-completed',
+										'branch=capture'
+									);
 									session.completePayment(
 										ApplePaySession.STATUS_SUCCESS
 									);
 									window.location.href =
 										authorizationResult.redirect;
 								} else {
+									this.reportFailure(
+										'capture-failed',
+										`result=${ authorizationResult?.result }`
+									);
 									session.completePayment(
 										ApplePaySession.STATUS_FAILURE
 									);
 								}
 							}
 						} catch ( error ) {
+							this.reportFailure(
+								'authorization-failed',
+								describeError( error )
+							);
 							session.completePayment(
 								ApplePaySession.STATUS_FAILURE
 							);
 							session.abort();
-							console.error( error );
 						}
 					} else {
-						console.error( 'Error status is not APPROVED' );
+						// confirmOrder goes straight from the browser to PayPal,
+						// so this status is the only account of the refusal.
+						this.reportFailure(
+							'confirm-order-not-approved',
+							`status=${ confirmOrderResponse.approveApplePayPayment.status }`
+						);
 						session.completePayment(
 							ApplePaySession.STATUS_FAILURE
 						);
 					}
 				} else {
-					console.error( 'Invalid confirmOrderResponse' );
+					this.reportFailure(
+						'confirm-order-unrecognized',
+						`keys=${ Object.keys( confirmOrderResponse ?? {} ).join( ',' ) }`
+					);
 					session.completePayment( ApplePaySession.STATUS_FAILURE );
 				}
 			} catch ( error ) {
-				console.error(
-					'Error confirming order with applepay token',
-					error
+				this.reportFailure(
+					'confirm-order-failed',
+					describeError( error )
 				);
 				session.completePayment( ApplePaySession.STATUS_FAILURE );
 				session.abort();
