@@ -90,9 +90,6 @@ jobs:
           )
 
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'
-
-          SDK_VERSION: 'both'
-          # alongside TEST_SUITE: 'all:parallel'.
           SDK_VERSION='${{ inputs.SDK_VERSION || 'both' }}'
 
           sdk_versions() {
