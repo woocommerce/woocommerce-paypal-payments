@@ -1,0 +1,44 @@
+name: QIT
+
+on:
+  workflow_run:
+    workflows: [ 'Build and distribute' ]
+    types: [ completed ]
+    branches: [ 'dev/develop', 'dev/release/**' ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build plugin package
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@f414e0b4da6c51adeee419cdd5fbbf299ae0167e # pinning PR #290
+    secrets:
+      GITHUB_USER_EMAIL: ${{ secrets.DEPLOYBOT_EMAIL }}
+      GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
+      GITHUB_USER_SSH_KEY: ${{ secrets.DEPLOYBOT_SSH_PRIVATE_KEY }}
+      GITHUB_USER_SSH_PUBLIC_KEY: ${{ secrets.DEPLOYBOT_SSH_PUBLIC_KEY }}
+      NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
+    with:
+      PACKAGE_NAME: 'woocommerce-paypal-payments'
+      PACKAGE_VERSION: ${{ inputs.PACKAGE_VERSION }}
+      NODE_VERSION: 22
+
+  qit:
+    strategy:
+      fail-fast: false
+      matrix:
+        test: ['phpcompatibility', 'validation', 'activation', 'woo-api', 'security', 'malware']
+    uses: inpsyde/reusable-workflows/.github/workflows/woo-qit.yml@f414e0b4da6c51adeee419cdd5fbbf299ae0167e
+    needs: build
+    secrets:
+      WOO_PARTNER_USER: ${{ secrets.WOO_PARTNER_USER }}
+      WOO_PARTNER_SECRET: ${{ secrets.WOO_PARTNER_SECRET }}
+    with:
+      ARTIFACT_NAME: ${{ needs.build.outputs.artifact }}
+      QIT_TEST: ${{ matrix.test }}
