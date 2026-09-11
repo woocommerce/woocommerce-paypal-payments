@@ -207,10 +207,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 
 			// Same reason as the wallets: paypal-guest-payments is only
 			// requested where the card button renders.
-			if (
-				method === FundingSources.CARD &&
-				! config.card_button?.enabled
-			) {
+			if ( method === FundingSources.CARD && ! config.card_button?.row ) {
 				continue;
 			}
 
