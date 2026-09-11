@@ -92,7 +92,7 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 				// Save initial card (not tested one)
 				await customerPaymentMethods.savePaymentMethod( {
 					...payments.acdc,
-					card: cards.visa2,
+					card: cards.visa,
 				} );
 				// Assert tested card is not present in My Account
 				await customerPaymentMethods.assertIsNotSavedPaymentMethod(

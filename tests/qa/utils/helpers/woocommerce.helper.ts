@@ -21,7 +21,9 @@ import {
 	disableWcSetupWizard,
 	disableWebhookVerificationPlugin,
 	negative12FeePlugin,
+	pcpSdkVersionFlag,
 } from '../../resources';
+import { sdkVersion } from './sdk-version.helper';
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 
@@ -31,8 +33,9 @@ const installPluginResolveActiveState = async ( {
 	slug,
 	zipFilePath,
 	isActive = true,
+	forceReinstall = false,
 } ) => {
-	if ( ! ( await requestUtils.isPluginInstalled( slug ) ) ) {
+	if ( forceReinstall || ! ( await requestUtils.isPluginInstalled( slug ) ) ) {
 		await plugins.installPluginFromFile( zipFilePath );
 	}
 	if ( isActive ) {
@@ -43,6 +46,24 @@ const installPluginResolveActiveState = async ( {
 };
 
 export const setupWooCommerce = async () => {
+	setup(
+		`Setup PCP SDK Version Flag (${ sdkVersion() })`,
+		async ( { requestUtils, plugins } ) => {
+			await installPluginResolveActiveState( {
+				requestUtils,
+				plugins,
+				...pcpSdkVersionFlag,
+				isActive: true,
+				forceReinstall: true,
+			} );
+			await requestUtils.rest( {
+				method: 'POST',
+				path: '/pcp-qa/v1/sdk-v6',
+				data: { enabled: sdkVersion() === 'v6' },
+			} );
+		}
+	);
+
 	// In CI wp-env is used and following setup is already done by wp-env, so skip it in CI to save time
 	if ( ! process.env.CI ) {
 		setup( 'Setup Permalinks', async ( { requestUtils } ) => {

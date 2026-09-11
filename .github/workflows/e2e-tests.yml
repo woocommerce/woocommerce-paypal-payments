@@ -25,12 +25,21 @@ on:
           - shard:refund
           - shard:vaulting
           - shard:subscription
+          - shard:transaction-international
           - stress
       XRAY_TEST_EXEC_KEY:
         description: 'Xray Test Execution Key'
         required: false
         default: ''
         type: string
+      SDK_VERSION:
+        description: 'PayPal JS SDK version to test'
+        required: true
+        default: 'v5'
+        type: choice
+        options:
+          - v6
+          - v5
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
@@ -77,26 +86,45 @@ jobs:
             refund
             vaulting
             subscription
+            transaction-international
           )
 
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'
+          SDK_VERSION='${{ inputs.SDK_VERSION || 'both' }}'
+
+          sdk_versions() {
+            if [[ "$SDK_VERSION" == "both" ]]; then
+              echo "v5 v6"
+            else
+              echo "$SDK_VERSION"
+            fi
+          }
 
           if [[ "$TEST_SUITE" == *':parallel' ]]; then
             SUFFIX=""
             [[ "$TEST_SUITE" != "all:parallel" ]] && SUFFIX=":${TEST_SUITE%:parallel}"
 
-            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1}\",\"artifact_name\":\"playwright-artifact-${1}\"}"; }
+            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1} / ${2}\",\"artifact_name\":\"playwright-artifact-${1}-${2}\",\"sdk_version\":\"${2}\"}"; }
 
             ITEMS=()
             for shard in "${SHARDS[@]}"; do
-              ITEMS+=("$(entry "$shard")")
+              for v in $(sdk_versions); do
+                ITEMS+=("$(entry "$shard" "$v")")
+              done
             done
             JOINED=$(IFS=,; echo "${ITEMS[*]}")
 
             echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
           else
             NAME="${TEST_SUITE#shard:}"
-            echo "matrix={\"include\":[{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME}\",\"artifact_name\":\"playwright-artifact-${NAME}\"}]}" >> "$GITHUB_OUTPUT"
+
+            ITEMS=()
+            for v in $(sdk_versions); do
+              ITEMS+=("{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME} / ${v}\",\"artifact_name\":\"playwright-artifact-${NAME}-${v}\",\"sdk_version\":\"${v}\"}")
+            done
+            JOINED=$(IFS=,; echo "${ITEMS[*]}")
+
+            echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
           fi
 
   e2e-playwright:
@@ -120,6 +148,11 @@ jobs:
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
       PRE_SCRIPT: |
+        # 0. Record which SDK version this matrix job tests. playwright.config.ts
+        # loads .env.ci via dotenv, so this reaches process.env.PCP_JS_SDK_VERSION
+        # for both the WP-side flag toggle and the page objects' locators.
+        echo "PCP_JS_SDK_VERSION=${{ matrix.sdk_version }}" >> .env.ci
+
         # 1. Download and unzip the built plugin
         gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files
         (

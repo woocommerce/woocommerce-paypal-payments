@@ -14,8 +14,6 @@ export class ApmHostedCheckout {
 	// Locators
 	testSuccessfulPaymentButton = () =>
 		this.page.getByRole( 'button', { name: 'Test Successful Payment' } );
-	testExpiredPaymentButton = () =>
-		this.page.getByRole( 'button', { name: 'Test Expired Payment' } );
 
 	// Actions
 

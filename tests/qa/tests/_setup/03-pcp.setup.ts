@@ -120,6 +120,7 @@ setup( 'setup:vaulting;', async ( { pcpApi } ) => {
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
+		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
 } );
 

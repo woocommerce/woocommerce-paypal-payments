@@ -66,6 +66,7 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 
 				await waitForOrderStatus( wooCommerceApi, order.id, {
 					expectedStatus: orderStatus,
+					timeout: isAsyncCaptureGateway ? 2.5 * 60_000 : undefined,
 				} );
 				const transactionId =
 						( await wooCommerceApi.getOrder( order.id ) ).transaction_id;
