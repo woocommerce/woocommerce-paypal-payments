@@ -161,7 +161,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 4.1.3 - XXXX-XX-XX =
+= 4.1.3 - 2026-09-09 =
 * Enhancement - PayPal JS SDK v6 is now the default for new store setups, moving PayPal buttons, Apple Pay, Google Pay, Advanced Card Fields, Fastlane, Pay Later messaging and vaulting subscriptions onto the new integration; existing stores remain on SDK v5 with this version #4641
 * Enhancement - Add filter hooks to customize the payment method title and allow payment method icons #4586
 * Enhancement - Clearer, customer-friendly decline messages for 3D Secure rejections #4573
