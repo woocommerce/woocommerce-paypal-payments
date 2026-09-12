@@ -64,6 +64,35 @@ class PurchaseUnitFactoryTest extends TestCase
 		$this->assertEquals($shipping, $unit->shipping());
 	}
 
+	/**
+	 * GIVEN a merchant who cleared the Invoice Prefix setting, so the factory is configured with an empty prefix
+	 * WHEN a purchase unit is built from a WooCommerce order
+	 * THEN the invoice ID equals the bare order number, with no "WC-" prepended
+	 */
+	public function test_invoice_id_has_no_prefix_when_prefix_is_empty()
+	{
+		$wc_order = $this->create_wc_order_mock();
+		$amount = Mockery::mock(Amount::class);
+		$shipping = $this->create_shipping_mock($this->create_address_mock());
+
+		$shipping_factory = Mockery::mock(ShippingFactory::class);
+		$shipping_factory->shouldReceive('from_wc_order')->with($wc_order)->andReturn($shipping);
+
+		$testee = $this->create_testee(
+			$this->create_amount_factory_mock($amount, 'from_wc_order', $wc_order),
+			$this->create_item_factory_mock([$this->item], 'from_wc_order', $wc_order),
+			$shipping_factory,
+			null,
+			null,
+			null,
+			null,
+			''
+		);
+
+		$unit = $testee->from_wc_order($wc_order);
+		$this->assertEquals($this->wcOrderNumber, $unit->invoice_id());
+	}
+
 	public function test_wc_order_with_negative_fees()
 	{
 		$wc_order = $this->create_wc_order_mock();
@@ -1043,7 +1072,8 @@ class PurchaseUnitFactoryTest extends TestCase
 		?PaymentsFactory $payments_factory = null,
 		?PaymentLevelHelper $payment_level_helper = null,
 		?PaymentLevelEligibility $payment_level_eligibility = null,
-		?SettingsProvider $settings = null
+		?SettingsProvider $settings = null,
+		string $prefix = 'WC-'
 	): PurchaseUnitFactory {
 		return new PurchaseUnitFactory(
 			$amount_factory,
@@ -1052,7 +1082,8 @@ class PurchaseUnitFactoryTest extends TestCase
 			$payments_factory ?? Mockery::mock(PaymentsFactory::class),
 			$payment_level_helper ?? Mockery::mock(PaymentLevelHelper::class),
 			$payment_level_eligibility ?? $this->create_payment_level_eligibility_mock(),
-			$settings ?? Mockery::mock(SettingsProvider::class)
+			$settings ?? Mockery::mock(SettingsProvider::class),
+			$prefix
 		);
 	}
 }

@@ -96,4 +96,26 @@ class CustomerRepositoryTest extends TestCase
 
 		$this->assertSame('', $repository->paypal_customer_id_for_user(0));
 	}
+
+	/**
+	 * GIVEN a user with a previously stored ppcp_customer_id
+	 * WHEN resolving the vault customer ID for that user
+	 * THEN the stored ID is returned verbatim, regardless of the repository's configured prefix
+	 */
+	public function test_stored_customer_id_takes_precedence_over_generated_one()
+	{
+		$repository = new CustomerRepository('ppcp_prefix_');
+
+		expect('get_user_meta')
+			->once()
+			->with(5, 'ppcp_guest_customer_id', true)
+			->andReturn('');
+
+		expect('get_user_meta')
+			->once()
+			->with(5, 'ppcp_customer_id', true)
+			->andReturn('PAYPAL-123');
+
+		$this->assertSame('PAYPAL-123', $repository->customer_id_for_user(5));
+	}
 }
