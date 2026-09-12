@@ -618,7 +618,8 @@ return array(
 			$gateway,
 			$endpoint,
 			$container->get( 'session.handler' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.helper.return-url-secret' )
 		);
 	},
 	'wcgateway.endpoint.refresh-feature-status'            => static function ( ContainerInterface $container ): RefreshFeatureStatusEndpoint {
