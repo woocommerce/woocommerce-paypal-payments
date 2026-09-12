@@ -24,45 +24,33 @@ class SingleProductActionHandler {
 					custom_id: this.config.subscription_custom_id,
 				} );
 			},
-			onApprove: ( data, actions ) => {
-				fetch( this.config.ajax.approve_subscription.endpoint, {
-					method: 'POST',
-					credentials: 'same-origin',
-					body: JSON.stringify( {
-						nonce: this.config.ajax.approve_subscription.nonce,
-						order_id: data.orderID,
-						subscription_id: data.subscriptionID,
-					} ),
-				} )
-					.then( ( res ) => {
-						return res.json();
-					} )
-					.then( () => {
-						const products = this.getSubscriptionProducts();
+			onApprove: async ( data ) => {
+				// The cart has to hold the subscription product before the
+				// approval is sent: the approve endpoint builds the WC order
+				// from WC()->cart, and the change-cart endpoint empties the
+				// cart before adding the product to it.
+				const cartResult = await this.changeCartToSubscription();
+				if ( ! cartResult.success ) {
+					console.log( cartResult );
+					throw Error( cartResult.data.message );
+				}
 
-						fetch( this.config.ajax.change_cart.endpoint, {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							credentials: 'same-origin',
-							body: JSON.stringify( {
-								nonce: this.config.ajax.change_cart.nonce,
-								products,
-							} ),
-						} )
-							.then( ( result ) => {
-								return result.json();
-							} )
-							.then( ( result ) => {
-								if ( ! result.success ) {
-									console.log( result );
-									throw Error( result.data.message );
-								}
-
-								location.href = this.config.redirect;
-							} );
-					} );
+				const res = await fetch(
+					this.config.ajax.approve_subscription.endpoint,
+					{
+						method: 'POST',
+						credentials: 'same-origin',
+						body: JSON.stringify( {
+							nonce: this.config.ajax.approve_subscription.nonce,
+							order_id: data.orderID,
+							subscription_id: data.subscriptionID,
+							should_create_wc_order:
+								! this.config.vaultingEnabled ||
+								data.paymentSource !== 'venmo',
+						} ),
+					}
+				);
+				location.href = this.approvalRedirectUrl( await res.json() );
 			},
 			onError: ( err ) => {
 				console.error( err );
@@ -72,6 +60,41 @@ class SingleProductActionHandler {
 				);
 			},
 		};
+	}
+
+	/**
+	 * Where to send the shopper once the subscription has been approved.
+	 *
+	 * The approve endpoint returns an order received URL only when it created
+	 * and paid the order itself, which it does when Pay Now is enabled.
+	 * Otherwise the shopper confirms the payment on the checkout page.
+	 *
+	 * @param {Object} response - The approve endpoint response.
+	 * @return {string} The URL to navigate to.
+	 */
+	approvalRedirectUrl( response ) {
+		return response.data?.order_received_url || this.config.redirect;
+	}
+
+	/**
+	 * Replaces the cart contents with the subscription product being viewed.
+	 *
+	 * @return {Promise<Object>} The change-cart endpoint response.
+	 */
+	async changeCartToSubscription() {
+		const res = await fetch( this.config.ajax.change_cart.endpoint, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			credentials: 'same-origin',
+			body: JSON.stringify( {
+				nonce: this.config.ajax.change_cart.nonce,
+				products: this.getSubscriptionProducts(),
+			} ),
+		} );
+
+		return res.json();
 	}
 
 	getSubscriptionProducts() {
