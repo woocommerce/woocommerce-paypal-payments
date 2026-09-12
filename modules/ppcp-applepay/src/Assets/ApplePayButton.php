@@ -184,10 +184,7 @@ class ApplePayButton implements ButtonInterface {
 				);
 				return;
 			}
-			if ( isset( $payment_details['shippingMethods'] )
-				&& is_array( $payment_details['shippingMethods'] )
-				&& empty( $payment_details['shippingMethods'] )
-			) {
+			if ( isset( $payment_details['shippingMethods'] ) && $payment_details['shippingMethods'] === [] ) {
 				$this->response_templates->response_with_data_errors(
 					array(
 						array(
