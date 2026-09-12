@@ -68,6 +68,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\Pay
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\ResumedOrderShippingRestorer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -683,6 +684,12 @@ return array(
 		return new FeesUpdater(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.capture' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
+	'wcgateway.helper.resumed-order-shipping-restorer'     => static function ( ContainerInterface $container ): ResumedOrderShippingRestorer {
+		return new ResumedOrderShippingRestorer(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
