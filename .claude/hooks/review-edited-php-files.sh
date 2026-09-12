@@ -2,9 +2,9 @@
 #
 # Stop hook.
 #
-# When the agent's turn settles, ask it to dispatch `php-review` for each PHP
+# When the agent's turn settles, ask it to dispatch code cleanliness check for each PHP
 # file it changed this session whose CONTENT changed since its last review.
-# Because php-review reviews the cumulative `git diff HEAD`, one review of the
+# Because the agent reviews the cumulative `git diff HEAD`, one review of the
 # final state beats many mid-edit reviews.
 #
 # Dedup is by content hash, not by existence: a file is nudged once per distinct
@@ -60,6 +60,6 @@ done
 
 [ -n "$list" ] || exit 0
 
-reason="Before finishing this turn, review your PHP changes. Dispatch the \`php-review\` agent once for each file below (in parallel is fine), each with the prompt \`review CHANGES in <file>\`, then apply any fixes it reports. Files needing review:${list}"
+reason="Before finishing this turn, review your PHP changes. Dispatch the \`review-php-code-cleanliness\` agent once for each file below (in parallel is fine), each with the prompt \`review CHANGES in <file>\`, then apply any fixes it reports. Files needing review:${list}"
 
 jq -n --arg r "$reason" '{decision: "block", reason: $r}'

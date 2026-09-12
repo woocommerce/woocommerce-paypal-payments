@@ -91,8 +91,8 @@ it leaves uncovered, and why); **How to verify** lists the concrete steps a revi
 
 **The catalog is framed for bug fixes.** For other PR types (test additions, refactors, features,
 chores), keep the headings that carry meaning and drop the rest. A test-addition PR, for example,
-often needs only `# Description`, `🔍 What to review`, and `🧪 How to verify` - forcing "Why it
-happens" / "The fix" onto it produces filler.
+often needs only `# Description` and `🔍 What to review` - forcing "Why it happens" / "The fix" onto
+it produces filler, and it has no product-level verification to offer.
 
 ## Tone and content rules
 
@@ -107,11 +107,14 @@ happens" / "The fix" onto it produces filler.
 - **Write evergreen.** Describe the end state the reviewer sees when this merges, not transient or
   in-progress status ("currently failing", "WIP", "will be green once X"). If something is genuinely
   temporary, it does not belong in the description.
-- **"How to verify" lists actions, not narration.** Give the reviewer steps that exercise *this*
-  change, using the project's real documented commands (check `CLAUDE.md` / `AGENTS.md` /
-  `package.json`; never invent an invocation). Skip preconditions that already hold and environment
-  boilerplate. Do not state expected pass/fail results - a test is expected to pass; saying so adds
-  nothing.
+- **"How to verify" lists product-level actions, not narration.** Give the reviewer steps that
+  exercise *this* change in the running product: pages to open, settings to toggle, flows to walk,
+  and what they should see. Skip preconditions that already hold and environment boilerplate. Do not
+  state expected pass/fail results - a test is expected to pass; saying so adds nothing.
+- **Never put a CLI command in the description.** No `npm`, `composer`, `phpunit`, `vendor/bin/*`,
+  `npx`, or `ddev` invocation, in "How to verify" or anywhere else. A reviewer does not need to be
+  told how to run the suite, and a generated invocation is usually wrong for this repo. If the only
+  verification a PR has is "run the tests", drop the "How to verify" section instead of writing one.
 
 ## Writing style
 
