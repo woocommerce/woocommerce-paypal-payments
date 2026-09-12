@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
@@ -13,6 +14,8 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
+use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
 
 return array(
 	'fraud-protection.asset_getter'                   => static function ( ContainerInterface $container ): AssetGetter {
@@ -30,11 +33,30 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'fraud-protection.recaptcha.rejection-counter' ),
-			$container->get( 'wcgateway.settings.status' )
+			$container->get( 'wcgateway.settings.status' ),
+			$container->get( 'fraud-protection.recaptcha.rejection-logger' )
 		);
 	},
 	'fraud-protection.recaptcha.integration'          => static function (): RecaptchaIntegration {
 		return new RecaptchaIntegration();
+	},
+
+	/**
+	 * Writes the rejected reCAPTCHA attempts into their own log source.
+	 *
+	 * Deliberately not the shared 'woocommerce.logger.woocommerce' service: that one becomes a
+	 * NullLogger unless the plugin-wide logging setting is on, which would silently disable the
+	 * reCAPTCHA integration's own "Log rejected attempts" setting.
+	 */
+	'fraud-protection.recaptcha.rejection-logger'     => static function (): LoggerInterface {
+		if ( ! function_exists( 'wc_get_logger' ) ) {
+			return new NullLogger();
+		}
+
+		return new WooCommerceLogger(
+			wc_get_logger(),
+			Recaptcha::REJECTION_LOGGER_SOURCE
+		);
 	},
 	'fraud-protection.recaptcha.payment-methods'      => static function (): array {
 		return apply_filters(
