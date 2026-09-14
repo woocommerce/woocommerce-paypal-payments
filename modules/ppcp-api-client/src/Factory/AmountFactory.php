@@ -84,26 +84,30 @@ class AmountFactory {
 
 		$item_total = new Money( $item_total_val, $this->currency->get() );
 		$shipping   = new Money( $shipping_val, $this->currency->get() );
-		$taxes      = new Money( $taxes_val, $this->currency->get() );
+
+		// The cart's own total is authoritative. A plugin can reduce it through
+		// WC_Cart::set_total() or the woocommerce_cart_get_total filter without
+		// registering a coupon or a fee, which leaves the reduction invisible to
+		// the getters above; a component sum would then charge the undiscounted
+		// amount. Reconciling against the cart total keeps PayPal's invariant that
+		// amount.value equals the sum of the breakdown fields.
+		$wc_total = (float) $cart->get_total( 'edit' );
+
+		list( $taxes_cents, $discount_cents ) = $this->reconcile_with_total(
+			(int) round( $wc_total * 100 ),
+			(int) round( $item_total_val * 100 ),
+			(int) round( $shipping_val * 100 ),
+			(int) round( $taxes_val * 100 ),
+			(int) round( $discount_val * 100 )
+		);
+
+		$taxes = new Money( $taxes_cents / 100, $this->currency->get() );
+		$total = new Money( $wc_total, $this->currency->get() );
 
 		$discount = null;
-		if ( $discount_val ) {
-			$discount = new Money( $discount_val, $this->currency->get() );
+		if ( $discount_cents ) {
+			$discount = new Money( $discount_cents / 100, $this->currency->get() );
 		}
-
-		// Derive the total from breakdown components in integer cents rather than
-		// using get_total(), which can diverge from the component sum by ±$0.01
-		// due to WooCommerce per-item tax rounding. PayPal requires amount.value to
-		// exactly equal the sum of its breakdown fields or it rejects the PATCH.
-		// Formatting through a string avoids floating-point representation issues
-		// when converting the integer-cent sum back to a decimal (e.g. 1001/100).
-		$total_cents = (int) round( $item_total_val * 100 )
-			+ (int) round( $shipping_val * 100 )
-			+ (int) round( $taxes_val * 100 )
-			- (int) round( $discount_val * 100 );
-		$total_str   = number_format( $total_cents / 100, 2, '.', '' );
-		$total       = new Money( (float) $total_str, $this->currency->get() );
-
 
 		$breakdown = new AmountBreakdown(
 			$item_total,
