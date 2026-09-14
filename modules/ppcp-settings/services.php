@@ -277,7 +277,8 @@ return array(
 		return new WebhookSettingsEndpoint(
 			$container->get( 'api.endpoint.webhook' ),
 			$container->get( 'webhook.registrar' ),
-			$container->get( 'webhook.status.simulation' )
+			$container->get( 'webhook.status.simulation' ),
+			$container->get( 'webhook.own-resolver' )
 		);
 	},
 	'settings.rest.pay_later_messaging'                   => static function ( ContainerInterface $container ): PayLaterMessagingEndpoint {

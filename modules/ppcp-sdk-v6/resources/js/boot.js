@@ -31,6 +31,7 @@ import { initCardFields } from './cardFields/renderer';
 import { initCardButton } from './cardButton/renderCardButton';
 import { hasJQuery } from './utils/api';
 import { watchViewedTotal } from './utils/viewedTotal';
+import { initProductButtonGate } from './utils/productButtonGate';
 import { setErrorLabels } from './utils/errorHandler';
 import { isFreeTrialCart } from './utils/freeTrial';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
@@ -452,6 +453,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		initCardButtonSafely();
 		initMessagesSafely();
 		trackProductTotal();
+		initProductButtonGate( config );
 		syncPlaceOrderButton();
 	}
 

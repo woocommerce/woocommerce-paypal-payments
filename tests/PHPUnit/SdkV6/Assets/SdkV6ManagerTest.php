@@ -329,6 +329,46 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a subscription cart on a free trial ($0 today), which therefore needs no
+     *       one-time payment
+     * WHEN determining which locations should render on the current page
+     * THEN the checkout still renders, because it must offer the PayPal
+     *      save-without-purchase button for the vaulted token backing the future
+     *      recurring payment
+     * AND the cart and mini-cart stay suppressed regardless of the free-trial flag,
+     *     since neither has a form to submit that vaulted token from
+     * AND a $0 cart that is NOT a free trial (e.g. a full-value coupon) keeps the
+     *     checkout suppressed too, same as before the fix
+     *
+     * @dataProvider free_trial_checkout_provider
+     */
+    public function testDetermineRenderPlacesCheckoutOnFreeTrialCart(bool $needs_payment, bool $is_free_trial_cart, bool $expected_checkout): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn($is_free_trial_cart);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn($needs_payment);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $testee = $this->createTestee();
+        $result = $testee->determine_render_places();
+
+        $this->assertSame($expected_checkout, $result['checkout']);
+        $this->assertSame($needs_payment, $result['cart']);
+        $this->assertSame($needs_payment, $result['mini-cart']);
+    }
+
+    public function free_trial_checkout_provider(): array
+    {
+        return [
+            'free-trial cart needing no payment still enables checkout' => [false, true, true],
+            'zero-total non-free-trial cart keeps checkout suppressed'  => [false, false, false],
+            'ordinary cart needing payment enables checkout regardless of free trial' => [true, false, true],
+        ];
+    }
+
+    /**
      * GIVEN the mini-cart smart button location is enabled sitewide
      * WHEN checking whether the v6 SDK should load on a page with no matching page context
      *      (e.g. the shop or home page, where a block Mini-Cart may still appear)
@@ -888,6 +928,8 @@ class SdkV6ManagerTest extends TestCase
         $this->context->shouldReceive('location')->andReturn($location);
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        // Off, so the hand-over to v5 is not what vetoes the claim here.
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')->andReturn(false);
         $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(true);
 
         $testee = $this->createTestee();
@@ -954,6 +996,10 @@ class SdkV6ManagerTest extends TestCase
         $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
             ->with('custom_placement')
             ->andReturn(true);
+        // Off for the page's own location, so the hand-over to v5 does not apply.
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with($location)
+            ->andReturn(false);
         // No block present, so has_paylater_block() resolves false and
         // messages_settings_location() falls back to the empty location, not
         // 'custom_placement' - the eligibility lookup below reflects that.
@@ -968,6 +1014,56 @@ class SdkV6ManagerTest extends TestCase
         $testee = $this->createTestee();
 
         $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN no v6 page context (home or shop), the mini-cart smart-button location
+     *       disabled so nothing else would claim the page, and v5 Pay Later messaging
+     *       enabled for the resolved page location
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it loads, claiming the page so the v5 stack stands down there — v6 owns
+     *      messaging wherever it is active, and withholds the message on home and shop
+     *      until it has a hook of its own rather than letting v5 draw it
+     * AND with messaging disabled for that same location nothing claims the page, so it
+     *     does not load — the claim is made only where v5 would otherwise have drawn a
+     *     banner
+     *
+     * @dataProvider homeShopMessagingClaimProvider
+     */
+    public function testShouldLoadOnCurrentPageClaimsHomeAndShopWhereV5WouldOtherwiseRenderAMessage(
+        string $location,
+        bool $messaging_enabled,
+        bool $expected
+    ): void {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        // Off, so the sitewide fallback cannot claim the page and the messaging
+        // decision below is the only thing that can.
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->andReturn(false);
+        // Catch-all so an incidental call for 'custom_placement' (reachable through
+        // messages_settings_location()'s has_paylater_block() check) does not throw.
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->andReturn(false)
+            ->byDefault();
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with($location)
+            ->andReturn($messaging_enabled);
+
+        $testee = $this->createTestee();
+
+        $this->assertSame($expected, $testee->should_load_on_current_page());
+    }
+
+    public function homeShopMessagingClaimProvider(): array
+    {
+        return [
+            'home page is claimed when v5 has a message there' => ['home', true, true],
+            'shop page is claimed when v5 has a message there' => ['shop', true, true],
+            'home page is left alone when v5 has no message'   => ['home', false, false],
+            'shop page is left alone when v5 has no message'   => ['shop', false, false],
+        ];
     }
 
     /**
@@ -1828,6 +1924,29 @@ class SdkV6ManagerTest extends TestCase
         );
         $this->assertArrayHasKey('card_declined', $data['labels']);
         $this->assertNotSame('', $data['labels']['card_declined']);
+    }
+
+    /**
+     * GIVEN a checkout page where the mini-cart smart button location is also enabled
+     * WHEN the SDK bootstrap data is generated
+     * THEN button_styles carries a shorter height for the mini-cart entry, since the
+     *      mini-cart column is narrower than a page column and a full-height button
+     *      there renders oversized
+     * AND the checkout page's own entry keeps the full page-width button height, so the
+     *     two heights differ within the same payload rather than both falling back to
+     *     one hardcoded value
+     */
+    public function testScriptDataButtonStylesMiniCartHeightDiffersFromPageContext(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('mini-cart')->andReturn(true);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(SdkV6Manager::PAYMENT_BUTTON_HEIGHT, $data['button_styles']['checkout']['height']);
+        $this->assertSame(SdkV6Manager::MINI_CART_BUTTON_HEIGHT, $data['button_styles']['mini-cart']['height']);
     }
 
     /**

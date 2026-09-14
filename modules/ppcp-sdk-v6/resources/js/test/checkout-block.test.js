@@ -1,6 +1,3 @@
-import { loadSdkV6 } from '../sdkLoader';
-import { checkEligibility } from '../eligibility';
-
 const mockRegisterExpressPaymentMethod = jest.fn();
 const mockRegisterPaymentMethod = jest.fn();
 // virtual: webpack resolves this to the wc.wcBlocksRegistry global, so there is
@@ -16,8 +13,14 @@ jest.mock(
 	{ virtual: true }
 );
 
-jest.mock( '../sdkLoader', () => ( { loadSdkV6: jest.fn() } ) );
-jest.mock( '../eligibility', () => ( { checkEligibility: jest.fn() } ) );
+const mockLoadSdkV6 = jest.fn();
+jest.mock( '../sdkLoader', () => ( {
+	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+const mockCheckEligibility = jest.fn();
+jest.mock( '../eligibility', () => ( {
+	checkEligibility: ( ...args ) => mockCheckEligibility( ...args ),
+} ) );
 jest.mock( '../utils/errorHandler', () => ( { setErrorLabels: jest.fn() } ) );
 jest.mock( '../blocks/V6ExpressComponent', () => ( {
 	V6ExpressComponent: () => null,
@@ -212,8 +215,8 @@ describe( 'checkout-block', () => {
 		};
 
 		beforeEach( () => {
-			loadSdkV6.mockResolvedValue( {} );
-			checkEligibility.mockResolvedValue( eligibleForEveryMethod );
+			mockLoadSdkV6.mockResolvedValue( {} );
+			mockCheckEligibility.mockResolvedValue( eligibleForEveryMethod );
 		} );
 
 		test( 'a cart that became $0 after page load is a free trial even though the server said it was not', async () => {
@@ -347,26 +350,47 @@ describe( 'checkout-block', () => {
 					totalPrice: '4900',
 					expected: true,
 				},
-			] )( '$name', ( { hasSubscriptions, totalPrice, expected } ) => {
-				loadCheckoutBlock(
-					baseConfig( {
-						place_order: { enabled: true, text: 'Complete order' },
-						has_subscriptions: hasSubscriptions,
-						amount: '10.00',
-					} )
-				);
+				{
+					name: 'a free-trial subscription cart at a $0 live total is not allowed: it is vaulted through the express button instead',
+					hasSubscriptions: true,
+					totalPrice: '0',
+					cartNeedsVaulting: true,
+					expected: false,
+				},
+			] )(
+				'$name',
+				( {
+					hasSubscriptions,
+					totalPrice,
+					cartNeedsVaulting,
+					expected,
+				} ) => {
+					loadCheckoutBlock(
+						baseConfig( {
+							place_order: {
+								enabled: true,
+								text: 'Complete order',
+							},
+							has_subscriptions: hasSubscriptions,
+							cart_needs_vaulting: cartNeedsVaulting,
+							amount: '10.00',
+						} )
+					);
 
-				const { canMakePayment } = regularCallFor( 'ppcp-gateway' );
+					const { canMakePayment } = regularCallFor(
+						'ppcp-gateway'
+					);
 
-				expect(
-					canMakePayment( {
-						cartTotals: {
-							total_price: totalPrice,
-							currency_minor_unit: 2,
-						},
-					} )
-				).toBe( expected );
-			} );
+					expect(
+						canMakePayment( {
+							cartTotals: {
+								total_price: totalPrice,
+								currency_minor_unit: 2,
+							},
+						} )
+					).toBe( expected );
+				}
+			);
 		} );
 
 		describe( 'when only the saved-PayPal vault row is eligible', () => {
@@ -427,5 +451,47 @@ describe( 'checkout-block', () => {
 				'ppcp_continuation'
 			);
 		} );
+	} );
+
+	describe( 'PayPal express canMakePayment()', () => {
+		const cartTotals = { total_price: '0', currency_minor_unit: 2 };
+
+		test( 'resolves to true on a free-trial cart without checking eligibility', async () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					is_free_trial_cart: true,
+					cart_needs_vaulting: true,
+				} )
+			);
+
+			const { canMakePayment } = expressCallFor( 'ppcp-gateway-paypal' );
+
+			await expect( canMakePayment( { cartTotals } ) ).resolves.toBe(
+				true
+			);
+			expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+			expect( mockCheckEligibility ).not.toHaveBeenCalled();
+		} );
+
+		test.each( [
+			[ { paypal: true }, true ],
+			[ { paypal: false }, false ],
+		] )(
+			'on a non-free-trial cart, eligibility %s resolves to %s',
+			async ( eligibility, expected ) => {
+				mockLoadSdkV6.mockResolvedValue( {} );
+				mockCheckEligibility.mockResolvedValue( eligibility );
+				loadCheckoutBlock( baseConfig() );
+
+				const { canMakePayment } = expressCallFor(
+					'ppcp-gateway-paypal'
+				);
+
+				await expect(
+					canMakePayment( { cartTotals } )
+				).resolves.toBe( expected );
+				expect( mockCheckEligibility ).toHaveBeenCalled();
+			}
+		);
 	} );
 } );

@@ -31,11 +31,33 @@ import { V6CardFieldContainer } from './V6CardFieldContainer';
 import { amountFromBilling } from '../utils/amount';
 import { isFreeTrialCart } from '../utils/freeTrial';
 import { hasCheckoutValidationErrors } from './checkoutValidation';
+import {
+	CARD_DECLINE_MESSAGE,
+	CARD_SAVE_DECLINE_MESSAGE,
+	userFacingMessage,
+} from '../utils/cardDeclineMessages';
 
 const CHECKOUT_FIELDS_NOT_VALID_MESSAGE = __(
 	'Please complete all required checkout fields before continuing with payment.',
 	'woocommerce-paypal-payments'
 );
+
+const FIELD_LABELS = {
+	number: __( 'Card number', 'woocommerce-paypal-payments' ),
+	expiry: __( 'Expiry (MM/YY)', 'woocommerce-paypal-payments' ),
+	cvv: __( 'CVV', 'woocommerce-paypal-payments' ),
+};
+
+const CARD_NAME_LABEL = __(
+	'Cardholder name (optional)',
+	'woocommerce-paypal-payments'
+);
+
+// Each event payload carries the state of all three fields, so these four
+// events keep every label in sync.
+const FIELD_STATE_EVENTS = [ 'focus', 'blur', 'empty', 'notempty' ];
+
+const NAME_FIELD_ID = 'ppcp-sdk-v6-card-name';
 
 /**
  * Creates the order, confirms it through the card session (which runs 3D
@@ -97,10 +119,7 @@ async function submitCardPayment( {
 		if ( result.state !== 'succeeded' ) {
 			return {
 				type: responseTypes.ERROR,
-				message: __(
-					'Card payment failed.',
-					'woocommerce-paypal-payments'
-				),
+				message: CARD_DECLINE_MESSAGE,
 			};
 		}
 
@@ -110,9 +129,7 @@ async function submitCardPayment( {
 	} catch ( error ) {
 		return {
 			type: responseTypes.ERROR,
-			message:
-				error?.message ||
-				__( 'Card payment failed.', 'woocommerce-paypal-payments' ),
+			message: userFacingMessage( error, CARD_DECLINE_MESSAGE ),
 		};
 	}
 }
@@ -173,10 +190,7 @@ async function submitCardSave( { config, session, responseTypes } ) {
 		if ( result.state !== 'succeeded' ) {
 			return {
 				type: responseTypes.ERROR,
-				message: __(
-					'Card could not be saved.',
-					'woocommerce-paypal-payments'
-				),
+				message: CARD_SAVE_DECLINE_MESSAGE,
 			};
 		}
 
@@ -186,9 +200,7 @@ async function submitCardSave( { config, session, responseTypes } ) {
 	} catch ( error ) {
 		return {
 			type: responseTypes.ERROR,
-			message:
-				error?.message ||
-				__( 'Card could not be saved.', 'woocommerce-paypal-payments' ),
+			message: userFacingMessage( error, CARD_SAVE_DECLINE_MESSAGE ),
 		};
 	}
 }
@@ -211,7 +223,8 @@ export function V6CardFieldsComponent( {
 	shouldSavePayment,
 	billing,
 } ) {
-	const { onPaymentSetup, onCheckoutValidation } = eventRegistration;
+	const { onPaymentSetup, onCheckoutValidation, onCheckoutFail } =
+		eventRegistration;
 	const { responseTypes } = emitResponse;
 
 	const context = config.page_context;
@@ -228,6 +241,9 @@ export function V6CardFieldsComponent( {
 	const [ inputStyle, setInputStyle ] = useState( null );
 	const [ textStyle, setTextStyle ] = useState( null );
 	const [ cardName, setCardName ] = useState( '' );
+	const [ nameFocused, setNameFocused ] = useState( false );
+	const [ floatingLabel, setFloatingLabel ] = useState( false );
+	const [ fieldStates, setFieldStates ] = useState( {} );
 	const referenceRef = useRef( null );
 
 	// The choice comes from WC Blocks' native "Save payment information…"
@@ -287,14 +303,61 @@ export function V6CardFieldsComponent( {
 	// decoration has no business.
 	const cardFieldOverrides = config.card_fields.styles;
 	useEffect( () => {
-		const source =
-			document.querySelector( '.wc-block-components-text-input input' ) ||
-			referenceRef.current;
+		const blockInput = document.querySelector(
+			'.wc-block-components-text-input input'
+		);
+		const source = blockInput || referenceRef.current;
+
+		// A Blocks text input on the page means its floating-label CSS is
+		// loaded. Without one, the fields fall back to plain placeholders.
+		setFloatingLabel( Boolean( blockInput ) );
+
 		if ( source ) {
 			setInputStyle( cardFieldStyles( source ) );
 			setTextStyle( hostedFieldTextStyles( source, cardFieldOverrides ) );
 		}
 	}, [ cardFieldOverrides ] );
+
+	// Mirrors the SDK's field state onto the wrappers so WooCommerce's CSS can
+	// float each label.
+	useEffect( () => {
+		if ( ! session || ! floatingLabel ) {
+			return undefined;
+		}
+
+		let listening = true;
+		const handler = ( payload ) => {
+			if ( ! listening || ! payload?.data ) {
+				return;
+			}
+
+			const { number, expiry, cvv } = payload.data;
+			setFieldStates( { number, expiry, cvv } );
+		};
+
+		// The session exposes no per-listener removal, only destroy(), so this
+		// flag is what stops a late event from reaching an unmounted component.
+		FIELD_STATE_EVENTS.forEach( ( event ) => {
+			Promise.resolve( session.on( event, handler ) ).catch( ( error ) => {
+				// eslint-disable-next-line no-console
+				console.warn(
+					'[PPCP SDK v6] card field event not available',
+					event,
+					error
+				);
+			} );
+		} );
+
+		return () => {
+			listening = false;
+		};
+	}, [ session, floatingLabel ] );
+
+	// WooCommerce floats a label once its field is focused or filled.
+	const isFieldActive = ( type ) => {
+		const state = fieldStates[ type ];
+		return Boolean( state && ( state.isFocused || ! state.isEmpty ) );
+	};
 
 	const sessionRef = useLatestRef( session );
 
@@ -368,13 +431,43 @@ export function V6CardFieldsComponent( {
 		} );
 	}, [ onCheckoutValidation, activePaymentMethod, methodId, responseTypes ] );
 
+	// The Store API clears the gateway's notices and Blocks ignores the
+	// errorMessage it returns, so a decline raised during process_payment
+	// reaches the shopper as WooCommerce's generic string unless it is put
+	// back here.
+	useEffect( () => {
+		if (
+			activePaymentMethod !== methodId ||
+			typeof onCheckoutFail !== 'function'
+		) {
+			return undefined;
+		}
+
+		return onCheckoutFail( ( { processingResponse } ) => {
+			const message = processingResponse?.paymentDetails?.errorMessage;
+			if ( ! message ) {
+				return true;
+			}
+
+			return { type: responseTypes.ERROR, message };
+		} );
+	}, [ onCheckoutFail, activePaymentMethod, methodId, responseTypes ] );
+
+	const nameFieldClassName = [
+		'ppcp-sdk-v6-card-field',
+		'ppcp-sdk-v6-card-field--name',
+		floatingLabel && 'wc-block-components-text-input',
+		floatingLabel && ( nameFocused || cardName !== '' ) && 'is-active',
+	]
+		.filter( Boolean )
+		.join( ' ' );
+
 	const fieldsReady = session && inputStyle && textStyle;
 
 	return createElement(
 		'div',
 		{
 			className: 'ppcp-sdk-v6-card-fields',
-			style: { display: 'flex', flexDirection: 'column', gap: '16px' },
 		},
 		// Off-screen rather than display:none, which would make getComputedStyle
 		// return nothing.
@@ -401,56 +494,60 @@ export function V6CardFieldsComponent( {
 					createElement(
 						'div',
 						{
-							className:
-								'ppcp-sdk-v6-card-field ppcp-sdk-v6-card-field--name',
+							className: nameFieldClassName,
 						},
 						createElement( 'input', {
+							id: NAME_FIELD_ID,
 							type: 'text',
 							className: 'input-text',
 							value: cardName,
 							onChange: ( event ) =>
 								setCardName( event.target.value ),
-							placeholder: __(
-								'Cardholder name (optional)',
-								'woocommerce-paypal-payments'
-							),
+							onFocus: () => setNameFocused( true ),
+							onBlur: () => setNameFocused( false ),
+							placeholder: floatingLabel
+								? undefined
+								: CARD_NAME_LABEL,
 							style: { width: '100%', ...inputStyle },
-						} )
+						} ),
+						// A real input, so this label uses for/id where the
+						// hosted fields' labels are aria-hidden.
+						floatingLabel &&
+							createElement(
+								'label',
+								{ htmlFor: NAME_FIELD_ID },
+								CARD_NAME_LABEL
+							)
 					),
 				createElement( V6CardFieldContainer, {
 					session,
 					type: 'number',
 					style: textStyle,
 					height: inputStyle.height,
-					placeholder: __(
-						'Card number',
-						'woocommerce-paypal-payments'
-					),
+					label: FIELD_LABELS.number,
+					floatingLabel,
+					isActive: isFieldActive( 'number' ),
 				} ),
 				createElement(
 					'div',
-					{
-						className: 'ppcp-sdk-v6-card-fields__row',
-						style: { display: 'flex', gap: '16px' },
-					},
+					{ className: 'ppcp-sdk-v6-card-fields__row' },
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'expiry',
 						style: textStyle,
 						height: inputStyle.height,
-						placeholder: __(
-							'MM / YY',
-							'woocommerce-paypal-payments'
-						),
-						containerStyle: { flex: 1 },
+						label: FIELD_LABELS.expiry,
+						floatingLabel,
+						isActive: isFieldActive( 'expiry' ),
 					} ),
 					createElement( V6CardFieldContainer, {
 						session,
 						type: 'cvv',
 						style: textStyle,
 						height: inputStyle.height,
-						placeholder: __( 'CVV', 'woocommerce-paypal-payments' ),
-						containerStyle: { flex: 1 },
+						label: FIELD_LABELS.cvv,
+						floatingLabel,
+						isActive: isFieldActive( 'cvv' ),
 					} )
 				)
 			),
