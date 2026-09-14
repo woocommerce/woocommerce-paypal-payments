@@ -26,7 +26,6 @@ jobs:
       NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
     with:
       PACKAGE_NAME: 'woocommerce-paypal-payments'
-      PACKAGE_VERSION: ${{ inputs.PACKAGE_VERSION }}
       NODE_VERSION: 22
 
   qit:
