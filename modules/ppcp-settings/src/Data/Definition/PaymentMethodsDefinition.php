@@ -72,7 +72,7 @@ class PaymentMethodsDefinition {
 	private ?array $wc_gateways = null;
 
 	/**
-	 * Whether the v6 SDK is active, which drops the cardholder name field.
+	 * Whether the v6 SDK is active.
 	 *
 	 * @var bool
 	 */
@@ -85,7 +85,7 @@ class PaymentMethodsDefinition {
 	 * @param GeneralSettings $general_settings                General plugin settings model.
 	 * @param string          $axo_checkout_config_notice      Axo checkout config conflict notice.
 	 * @param string          $axo_incompatible_plugins_notice Axo incompatible plugins notice.
-	 * @param bool            $sdk_v6_active                   Whether the v6 SDK is active, which drops the cardholder name toggle.
+	 * @param bool            $sdk_v6_active                   Whether the v6 SDK is active.
 	 */
 	public function __construct(
 		PaymentSettings $settings,
@@ -264,9 +264,8 @@ class PaymentMethodsDefinition {
 
 		$card_fields = array();
 
-		// Offered only under v5: v6's card-fields component set is
-		// number|expiry|cvv, so the toggle would control nothing. The stored
-		// value stays, so turning v6 off restores the merchant's choice.
+		// The cardholder-name toggle is offered under v5 only. The stored value
+		// stays, so turning v6 off restores the merchant's choice.
 		if ( ! $this->sdk_v6_active ) {
 			$card_fields['cardholderName'] = array(
 				'type'    => 'toggle',

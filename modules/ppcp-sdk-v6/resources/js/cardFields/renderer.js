@@ -3,9 +3,7 @@
  *
  * Mounts number/expiry/CVV into the existing WC card-form inputs and runs a new
  * card through the v6 card session (3D Secure included) before letting the
- * native submit through to CreditCardGateway::process_payment(). Those three
- * are the whole set: v6 has no cardholder-name component, and the name is no
- * longer collected or sent.
+ * native submit through to CreditCardGateway::process_payment().
  *
  * Scope: a fresh card, one-time or the $0 free-trial variant that saves via a
  * setup token. A selected saved token is left to the native submit.

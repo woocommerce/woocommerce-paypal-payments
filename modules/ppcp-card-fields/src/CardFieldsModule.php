@@ -98,9 +98,8 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 				assert( $card_payments_configuration instanceof CardPaymentsConfiguration );
 				$should_show_card_holder_name = apply_filters( 'woocommerce_paypal_payments_enable_cardholder_name_field', $card_payments_configuration->show_name_on_card() === 'yes' );
 
-				// v6 dropped the cardholder name: its card-fields component set is
-				// number|expiry|cvv, and the name is no longer sent with the order.
-				// v5 keeps it, where the SDK mounts its own field onto this input.
+				// The cardholder name belongs to the v5 card form, where the SDK
+				// mounts its own field onto this input.
 				if ( $should_show_card_holder_name && $c->has( 'sdk-v6.owns-current-page' ) ) {
 					$owns_current_page            = $c->get( 'sdk-v6.owns-current-page' );
 					$should_show_card_holder_name = ! ( is_callable( $owns_current_page ) && $owns_current_page() );
