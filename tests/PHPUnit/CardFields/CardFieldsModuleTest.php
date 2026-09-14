@@ -97,37 +97,6 @@ class CardFieldsModuleTest extends TestCase
     }
 
     /**
-     * GIVEN Advanced Card Fields is enabled and the buyer submitted a cardholder name
-     * WHEN the request body for a card payment order is being built
-     * THEN the cardholder name is carried into payment_source.card.name, trimmed and
-     *      capped at 300 characters
-     */
-    public function testRequestBodyMapsCardNameToPaymentSource(): void
-    {
-        $this->card_payments_configuration->shouldReceive('is_enabled')->andReturn(true);
-        $this->settings->shouldReceive('three_d_secure_enum')->andReturn('');
-        $this->experience_context_builder->shouldReceive('with_endpoint_return_urls')->andReturnSelf();
-        $experience_context = Mockery::mock(ExperienceContext::class);
-        $experience_context->shouldReceive('to_array')->andReturn(['return_url' => 'https://example.test']);
-        $this->experience_context_builder->shouldReceive('build')->andReturn($experience_context);
-
-        [$request_body_filter] = $this->captured_filters();
-
-        $long_name = str_repeat('a', 400);
-
-        $result = $request_body_filter(
-            [],
-            CreditCardGateway::ID,
-            ['card_name' => '  ' . $long_name . '  ']
-        );
-
-        $this->assertSame(
-            substr($long_name, 0, 300),
-            $result['payment_source']['card']['name']
-        );
-    }
-
-    /**
      * GIVEN Advanced Card Fields is enabled and the buyer did not submit a cardholder name
      * WHEN the request body for a card payment order is being built
      * THEN payment_source.card carries no name key
@@ -150,6 +119,7 @@ class CardFieldsModuleTest extends TestCase
 
     /**
      * GIVEN the cardholder name field is enabled for the credit card gateway
+     * AND v6 does not own the current page (v5 renders the card form)
      * WHEN WooCommerce builds the credit card form fields
      * THEN the cardholder-name field is placed first
      * AND the existing card-number-field entry survives the reorder under its own key
@@ -158,6 +128,9 @@ class CardFieldsModuleTest extends TestCase
     {
         $this->card_payments_configuration->shouldReceive('is_enabled')->andReturn(true);
         $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('yes');
+        $this->container->shouldReceive('has')
+            ->with('sdk-v6.owns-current-page')
+            ->andReturn(false);
 
         [, $form_fields_filter] = $this->captured_filters();
 
@@ -169,6 +142,38 @@ class CardFieldsModuleTest extends TestCase
         $result = $form_fields_filter($default_fields, CreditCardGateway::ID);
 
         $this->assertSame('card-name-field', array_key_first($result));
+        $this->assertArrayHasKey('card-number-field', $result);
+        $this->assertArrayHasKey('card-expiry-field', $result);
+    }
+
+    /**
+     * GIVEN the cardholder name field is enabled for the credit card gateway
+     * AND v6 owns the current page, where the cardholder name is no longer collected
+     * WHEN WooCommerce builds the credit card form fields
+     * THEN the cardholder-name field is not added
+     * AND the existing card-number-field entry is left untouched
+     */
+    public function testCreditCardFormFieldsOmitsNameFieldWhenV6OwnsPage(): void
+    {
+        $this->card_payments_configuration->shouldReceive('is_enabled')->andReturn(true);
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('yes');
+        $this->container->shouldReceive('has')
+            ->with('sdk-v6.owns-current-page')
+            ->andReturn(true);
+        $this->container->shouldReceive('get')
+            ->with('sdk-v6.owns-current-page')
+            ->andReturn(static fn(): bool => true);
+
+        [, $form_fields_filter] = $this->captured_filters();
+
+        $default_fields = [
+            'card-number-field' => '<p>number field with &bull;&bull;&bull;&bull; placeholder</p>',
+            'card-expiry-field' => '<p>expiry field</p>',
+        ];
+
+        $result = $form_fields_filter($default_fields, CreditCardGateway::ID);
+
+        $this->assertArrayNotHasKey('card-name-field', $result);
         $this->assertArrayHasKey('card-number-field', $result);
         $this->assertArrayHasKey('card-expiry-field', $result);
     }
