@@ -128,8 +128,6 @@ class AmountFactory {
 		// Store API values are in integer minor units (e.g. cents), so integer
 		// arithmetic here is exact. Fees are included in items to match
 		// from_wc_cart() and to avoid a breakdown mismatch when fees are present.
-		// Total is derived from the breakdown sum rather than total_price() so
-		// PayPal's amount.value === sum(breakdown) invariant always holds.
 		$items_minor    = (int) $cart_totals->total_items()->value()
 			+ (int) $cart_totals->total_fees()->value();
 		$shipping_minor = (int) $cart_totals->total_shipping()->value();
@@ -143,7 +141,17 @@ class AmountFactory {
 		 */
 		$discount_minor += max( 0, (int) apply_filters( 'woocommerce_paypal_payments_store_api_cart_extra_discount', 0, $cart_totals ) );
 
-		$total_minor = $items_minor + $shipping_minor + $tax_minor - $discount_minor;
+		// total_price() is authoritative for the same reason the cart total is in
+		// from_wc_cart(): it carries reductions the component getters never see.
+		$total_minor = (int) $cart_totals->total_price()->value();
+
+		list( $tax_minor, $discount_minor ) = $this->reconcile_with_total(
+			$total_minor,
+			$items_minor,
+			$shipping_minor,
+			$tax_minor,
+			$discount_minor
+		);
 
 		$currency   = $cart_totals->total_price()->currency_code();
 		$minor_unit = $cart_totals->total_price()->currency_minor_unit();
