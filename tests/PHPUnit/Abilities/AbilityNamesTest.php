@@ -33,7 +33,6 @@ class AbilityNamesTest extends TestCase
 	 */
 	public function test_category_slug_is_the_shared_woocommerce_bucket(): void
 	{
-		// Then.
 		$this->assertSame('woocommerce', AbilityNames::CATEGORY_SLUG);
 	}
 
@@ -50,7 +49,6 @@ class AbilityNamesTest extends TestCase
 	 */
 	public function test_deprecated_alias_mirrors_the_shared_constant(string $alias): void
 	{
-		// Then.
 		$this->assertSame(
 			AbilityNames::CATEGORY_SLUG,
 			$alias,

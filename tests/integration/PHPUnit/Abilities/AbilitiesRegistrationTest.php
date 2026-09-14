@@ -43,7 +43,7 @@ class AbilitiesRegistrationTest extends IntegrationMockedTestCase
 	);
 
 	/** @var array<int, int> User ids created by a test, deleted in tearDown. */
-	private $created_user_ids = array();
+	private array $created_user_ids = array();
 
 	public function tearDown(): void
 	{

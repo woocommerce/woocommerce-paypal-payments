@@ -31,10 +31,9 @@ use WooCommerce\PayPalCommerce\TestCase;
 class BootWithoutAbilitiesApiTest extends TestCase
 {
 	/** @var array<int, string> */
-	private $lines = array();
+	private array $lines = array();
 
-	/** @var int */
-	private $exit_code = -1;
+	private int $exit_code = -1;
 
 	public function setUp(): void
 	{
@@ -63,10 +62,8 @@ class BootWithoutAbilitiesApiTest extends TestCase
 	 */
 	public function test_module_boots_without_the_wc_10_9_ability_definition_interface(): void
 	{
-		// Arrange / When: the subprocess ran in setUp(), the way plugins_loaded
-		// would boot the module on a real WC < 10.9 install.
-
-		// Then.
+		// The subprocess ran in setUp(), the way plugins_loaded would boot the
+		// module on a real WC < 10.9 install.
 		$this->assertSame(
 			'no',
 			$this->fixture_value('ability_definition_defined'),
@@ -94,9 +91,7 @@ class BootWithoutAbilitiesApiTest extends TestCase
 	 */
 	public function test_boot_leaves_the_domain_shells_unloaded(): void
 	{
-		// Arrange / When: same subprocess as above, already run in setUp().
-
-		// Then.
+		// Same subprocess as above, already run in setUp().
 		foreach (array( 'GetConnectionStatus', 'GetPaymentMethods', 'GetOrderTracking', 'GetPaypalOrder' ) as $shell) {
 			$this->assertSame(
 				'no',

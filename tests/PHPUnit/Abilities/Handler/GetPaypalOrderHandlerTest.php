@@ -25,8 +25,7 @@ use function Brain\Monkey\Functions\when;
  */
 class GetPaypalOrderHandlerTest extends TestCase
 {
-	/** @var LoggerInterface */
-	private $logger;
+	private LoggerInterface $logger;
 
 	public function setUp(): void
 	{
@@ -185,6 +184,138 @@ class GetPaypalOrderHandlerTest extends TestCase
 
 		$this->assertArrayHasKey('payer', $result);
 		$this->assertSame('payer@example.test', $result['payer']['email_address']);
+	}
+
+	/**
+	 * GIVEN the site denies payer PII through the
+	 * woocommerce_paypal_payments_abilities_allow_payer_pii filter
+	 * WHEN the handler executes with include_payer_pii true
+	 * THEN the input flag cannot widen past the site gate and the payload is
+	 * still redacted.
+	 */
+	public function test_execute_strips_payer_when_the_site_gate_denies_pii(): void
+	{
+		when('apply_filters')->alias(static function (string $hook, $value) {
+			return 'woocommerce_paypal_payments_abilities_allow_payer_pii' === $hook ? false : $value;
+		});
+
+		$order = Mockery::mock(Order::class);
+		$order->shouldReceive('to_array')->andReturn(array(
+			'id'             => 'ORDERID',
+			'payer'          => array( 'email_address' => 'payer@example.test' ),
+			'payment_source' => array( 'paypal' => array( 'email_address' => 'leaky@example.test' ) ),
+			'purchase_units' => array(
+				array( 'shipping' => array( 'address' => array( 'country_code' => 'US' ) ) ),
+			),
+		));
+
+		$endpoint = Mockery::mock(OrderEndpointCached::class);
+		$endpoint->shouldReceive('order')->once()->with('ORDERID')->andReturn($order);
+
+		$result = $this->create_handler($endpoint)->execute(array(
+			'paypal_order_id'   => 'ORDERID',
+			'include_payer_pii' => true,
+		));
+
+		$this->assertIsArray($result);
+		$this->assertArrayNotHasKey('payer', $result);
+		$this->assertArrayNotHasKey('payment_source', $result);
+		$this->assertArrayNotHasKey('shipping', $result['purchase_units'][0]);
+	}
+
+	/**
+	 * GIVEN the site gate returns a truthy non-boolean, as any filter callback
+	 * may
+	 * WHEN the handler executes with include_payer_pii true
+	 * THEN the value is coerced and the payer block passes through.
+	 */
+	public function test_execute_coerces_a_non_boolean_site_gate_value(): void
+	{
+		when('apply_filters')->alias(static function (string $hook, $value) {
+			return 'woocommerce_paypal_payments_abilities_allow_payer_pii' === $hook ? '1' : $value;
+		});
+
+		$order = Mockery::mock(Order::class);
+		$order->shouldReceive('to_array')->andReturn(array(
+			'id'    => 'ORDERID',
+			'payer' => array( 'email_address' => 'payer@example.test' ),
+		));
+
+		$endpoint = Mockery::mock(OrderEndpointCached::class);
+		$endpoint->shouldReceive('order')->once()->with('ORDERID')->andReturn($order);
+
+		$result = $this->create_handler($endpoint)->execute(array(
+			'paypal_order_id'   => 'ORDERID',
+			'include_payer_pii' => true,
+		));
+
+		$this->assertArrayHasKey('payer', $result);
+	}
+
+	/**
+	 * GIVEN the site denies payer PII
+	 * WHEN the handler executes WITHOUT asking for PII
+	 * THEN the gate changes nothing: the default redaction already applies and
+	 * no denial is logged.
+	 */
+	public function test_site_gate_does_not_log_when_pii_was_never_requested(): void
+	{
+		when('apply_filters')->alias(static function (string $hook, $value) {
+			return 'woocommerce_paypal_payments_abilities_allow_payer_pii' === $hook ? false : $value;
+		});
+
+		$order = Mockery::mock(Order::class);
+		$order->shouldReceive('to_array')->andReturn(array(
+			'id'    => 'ORDERID',
+			'payer' => array( 'email_address' => 'payer@example.test' ),
+		));
+
+		$endpoint = Mockery::mock(OrderEndpointCached::class);
+		$endpoint->shouldReceive('order')->once()->with('ORDERID')->andReturn($order);
+
+		$logger = Mockery::mock(LoggerInterface::class);
+		$logger->shouldNotReceive('info');
+
+		$handler = new GetPaypalOrderHandler($endpoint, $logger);
+
+		$result = $handler->execute(array( 'paypal_order_id' => 'ORDERID' ));
+
+		$this->assertArrayNotHasKey('payer', $result);
+	}
+
+	/**
+	 * GIVEN the site denies payer PII
+	 * WHEN the handler executes with include_payer_pii true
+	 * THEN the silent narrowing is logged, so a smaller-than-requested payload
+	 * is diagnosable server-side.
+	 */
+	public function test_site_gate_denial_is_logged_when_pii_was_requested(): void
+	{
+		when('apply_filters')->alias(static function (string $hook, $value) {
+			return 'woocommerce_paypal_payments_abilities_allow_payer_pii' === $hook ? false : $value;
+		});
+
+		$order = Mockery::mock(Order::class);
+		$order->shouldReceive('to_array')->andReturn(array( 'id' => 'ORDERID' ));
+
+		$endpoint = Mockery::mock(OrderEndpointCached::class);
+		$endpoint->shouldReceive('order')->once()->with('ORDERID')->andReturn($order);
+
+		$logger = Mockery::mock(LoggerInterface::class);
+		$logger->shouldReceive('info')
+			->once()
+			->with(Mockery::on(static function ($message): bool {
+				return is_string($message) && false !== strpos($message, 'include_payer_pii');
+			}));
+
+		$handler = new GetPaypalOrderHandler($endpoint, $logger);
+
+		$result = $handler->execute(array(
+			'paypal_order_id'   => 'ORDERID',
+			'include_payer_pii' => true,
+		));
+
+		$this->assertSame(array( 'id' => 'ORDERID' ), $result);
 	}
 
 	/**

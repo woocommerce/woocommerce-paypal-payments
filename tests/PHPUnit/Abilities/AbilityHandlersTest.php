@@ -47,16 +47,13 @@ class AbilityHandlersTest extends TestCase
 	 */
 	public function test_callback_dispatches_to_the_bound_handler_instance(): void
 	{
-		// Arrange.
 		$input   = array( 'wc_order_id' => 42 );
 		$handler = Mockery::mock(GetConnectionStatusHandler::class);
 		$handler->shouldReceive('execute')->once()->with($input)->andReturn(array( 'merchant' => array() ));
 		AbilityHandlers::set(array( self::ABILITY => $handler ));
 
-		// When.
 		$callback = AbilityHandlers::callback(self::ABILITY);
 
-		// Then.
 		$this->assertIsCallable($callback);
 		$this->assertSame(array( 'merchant' => array() ), $callback($input));
 	}
@@ -71,12 +68,10 @@ class AbilityHandlersTest extends TestCase
 	 */
 	public function test_callback_is_invocable_with_no_argument(): void
 	{
-		// Arrange.
 		$handler = Mockery::mock(GetConnectionStatusHandler::class);
 		$handler->shouldReceive('execute')->once()->with(null)->andReturn(array());
 		AbilityHandlers::set(array( self::ABILITY => $handler ));
 
-		// When / Then.
 		$callback = AbilityHandlers::callback(self::ABILITY);
 		$this->assertSame(array(), $callback());
 	}
@@ -96,7 +91,6 @@ class AbilityHandlersTest extends TestCase
 	 */
 	public function test_callback_does_not_resolve_the_factory_until_the_returned_callable_is_invoked(): void
 	{
-		// Arrange.
 		$handler = Mockery::mock(GetConnectionStatusHandler::class);
 		$handler->shouldReceive('execute')->andReturn(array());
 		$calls = 0;
@@ -111,16 +105,14 @@ class AbilityHandlersTest extends TestCase
 			)
 		);
 
-		// When.
 		$callback = AbilityHandlers::callback(self::ABILITY);
 
-		// Then: registration-time is too early.
+		// Registration-time is too early.
 		$this->assertSame(0, $calls, 'Building the registration args must not resolve the handler.');
 
-		// When: the ability is actually executed.
+		// The ability is actually executed.
 		$callback(array());
 
-		// Then.
 		$this->assertSame(1, $calls, 'The factory must run when the ability executes.');
 	}
 
@@ -133,7 +125,6 @@ class AbilityHandlersTest extends TestCase
 	 */
 	public function test_the_resolved_handler_is_memoized_across_invocations(): void
 	{
-		// Arrange.
 		$handler = Mockery::mock(GetConnectionStatusHandler::class);
 		$handler->shouldReceive('execute')->times(3)->andReturn(array());
 		$calls = 0;
@@ -148,13 +139,11 @@ class AbilityHandlersTest extends TestCase
 			)
 		);
 
-		// When.
 		$first = AbilityHandlers::callback(self::ABILITY);
 		$first(array());
 		$first(array());
 		AbilityHandlers::callback(self::ABILITY)(array());
 
-		// Then.
 		$this->assertSame(1, $calls, 'The factory must be resolved once and memoized.');
 	}
 
@@ -173,7 +162,6 @@ class AbilityHandlersTest extends TestCase
 	 */
 	public function test_callback_returns_a_service_unavailable_wp_error_when_the_factory_throws(): void
 	{
-		// Arrange.
 		AbilityHandlers::set(
 			array(
 				self::ABILITY => static function (): void {
@@ -182,13 +170,12 @@ class AbilityHandlersTest extends TestCase
 			)
 		);
 
-		// When: registration itself must survive.
+		// Registration itself must survive.
 		$callback = AbilityHandlers::callback(self::ABILITY);
 		$this->assertIsCallable($callback);
 
 		$result = $callback(array());
 
-		// Then.
 		$this->assertInstanceOf(WP_Error::class, $result);
 		$this->assertSame('woocommerce_paypal_payments_service_unavailable', $result->get_error_code());
 	}
@@ -202,10 +189,8 @@ class AbilityHandlersTest extends TestCase
 	 */
 	public function test_callback_for_an_unbound_ability_returns_a_wp_error_instead_of_fataling(): void
 	{
-		// When.
 		$callback = AbilityHandlers::callback(self::ABILITY);
 
-		// Then.
 		$this->assertIsCallable($callback);
 
 		$result = $callback(array());
@@ -224,13 +209,10 @@ class AbilityHandlersTest extends TestCase
 	 */
 	public function test_callback_for_a_non_executable_bound_object_returns_a_wp_error_instead_of_an_invalid_callable(): void
 	{
-		// Arrange.
 		AbilityHandlers::set(array( self::ABILITY => new \stdClass() ));
 
-		// When.
 		$callback = AbilityHandlers::callback(self::ABILITY);
 
-		// Then.
 		$this->assertIsCallable($callback);
 
 		$result = $callback(array());
@@ -247,16 +229,13 @@ class AbilityHandlersTest extends TestCase
 	 */
 	public function test_permission_callback_returns_the_bound_callable(): void
 	{
-		// Arrange.
 		$permission = static function (): bool {
 			return true;
 		};
 		AbilityHandlers::set(array(), $permission);
 
-		// When.
 		$callback = AbilityHandlers::permission_callback();
 
-		// Then.
 		$this->assertTrue($callback());
 	}
 
@@ -269,10 +248,8 @@ class AbilityHandlersTest extends TestCase
 	 */
 	public function test_permission_callback_denies_when_nothing_was_bound(): void
 	{
-		// When.
 		$callback = AbilityHandlers::permission_callback();
 
-		// Then.
 		$this->assertIsCallable($callback);
 		$this->assertFalse($callback(), 'An unwired permission gate must fail closed.');
 	}

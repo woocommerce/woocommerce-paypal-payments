@@ -33,30 +33,16 @@ final class AbilityNames {
 	 */
 	public const CATEGORY_SLUG = 'woocommerce';
 
-	/**
-	 * Merchant connection state.
-	 */
 	public const GET_CONNECTION_STATUS = 'woocommerce-paypal-payments/get-connection-status';
 
-	/**
-	 * PayPal payment gateway inventory.
-	 */
 	public const GET_PAYMENT_METHODS = 'woocommerce-paypal-payments/get-payment-methods';
 
-	/**
-	 * Shipment tracking registered with PayPal for a WooCommerce order.
-	 */
 	public const GET_ORDER_TRACKING = 'woocommerce-paypal-payments/get-order-tracking';
 
-	/**
-	 * A single PayPal order.
-	 */
 	public const GET_PAYPAL_ORDER = 'woocommerce-paypal-payments/get-paypal-order';
 
 	/**
 	 * Every slug this module registers.
-	 *
-	 * @var array<int, string>
 	 */
 	public const ALL = array(
 		self::GET_CONNECTION_STATUS,

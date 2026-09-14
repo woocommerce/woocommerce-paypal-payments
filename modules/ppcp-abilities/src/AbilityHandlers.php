@@ -22,26 +22,22 @@ use Throwable;
 class AbilityHandlers {
 
 	/**
-	 * Ability name => handler instance, or a factory resolving to one.
-	 *
-	 * @var array<string, object|callable>
+	 * @var array<string, object|callable> Ability name => handler, or a factory resolving to one.
 	 */
-	private static $handlers = array();
+	private static array $handlers = array();
 
 	/**
-	 * Shared permission gate for every ability.
+	 * Not a typed property: PHP has no `callable` property type.
 	 *
 	 * @var callable|null
 	 */
 	private static $permission_callback = null;
 
 	/**
-	 * Bind the ability handlers and the shared permission gate. Replaces the
-	 * previous binding wholesale, so a re-run rebinds rather than accumulates.
+	 * Replaces the previous binding wholesale, so a re-run rebinds rather than
+	 * accumulates.
 	 *
-	 * @param array<string, object|callable> $handlers            Ability name => handler or factory.
-	 * @param callable|null                  $permission_callback Shared permission gate.
-	 * @return void
+	 * @param array<string, object|callable> $handlers Ability name => handler or factory.
 	 */
 	public static function set( array $handlers, ?callable $permission_callback = null ): void {
 		self::$handlers            = $handlers;
@@ -49,8 +45,6 @@ class AbilityHandlers {
 	}
 
 	/**
-	 * The execute callback for an ability.
-	 *
 	 * Deliberately a closure rather than array( $handler, 'execute' ): the
 	 * shells call this from get_registration_args(), which Woo's loader runs
 	 * inside `wp_abilities_api_init`. Resolving the handler there would
@@ -63,9 +57,6 @@ class AbilityHandlers {
 	 *
 	 * Signature matches the removed static execute( $input = null ) so the
 	 * registered callback's arity is unchanged.
-	 *
-	 * @param string $ability_name Fully namespaced ability name.
-	 * @return callable
 	 */
 	public static function callback( string $ability_name ): callable {
 		return static function ( $input = null ) use ( $ability_name ) {
@@ -102,10 +93,8 @@ class AbilityHandlers {
 	}
 
 	/**
-	 * The shared permission gate. Fails closed when nothing was bound: an
-	 * unwired abilities surface must never be readable.
-	 *
-	 * @return callable
+	 * Fails closed when nothing was bound: an unwired abilities surface must
+	 * never be readable.
 	 */
 	public static function permission_callback(): callable {
 		$callback = self::$permission_callback;
@@ -120,10 +109,9 @@ class AbilityHandlers {
 	}
 
 	/**
-	 * Resolve a bound handler, running its factory on first use and memoizing
-	 * the result for the rest of the request.
+	 * Runs the factory on first use and memoizes the result for the rest of the
+	 * request.
 	 *
-	 * @param string $ability_name Fully namespaced ability name.
 	 * @return object|null The handler, or null when the ability is unbound.
 	 */
 	private static function resolve( string $ability_name ) {

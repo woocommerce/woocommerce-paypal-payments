@@ -26,8 +26,7 @@ use function Brain\Monkey\Functions\when;
  */
 class GetOrderTrackingHandlerTest extends TestCase
 {
-	/** @var LoggerInterface */
-	private $logger;
+	private LoggerInterface $logger;
 
 	public function setUp(): void
 	{

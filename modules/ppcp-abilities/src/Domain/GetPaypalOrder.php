@@ -24,8 +24,9 @@ use WooCommerce\PayPalCommerce\Abilities\AbilityNames;
  * cached to amortize repeat lookups in a session.
  *
  * Security: payer PII (top-level `payer`) and per-purchase-unit `shipping`
- * are STRIPPED unless include_payer_pii is true. `payment_source` is stripped
- * defensively — Order::to_array() does not serialize it today, but a future
+ * are STRIPPED unless include_payer_pii is true AND the site permits it via
+ * `woocommerce_paypal_payments_abilities_allow_payer_pii` (default true).
+ * `payment_source` is stripped defensively — Order::to_array() does not serialize it today, but a future
  * change that did would leak through the denylist gap (pinned by
  * test_project_order_does_not_leak_synthetic_payment_source).
  *
@@ -58,7 +59,7 @@ class GetPaypalOrder extends AbstractPpcpAbility implements AbilityDefinition {
 					'include_payer_pii' => array(
 						'type'        => 'boolean',
 						'default'     => false,
-						'description' => __( 'When true, returns the payer block (email, name, address, phone) and per-purchase-unit shipping addresses. Defaults to false; only opt in when the calling context legitimately needs payer identity.', 'woocommerce-paypal-payments' ),
+						'description' => __( 'When true, returns the payer block (email, name, address, phone) and per-purchase-unit shipping addresses. Defaults to false; only opt in when the calling context legitimately needs payer identity. Sites can deny payer PII outright via the woocommerce_paypal_payments_abilities_allow_payer_pii filter, in which case this flag has no effect.', 'woocommerce-paypal-payments' ),
 					),
 				),
 				'additionalProperties' => false,

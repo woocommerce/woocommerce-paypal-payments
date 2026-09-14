@@ -38,7 +38,6 @@ class AbilitiesRegistrarTest extends TestCase
 	 */
 	public function test_registrar_exposes_no_static_test_reset_helper(): void
 	{
-		// Then.
 		$this->assertFalse(
 			method_exists(AbilitiesRegistrar::class, 'reset_initialized_for_testing'),
 			'A test-only public method on a production class was the symptom of the static design.'
@@ -63,7 +62,6 @@ class AbilitiesRegistrarTest extends TestCase
 	 */
 	public function test_init_guard_is_instance_state_so_two_registrars_are_independent(): void
 	{
-		// Arrange.
 		when('apply_filters')->justReturn(true);
 		expect('add_filter')
 			->twice()
@@ -84,13 +82,12 @@ class AbilitiesRegistrarTest extends TestCase
 		$first  = $this->registrar_with_loader_present();
 		$second = $this->registrar_with_loader_present();
 
-		// When.
 		$first->init();
 		$first->init();
 		$second->init();
 		$second->init();
 
-		// Then: two instances -> two registrations, each guarded once.
+		// Two instances -> two registrations, each guarded once.
 		$this->assertTrue($this->read_initialized_guard($first));
 		$this->assertTrue($this->read_initialized_guard($second));
 	}
@@ -105,7 +102,6 @@ class AbilitiesRegistrarTest extends TestCase
 	 */
 	public function test_init_does_not_register_the_loader_filter_when_feature_flag_is_disabled(): void
 	{
-		// Arrange.
 		expect('apply_filters')
 			->once()
 			->with(self::FEATURE_FILTER, false)
@@ -114,10 +110,8 @@ class AbilitiesRegistrarTest extends TestCase
 
 		$registrar = $this->registrar_with_loader_present();
 
-		// When.
 		$registrar->init();
 
-		// Then.
 		$this->assertFalse(
 			$this->read_initialized_guard($registrar),
 			'A disabled flag must leave the guard unlatched so an operator can flip it at runtime.'
@@ -133,7 +127,6 @@ class AbilitiesRegistrarTest extends TestCase
 	 */
 	public function test_init_bails_when_the_woo_abilities_loader_is_absent(): void
 	{
-		// Arrange.
 		expect('apply_filters')
 			->once()
 			->with(self::FEATURE_FILTER, false)
@@ -146,10 +139,8 @@ class AbilitiesRegistrarTest extends TestCase
 			}
 		);
 
-		// When.
 		$registrar->init();
 
-		// Then.
 		$this->assertFalse($this->read_initialized_guard($registrar));
 	}
 
@@ -162,14 +153,11 @@ class AbilitiesRegistrarTest extends TestCase
 	 */
 	public function test_append_classes_contributes_the_four_definition_classes_onto_the_caller_list(): void
 	{
-		// Arrange.
 		$preexisting = array( 'Some\\OtherPlugin\\AbilityDefinition' );
 		$registrar   = $this->registrar_with_loader_present();
 
-		// When.
 		$classes = $registrar->append_classes($preexisting);
 
-		// Then.
 		$expected = array(
 			Domain\GetConnectionStatus::class,
 			Domain\GetPaymentMethods::class,
@@ -199,13 +187,11 @@ class AbilitiesRegistrarTest extends TestCase
 	 */
 	public function test_permission_gate_allows_only_manage_woocommerce(bool $granted): void
 	{
-		// Arrange.
 		when('current_user_can')
 			->alias(static function (string $capability) use ($granted): bool {
 				return $granted && 'manage_woocommerce' === $capability;
 			});
 
-		// When / Then.
 		$this->assertSame($granted, $this->registrar_with_loader_present()->can_manage_woocommerce());
 	}
 

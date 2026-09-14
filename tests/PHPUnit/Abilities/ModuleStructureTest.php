@@ -30,10 +30,8 @@ class ModuleStructureTest extends TestCase
 	 */
 	public function test_module_sources_contain_no_container_service_locator(): void
 	{
-		// Arrange / When.
 		$offenders = $this->module_files_matching('/PPCP::container\s*\(/');
 
-		// Then.
 		$this->assertSame(
 			array(),
 			$offenders,
@@ -51,10 +49,8 @@ class ModuleStructureTest extends TestCase
 	 */
 	public function test_abstract_ability_drops_the_static_logger_and_service_locator_seams(): void
 	{
-		// Arrange.
 		$removed = array( 'set_logger', 'logger', 'reset_logger_for_testing', 'resolve_service' );
 
-		// When / Then.
 		foreach ($removed as $method) {
 			$this->assertFalse(
 				method_exists(AbstractPpcpAbility::class, $method),
@@ -62,7 +58,7 @@ class ModuleStructureTest extends TestCase
 			);
 		}
 
-		// Then: no mutable static state is left on the base class either.
+		// No mutable static state is left on the base class either.
 		$this->assertSame(
 			array(),
 			(new ReflectionClass(AbstractPpcpAbility::class))->getStaticProperties(),
@@ -80,10 +76,8 @@ class ModuleStructureTest extends TestCase
 	 */
 	public function test_module_sources_never_dispatch_rest_do_request(): void
 	{
-		// When.
 		$offenders = $this->module_files_matching('/rest_do_request\s*\(/');
 
-		// Then.
 		$this->assertSame(
 			array(),
 			$offenders,
@@ -105,10 +99,8 @@ class ModuleStructureTest extends TestCase
 	 */
 	public function test_loader_gate_uses_an_imported_class_constant_not_a_string_literal(): void
 	{
-		// Arrange.
 		$source = (string) file_get_contents(ROOT_DIR . '/modules/ppcp-abilities/src/AbilitiesRegistrar.php');
 
-		// Then.
 		$this->assertMatchesRegularExpression(
 			'/use\s+Automattic\\\\WooCommerce\\\\Internal\\\\Abilities\\\\AbilitiesLoader\s*;/',
 			$source,
@@ -140,10 +132,8 @@ class ModuleStructureTest extends TestCase
 	 */
 	public function test_abilities_module_carries_no_domain_reference(): void
 	{
-		// Arrange.
 		$source = (string) file_get_contents(ROOT_DIR . '/modules/ppcp-abilities/src/AbilitiesModule.php');
 
-		// Then.
 		$this->assertDoesNotMatchRegularExpression(
 			'/use\s+[\w\\\\]*Abilities\\\\Domain\\\\/',
 			$source,

@@ -62,10 +62,8 @@ class AbilitiesModuleTest extends TestCase
 	 */
 	public function test_services_registers_the_registrar_and_one_handler_per_ability(): void
 	{
-		// Arrange / When.
 		$services = require ROOT_DIR . '/modules/ppcp-abilities/services.php';
 
-		// Then.
 		$this->assertIsArray($services);
 		$this->assertNotEmpty(
 			$services,
@@ -96,7 +94,6 @@ class AbilitiesModuleTest extends TestCase
 	 */
 	public function test_handler_factories_receive_their_backing_endpoint_and_a_logger(): void
 	{
-		// Arrange.
 		$requested = array();
 		$container = $this->container_double($requested);
 		$services  = require ROOT_DIR . '/modules/ppcp-abilities/services.php';
@@ -109,14 +106,12 @@ class AbilitiesModuleTest extends TestCase
 		);
 
 		foreach ($expected_classes as $service_id => $expected_class) {
-			// When.
 			$handler = $services[$service_id]($container);
 
-			// Then.
 			$this->assertInstanceOf($expected_class, $handler);
 		}
 
-		// Then: the collaborators came from the container, not from a locator.
+		// The collaborators came from the container, not from a locator.
 		$this->assertContains('settings.rest.common', $requested);
 		$this->assertContains('settings.rest.payment', $requested);
 		$this->assertContains('order-tracking.endpoint.controller', $requested);
@@ -134,7 +129,6 @@ class AbilitiesModuleTest extends TestCase
 	 */
 	public function test_logger_service_resolves_the_plugin_logger(): void
 	{
-		// Arrange.
 		$plugin_logger = Mockery::mock(LoggerInterface::class);
 		$requested     = array();
 		$container     = $this->container_double(
@@ -143,10 +137,8 @@ class AbilitiesModuleTest extends TestCase
 		);
 		$services = require ROOT_DIR . '/modules/ppcp-abilities/services.php';
 
-		// When.
 		$logger = $services['abilities.logger']($container);
 
-		// Then.
 		$this->assertSame($plugin_logger, $logger);
 		$this->assertContains('woocommerce.logger.woocommerce', $requested);
 	}
@@ -173,15 +165,12 @@ class AbilitiesModuleTest extends TestCase
 	 */
 	public function test_logger_service_falls_back_to_the_null_logger_when_the_plugin_logger_is_unusable(callable $configure_container): void
 	{
-		// Arrange.
 		$container = Mockery::mock(ContainerInterface::class);
 		$configure_container($container);
 		$services = require ROOT_DIR . '/modules/ppcp-abilities/services.php';
 
-		// When.
 		$logger = $services['abilities.logger']($container);
 
-		// Then.
 		$this->assertInstanceOf(
 			NullLogger::class,
 			$logger,
@@ -218,7 +207,6 @@ class AbilitiesModuleTest extends TestCase
 	 */
 	public function test_run_resolves_the_registrar_from_the_container_and_initializes_it(): void
 	{
-		// Arrange.
 		$registrar = Mockery::mock(AbilitiesRegistrar::class);
 		$registrar->shouldReceive('init')->once();
 		$registrar->shouldReceive('can_manage_woocommerce')->andReturn(true);
@@ -241,10 +229,8 @@ class AbilitiesModuleTest extends TestCase
 			$unexpected
 		);
 
-		// When.
 		$result = (new AbilitiesModule())->run($container);
 
-		// Then.
 		$this->assertTrue($result);
 		$this->assertContains(
 			'abilities.registrar',
@@ -252,7 +238,7 @@ class AbilitiesModuleTest extends TestCase
 			'run() must resolve the registrar from the injected container instead of calling a static coordinator.'
 		);
 
-		// Then: invoking the bound callback dispatches to the container-resolved handler.
+		// Invoking the bound callback dispatches to the container-resolved handler.
 		$callback = AbilityHandlers::callback('woocommerce-paypal-payments/get-connection-status');
 		$this->assertIsCallable(
 			$callback,
@@ -264,7 +250,7 @@ class AbilitiesModuleTest extends TestCase
 			'Invoking the bound callback must dispatch to the handler run() resolved from the container and forward its input.'
 		);
 
-		// Then: the id the bound callback resolved matches services.php exactly.
+		// The id the bound callback resolved matches services.php exactly.
 		$this->assertSame(
 			array(),
 			$unexpected,
@@ -285,7 +271,6 @@ class AbilitiesModuleTest extends TestCase
 	 */
 	public function test_run_resolves_only_the_registrar_from_the_container(): void
 	{
-		// Arrange.
 		$registrar = Mockery::mock(AbilitiesRegistrar::class);
 		$registrar->shouldReceive('init')->once();
 
@@ -305,10 +290,8 @@ class AbilitiesModuleTest extends TestCase
 			}
 		);
 
-		// When.
 		$result = (new AbilitiesModule())->run($container);
 
-		// Then.
 		$this->assertTrue($result);
 	}
 
@@ -329,7 +312,6 @@ class AbilitiesModuleTest extends TestCase
 	 */
 	public function test_every_contributed_ability_class_has_a_handler_bound_by_run(): void
 	{
-		// Arrange.
 		$contributed_names = array_map(
 			static function (string $class): string {
 				return $class::get_name();
@@ -349,17 +331,16 @@ class AbilitiesModuleTest extends TestCase
 			$unexpected
 		);
 
-		// When.
 		(new AbilitiesModule())->run($container);
 
-		// Then: AbilityNames::ALL is exactly the set of contributed names.
+		// AbilityNames::ALL is exactly the set of contributed names.
 		$this->assertEqualsCanonicalizing(
 			$contributed_names,
 			AbilityNames::ALL,
 			'AbilityNames::ALL must list exactly the ability names the registrar contributes — no missing and no stale entries.'
 		);
 
-		// Then: every contributed name resolves to a bound handler.
+		// Every contributed name resolves to a bound handler.
 		foreach ($contributed_names as $ability_name) {
 			$callback = AbilityHandlers::callback($ability_name);
 			$result   = $callback();
@@ -373,7 +354,7 @@ class AbilitiesModuleTest extends TestCase
 			);
 		}
 
-		// Then: the handler service ids run() bound resolve to exactly the ids
+		// The handler service ids run() bound resolve to exactly the ids
 		// services.php declares — a misspelled id in run()'s handler map would
 		// otherwise resolve to a WP_Error whose code is not the specific
 		// "not_initialized" string checked above, and pass silently.

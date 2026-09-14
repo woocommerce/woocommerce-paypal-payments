@@ -22,26 +22,12 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
  */
 class GetPaymentMethodsHandler {
 
-	/**
-	 * @var PaymentRestEndpoint
-	 */
-	private $endpoint;
+	private PaymentRestEndpoint $endpoint;
 
-	/**
-	 * @var EnvelopeParser
-	 */
-	private $envelope;
+	private EnvelopeParser $envelope;
 
-	/**
-	 * @var LoggerInterface
-	 */
-	private $logger;
+	private LoggerInterface $logger;
 
-	/**
-	 * @param PaymentRestEndpoint $endpoint The backing payment-details endpoint.
-	 * @param EnvelopeParser      $envelope The shared envelope parser.
-	 * @param LoggerInterface     $logger   The plugin's PSR-3 logger.
-	 */
 	public function __construct( PaymentRestEndpoint $endpoint, EnvelopeParser $envelope, LoggerInterface $logger ) {
 		$this->endpoint = $endpoint;
 		$this->envelope = $envelope;
@@ -49,10 +35,8 @@ class GetPaymentMethodsHandler {
 	}
 
 	/**
-	 * Execute callback.
-	 *
 	 * @param mixed $input Optional; ignored.
-	 * @return array|\WP_Error The payment-methods payload or WP_Error on failure.
+	 * @return array|\WP_Error
 	 */
 	public function execute( $input = null ) {
 		unset( $input );
@@ -68,7 +52,7 @@ class GetPaymentMethodsHandler {
 			);
 		}
 
-		$payload = $response instanceof \WP_REST_Response ? $response->get_data() : $response;
+		$payload = $response->get_data();
 
 		if ( is_wp_error( $payload ) ) {
 			return $payload;

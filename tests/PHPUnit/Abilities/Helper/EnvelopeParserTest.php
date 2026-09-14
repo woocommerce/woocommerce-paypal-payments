@@ -21,8 +21,7 @@ use WP_Error;
  */
 class EnvelopeParserTest extends TestCase
 {
-	/** @var LoggerInterface */
-	private $logger;
+	private LoggerInterface $logger;
 
 	public function setUp(): void
 	{
@@ -58,6 +57,94 @@ class EnvelopeParserTest extends TestCase
 		$payload = array( 'merchant' => array() );
 
 		$this->assertNull($this->create_parser()->error_or_null($payload));
+	}
+
+	/**
+	 * GIVEN an envelope whose `success` is present but falsy without being
+	 * boolean false, as a replacement settings.rest.* service could produce
+	 * WHEN error_or_null() inspects it
+	 * THEN the envelope is treated as failed, the same as a boolean false.
+	 *
+	 * @dataProvider falsy_non_boolean_success_values
+	 *
+	 * @param mixed $success The malformed success value.
+	 */
+	public function test_error_or_null_treats_a_falsy_non_boolean_success_as_failure($success): void
+	{
+		$result = $this->create_parser()->error_or_null(array( 'success' => $success ));
+
+		$this->assertInstanceOf(WP_Error::class, $result);
+		$this->assertSame('woocommerce_paypal_payments_endpoint_error', $result->get_error_code());
+	}
+
+	public function falsy_non_boolean_success_values(): array
+	{
+		return array(
+			'integer zero' => array( 0 ),
+			'empty string' => array( '' ),
+			'string zero'  => array( '0' ),
+			'null'         => array( null ),
+			'empty array'  => array( array() ),
+		);
+	}
+
+	/**
+	 * GIVEN an envelope whose `success` is truthy but not boolean true
+	 * WHEN error_or_null() inspects it
+	 * THEN it is still treated as a success: the guard is a falsy check, not
+	 * an identity test against boolean true.
+	 */
+	public function test_error_or_null_treats_a_truthy_non_boolean_success_as_success(): void
+	{
+		$this->assertNull($this->create_parser()->error_or_null(array( 'success' => 1 )));
+	}
+
+	/**
+	 * GIVEN a failed envelope whose `success` is falsy but not boolean false,
+	 * carrying inner data
+	 * WHEN unwrap() runs
+	 * THEN the inner data of the failed call is withheld from the caller
+	 * rather than being returned as if the call had succeeded.
+	 */
+	public function test_unwrap_withholds_inner_data_when_success_is_falsy_but_not_false(): void
+	{
+		$payload = array(
+			'success' => 0,
+			'data'    => array( 'merchant_id' => 'MERCHANT123' ),
+		);
+
+		$result = $this->create_parser()->unwrap($payload);
+
+		$this->assertInstanceOf(WP_Error::class, $result);
+		$this->assertNotSame($payload['data'], $result);
+		$this->assertStringNotContainsString('MERCHANT123', $result->get_error_message());
+		$this->assertStringNotContainsString('MERCHANT123', wp_json_encode($result->get_error_data()) ?: '');
+	}
+
+	/**
+	 * GIVEN two envelopes that report failure the same way except that one
+	 * uses boolean false and the other a falsy non-boolean (e.g. null)
+	 * WHEN error_or_null() runs with the default redaction on each
+	 * THEN both produce the same agent-facing error code, message, and
+	 * error data — a falsy non-boolean success takes the identical
+	 * redaction path as boolean false, it is not a distinct code path that
+	 * could accidentally leak upstream detail.
+	 */
+	public function test_falsy_non_boolean_success_takes_the_same_redaction_path_as_boolean_false(): void
+	{
+		$shared_fields = array(
+			'message' => 'See https://api.paypal.com/v2/x for details.',
+			'details' => array( 'internal_route' => '/v2/checkout/orders/SECRET_ROUTE' ),
+		);
+
+		$result_with_false = $this->create_parser()->error_or_null(array( 'success' => false ) + $shared_fields);
+		$result_with_null  = $this->create_parser()->error_or_null(array( 'success' => null ) + $shared_fields);
+
+		$this->assertInstanceOf(WP_Error::class, $result_with_false);
+		$this->assertInstanceOf(WP_Error::class, $result_with_null);
+		$this->assertSame($result_with_false->get_error_code(), $result_with_null->get_error_code());
+		$this->assertSame($result_with_false->get_error_message(), $result_with_null->get_error_message());
+		$this->assertSame($result_with_false->get_error_data(), $result_with_null->get_error_data());
 	}
 
 	/**

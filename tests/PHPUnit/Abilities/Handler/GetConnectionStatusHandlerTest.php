@@ -23,8 +23,7 @@ use WP_REST_Response;
  */
 class GetConnectionStatusHandlerTest extends TestCase
 {
-	/** @var LoggerInterface */
-	private $logger;
+	private LoggerInterface $logger;
 
 	public function setUp(): void
 	{

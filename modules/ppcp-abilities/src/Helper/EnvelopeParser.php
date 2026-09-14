@@ -24,24 +24,18 @@ use Psr\Log\LoggerInterface;
  */
 class EnvelopeParser {
 
-	/**
-	 * @var LoggerInterface
-	 */
-	private $logger;
+	private LoggerInterface $logger;
 
-	/**
-	 * @param LoggerInterface $logger The plugin's PSR-3 logger.
-	 */
 	public function __construct( LoggerInterface $logger ) {
 		$this->logger = $logger;
 	}
 
 	/**
-	 * Unwrap the envelope to its inner `data`, or a WP_Error on success=false.
+	 * Unwrap the envelope to its inner `data`, or pass a non-envelope payload
+	 * through untouched.
 	 *
-	 * @param mixed $payload        Decoded REST response.
-	 * @param bool  $redact_message Redact + log the error message/details (default true).
-	 * @return mixed Inner `data`, the original payload, or WP_Error on success=false.
+	 * @param mixed $payload Decoded REST response.
+	 * @return mixed
 	 */
 	public function unwrap( $payload, bool $redact_message = true ) {
 		if ( ! is_array( $payload ) ) {
@@ -61,17 +55,15 @@ class EnvelopeParser {
 	}
 
 	/**
-	 * The success=false branch, separate so callers whose endpoint returns
+	 * The failed-envelope branch, separate so callers whose endpoint returns
 	 * extra top-level keys (e.g. CommonRestEndpoint's merchant/features) can
 	 * reuse the redaction without having those keys discarded by `data`
 	 * extraction.
-	 *
-	 * @param array $payload        Decoded REST envelope.
-	 * @param bool  $redact_message See unwrap().
-	 * @return \WP_Error|null WP_Error on success=false; null otherwise.
 	 */
 	public function error_or_null( array $payload, bool $redact_message = true ): ?\WP_Error {
-		if ( ! array_key_exists( 'success', $payload ) || false !== $payload['success'] ) {
+		// An absent key means this is not an envelope at all; a present but falsy
+		// one fails closed, so a failed call's payload never reaches agent context.
+		if ( ! array_key_exists( 'success', $payload ) || $payload['success'] ) {
 			return null;
 		}
 
