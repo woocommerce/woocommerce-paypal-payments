@@ -130,6 +130,7 @@ jobs:
               ref: process.env.SOURCE_REF,
               inputs: {
                 TEST_SUITE: 'all:parallel',
+                SDK_VERSION: 'both',
               },
             });
 

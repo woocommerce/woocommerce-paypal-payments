@@ -41,3 +41,9 @@ export const negative12FeePlugin = {
 	slug: 'negative-12-fee',
 	zipFilePath: `${ filePath }/negative-12-fee.zip`,
 };
+
+export const pcpSdkVersionFlag = {
+	name: 'PCP SDK Version Flag',
+	slug: 'pcp-sdk-version-flag',
+	zipFilePath: `${ filePath }/pcp-sdk-version-flag.zip`,
+};

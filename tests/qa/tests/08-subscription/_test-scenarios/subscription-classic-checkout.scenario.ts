@@ -38,6 +38,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await classicCheckout.payPalUi.makePayment( {
 					merchant,
 					payment,
+					isPayPalSubscription: payment.isPayPalSubscription,
 				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
@@ -126,6 +127,7 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await classicCheckout.payPalUi.makePayment( {
 					merchant,
 					payment,
+					isPayPalSubscription: payment.isPayPalSubscription,
 				} );
 				// }
 				await orderReceived.assertOrderDetails( testOrder );
