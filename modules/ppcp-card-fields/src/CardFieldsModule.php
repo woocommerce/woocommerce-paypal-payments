@@ -98,6 +98,14 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 				assert( $card_payments_configuration instanceof CardPaymentsConfiguration );
 				$should_show_card_holder_name = apply_filters( 'woocommerce_paypal_payments_enable_cardholder_name_field', $card_payments_configuration->show_name_on_card() === 'yes' );
 
+				// v6 dropped the cardholder name: its card-fields component set is
+				// number|expiry|cvv, and the name is no longer sent with the order.
+				// v5 keeps it, where the SDK mounts its own field onto this input.
+				if ( $should_show_card_holder_name && $c->has( 'sdk-v6.owns-current-page' ) ) {
+					$owns_current_page            = $c->get( 'sdk-v6.owns-current-page' );
+					$should_show_card_holder_name = ! ( is_callable( $owns_current_page ) && $owns_current_page() );
+				}
+
 				if ( CreditCardGateway::ID === $id && $should_show_card_holder_name ) {
 					$card_name_field = '<p class="form-row form-row-wide">
 						<label for="ppcp-credit-card-gateway-card-name">' . esc_attr__( 'Cardholder Name', 'woocommerce-paypal-payments' ) . '</label>
@@ -167,15 +175,6 @@ class CardFieldsModule implements ServiceModule, ExecutableModule {
 							'method' => $three_d_secure_contingency,
 						),
 					);
-				}
-
-				// The v6 card-fields component set is number|expiry|cvv only, so the
-				// cardholder name (when enabled) is submitted as a plain field and
-				// forwarded here as payment_source.card.name.
-				$card_name = (string) ( $request_data['card_name'] ?? '' );
-				$card_name = substr( trim( $card_name ), 0, 300 );
-				if ( $card_name !== '' ) {
-					$payment_source_data['name'] = $card_name;
 				}
 
 				$data['payment_source'] = array( 'card' => $payment_source_data );
