@@ -71,6 +71,7 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 							text,
 							onClick,
 							target,
+							disabled,
 						} = buttonData;
 
 						const buttonUrl = getButtonUrl( buttonData );
@@ -84,6 +85,7 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 								className={ className }
 								variant={ type }
 								isBusy={ actionProps.isBusy }
+								disabled={ disabled }
 								href={ buttonUrl }
 								target={ buttonTarget }
 								onClick={ ! buttonUrl ? onClick : undefined }

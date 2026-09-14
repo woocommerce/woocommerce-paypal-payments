@@ -31,6 +31,8 @@ class WebhookRegistrar {
 
 	private LoggerInterface $logger;
 
+	private OwnWebhookResolver $own_webhook_resolver;
+
 	public function __construct(
 		WebhookFactory $webhook_factory,
 		WebhookEndpoint $endpoint,
@@ -38,7 +40,8 @@ class WebhookRegistrar {
 		WebhookEventStorage $last_webhook_event_storage,
 		WebhookSimulation $webhook_simulation,
 		WebhookOrchestrator $webhook_orchestrator,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		OwnWebhookResolver $own_webhook_resolver
 	) {
 
 		$this->webhook_factory            = $webhook_factory;
@@ -48,6 +51,7 @@ class WebhookRegistrar {
 		$this->webhook_simulation         = $webhook_simulation;
 		$this->webhook_orchestrator       = $webhook_orchestrator;
 		$this->logger                     = $logger;
+		$this->own_webhook_resolver       = $own_webhook_resolver;
 	}
 
 	/**
@@ -114,11 +118,23 @@ class WebhookRegistrar {
 
 	/**
 	 * Internal unregister logic.
+	 *
+	 * Only webhooks that belong to this site are deleted. Webhooks registered for
+	 * other sites or services on the same PayPal account are left untouched, so
+	 * connecting a staging or secondary site to shared credentials no longer wipes
+	 * the primary site's webhook. See GitHub issue #4604.
 	 */
 	private function do_unregister(): void {
 		try {
 			$webhooks = $this->endpoint->list();
 			foreach ( $webhooks as $webhook ) {
+				if ( ! $this->own_webhook_resolver->is_own( $webhook ) ) {
+					$this->logger->warning(
+						"Skipping deletion of webhook {$webhook->id()} ({$webhook->url()}): it belongs to a different site and is not managed by this install."
+					);
+					continue;
+				}
+
 				try {
 					$this->endpoint->delete( $webhook );
 				} catch ( RuntimeException $deletion_error ) {

@@ -14,6 +14,7 @@ use Throwable;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 
 /**
  * Class ValidateCheckoutEndpoint.

@@ -19,7 +19,11 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		placement,
 		id,
 	} = attributes;
-	const isFlex = layout === 'flex';
+
+	// v6 styles text only; the stored attribute stays, so flag-off restores it.
+	const isSdkV6Active = !! PcpPayLaterBlock.isSdkV6Active;
+	const effectiveLayout = isSdkV6Active ? 'text' : layout;
+	const isFlex = effectiveLayout === 'flex';
 
 	const [ loaded, setLoaded ] = useState( false );
 	const timedOut = usePreviewTimeout( loaded );
@@ -36,7 +40,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	}
 
 	const previewStyle = {
-		layout,
+		layout: effectiveLayout,
 		logo: {
 			position,
 			type: logo,
@@ -180,29 +184,34 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				<PanelBody
 					title={ __( 'Settings', 'woocommerce-paypal-payments' ) }
 				>
-					<SelectControl
-						label={ __( 'Layout', 'woocommerce-paypal-payments' ) }
-						options={ [
-							{
-								label: __(
-									'Text',
-									'woocommerce-paypal-payments'
-								),
-								value: 'text',
-							},
-							{
-								label: __(
-									'Banner',
-									'woocommerce-paypal-payments'
-								),
-								value: 'flex',
-							},
-						] }
-						value={ layout }
-						onChange={ ( value ) =>
-							setAttributes( { layout: value } )
-						}
-					/>
+					{ ! isSdkV6Active && (
+						<SelectControl
+							label={ __(
+								'Layout',
+								'woocommerce-paypal-payments'
+							) }
+							options={ [
+								{
+									label: __(
+										'Text',
+										'woocommerce-paypal-payments'
+									),
+									value: 'text',
+								},
+								{
+									label: __(
+										'Banner',
+										'woocommerce-paypal-payments'
+									),
+									value: 'flex',
+								},
+							] }
+							value={ layout }
+							onChange={ ( value ) =>
+								setAttributes( { layout: value } )
+							}
+						/>
+					) }
 					{ ! isFlex && (
 						<SelectControl
 							label={ __(

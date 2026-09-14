@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
@@ -167,7 +168,7 @@ class PartnersEndpointTest extends TestCase
 		$this->failure_registry
 			->shouldReceive('has_failure_in_timeframe')
 			->once()
-			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_FAILURE_BACKOFF)
 			->andReturn(false);
 
 		$this->seller_status_factory
@@ -212,7 +213,7 @@ class PartnersEndpointTest extends TestCase
 		$this->failure_registry
 			->shouldReceive('has_failure_in_timeframe')
 			->once()
-			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_FAILURE_BACKOFF)
 			->andReturn(false);
 
 		$this->failure_registry
@@ -223,6 +224,51 @@ class PartnersEndpointTest extends TestCase
 		$this->stub_failed_http_round_trip($raw_response, 500);
 
 		$this->expectException(PayPalApiException::class);
+
+		$this->make_endpoint()->seller_status();
+	}
+
+	/**
+	 * GIVEN the transient cache is empty
+	 * AND the PayPal API request fails at the transport level (e.g. timeout, DNS)
+	 * WHEN seller_status() is called
+	 * THEN the failure is registered in the failure registry
+	 * AND the result is NOT stored in the cache
+	 * AND a RuntimeException is thrown
+	 */
+	public function testSellerStatusOnTransportErrorRegistersFailureAndThrows(): void
+	{
+		$wp_error = Mockery::mock(\WP_Error::class);
+		$wp_error->shouldReceive('get_error_messages')->andReturn(['Connection timeout']);
+
+		$this->cache
+			->shouldReceive('get')
+			->once()
+			->with(PartnersEndpoint::SELLER_STATUS_CACHE_KEY)
+			->andReturn(false);
+
+		$this->cache
+			->shouldReceive('set')
+			->never();
+
+		$this->failure_registry
+			->shouldReceive('has_failure_in_timeframe')
+			->once()
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_FAILURE_BACKOFF)
+			->andReturn(false);
+
+		$this->failure_registry
+			->shouldReceive('add_failure')
+			->once()
+			->with(FailureRegistry::SELLER_STATUS_KEY);
+
+		when('apply_filters')->alias(function (string $hook, ...$args) {
+			return $args[0] ?? null;
+		});
+		when('wp_remote_get')->justReturn($wp_error);
+		when('is_wp_error')->justReturn(true);
+
+		$this->expectException(RuntimeException::class);
 
 		$this->make_endpoint()->seller_status();
 	}
@@ -262,7 +308,7 @@ class PartnersEndpointTest extends TestCase
 		$this->failure_registry
 			->shouldReceive('has_failure_in_timeframe')
 			->once()
-			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_FAILURE_BACKOFF)
 			->andReturn(false);
 
 		$this->failure_registry
@@ -312,7 +358,7 @@ class PartnersEndpointTest extends TestCase
 		$this->failure_registry
 			->shouldReceive('has_failure_in_timeframe')
 			->once()
-			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_FAILURE_BACKOFF)
 			->andReturn(true);
 
 		$this->failure_registry
@@ -360,7 +406,7 @@ class PartnersEndpointTest extends TestCase
 		$this->failure_registry
 			->shouldReceive('has_failure_in_timeframe')
 			->once()
-			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_CACHE_TTL)
+			->with(FailureRegistry::SELLER_STATUS_KEY, PartnersEndpoint::SELLER_STATUS_FAILURE_BACKOFF)
 			->andReturn(true);
 
 		$this->failure_registry
@@ -379,6 +425,28 @@ class PartnersEndpointTest extends TestCase
 		$result = $this->make_endpoint()->seller_status();
 
 		$this->assertSame($fallback, $result);
+	}
+
+	// -----------------------------------------------------------------------
+	// Tests: back-off/cache TTL relationship
+	// -----------------------------------------------------------------------
+
+	/**
+	 * GIVEN the success cache TTL and the failure back-off window
+	 * WHEN comparing the two constants
+	 * THEN the back-off window is strictly longer than the cache TTL
+	 *
+	 * A back-off equal to or shorter than the WP-Cron period (which defaults
+	 * to roughly the cache TTL) would lapse before the next cron run, so a
+	 * persistently failing merchant account would be polled on every run
+	 * instead of being throttled.
+	 */
+	public function testFailureBackoffIsLongerThanSuccessCacheTtl(): void
+	{
+		$this->assertGreaterThan(
+			PartnersEndpoint::SELLER_STATUS_CACHE_TTL,
+			PartnersEndpoint::SELLER_STATUS_FAILURE_BACKOFF
+		);
 	}
 
 	// -----------------------------------------------------------------------

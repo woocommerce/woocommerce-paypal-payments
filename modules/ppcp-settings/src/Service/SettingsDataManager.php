@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
@@ -38,6 +39,7 @@ class SettingsDataManager {
 	private SettingsModel $payment_settings;
 	private StylingSettings $styling_settings;
 	private PaymentSettings $payment_methods;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * Data accessors for pay later messaging settings.
@@ -63,6 +65,7 @@ class SettingsDataManager {
 		StylingSettings $styling_settings,
 		PaymentSettings $payment_methods,
 		array $paylater_messaging, // TODO should be migrated to an AbstractDataModel.
+		SettingsProvider $settings_provider,
 		AbstractDataModel ...$data_models
 	) {
 		foreach ( $data_models as $data_model ) {
@@ -80,6 +83,7 @@ class SettingsDataManager {
 		$this->payment_settings   = $payment_settings;
 		$this->styling_settings   = $styling_settings;
 		$this->payment_methods    = $payment_methods;
+		$this->settings_provider  = $settings_provider;
 		$this->paylater_messaging = $paylater_messaging;
 	}
 
@@ -207,9 +211,10 @@ class SettingsDataManager {
 				// Enable ACDC for business sellers.
 				$this->payment_methods->toggle_method_state( CreditCardGateway::ID, true );
 
-				// Enable Pay Later for business sellers if subscriptions were not selected.
-				// Selecting subscriptions automatically enables the "Save PayPal and Venmo" option, which is incompatible with Pay Later.
-				if ( ! $flags->use_subscriptions ) {
+				// Enable Pay Later for business sellers. Selecting subscriptions automatically enables
+				// the "Save PayPal and Venmo" option, which suppresses Pay Later unless the merchant
+				// may combine the two.
+				if ( ! $flags->use_subscriptions || $this->settings_provider->pay_later_with_vaulting_enabled() ) {
 					$this->payment_methods->toggle_method_state( 'pay-later', true );
 				}
 

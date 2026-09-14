@@ -46,3 +46,19 @@ export const isSavedCardSelected = () => {
 	const savedCardList = document.querySelector( '#saved-credit-card' );
 	return savedCardList && savedCardList.value !== '';
 };
+
+/**
+ * Whether a saved PayPal token (not "Use a new payment method") is the selected
+ * token for the PayPal gateway on classic checkout.
+ *
+ * Such a payment is completed through the vault component and "Place order", so
+ * the express buttons must not stand in for it.
+ *
+ * @return {boolean} True when a saved ppcp-gateway token is selected.
+ */
+export const isSavedPayPalTokenSelected = () => {
+	const checked = document.querySelector(
+		'input[name="wc-ppcp-gateway-payment-token"]:checked'
+	);
+	return Boolean( checked && checked.value && checked.value !== 'new' );
+};

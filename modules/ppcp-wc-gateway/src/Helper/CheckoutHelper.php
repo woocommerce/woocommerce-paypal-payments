@@ -61,6 +61,24 @@ class CheckoutHelper {
 	}
 
 	/**
+	 * Returns the first non-empty phone number found among the submitted fields.
+	 *
+	 * @param string ...$field_ids The submitted field ids, in order of precedence.
+	 * @return string
+	 */
+	public function submitted_phone( string ...$field_ids ): string {
+		foreach ( $field_ids as $field_id ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$phone = wc_clean( wp_unslash( $_POST[ $field_id ] ?? '' ) );
+			if ( is_string( $phone ) && '' !== $phone ) {
+				return $phone;
+			}
+		}
+
+		return '';
+	}
+
+	/**
 	 * Ensures date is valid and at least 18 years back.
 	 *
 	 * @param string $date The date.

@@ -1,4 +1,8 @@
-export async function createOrder() {
+/**
+ * @param {boolean} savePaymentMethod Whether to vault the card for later payments.
+ * @return {Promise<string>} The created PayPal order ID.
+ */
+export async function createOrder( savePaymentMethod = false ) {
 	const config = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
 
 	return fetch( config.scriptData.ajax.create_order.endpoint, {
@@ -10,8 +14,7 @@ export async function createOrder() {
 			nonce: config.scriptData.ajax.create_order.nonce,
 			context: config.scriptData.context,
 			payment_method: 'ppcp-credit-card-gateway',
-			save_payment_method:
-				localStorage.getItem( 'ppcp-save-card-payment' ) === 'true',
+			save_payment_method: savePaymentMethod,
 		} ),
 	} )
 		.then( ( response ) => response.json() )
@@ -37,9 +40,6 @@ export async function onApprove( data ) {
 		} ),
 	} )
 		.then( ( response ) => response.json() )
-		.then( ( data ) => {
-			localStorage.removeItem( 'ppcp-save-card-payment' );
-		} )
 		.catch( ( err ) => {
 			console.error( err );
 		} );

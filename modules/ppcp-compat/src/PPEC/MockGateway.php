@@ -18,11 +18,16 @@ class MockGateway extends \WC_Payment_Gateway {
 	 * @param string $title Gateway title.
 	 */
 	public function __construct( $title ) {
-		$this->id           = PPECHelper::PPEC_GATEWAY_ID;
-		$this->title        = $title;
-		$this->method_title = $this->title;
-		$this->description  = '';
-		$this->supports     = array(
+		$this->id    = PPECHelper::PPEC_GATEWAY_ID;
+		$this->title = $title;
+
+		// Deliberately no method_title or method_description: that combination is
+		// how WooCommerce recognises a gateway as a shell and keeps it out of the
+		// Payments settings screen, where this one has no business appearing. The
+		// title above still labels it on order and subscription screens. Setting
+		// either of them puts it back on the settings screen.
+		$this->description = '';
+		$this->supports    = array(
 			'subscriptions',
 			'subscription_cancellation',
 			'subscription_suspension',

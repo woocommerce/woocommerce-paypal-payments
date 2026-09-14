@@ -15,7 +15,7 @@ export const keysToCamelCase = ( obj ) => {
 };
 
 export const strAddWord = ( str, word, separator = ',' ) => {
-	const arr = str.split( separator );
+	const arr = str ? str.split( separator ) : [];
 	if ( ! arr.includes( word ) ) {
 		arr.push( word );
 	}
@@ -23,7 +23,7 @@ export const strAddWord = ( str, word, separator = ',' ) => {
 };
 
 export const strRemoveWord = ( str, word, separator = ',' ) => {
-	const arr = str.split( separator );
+	const arr = str ? str.split( separator ) : [];
 	const index = arr.indexOf( word );
 	if ( index !== -1 ) {
 		arr.splice( index, 1 );

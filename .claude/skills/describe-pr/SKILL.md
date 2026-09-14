@@ -25,7 +25,7 @@ If a PR number was passed, use it. Otherwise, resolve the current branch's open 
 gh pr view --json number,title,body,url,headRefName,baseRefName,state
 ```
 
-If no PR is found for the current branch and none was given, stop and tell the user - offer to proceed once they pass a PR number or push a branch with an open PR.
+If no PR is found for the current branch and none was given, proceed without doing anything with the PR in the next steps (just output the draft).
 
 Also resolve the **Jira number** for the title suffix: the Jira ID (from the argument or the branch name `[A-Z]+-\d+`) with its letter prefix stripped, e.g. `PCP-6288` -> `6288`. If no Jira ID is found anywhere, ask the user for the number in step 4 rather than dropping the suffix.
 

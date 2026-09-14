@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Compat;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\ConnectionDataSanitizer;
 use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalBlueprintBootstrap;
 use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter;
 use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsImporter;
@@ -100,6 +101,17 @@ return array(
 		return class_exists( 'WC_Bookings' );
 	},
 
+	'compat.plugin-detector'                               => static function (): PluginDetector\PluginDetector {
+		return new PluginDetector\PluginDetector();
+	},
+
+	'compat.product-customization-detector'                => static function ( ContainerInterface $container ): PluginDetector\ProductCustomizationDetector {
+		return new PluginDetector\ProductCustomizationDetector(
+			$container->get( 'compat.plugin-detector' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
 	'compat.asset_getter'                                  => static function ( ContainerInterface $container ): AssetGetter {
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
@@ -121,8 +133,20 @@ return array(
 	'compat.blueprint.is_available'                        => function (): bool {
 		return interface_exists( 'Automattic\WooCommerce\Blueprint\Exporters\StepExporter' );
 	},
+	'compat.blueprint.connection_data_sanitizer'           => static function (): ConnectionDataSanitizer {
+		return new ConnectionDataSanitizer();
+	},
 	'compat.blueprint.paypal_settings_exporter'            => static function ( ContainerInterface $container ): PayPalSettingsExporter {
-		return new PayPalSettingsExporter();
+		return new PayPalSettingsExporter(
+			$container->get( 'compat.blueprint.connection_data_sanitizer' ),
+			false
+		);
+	},
+	'compat.blueprint.paypal_settings_exporter_with_connection' => static function ( ContainerInterface $container ): PayPalSettingsExporter {
+		return new PayPalSettingsExporter(
+			$container->get( 'compat.blueprint.connection_data_sanitizer' ),
+			true
+		);
 	},
 	'compat.blueprint.paypal_settings_importer'            => static function ( ContainerInterface $container ): PayPalSettingsImporter {
 		return new PayPalSettingsImporter(
@@ -132,6 +156,7 @@ return array(
 	'compat.blueprint.bootstrap'                           => static function ( ContainerInterface $container ): PayPalBlueprintBootstrap {
 		return new PayPalBlueprintBootstrap(
 			$container->get( 'compat.blueprint.paypal_settings_exporter' ),
+			$container->get( 'compat.blueprint.paypal_settings_exporter_with_connection' ),
 			$container->get( 'compat.blueprint.paypal_settings_importer' )
 		);
 	},

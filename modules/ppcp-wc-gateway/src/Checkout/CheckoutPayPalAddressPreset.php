@@ -60,6 +60,21 @@ class CheckoutPayPalAddressPreset {
 			return $default_value;
 		}
 
+		/*
+		 * What the shopper typed outranks what PayPal knows. They only diverge
+		 * when the checkout page is rendered again after a return from PayPal,
+		 * and replacing a name someone entered with the one on their PayPal
+		 * account is wrong even though both describe the same person.
+		 *
+		 * Express flows are unaffected: no checkout form was filled in on a
+		 * product or cart page, so there is nothing saved and the preset still
+		 * supplies the address, which is what it exists for.
+		 */
+		$entered = $this->session_handler->checkout_form()[ $field_id ] ?? '';
+		if ( is_string( $entered ) && '' !== $entered ) {
+			return $entered;
+		}
+
 		return $this->read_preset_for_field( $field_id ) ?? $default_value;
 	}
 

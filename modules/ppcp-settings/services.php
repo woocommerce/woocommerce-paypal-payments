@@ -106,7 +106,8 @@ return array(
 			$container->get( 'settings.data.settings' ),
 			$container->get( 'settings.data.styling' ),
 			$container->get( 'settings.data.fastlane' ),
-			$container->get( 'settings.data.paylater-messaging-settings' )
+			$container->get( 'settings.data.paylater-messaging-settings' ),
+			$container->get( 'button.helper.messages-apply' )
 		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
@@ -276,7 +277,8 @@ return array(
 		return new WebhookSettingsEndpoint(
 			$container->get( 'api.endpoint.webhook' ),
 			$container->get( 'webhook.registrar' ),
-			$container->get( 'webhook.status.simulation' )
+			$container->get( 'webhook.status.simulation' ),
+			$container->get( 'webhook.own-resolver' )
 		);
 	},
 	'settings.rest.pay_later_messaging'                   => static function ( ContainerInterface $container ): PayLaterMessagingEndpoint {
@@ -406,6 +408,7 @@ return array(
 			$container->get( 'settings.data.styling' ),
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.paylater-messaging' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.data.todos' ),
 		);
 	},
@@ -429,7 +432,11 @@ return array(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'api.helpers.paymentLevelEligibility' ),
 			$check_override(),
-			$container->get( 'settings.service.agentic-beta-eligibility' )
+			$container->get( 'settings.service.agentic-beta-eligibility' ),
+			// The module registers its services only behind its feature flag, so
+			// presence means v6 is active; has() does not instantiate it. Per-page
+			// ownership is moot: one admin screen configures every page.
+			$container->has( 'sdk-v6.owns-current-page' )
 		);
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
@@ -604,7 +611,7 @@ return array(
 		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $settings_model->get_stay_updated();
 
 		$recaptcha_settings = get_option( 'woocommerce_ppcp-recaptcha_settings', array() );
-		$is_recaptcha_enabled = isset( $recaptcha_settings['enabled'] ) && 'yes' === $recaptcha_settings['enabled'];
+		$is_recaptcha_enabled = wc_string_to_bool( $recaptcha_settings['enabled'] ?? 'no' );
 
 		/**
 		 * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.

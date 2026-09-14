@@ -8,6 +8,7 @@ import ButtonStateManager from './ButtonStateManager';
 import PayPalInsights from './Insights/PayPalInsights';
 import { disable, enable } from '@ppcp-button/Helper/ButtonDisabler';
 import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
+import { fastlaneSdkV6Config } from '@ppcp-sdk-v6/utils/config';
 
 /**
  * Internal customer details.
@@ -319,7 +320,14 @@ class AxoManager {
 		this.el.watermarkContainer.hide();
 
 		if ( scenario.defaultSubmitButton ) {
-			this.el.defaultSubmitButton.show();
+			// On v6 pages the SDK owns #place_order for every non-AXO gateway
+			// (it hides it for PayPal express/wallets and shows it otherwise), so
+			// re-showing it here would clobber that hide - jQuery .show() strips the
+			// inline `display:none !important` the v6 code sets. AXO still hides it
+			// in the else branch when the Fastlane gateway itself is selected.
+			if ( ! fastlaneSdkV6Config() ) {
+				this.el.defaultSubmitButton.show();
+			}
 			this.el.billingEmailSubmitButton.hide();
 		} else {
 			this.el.defaultSubmitButton.hide();
@@ -467,7 +475,13 @@ class AxoManager {
 		const $shippingFields = this.$(
 			'.woocommerce-shipping-fields .form-row:visible'
 		);
-		const $shippingHeaders = this.$( '.woocommerce-shipping-fields h3' );
+		// The "Ship to a different address?" toggle is itself an <h3> inside
+		// .woocommerce-shipping-fields, but it is the control that reveals the
+		// (collapsed) shipping fields rather than a section title. Excluding it
+		// avoids hiding the only control that could make those fields visible.
+		const $shippingHeaders = this.$(
+			'.woocommerce-shipping-fields h3'
+		).not( '#ship-to-different-address' );
 		if ( $shippingFields.length ) {
 			$shippingHeaders.show();
 		} else {

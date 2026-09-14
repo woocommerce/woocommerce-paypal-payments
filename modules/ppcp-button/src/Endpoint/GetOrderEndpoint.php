@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 
 /**
  * Class GetOrderEndpoint

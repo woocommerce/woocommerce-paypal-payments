@@ -110,7 +110,13 @@ class PayLaterWCBlocksRenderer {
 				$processor->set_attribute( 'class', 'ppcp-messages' );
 				$processor->set_attribute( 'data-partner-attribution-id', $bn_code );
 
-				if ( $this->layout === 'flex' ) {
+				// v6 styles text only. Coerced, not migrated, so flag-off restores
+				// the banner. See PayLaterBlockRenderer for why not left to the JS.
+				$layout = PayLaterWCBlocksModule::v6_owns_current_page( $c )
+					? 'text'
+					: $this->layout;
+
+				if ( 'flex' === $layout ) {
 					$processor->set_attribute( 'data-pp-style-layout', 'flex' );
 					$processor->set_attribute( 'data-pp-style-color', esc_attr( $this->flex_color ) );
 					$processor->set_attribute( 'data-pp-style-ratio', esc_attr( $this->flex_ratio ) );

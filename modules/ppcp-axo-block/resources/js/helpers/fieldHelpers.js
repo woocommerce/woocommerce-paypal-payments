@@ -134,26 +134,31 @@ export const populateWooFields = (
 	);
 	setWooShippingAddress( shippingAddress );
 
-	// Prepare and set billing address
-	const billingData = profileData.card.paymentSource.card.billingAddress;
+	// Prepare and set billing address. A recognised profile without a saved
+	// card carries no billing address, so there is nothing to prefill; the
+	// shopper fills the card form and its billing fields themselves.
+	const billingData =
+		profileData.card?.paymentSource?.card?.billingAddress ?? null;
 
-	const billingAddress = {
-		first_name: profileData.name.firstName,
-		last_name: profileData.name.lastName,
-		address_1: billingData.addressLine1,
-		address_2: billingData.addressLine2 || '',
-		city: billingData.adminArea2,
-		state: billingData.adminArea1,
-		postcode: billingData.postalCode,
-		country: billingData.countryCode,
-	};
+	if ( billingData ) {
+		const billingAddress = {
+			first_name: profileData.name.firstName,
+			last_name: profileData.name.lastName,
+			address_1: billingData.addressLine1,
+			address_2: billingData.addressLine2 || '',
+			city: billingData.adminArea2,
+			state: billingData.adminArea1,
+			postcode: billingData.postalCode,
+			country: billingData.countryCode,
+		};
 
-	log(
-		`Setting WooCommerce billing address: ${ JSON.stringify(
-			billingAddress
-		) }`
-	);
-	setWooBillingAddress( billingAddress );
+		log(
+			`Setting WooCommerce billing address: ${ JSON.stringify(
+				billingAddress
+			) }`
+		);
+		setWooBillingAddress( billingAddress );
+	}
 
 	// Collapse shipping address input fields into the card view
 	if ( typeof checkoutDispatch.setEditingShippingAddress === 'function' ) {

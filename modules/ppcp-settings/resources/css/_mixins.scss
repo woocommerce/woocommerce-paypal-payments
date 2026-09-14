@@ -44,6 +44,39 @@
 	gap: $gap;
 }
 
+// Expects a single `> .ppcp--content` child; open state is `.ppcp--is-open`.
+@mixin grid-reveal($open-margin: 0) {
+	display: grid;
+	grid-template-rows: 0fr;
+	opacity: 0;
+	margin: 0;
+	transition: grid-template-rows 0.2s ease-out, opacity 0.2s ease-out, margin 0.2s ease-out;
+
+	> .ppcp--content {
+		overflow: hidden;
+	}
+
+	&.ppcp--is-open {
+		grid-template-rows: 1fr;
+		opacity: 1;
+		margin: $open-margin;
+		transition: grid-template-rows 0.3s ease-in, opacity 0.3s ease-in, margin 0.3s ease-in;
+
+		> .ppcp--content {
+			// Focus outlines can extend beyond the content box.
+			overflow: visible;
+		}
+
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&,
+		&.ppcp--is-open {
+			transition: none;
+		}
+	}
+}
+
 @mixin disabled-state($control-type) {
 	.components-#{$control-type}-control.ppcp--is-disabled {
 		.components-#{$control-type}-control__input,

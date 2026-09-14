@@ -42,7 +42,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
-    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@64f8f3a974b508dfa76ea278b748228c6ffed1b6 # pinning PR #278
     secrets:
       GITHUB_USER_EMAIL: ${{ secrets.DEPLOYBOT_EMAIL }}
       GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
@@ -56,6 +56,7 @@ jobs:
   resolve-playwright-matrix:
     name: Resolve Playwright matrix
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
@@ -106,7 +107,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@main
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@64f8f3a974b508dfa76ea278b748228c6ffed1b6 # pinning PR #278
     with:
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}

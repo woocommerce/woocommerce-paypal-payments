@@ -114,4 +114,91 @@ class CardCaptureValidatorTest extends TestCase {
 
 		$this->assertFalse( $validator->is_valid( $order ) );
 	}
+
+	public function test_rejection_reason_is_none_when_order_status_is_approved(): void {
+		$validator   = new CardCaptureValidator();
+		$order       = Mockery::mock( Order::class );
+		$orderStatus = Mockery::mock( OrderStatus::class );
+
+		$order->shouldReceive( 'status' )->andReturn( $orderStatus );
+		$orderStatus->shouldReceive( 'name' )->andReturn( $orderStatus::APPROVED );
+
+		$this->assertSame( CardCaptureValidator::REASON_NONE, $validator->rejection_reason( $order ) );
+	}
+
+	public function test_rejection_reason_is_none_when_payment_source_is_not_card(): void {
+		$validator     = new CardCaptureValidator();
+		$order         = Mockery::mock( Order::class );
+		$orderStatus   = Mockery::mock( OrderStatus::class );
+		$paymentSource = Mockery::mock( PaymentSource::class );
+
+		$order->shouldReceive( 'status' )->andReturn( $orderStatus );
+		$orderStatus->shouldReceive( 'name' )->andReturn( $orderStatus::CREATED );
+		$order->shouldReceive( 'payment_source' )->andReturn( $paymentSource );
+		$paymentSource->shouldReceive( 'name' )->andReturn( 'foo' );
+
+		$this->assertSame( CardCaptureValidator::REASON_NONE, $validator->rejection_reason( $order ) );
+	}
+
+	public function test_rejection_reason_is_malformed_when_payment_source_is_null(): void {
+		$validator   = new CardCaptureValidator();
+		$order       = Mockery::mock( Order::class );
+		$orderStatus = Mockery::mock( OrderStatus::class );
+
+		$order->shouldReceive( 'status' )->andReturn( $orderStatus );
+		$orderStatus->shouldReceive( 'name' )->andReturn( $orderStatus::CREATED );
+		$order->shouldReceive( 'payment_source' )->andReturn( null );
+
+		$this->assertSame( CardCaptureValidator::REASON_MALFORMED, $validator->rejection_reason( $order ) );
+	}
+
+	/**
+	 * @dataProvider card_rejection_reason_provider
+	 */
+	public function test_rejection_reason_for_card_liability_shift(
+		string $liability_shift,
+		string $expected
+	): void {
+		$validator     = new CardCaptureValidator();
+		$order         = Mockery::mock( Order::class );
+		$orderStatus   = Mockery::mock( OrderStatus::class );
+		$paymentSource = Mockery::mock( PaymentSource::class );
+
+		$order->shouldReceive( 'status' )->andReturn( $orderStatus );
+		$orderStatus->shouldReceive( 'name' )->andReturn( $orderStatus::CREATED );
+		$order->shouldReceive( 'payment_source' )->andReturn( $paymentSource );
+		$paymentSource->shouldReceive( 'name' )->andReturn( 'card' );
+		$paymentSource->shouldReceive( 'properties' )->andReturn( (object) [
+			'authentication_result' => (object) [
+				'liability_shift' => $liability_shift,
+			],
+		] );
+
+		$this->assertSame( $expected, $validator->rejection_reason( $order ) );
+	}
+
+	public function card_rejection_reason_provider(): array {
+		return [
+			'POSSIBLE is not a rejection' => [ 'POSSIBLE', CardCaptureValidator::REASON_NONE ],
+			'YES is not a rejection'      => [ 'YES', CardCaptureValidator::REASON_NONE ],
+			'NO is a 3ds failure'         => [ 'NO', CardCaptureValidator::REASON_3DS_FAILED ],
+			'UNKNOWN is unclear'          => [ 'UNKNOWN', CardCaptureValidator::REASON_3DS_UNCLEAR ],
+			'empty is unclear'            => [ '', CardCaptureValidator::REASON_3DS_UNCLEAR ],
+		];
+	}
+
+	public function test_rejection_reason_is_unclear_when_authentication_result_absent(): void {
+		$validator     = new CardCaptureValidator();
+		$order         = Mockery::mock( Order::class );
+		$orderStatus   = Mockery::mock( OrderStatus::class );
+		$paymentSource = Mockery::mock( PaymentSource::class );
+
+		$order->shouldReceive( 'status' )->andReturn( $orderStatus );
+		$orderStatus->shouldReceive( 'name' )->andReturn( $orderStatus::CREATED );
+		$order->shouldReceive( 'payment_source' )->andReturn( $paymentSource );
+		$paymentSource->shouldReceive( 'name' )->andReturn( 'card' );
+		$paymentSource->shouldReceive( 'properties' )->andReturn( (object) [] );
+
+		$this->assertSame( CardCaptureValidator::REASON_3DS_UNCLEAR, $validator->rejection_reason( $order ) );
+	}
 }

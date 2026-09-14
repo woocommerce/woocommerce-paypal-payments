@@ -73,7 +73,7 @@ class ProductFactory
         $product->set_status('publish');
         $product->save();
 
-        $this->created_product_ids[] = $product_id;
+        $this->created_product_ids[] = $product->get_id();
 
         return $product;
     }
@@ -102,8 +102,8 @@ class ProductFactory
         $variation->set_status('publish');
         $variation->save();
 
-        $this->created_product_ids[] = $product_id;
-        $this->created_product_ids[] = $preset['variation_id'];
+        $this->created_product_ids[] = $parent->get_id();
+        $this->created_product_ids[] = $variation->get_id();
 
         return $variation;
     }

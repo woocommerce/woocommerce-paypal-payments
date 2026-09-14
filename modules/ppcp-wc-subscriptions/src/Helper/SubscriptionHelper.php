@@ -19,6 +19,7 @@ use WC_Subscription;
 use WC_Subscriptions;
 use WC_Subscriptions_Product;
 use WCS_Manual_Renewal_Manager;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WP_Query;
 
@@ -162,16 +163,23 @@ class SubscriptionHelper {
 	 * @return bool
 	 */
 	public function need_subscription_intent( string $subscription_mode ): bool {
-		if ( $subscription_mode === 'subscriptions_api' ) {
-			if (
-				$this->current_product_is_subscription()
-				|| ( ( is_cart() || is_checkout() ) && $this->cart_contains_subscription() )
-			) {
-				return true;
-			}
+		if ( $subscription_mode !== 'subscriptions_api' ) {
+			return false;
 		}
 
-		return false;
+		if ( $this->current_product_is_subscription() ) {
+			// Manual renewals mean no PayPal subscription plan is required for
+			// this product, so the standard (non-subscription) checkout flow
+			// is used instead - the SDK must not be forced into subscription
+			// intent in that case.
+			if ( $this->accept_manual_renewals() && ! $this->paypal_subscription_id() ) {
+				return false;
+			}
+
+			return true;
+		}
+
+		return ( is_cart() || is_checkout() ) && $this->cart_contains_subscription();
 	}
 
 	/**
@@ -199,7 +207,9 @@ class SubscriptionHelper {
 	 * - A non-subscription cart is always allowed.
 	 * - In PayPal Subscriptions mode the product must be allowed
 	 *   (has a PayPal plan and the cart contains a single item).
-	 * - In vaulting mode a vault token must be savable.
+	 * - A manual-renewal-only subscription (Accept Manual Renewals enabled) is always
+	 *   allowed, since it is processed as a plain Orders API payment.
+	 * - Otherwise (vaulting mode) a vault token must be savable.
 	 *
 	 * @param bool $is_paypal_subscription Whether PayPal Subscriptions mode applies.
 	 * @param bool $can_save_vault_token   Whether a vault token can be saved.
@@ -215,7 +225,79 @@ class SubscriptionHelper {
 			return $this->checkout_subscription_product_allowed();
 		}
 
+		if ( $this->accept_manual_renewals() ) {
+			return true;
+		}
+
 		return $can_save_vault_token;
+	}
+
+	/**
+	 * Whether the current (subscription) cart can actually be processed by the PayPal gateway.
+	 *
+	 * This resolves the mode-aware {@see self::paypal_subscription_button_allowed()} rule from
+	 * settings, so callers that only have a {@see SettingsProvider} (such as the classic-checkout
+	 * gateway-availability filter) can hide the PayPal gateway when it could not fulfil the payment
+	 * instead of leaving it visible with a disabled button. A non-subscription cart is always
+	 * processable.
+	 *
+	 * @param SettingsProvider $settings_provider The settings provider.
+	 * @return bool
+	 * @throws NotFoundException If setting is not found.
+	 */
+	public function subscription_cart_processable( SettingsProvider $settings_provider ): bool {
+		if ( ! $this->cart_contains_subscription() ) {
+			return true;
+		}
+
+		$is_paypal_subscription = self::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS === $this->resolve_subscription_mode( $settings_provider );
+
+		// Mirrors SmartButton::can_save_vault_token(): a token can only be saved with a
+		// connected merchant and vaulting ("Save PayPal and Venmo") enabled.
+		$can_save_vault_token = ! empty( $settings_provider->merchant_data()->client_id )
+			&& $settings_provider->save_paypal_and_venmo();
+
+		return $this->paypal_subscription_button_allowed( $is_paypal_subscription, $can_save_vault_token );
+	}
+
+	/**
+	 * Resolves how a subscription checkout must be routed.
+	 *
+	 * This is the single deciding function for the subscriptions mode. Rules:
+	 * - WooCommerce Subscriptions inactive yields an empty string.
+	 * - The `woocommerce_paypal_payments_subscription_mode_disabled` filter forces the
+	 *   disabled mode.
+	 * - A manual-renewal-only subscription with vaulting disabled also resolves to the
+	 *   disabled mode: it needs a one-time charge, not a linked PayPal plan.
+	 * - Otherwise vaulting decides between the vaulting and PayPal Subscriptions APIs.
+	 *
+	 * @param SettingsProvider $settings_provider The settings provider.
+	 * @return string One of the SUBSCRIPTION_MODE_VALUE_* constants, or an empty string
+	 *                when WooCommerce Subscriptions is not active.
+	 */
+	public function resolve_subscription_mode( SettingsProvider $settings_provider ): string {
+		if ( ! $this->plugin_is_active() ) {
+			return '';
+		}
+
+		$subscription_mode_disabled = (bool) apply_filters(
+			'woocommerce_paypal_payments_subscription_mode_disabled',
+			false
+		);
+
+		if ( $subscription_mode_disabled ) {
+			return self::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		$save_paypal_and_venmo = $settings_provider->save_paypal_and_venmo();
+
+		if ( $this->accept_manual_renewals() && ! $save_paypal_and_venmo ) {
+			return self::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		return $save_paypal_and_venmo
+			? self::SUBSCRIPTION_MODE_VALUE_VAULTING
+			: self::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
 	}
 
 	/**

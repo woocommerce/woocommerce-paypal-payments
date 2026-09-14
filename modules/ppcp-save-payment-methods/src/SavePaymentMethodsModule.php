@@ -134,6 +134,28 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 							if ( ! $save_payment_method ) {
 								return $data;
 							}
+						} elseif ( $payment_method === PayPalGateway::ID && $funding_source === 'apple_pay' ) {
+							if ( ! $settings_provider->save_paypal_and_venmo() ) {
+								return $data;
+							}
+
+							// Only vault Apple Pay when a subscription is being purchased.
+							// Apple guidelines forbid reusing Apple Pay for general returning-buyer
+							// checkout, so vaulting only serves merchant-initiated renewals.
+							$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+							assert( $subscription_helper instanceof SubscriptionHelper );
+							if (
+								! $subscription_helper->cart_contains_subscription()
+								&& ! $subscription_helper->current_product_is_subscription()
+								&& ! $subscription_helper->order_pay_contains_subscription()
+							) {
+								return $data;
+							}
+
+							// Fall through: the generic merge below attaches the vault + customer
+							// attributes to the existing `apple_pay` payment_source key. Do not set
+							// usage_type/permit_multiple_payment_tokens, which are PayPal-wallet
+							// specific and not part of the Apple Pay save-during-purchase spec.
 						} elseif ( $payment_method === PayPalGateway::ID ) {
 							if ( ! $settings_provider->save_paypal_and_venmo() ) {
 								return $data;
@@ -267,6 +289,18 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 						$context = $c->get( 'button.helper.context' );
 						assert( $context instanceof Context );
 						if ( ! is_user_logged_in() || ! ( $context->is_add_payment_method_page() || $context->is_subscription_change_payment_method_page() ) ) {
+							return;
+						}
+
+						/**
+						 * Whether to render the v5 add-payment-method assets. The
+						 * v6 SDK module returns false here when it owns the page
+						 * (its own save button + card fields), so the two stacks
+						 * do not both render into the same container.
+						 *
+						 * @param bool $render Whether to enqueue the v5 assets.
+						 */
+						if ( ! apply_filters( 'woocommerce_paypal_payments_render_add_payment_method_assets', true ) ) {
 							return;
 						}
 

@@ -12,7 +12,7 @@ jest.mock( '@wordpress/block-editor', () => ( {
 
 jest.mock( '@wordpress/components', () => ( {
 	PanelBody: ( { children } ) => children,
-	SelectControl: () => null,
+	SelectControl: ( { label } ) => <div>{ label }</div>,
 	Spinner: () => <div className="components-spinner" />,
 } ) );
 
@@ -147,4 +147,75 @@ test( 'shows placement warning when placement is disabled', () => {
 	expect(
 		screen.getByText( /messaging placement is disabled/ )
 	).toBeInTheDocument();
+} );
+
+describe( 'when the v6 SDK flag is inactive', () => {
+	test( 'renders the Layout control and respects a flex layout attribute', () => {
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
+		const { PayPalMessages } = require( '@paypal/react-paypal-js' );
+
+		render(
+			<Edit
+				{ ...defaultProps }
+				attributes={ { ...defaultProps.attributes, layout: 'flex' } }
+			/>
+		);
+
+		expect( screen.getByText( 'Layout' ) ).toBeInTheDocument();
+		expect( PayPalMessages.mock.calls[ 0 ][ 0 ].style.layout ).toBe(
+			'flex'
+		);
+	} );
+} );
+
+describe( 'when the v6 SDK flag is active', () => {
+	beforeEach( () => {
+		global.PcpPayLaterBlock = { ...defaultConfig, isSdkV6Active: true };
+	} );
+
+	test( 'hides the Layout control', () => {
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
+
+		render( <Edit { ...defaultProps } /> );
+
+		expect( screen.queryByText( 'Layout' ) ).not.toBeInTheDocument();
+	} );
+
+	test( 'hides the banner-only controls even when the stored layout is flex', () => {
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
+
+		render(
+			<Edit
+				{ ...defaultProps }
+				attributes={ { ...defaultProps.attributes, layout: 'flex' } }
+			/>
+		);
+
+		expect( screen.queryByText( 'Color' ) ).not.toBeInTheDocument();
+		expect( screen.queryByText( 'Ratio' ) ).not.toBeInTheDocument();
+	} );
+
+	test( 'forces a text preview style even when the stored layout is flex', () => {
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
+		const { PayPalMessages } = require( '@paypal/react-paypal-js' );
+
+		render(
+			<Edit
+				{ ...defaultProps }
+				attributes={ { ...defaultProps.attributes, layout: 'flex' } }
+			/>
+		);
+
+		expect( PayPalMessages.mock.calls[ 0 ][ 0 ].style.layout ).toBe(
+			'text'
+		);
+	} );
 } );

@@ -704,7 +704,9 @@ return array(
 	},
 
 	'wcgateway.payment-method-title-enricher'              => static function ( ContainerInterface $container ): PaymentMethodTitleEnricher {
-		return new PaymentMethodTitleEnricher();
+		return new PaymentMethodTitleEnricher(
+			$container->get( 'wcgateway.asset_getter' )
+		);
 	},
 
 	'wcgateway.checkout-helper'                            => static function ( ContainerInterface $container ): CheckoutHelper {

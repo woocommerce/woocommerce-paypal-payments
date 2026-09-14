@@ -20,7 +20,7 @@ return array(
 		assert( $inbox_note_factory instanceof InboxNoteFactory );
 
 		$recaptcha_settings = get_option( 'woocommerce_ppcp-recaptcha_settings', array() );
-		$is_recaptcha_enabled = isset( $recaptcha_settings['enabled'] ) && 'yes' === $recaptcha_settings['enabled'];
+		$is_recaptcha_enabled = wc_string_to_bool( $recaptcha_settings['enabled'] ?? 'no' );
 
 		return array_merge(
 			$notes,
@@ -49,6 +49,15 @@ return array(
 						Note::E_WC_ADMIN_NOTE_UNACTIONED,
 						false
 					)
+				),
+				// Disabled former name of the note above (renamed in 3.3.2), so the registrar deletes copies left over from 3.3.1.
+				$inbox_note_factory->create_note(
+					'',
+					'',
+					Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
+					'ppcp-recaptcha-protection-note',
+					Note::E_WC_ADMIN_NOTE_UNACTIONED,
+					false
 				),
 			)
 		);
