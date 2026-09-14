@@ -148,7 +148,7 @@ class CardFieldsModuleTest extends TestCase
 
     /**
      * GIVEN the cardholder name field is enabled for the credit card gateway
-     * AND v6 owns the current page, where the cardholder name is no longer collected
+     * AND v6 owns the current page
      * WHEN WooCommerce builds the credit card form fields
      * THEN the cardholder-name field is not added
      * AND the existing card-number-field entry is left untouched

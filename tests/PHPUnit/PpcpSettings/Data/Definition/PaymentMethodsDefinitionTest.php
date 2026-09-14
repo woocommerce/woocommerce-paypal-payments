@@ -84,9 +84,8 @@ class PaymentMethodsDefinitionTest extends TestCase
     /**
      * GIVEN the v6 SDK is active
      * WHEN the ACDC group entry is built
-     * THEN the fields no longer include the "Display cardholder name" toggle,
-     *      since v6's card-fields component set cannot be controlled by it
-     * AND showCardLogos is still present, since only the cardholder name field is dropped
+     * THEN the fields no longer include the "Display cardholder name" toggle
+     * AND showCardLogos is still present
      */
     public function testCardholderNameToggleIsDroppedUnderV6(): void
     {

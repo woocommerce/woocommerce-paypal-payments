@@ -612,8 +612,7 @@ class SdkV6ManagerTest extends TestCase
      * AND is_vaulting_enabled reflects the card vaulting setting
      * AND has_subscriptions reflects whether the cart contains a subscription
      * AND the merchant's card field style overrides are carried into the payload
-     * AND card_fields.fields only ever exposes number, expiry and cvv, with no
-     *     cardholder-name field, since v6 no longer collects it
+     * AND card_fields.fields only ever exposes number, expiry and cvv
      *
      * @dataProvider script_data_card_fields_provider
      */

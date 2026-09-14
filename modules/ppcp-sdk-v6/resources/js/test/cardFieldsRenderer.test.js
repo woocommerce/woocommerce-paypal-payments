@@ -209,7 +209,7 @@ describe( 'initCardFields', () => {
 		);
 	} );
 
-	test( 'never mounts a name field, since v6 has no name field component and the server no longer emits a name selector', async () => {
+	test( 'never mounts a name field, since the server no longer emits a name selector', async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		document.body.insertAdjacentHTML(
 			'beforeend',

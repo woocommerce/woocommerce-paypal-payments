@@ -735,7 +735,7 @@ describe( 'createCardOrder', () => {
 		);
 	} );
 
-	test( 'never sends card_name, since v6 dropped the cardholder-name field', async () => {
+	test( 'never sends card_name', async () => {
 		document.body.innerHTML = '<form class="checkout"></form>';
 		mockPayerData.mockReturnValueOnce( null );
 		postJson.mockResolvedValueOnce( { id: 'CARDORDER6' } );
