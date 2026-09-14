@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Psr\Container;
 
 /**
@@ -20,7 +19,6 @@ interface ContainerInterface
      * @return mixed Entry.
      */
     public function get(string $id);
-
     /**
      * Returns true if the container can return an entry for the given identifier.
      * Returns false otherwise.
