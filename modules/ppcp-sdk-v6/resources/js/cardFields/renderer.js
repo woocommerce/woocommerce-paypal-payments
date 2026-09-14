@@ -3,9 +3,9 @@
  *
  * Mounts number/expiry/CVV into the existing WC card-form inputs and runs a new
  * card through the v6 card session (3D Secure included) before letting the
- * native submit through to CreditCardGateway::process_payment(). The SDK has no
- * cardholder-name component, so that input stays a plain field forwarded to
- * create-order.
+ * native submit through to CreditCardGateway::process_payment(). Those three
+ * are the whole set: v6 has no cardholder-name component, and the name is no
+ * longer collected or sent.
  *
  * Scope: a fresh card, one-time or the $0 free-trial variant that saves via a
  * setup token. A selected saved token is left to the native submit.
@@ -159,14 +159,13 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 	 * Re-queries the current card-form inputs, since a DOM swap invalidates
 	 * any previously queried references.
 	 *
-	 * @return {Object} The number/expiry/cvv/name input elements.
+	 * @return {Object} The number/expiry/cvv input elements.
 	 */
 	function getInputs() {
 		return {
 			number: document.querySelector( fields.number ),
 			expiry: document.querySelector( fields.expiry ),
 			cvv: document.querySelector( fields.cvv ),
-			name: fields.name ? document.querySelector( fields.name ) : null,
 		};
 	}
 
@@ -245,12 +244,9 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 				return;
 			}
 
-			// The name has no v6 field component; read the plain WC input.
-			const cardName = getInputs().name?.value?.trim() || '';
 			const { orderId } = await createCardOrder(
 				config,
 				config.page_context || 'checkout',
-				cardName,
                 shouldSavePaymentMethod(),
 			);
 			const result = submitOptions
