@@ -104,6 +104,7 @@ class AmountFactory {
 		$total_str   = number_format( $total_cents / 100, 2, '.', '' );
 		$total       = new Money( (float) $total_str, $this->currency->get() );
 
+
 		$breakdown = new AmountBreakdown(
 			$item_total,
 			$shipping,
@@ -214,27 +215,19 @@ class AmountFactory {
 			$taxes = new Money( $taxes_val, $currency );
 			$total = new Money( 1.0, $currency );
 		} else {
-			$wc_total              = (float) $order->get_total();
-			$wc_total_cents        = (int) round( $wc_total * 100 );
-			$discount_cents        = (int) round( $discount_value * 100 );
-			$component_total_cents = (int) round( $item_total_val * 100 )
-				+ (int) round( $shipping_val * 100 )
-				+ (int) round( $taxes_val * 100 )
-				- $discount_cents;
-			$delta_cents           = $wc_total_cents - $component_total_cents;
-			$taxes_cents           = (int) round( $taxes_val * 100 ) + $delta_cents;
+			$wc_total       = (float) $order->get_total();
+			$discount_cents = (int) round( $discount_value * 100 );
 
-			// Deeper than the tax means an unreported discount, not rounding. Book it as
-			// one: PayPal rejects a negative tax_total on Level 2 card data.
-			if ( $taxes_cents < 0 ) {
-				$taxes_cents = max( 0, (int) round( $taxes_val * 100 ) );
-				$discount    = new Money(
-					( (int) round( $item_total_val * 100 )
-						+ (int) round( $shipping_val * 100 )
-						+ $taxes_cents
-						- $wc_total_cents ) / 100,
-					$currency
-				);
+			list( $taxes_cents, $adjusted_discount_cents ) = $this->reconcile_with_total(
+				(int) round( $wc_total * 100 ),
+				(int) round( $item_total_val * 100 ),
+				(int) round( $shipping_val * 100 ),
+				(int) round( $taxes_val * 100 ),
+				$discount_cents
+			);
+
+			if ( $adjusted_discount_cents !== $discount_cents ) {
+				$discount = new Money( $adjusted_discount_cents / 100, $currency );
 			}
 
 			$taxes = new Money( $taxes_cents / 100, $currency );
@@ -320,6 +313,48 @@ class AmountFactory {
 		}
 
 		return new AmountBreakdown( ...$money );
+	}
+
+	/**
+	 * Reconciles a breakdown against the total WooCommerce reports, which is the
+	 * amount the buyer was shown and the one PayPal must charge.
+	 *
+	 * Any gap goes into tax, where a cent of per-item rounding belongs. A gap
+	 * deeper than the tax is an unreported discount rather than rounding, so the
+	 * tax is restored and the gap is booked as a discount instead: PayPal rejects
+	 * a negative tax_total on Level 2 card data.
+	 *
+	 * All amounts are in the currency's minor unit, and the returned pair keeps
+	 * PayPal's invariant that amount.value equals the sum of the breakdown.
+	 *
+	 * @param int $total_minor    The total WooCommerce reports.
+	 * @param int $items_minor    The item total, fees included.
+	 * @param int $shipping_minor The shipping total.
+	 * @param int $taxes_minor    The tax total.
+	 * @param int $discount_minor The discount total.
+	 *
+	 * @return int[] The reconciled tax and discount totals, in that order.
+	 */
+	private function reconcile_with_total(
+		int $total_minor,
+		int $items_minor,
+		int $shipping_minor,
+		int $taxes_minor,
+		int $discount_minor
+	): array {
+		$components_minor = $items_minor + $shipping_minor + $taxes_minor - $discount_minor;
+		$adjusted_taxes   = $taxes_minor + ( $total_minor - $components_minor );
+
+		if ( $adjusted_taxes >= 0 ) {
+			return array( $adjusted_taxes, $discount_minor );
+		}
+
+		$adjusted_taxes = max( 0, $taxes_minor );
+
+		return array(
+			$adjusted_taxes,
+			$items_minor + $shipping_minor + $adjusted_taxes - $total_minor,
+		);
 	}
 
 	/**
