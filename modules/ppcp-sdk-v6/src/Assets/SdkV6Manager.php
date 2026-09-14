@@ -82,7 +82,6 @@ class SdkV6Manager {
 
 	// Existing WC credit-card-form field IDs the v6 card fields mount into; see
 	// CardFieldsModule's woocommerce_credit_card_form_fields filter.
-	private const CARD_FIELD_NAME_ID   = 'ppcp-credit-card-gateway-card-name';
 	private const CARD_FIELD_NUMBER_ID = 'ppcp-credit-card-gateway-card-number';
 	private const CARD_FIELD_EXPIRY_ID = 'ppcp-credit-card-gateway-card-expiry';
 	private const CARD_FIELD_CVV_ID    = 'ppcp-credit-card-gateway-card-cvc';
@@ -1220,10 +1219,9 @@ class SdkV6Manager {
 				'enabled'             => $card_fields_enabled,
 				'payment_method'      => CreditCardGateway::ID,
 				'funding_source'      => 'card',
-				// Label, name-field flag and logos for the block's own card
-				// method; card_icons is empty when "Show logos" is off.
+				// Label and logos for the block's own card method; card_icons is
+				// empty when "Show logos" is off.
 				'title'               => $this->card_payments_configuration->gateway_title(),
-				'name_field'          => 'yes' === $this->card_payments_configuration->show_name_on_card(),
 				// Card "save during purchase". The block checkout gates WC Blocks'
 				// native save option on this; classic reads WC's own tokenization
 				// checkbox. A subscription force-saves, since its card must be
@@ -1240,7 +1238,6 @@ class SdkV6Manager {
 					$this->credit_card_icons
 				),
 				'fields'              => array(
-					'name'   => '#' . self::CARD_FIELD_NAME_ID,
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,
