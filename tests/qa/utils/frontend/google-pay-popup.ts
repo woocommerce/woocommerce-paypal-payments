@@ -3,21 +3,20 @@
  */
 import { expect, BrowserContext, Locator, Page } from '@playwright/test';
 import { generate } from 'otplib';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Handles the Google Pay TEST-environment popup.
  *
- * Flow:
- *  1. Clicking the Google Pay button opens a popup at pay.google.com/gp/p/loading.
- *  2. Google redirects to accounts.google.com for sign-in (fresh contexts have no session).
- *  3. Google may challenge with 2-Step Verification (TOTP code from an authenticator app).
- *  4. After sign-in, intermediate consent / recovery pages may appear.
- *  5. The payment sheet at pay.google.com/gp/p/ui/pay shows a confirm button.
+ * Flow: button click opens a popup -> Google sign-in (accounts.google.com) ->
+ * optional 2FA (TOTP, or a "Verify it's you" step-up prompt) -> optional
+ * consent/recovery screens -> payment sheet with a confirm button.
  *
- * Credentials are read from GOOGLE_PAY_EMAIL / GOOGLE_PAY_PASSWORD env vars.
- * The test account must have 2-Step Verification set up via an authenticator app
- * (not SMS) — its secret is read from GOOGLE_PAY_TOTP_SECRET and used to compute
- * the current code locally, instead of waiting on an unautomatable phone prompt.
+ * Credentials: GOOGLE_PAY_EMAIL / GOOGLE_PAY_PASSWORD / GOOGLE_PAY_TOTP_SECRET
+ * (authenticator app, not SMS). Sign-in cookies are cached across runs (see
+ * loadPersistedSession/persistSession) so Google recognizes the device and
+ * offers the step-up challenge less often.
  */
 export class GooglePayPopup {
 	page: Page;
@@ -25,6 +24,64 @@ export class GooglePayPopup {
 	constructor( page: Page ) {
 		this.page = page;
 	}
+
+	/** Where Google's sign-in cookies are cached across runs (google.com only, separate from the WP storage states in STORAGE_STATE_PATH). */
+	private static sessionStoragePath = (): string | undefined =>
+		process.env.STORAGE_STATE_PATH
+			? path.join(
+					process.env.STORAGE_STATE_PATH,
+					'google-pay-session.json'
+			  )
+			: undefined;
+
+	/**
+	 * Restores cached Google sign-in cookies so the device is recognized.
+	 * Call in beforeEach, alongside applyBrowserPatches(), before navigation.
+	 *
+	 * @param context
+	 */
+	static loadPersistedSession = async (
+		context: BrowserContext
+	): Promise< void > => {
+		const storagePath = GooglePayPopup.sessionStoragePath();
+		if ( ! storagePath || ! fs.existsSync( storagePath ) ) {
+			return;
+		}
+
+		try {
+			const { cookies } = JSON.parse(
+				fs.readFileSync( storagePath, 'utf-8' )
+			);
+			if ( cookies?.length ) {
+				await context.addCookies( cookies );
+			}
+		} catch {
+			// A corrupt or unreadable cache isn't fatal — the test just signs in fresh.
+		}
+	};
+
+	/** Persists the context's google.com cookies for a later run to reuse, excluding the merchant site's own cookies in the same context. */
+	private persistSession = async (): Promise< void > => {
+		const storagePath = GooglePayPopup.sessionStoragePath();
+		if ( ! storagePath ) {
+			return;
+		}
+
+		try {
+			const { cookies } = await this.page.context().storageState();
+			const googleCookies = cookies.filter( ( cookie ) =>
+				/(^|\.)google\.com$/.test( cookie.domain )
+			);
+
+			fs.mkdirSync( path.dirname( storagePath ), { recursive: true } );
+			fs.writeFileSync(
+				storagePath,
+				JSON.stringify( { cookies: googleCookies }, null, 2 )
+			);
+		} catch {
+			// Best-effort caching; a write failure shouldn't fail the test.
+		}
+	};
 
 	// -------------------------------------------------------------------------
 	// Locators — Google Sign-in (accounts.google.com)
@@ -70,8 +127,7 @@ export class GooglePayPopup {
 	private totpVerifyButton = () =>
 		this.page.getByRole( 'button', { name: /^(Next|Verify)$/i } ).first();
 
-	// Google may default to an SMS challenge even when an authenticator app is
-	// set up as a secondary method; this switches to the TOTP code prompt.
+	// Switches an SMS-first challenge to the TOTP prompt.
 	private tryAnotherWayButton = () =>
 		this.page.getByRole( 'button', { name: 'Try another way' } );
 
@@ -85,26 +141,21 @@ export class GooglePayPopup {
 			)
 			.first();
 
-	// Recovery-options prompt (gds.google.com) — Cancel follows the `continue`
-	// param back to the payment flow.
+	// Recovery-options prompt (gds.google.com); Cancel returns to the payment flow.
 	private recoveryCancelButton = () =>
 		this.page.getByRole( 'button', { name: 'Cancel' } );
 
 	/**
-	 * Every post-login screen a plain click gets past.
-	 *
-	 * Which one is showing doesn't matter — they all need the same action — so
-	 * they're matched as a union rather than probed one at a time. "Cancel" is
-	 * only offered on the recovery prompt, since clicking a generic "Cancel" on
-	 * an arbitrary Google page is far worse than one wasted pass.
+	 * Every post-login screen a plain click gets past, matched as a union
+	 * since they all need the same action. "Cancel" only applies on the
+	 * recovery prompt — too risky to offer generically.
 	 */
 	private clickablePrompt = () => {
 		const base = this.authenticatorAppOption()
 			.or( this.tryAnotherWayButton() )
 			.or( this.postLoginButton() );
 
-		// .first() because waitFor is strict: a page showing two of these would
-		// otherwise throw instead of being advanced.
+		// .first(): waitFor is strict and would throw if two matched at once.
 		return (
 			this.page.url().includes( 'gds.google.com' )
 				? base.or( this.recoveryCancelButton() )
@@ -125,15 +176,14 @@ export class GooglePayPopup {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Registers init scripts on the Playwright browser context that prevent
-	 * Google from detecting the automated browser and blocking sign-in.
-	 * Call this in beforeEach, before any page navigation.
+	 * Patches the context so Google doesn't detect automation and block
+	 * sign-in. Call in beforeEach, before navigation.
+	 *
 	 * @param context
 	 */
 	static applyBrowserPatches = async ( context: BrowserContext ) => {
 		await context.addInitScript( () => {
-			// Google Pay requires a secure context. On a local http:// dev site it
-			// throws DEVELOPER_ERROR without this patch.
+			// Needed for a secure context; without it, http:// throws DEVELOPER_ERROR.
 			try {
 				Object.defineProperty( window, 'isSecureContext', {
 					get: () => true,
@@ -141,9 +191,8 @@ export class GooglePayPopup {
 				} );
 			} catch {}
 
-			// Chrome's Payment Handler API intercepts loadPaymentData() and opens a
-			// native payment sheet Playwright cannot capture as a popup event.
-			// Removing PaymentRequest forces the Google Pay SDK into window.open() mode.
+			// Forces window.open() mode instead of the native Payment Handler
+			// sheet, which Playwright can't capture as a popup event.
 			try {
 				// @ts-ignore — intentional: force Google Pay into popup mode
 				delete window.PaymentRequest;
@@ -154,8 +203,7 @@ export class GooglePayPopup {
 				} catch {}
 			}
 
-			// Headless Chrome lacks window.chrome. Google sign-in detects this and
-			// shows "This browser or app may not be secure." A minimal stub fixes it.
+			// Headless Chrome lacks window.chrome, which trips Google's "may not be secure" check.
 			try {
 				if ( ! ( window as any ).chrome ) {
 					Object.defineProperty( window, 'chrome', {
@@ -178,8 +226,7 @@ export class GooglePayPopup {
 				}
 			} catch {}
 
-			// Headless Chrome reports 0 plugins. A non-empty list looks more like a
-			// real browser to Google's risk scoring.
+			// A non-empty plugins list looks more like a real browser to Google's risk scoring.
 			try {
 				Object.defineProperty( navigator, 'plugins', {
 					get: () => [ 1, 2, 3, 4, 5 ],
@@ -189,6 +236,11 @@ export class GooglePayPopup {
 		} );
 	};
 
+	/**
+	 * Fills email/password only if Google actually asks for them — a
+	 * restored session can skip the form entirely. Env vars are still
+	 * required as a fallback for a stale/expired session.
+	 */
 	private signInToGoogle = async () => {
 		const email = process.env.GOOGLE_PAY_EMAIL;
 		const password = process.env.GOOGLE_PAY_PASSWORD;
@@ -199,10 +251,9 @@ export class GooglePayPopup {
 			);
 		}
 
-		await expect(
-			this.emailInput(),
-			'Assert Google email input is visible'
-		).toBeVisible();
+		if ( ! ( await this.appears( this.emailInput() ) ) ) {
+			return;
+		}
 		await this.emailInput().fill( email );
 
 		await expect(
@@ -211,10 +262,9 @@ export class GooglePayPopup {
 		).toBeVisible();
 		await this.nextButton().click();
 
-		await expect(
-			this.passwordInput(),
-			'Assert Google password input is visible'
-		).toBeVisible();
+		if ( ! ( await this.appears( this.passwordInput() ) ) ) {
+			return;
+		}
 		await this.passwordInput().fill( password );
 
 		await expect(
@@ -227,12 +277,9 @@ export class GooglePayPopup {
 	};
 
 	/**
-	 * Whether `locator` shows up within `timeout`.
-	 *
-	 * Uses `waitFor` rather than `isVisible`: `isVisible` resolves the selector
-	 * and checks the DOM exactly once, so it reports "not there" for anything
-	 * that simply hasn't rendered yet — its `timeout` bounds the round-trip,
-	 * not how long it waits.
+	 * Whether `locator` shows up within `timeout`. Uses `waitFor` rather than
+	 * `isVisible`, which checks the DOM only once and misses anything that
+	 * simply hasn't rendered yet.
 	 *
 	 * @param locator
 	 * @param timeout
@@ -260,32 +307,27 @@ export class GooglePayPopup {
 			.click()
 			.catch( () => {} );
 
-		// A code is single-use and only valid for its 30-second window, and
-		// Google leaves the field on screen while it verifies. Without waiting
-		// for it to go away, the next pass re-detects the same field and submits
-		// a second code that Google has already consumed — which it rejects,
-		// costing the whole challenge. Hence a longer wait than the generic one:
-		// this is the screen where guessing wrong is unrecoverable, not just slow.
+		// Wait for the field to clear before the next pass, or it resubmits
+		// the same single-use code and Google rejects it, costing the challenge.
 		await codeInput
 			.waitFor( { state: 'hidden', timeout: 20_000 } )
 			.catch( () => {} );
 	};
 
 	/**
-	 * Advances the popup past whichever post-login screen is showing, at most one
-	 * screen per call. Returns true once the popup has reached the payment sheet.
+	 * Advances the popup past whichever post-login screen is showing, at most
+	 * one per call. Returns true once the confirm button is visible.
 	 *
-	 * Only one distinction matters here: the 2FA field needs filling, everything
-	 * else just needs clicking — so the rest are matched as a union instead of
-	 * being probed individually.
+	 * "Arrived" used to be inferred from the URL reaching pay.google.com, but
+	 * Google can show a step-up "Verify it's you" prompt on that same domain —
+	 * the URL check would then report done while the prompt sits untouched.
+	 * Checking the confirm button directly avoids that false positive.
 	 *
-	 * Action errors are swallowed on purpose. These screens are transient, and a
-	 * click that loses a race with a navigation is a retry, not a failure. It
-	 * also has to hold for `expect.poll`, which runs its generator outside its
-	 * own try/catch: a rejection here would abort the poll instead of retrying.
+	 * Action errors are swallowed on purpose: these screens are transient, and
+	 * `expect.poll` needs the generator to keep retrying rather than throw.
 	 */
 	private advancePastPrompt = async (): Promise< boolean > => {
-		if ( this.page.url().includes( 'pay.google.com' ) ) {
+		if ( await this.appears( this.confirmButton(), 1_000 ) ) {
 			return true;
 		}
 
@@ -297,8 +339,7 @@ export class GooglePayPopup {
 		const clickable = this.clickablePrompt();
 		if ( await this.appears( clickable ) ) {
 			await clickable.click().catch( () => {} );
-			// Wait for it to go away, so the next pass doesn't re-detect the
-			// screen it just dismissed and act on it twice.
+			// So the next pass doesn't re-detect and re-click the same screen.
 			await clickable
 				.waitFor( { state: 'hidden', timeout: 4_000 } )
 				.catch( () => {} );
@@ -308,12 +349,10 @@ export class GooglePayPopup {
 	};
 
 	/**
-	 * Describes whatever screen the popup is stuck on, for the failure message.
-	 *
-	 * A datacenter IP (which is what CI runs from) draws challenges that no
-	 * amount of retrying solves — recovery-email confirmation, device approval,
-	 * "this browser or app may not be secure". Those have to be identifiable
-	 * from a CI log alone, since they can't be reproduced interactively.
+	 * Describes whatever screen the popup is stuck on, for the failure
+	 * message — some CI-only challenges (device approval, recovery email)
+	 * can't be reproduced interactively, so this has to be identifiable from
+	 * the log alone.
 	 */
 	private describeCurrentScreen = async () => {
 		const heading = await this.page
@@ -328,21 +367,19 @@ export class GooglePayPopup {
 	};
 
 	/**
-	 * Dismisses whatever Google shows between sign-in and the payment sheet:
-	 * 2-Step Verification, recovery-options (gds.google.com), consent dialogs,
-	 * "Continue" / "Not now".
-	 *
-	 * Bounded by wall-clock time rather than a number of attempts: the same ten
-	 * passes meant seconds on a settled page and minutes mid-navigation. The old
-	 * loop also ran out silently, so a popup that never reached the payment sheet
-	 * surfaced later as a confusing "confirm button is not visible" failure.
+	 * Dismisses whatever Google shows between sign-in and the payment sheet.
+	 * Bounded by wall-clock time, not attempt count, so a popup that never
+	 * arrives fails here with a clear message instead of a confusing timeout
+	 * later on the confirm button.
 	 */
 	private skipPostLoginPrompts = async () => {
 		await expect
 			.poll( () => this.advancePastPrompt(), {
 				message:
 					'Google Pay popup never reached the payment sheet — stuck on an unhandled screen',
-				timeout: 30_000,
+				// Bumped from 30s: each pass now also peeks for the confirm
+				// button, so a multi-step challenge needs more passes to resolve.
+				timeout: 45_000,
 				intervals: [ 0 ],
 			} )
 			.toBe( true )
@@ -364,6 +401,9 @@ export class GooglePayPopup {
 	completePayment = async () => {
 		await this.signInToGoogle();
 		await this.skipPostLoginPrompts();
+		// Cache the session now that we've reliably signed in, before the
+		// popup closes.
+		await this.persistSession();
 		await this.page.waitForLoadState();
 		await this.tryClickConfirmButton();
 	};
@@ -380,10 +420,8 @@ export class GooglePayPopup {
 					if ( this.page.isClosed() ) {
 						return true;
 					}
-					// Swallow click errors caused by the popup tearing down
-					// mid-click; the popup closing is the success signal and is
-					// detected on the next poll via isClosed(). A genuinely broken
-					// selector surfaces as a poll timeout, since the page never closes.
+					// Swallow click errors from the popup tearing down mid-click;
+					// isClosed() on the next poll is the real success signal.
 					await this.confirmButton()
 						.click()
 						.catch( () => {} );

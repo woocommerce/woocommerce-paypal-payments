@@ -41,6 +41,7 @@ test.beforeAll( async ( { utils } ) => {
 
 test.beforeEach( async ( { visitorPage } ) => {
 	await GooglePayPopup.applyBrowserPatches( visitorPage.context() );
+	await GooglePayPopup.loadPersistedSession( visitorPage.context() );
 } );
 
 for ( const testOrder of googlePayCheckout ) {
