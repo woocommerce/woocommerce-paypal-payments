@@ -21,30 +21,13 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 class GetConnectionStatusHandler
 {
     /**
-     * Fields dropped before returning to the agent. clientId/clientSecret are
-     * the OAuth API credentials (admin-only); an agent could log them verbatim.
+     * The OAuth API credentials (admin-only); an agent could log them verbatim.
      * The merchant `id`/email stay — agents need them to reason about the account.
-     *
-     * @var array<int, string>
      */
     private const REDACTED_FIELDS = array('clientId', 'clientSecret');
-    /**
-     * @var CommonRestEndpoint
-     */
-    private $endpoint;
-    /**
-     * @var EnvelopeParser
-     */
-    private $envelope;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @param CommonRestEndpoint $endpoint The backing merchant-details endpoint.
-     * @param EnvelopeParser     $envelope The shared envelope parser.
-     * @param LoggerInterface    $logger   The plugin's PSR-3 logger.
-     */
+    private CommonRestEndpoint $endpoint;
+    private EnvelopeParser $envelope;
+    private LoggerInterface $logger;
     public function __construct(CommonRestEndpoint $endpoint, EnvelopeParser $envelope, LoggerInterface $logger)
     {
         $this->endpoint = $endpoint;
@@ -52,8 +35,6 @@ class GetConnectionStatusHandler
         $this->logger = $logger;
     }
     /**
-     * Execute callback.
-     *
      * @param mixed $input Optional; ignored.
      * @return array|\WP_Error
      */
@@ -68,7 +49,7 @@ class GetConnectionStatusHandler
             $this->logger->error('[ppcp-abilities] get-connection-status lookup threw ' . get_class($e) . ': ' . $e->getMessage());
             return new \WP_Error('woocommerce_paypal_payments_endpoint_error', __('PayPal Payments endpoint returned an error; see server log for details.', 'woocommerce-paypal-payments'));
         }
-        $payload = $response instanceof \WP_REST_Response ? $response->get_data() : $response;
+        $payload = $response->get_data();
         if (is_wp_error($payload)) {
             return $payload;
         }
@@ -84,13 +65,6 @@ class GetConnectionStatusHandler
         }
         return $this->project_merchant_payload($payload);
     }
-    /**
-     * Project the success response to the agent payload: the merchant
-     * subobject (API credentials stripped) plus optional features.
-     *
-     * @param array $payload Decoded REST response array (success branch).
-     * @return array Agent-facing payload.
-     */
     private function project_merchant_payload(array $payload): array
     {
         $merchant = isset($payload['merchant']) && is_array($payload['merchant']) ? $payload['merchant'] : array();

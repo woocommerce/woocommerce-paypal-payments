@@ -12,53 +12,37 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use Throwable;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpointCached;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 /**
  * Looks up a PayPal order by PayPal order ID or WooCommerce order ID.
  *
  * Security: payer PII (top-level `payer`) and per-purchase-unit `shipping`
- * are STRIPPED unless include_payer_pii is true. `payment_source` is stripped
- * defensively — Order::to_array() does not serialize it today, but a future
- * change that did would leak through the denylist gap.
+ * are STRIPPED unless include_payer_pii is true AND the site permits it via
+ * `woocommerce_paypal_payments_abilities_allow_payer_pii` (default true).
+ * `payment_source` is stripped defensively — Order::to_array() does not
+ * serialize it today, but a future change that did would leak through the
+ * denylist gap.
  *
  * @internal
  */
 class GetPaypalOrderHandler
 {
     /**
-     * Valid PayPal v2 order ID format. Constraining the input blocks
-     * path-traversal payloads (e.g. "ID/../refunds") from reaching
-     * OrderEndpoint::order(), which concatenates the id without rawurlencode().
-     *
-     * @var string
+     * Constraining the input blocks path-traversal payloads (e.g.
+     * "ID/../refunds") from reaching OrderEndpoint::order(), which concatenates
+     * the id without rawurlencode().
      */
     private const PAYPAL_ORDER_ID_PATTERN = '/^[A-Z0-9]{1,64}$/';
-    /**
-     * Top-level keys stripped unless include_payer_pii.
-     *
-     * @var array<int, string>
-     */
     private const REDACTED_TOP_LEVEL_KEYS = array('payer', 'payment_source');
-    /**
-     * @var OrderEndpointCached
-     */
-    private $endpoint;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @param OrderEndpointCached $endpoint The backing cached order endpoint.
-     * @param LoggerInterface     $logger   The plugin's PSR-3 logger.
-     */
+    private OrderEndpointCached $endpoint;
+    private LoggerInterface $logger;
     public function __construct(OrderEndpointCached $endpoint, LoggerInterface $logger)
     {
         $this->endpoint = $endpoint;
         $this->logger = $logger;
     }
     /**
-     * Execute callback. Accepts EITHER paypal_order_id OR wc_order_id; with
-     * wc_order_id the endpoint resolves the PayPal id from order meta.
+     * Accepts EITHER paypal_order_id OR wc_order_id; with wc_order_id the
+     * endpoint resolves the PayPal id from order meta.
      *
      * @param mixed $input Expected shape: { paypal_order_id?: string, wc_order_id?: int, include_payer_pii?: bool }.
      * @return array|\WP_Error
@@ -78,24 +62,15 @@ class GetPaypalOrderHandler
             $this->logger->error('[ppcp-abilities] get-paypal-order lookup threw ' . get_class($e) . ': ' . $e->getMessage());
             return new \WP_Error('woocommerce_paypal_payments_order_lookup_failed', __('PayPal order lookup failed; see server log for details.', 'woocommerce-paypal-payments'), array('identifier' => is_object($identifier) ? get_class($identifier) : $identifier));
         }
-        if (!$order instanceof Order) {
-            return new \WP_Error('woocommerce_paypal_payments_unexpected_response', __('PayPal order lookup returned an unexpected response shape.', 'woocommerce-paypal-payments'));
-        }
         return $this->project_order($order->to_array(), (bool) ($input['include_payer_pii'] ?? \false));
     }
-    /**
-     * Project the PayPal Order payload to the agent shape, stripping the payer
-     * block, payment_source, and per-purchase-unit shipping unless
-     * $include_payer_pii.
-     *
-     * @param array $payload           Decoded PayPal Order payload.
-     * @param bool  $include_payer_pii Pass payer + shipping through when true.
-     * @return array
-     */
     private function project_order(array $payload, bool $include_payer_pii): array
     {
-        if ($include_payer_pii) {
+        if ($include_payer_pii && $this->site_allows_payer_pii()) {
             return $payload;
+        }
+        if ($include_payer_pii) {
+            $this->logger->info('[ppcp-abilities] get-paypal-order: include_payer_pii was requested but the site denies payer PII; returning the redacted payload.');
         }
         foreach (self::REDACTED_TOP_LEVEL_KEYS as $key) {
             unset($payload[$key]);
@@ -109,10 +84,23 @@ class GetPaypalOrderHandler
         }
         return $payload;
     }
+    private function site_allows_payer_pii(): bool
+    {
+        /**
+         * Filters whether this site permits PayPal Payments abilities to return
+         * payer PII at all.
+         *
+         * The get-paypal-order ability's `include_payer_pii` input can only
+         * narrow within this: when this returns false, payer PII is stripped
+         * regardless of the input.
+         *
+         * @since 4.1.0
+         *
+         * @param bool $allowed Whether payer PII may be returned. Default true.
+         */
+        return (bool) apply_filters('woocommerce_paypal_payments_abilities_allow_payer_pii', \true);
+    }
     /**
-     * Extract the identifier OrderEndpoint expects: a string PayPal order id,
-     * a WC_Order, or WP_Error when neither resolves.
-     *
      * @param array<string, mixed> $input Ability input.
      * @return string|WC_Order|\WP_Error
      */

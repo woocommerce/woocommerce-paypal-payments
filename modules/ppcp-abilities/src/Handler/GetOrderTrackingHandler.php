@@ -22,26 +22,14 @@ use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
  */
 class GetOrderTrackingHandler
 {
-    /**
-     * @var OrderTrackingEndpoint
-     */
-    private $endpoint;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @param OrderTrackingEndpoint $endpoint The backing tracking endpoint.
-     * @param LoggerInterface       $logger   The plugin's PSR-3 logger.
-     */
+    private OrderTrackingEndpoint $endpoint;
+    private LoggerInterface $logger;
     public function __construct(OrderTrackingEndpoint $endpoint, LoggerInterface $logger)
     {
         $this->endpoint = $endpoint;
         $this->logger = $logger;
     }
     /**
-     * Execute callback.
-     *
      * @param mixed $input Expected shape: { wc_order_id: int }.
      * @return array|\WP_Error
      */
@@ -75,9 +63,6 @@ class GetOrderTrackingHandler
         return array('wc_order_id' => $wc_order_id, 'shipments' => array_map(array($this, 'serialize_shipment'), $shipments));
     }
     /**
-     * Serialize a ShipmentInterface for the agent payload via its own to_array().
-     *
-     * @param ShipmentInterface $shipment The shipment entity.
      * @return array<string, mixed>
      */
     private function serialize_shipment(ShipmentInterface $shipment): array

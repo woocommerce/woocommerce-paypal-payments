@@ -42,8 +42,6 @@ class AbilitiesModule implements ServiceModule, ExecutableModule
      * that only exists on WC 10.9+. Since run() fires on plugins_loaded, ahead
      * of both the feature flag and the AbilitiesLoader gate, that autoload
      * would fatal every request on every store below WC 10.9.
-     *
-     * @param ContainerInterface $c A services container instance.
      */
     public function run(ContainerInterface $c): bool
     {

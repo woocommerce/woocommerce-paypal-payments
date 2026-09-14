@@ -20,23 +20,9 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
  */
 class GetPaymentMethodsHandler
 {
-    /**
-     * @var PaymentRestEndpoint
-     */
-    private $endpoint;
-    /**
-     * @var EnvelopeParser
-     */
-    private $envelope;
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * @param PaymentRestEndpoint $endpoint The backing payment-details endpoint.
-     * @param EnvelopeParser      $envelope The shared envelope parser.
-     * @param LoggerInterface     $logger   The plugin's PSR-3 logger.
-     */
+    private PaymentRestEndpoint $endpoint;
+    private EnvelopeParser $envelope;
+    private LoggerInterface $logger;
     public function __construct(PaymentRestEndpoint $endpoint, EnvelopeParser $envelope, LoggerInterface $logger)
     {
         $this->endpoint = $endpoint;
@@ -44,10 +30,8 @@ class GetPaymentMethodsHandler
         $this->logger = $logger;
     }
     /**
-     * Execute callback.
-     *
      * @param mixed $input Optional; ignored.
-     * @return array|\WP_Error The payment-methods payload or WP_Error on failure.
+     * @return array|\WP_Error
      */
     public function execute($input = null)
     {
@@ -58,7 +42,7 @@ class GetPaymentMethodsHandler
             $this->logger->error('[ppcp-abilities] get-payment-methods lookup threw ' . get_class($e) . ': ' . $e->getMessage());
             return new \WP_Error('woocommerce_paypal_payments_endpoint_error', __('PayPal Payments endpoint returned an error; see server log for details.', 'woocommerce-paypal-payments'));
         }
-        $payload = $response instanceof \WP_REST_Response ? $response->get_data() : $response;
+        $payload = $response->get_data();
         if (is_wp_error($payload)) {
             return $payload;
         }

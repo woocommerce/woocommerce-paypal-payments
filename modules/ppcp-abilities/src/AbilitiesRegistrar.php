@@ -26,16 +26,11 @@ class AbilitiesRegistrar
      *
      * @deprecated 4.1.0 Use AbilityNames::CATEGORY_SLUG. Kept as an alias so
      *             external code reading this constant keeps working.
-     *
-     * @var string
      */
     public const CATEGORY_SLUG = \WooCommerce\PayPalCommerce\Abilities\AbilityNames::CATEGORY_SLUG;
     /**
-     * Ability classes registered through the WC 10.9 loader. The ::class
-     * constants don't autoload; they resolve only when Woo's loader iterates
-     * them on WC 10.9+.
-     *
-     * @var array<int, class-string>
+     * The ::class constants don't autoload; they resolve only when Woo's loader
+     * iterates them on WC 10.9+.
      */
     private const ABILITY_CLASSES = array(\WooCommerce\PayPalCommerce\Abilities\Domain\GetConnectionStatus::class, \WooCommerce\PayPalCommerce\Abilities\Domain\GetPaymentMethods::class, \WooCommerce\PayPalCommerce\Abilities\Domain\GetOrderTracking::class, \WooCommerce\PayPalCommerce\Abilities\Domain\GetPaypalOrder::class);
     /**
@@ -43,29 +38,20 @@ class AbilitiesRegistrar
      * class entries → _doing_it_wrong on every registered slug). init() must
      * run at/after plugins_loaded so WC 10.9's autoloader is warm before the
      * loader gate runs.
-     *
-     * @var bool
      */
-    private $initialized = \false;
+    private bool $initialized = \false;
     /**
-     * Optional override for the WC 10.9 loader check, so the registration path
-     * can be exercised without a WooCommerce runtime. Null uses the real check.
+     * Override for the WC 10.9 loader check, so the registration path can be
+     * exercised without a WooCommerce runtime. Not a typed property: PHP has no
+     * `callable` property type.
      *
      * @var callable|null
      */
     private $loader_gate;
-    /**
-     * @param callable|null $loader_gate Returns whether Woo's AbilitiesLoader is available.
-     */
     public function __construct(?callable $loader_gate = null)
     {
         $this->loader_gate = $loader_gate;
     }
-    /**
-     * Initialize the abilities registration.
-     *
-     * @return void
-     */
     public function init(): void
     {
         if ($this->initialized) {
@@ -94,30 +80,21 @@ class AbilitiesRegistrar
     }
     /**
      * Filter callback for `woocommerce_ability_definition_classes`.
-     *
-     * @param array $classes Class names accumulated by the loader.
-     * @return array
      */
     public function append_classes(array $classes): array
     {
         return array_merge($classes, self::ABILITY_CLASSES);
     }
     /**
-     * Permission callback for read abilities. Mirrors the wc/v3/wc_paypal/*
-     * controllers' gate (RestEndpoint::check_permission() returns
-     * current_user_can('manage_woocommerce')).
-     *
-     * @return bool
+     * Mirrors the wc/v3/wc_paypal/* controllers' gate
+     * (RestEndpoint::check_permission()).
      */
     public function can_manage_woocommerce(): bool
     {
         return current_user_can('manage_woocommerce');
     }
     /**
-     * Whether WC 10.9's AbilitiesLoader is available (hard gate; WC 10.9 also
-     * implies WP 6.9 / wp_register_ability()).
-     *
-     * @return bool
+     * Hard gate; WC 10.9 also implies WP 6.9 / wp_register_ability().
      */
     private function is_loader_available(): bool
     {
