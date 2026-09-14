@@ -608,10 +608,12 @@ class SdkV6ManagerTest extends TestCase
      * GIVEN a checkout block page with Advanced Card Fields enabled for the merchant
      * WHEN the SDK bootstrap data is generated
      * THEN card_fields.enabled is true, unless Fastlane renders on the same page
-     * AND the gateway title and name-field flag are carried into the payload
+     * AND the gateway title is carried into the payload
      * AND is_vaulting_enabled reflects the card vaulting setting
      * AND has_subscriptions reflects whether the cart contains a subscription
      * AND the merchant's card field style overrides are carried into the payload
+     * AND card_fields.fields only ever exposes number, expiry and cvv, with no
+     *     cardholder-name field, since v6 no longer collects it
      *
      * @dataProvider script_data_card_fields_provider
      */
@@ -619,17 +621,14 @@ class SdkV6ManagerTest extends TestCase
         string $page_context,
         bool $acdc_enabled,
         string $gateway_title,
-        string $show_name_on_card,
         bool $card_vaulting_enabled,
         bool $cart_contains_subscription,
         bool $fastlane_renders,
-        bool $expected_enabled,
-        bool $expected_name_field
+        bool $expected_enabled
     ): void {
         $this->context->shouldReceive('context')->andReturn($page_context);
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn($acdc_enabled);
         $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn($gateway_title);
-        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn($show_name_on_card);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn($cart_contains_subscription);
         $this->fastlane_config->shouldReceive('should_render')->andReturn($fastlane_renders);
 
@@ -658,42 +657,40 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame($expected_enabled, $data['card_fields']['enabled']);
         $this->assertSame($gateway_title, $data['card_fields']['title']);
-        $this->assertSame($expected_name_field, $data['card_fields']['name_field']);
         $this->assertSame(CreditCardGateway::ID, $data['card_fields']['payment_method']);
         $this->assertSame($card_vaulting_enabled, $data['card_fields']['is_vaulting_enabled']);
         $this->assertSame($cart_contains_subscription, $data['has_subscriptions']);
         $this->assertSame($card_field_styles, $data['card_fields']['styles']);
+        $this->assertSame(['number', 'expiry', 'cvv'], array_keys($data['card_fields']['fields']));
+        $this->assertArrayNotHasKey('name_field', $data['card_fields']);
     }
 
     public function script_data_card_fields_provider(): array
     {
         return [
-            'checkout-block with ACDC enabled and name field shown' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, false, false, true, true,
-            ],
-            'checkout-block with ACDC enabled and name field hidden' => [
-                'checkout-block', true, 'Credit Card', 'no', false, false, false, true, false,
+            'checkout-block with ACDC enabled' => [
+                'checkout-block', true, 'Credit Card', false, false, false, true,
             ],
             'checkout-block with ACDC disabled' => [
-                'checkout-block', false, 'Credit Card', 'yes', false, false, false, false, true,
+                'checkout-block', false, 'Credit Card', false, false, false, false,
             ],
             'classic checkout with ACDC enabled' => [
-                'checkout', true, 'Credit Card', 'yes', false, false, false, true, true,
+                'checkout', true, 'Credit Card', false, false, false, true,
             ],
             'checkout-block with card vaulting enabled' => [
-                'checkout-block', true, 'Credit Card', 'yes', true, false, false, true, true,
+                'checkout-block', true, 'Credit Card', true, false, false, true,
             ],
             'checkout-block with a subscription in the cart' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, true, false, true, true,
+                'checkout-block', true, 'Credit Card', false, true, false, true,
             ],
             'checkout-block with ACDC enabled but Fastlane renders' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, false, true, false, true,
+                'checkout-block', true, 'Credit Card', false, false, true, false,
             ],
             'classic checkout with ACDC enabled but Fastlane renders' => [
-                'checkout', true, 'Credit Card', 'yes', false, false, true, false, true,
+                'checkout', true, 'Credit Card', false, false, true, false,
             ],
             'checkout-block with ACDC disabled and Fastlane renders' => [
-                'checkout-block', false, 'Credit Card', 'yes', false, false, true, false, true,
+                'checkout-block', false, 'Credit Card', false, false, true, false,
             ],
         ];
     }
