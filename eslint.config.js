@@ -36,4 +36,11 @@ module.exports = [
 			'no-console': [ 'error', { allow: [ 'warn', 'error' ] } ],
 		},
 	},
+	{
+		files: [ 'tests/qa/**/*.{js,mjs,cjs,ts,tsx}' ],
+		rules: {
+			'@wordpress/dependency-group': 'error',
+			'no-console': 'off',
+		},
+	},
 ];
