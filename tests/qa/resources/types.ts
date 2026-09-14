@@ -108,6 +108,7 @@ export namespace Pcp {
 		isAuthorized?: boolean;
 		saveToAccount?: boolean;
 		isFreeTrialSubscription?: boolean; // cart total is 0 (free trial or 100% coupon) - PayPal renders the saved-token radio instead of the vault component, see FreeTrialSubscriptionHelper::is_free_trial_cart()
+		isPayPalSubscription?: boolean; // native PayPal Subscription (subscriptions_api mode, "Save PayPal and Venmo" off) rather than a vaulted WC Subscriptions renewal - see SdkV6Manager::is_native_paypal_subscription_page()
 	};
 
 	export namespace Api {

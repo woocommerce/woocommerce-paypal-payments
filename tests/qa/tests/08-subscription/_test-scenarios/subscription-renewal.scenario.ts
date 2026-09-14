@@ -50,6 +50,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					await classicCheckout.payPalUi.makePayment( {
 						merchant,
 						payment,
+						isPayPalSubscription: payment.isPayPalSubscription,
 					} );
 				} );
 					
@@ -219,6 +220,7 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				await classicCheckout.payPalUi.makePayment( {
 					merchant,
 					payment,
+					isPayPalSubscription: payment.isPayPalSubscription,
 				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
