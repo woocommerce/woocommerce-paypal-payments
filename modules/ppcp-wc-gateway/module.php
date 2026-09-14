@@ -1,14 +1,13 @@
 <?php
+
 /**
  * The module.
  *
  * @package WooCommerce\PayPalCommerce\WcGateway
  */
-
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
-return static function (): WCGatewayModule {
-	return new WCGatewayModule();
+return static function (): \WooCommerce\PayPalCommerce\WcGateway\WCGatewayModule {
+    return new \WooCommerce\PayPalCommerce\WcGateway\WCGatewayModule();
 };
