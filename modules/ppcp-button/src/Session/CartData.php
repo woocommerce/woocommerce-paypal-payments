@@ -43,7 +43,7 @@ class CartData {
 	 * @param bool                                $needs_shipping
 	 * @param int                                 $user_id
 	 * @param string                              $cart_hash
-	 * @param array<string, array<string, mixed>> $fees Optional, so existing callers keep working.
+	 * @param array<string, array<string, mixed>> $fees Optional.
 	 */
 	public function __construct(
 		array $items,
