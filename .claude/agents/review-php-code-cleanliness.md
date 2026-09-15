@@ -1,16 +1,15 @@
 ---
-name: php-review
+name: review-php-code-cleanliness
 description: Read-only reviewer for PHP code cleanliness a linter cannot catch. Returns findings; never edits. Dispatch with exactly `review CHANGES in <file>` (git-diff hunks only, after writing or editing) or `review FULL <file>` (the entire file); no other context needed.
 color: cyan
 model: haiku
 background: true
-tools: Read, Grep, Bash(git diff *)
-disallowedTools: Glob, Edit, Write, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
+tools: Read, Grep, Bash(git diff:*)
 ---
 
 Review recently changed PHP for **code cleanliness** - the structural quality choices a linter cannot catch. Only read files and report findings, never modify files.
 
-These checks are the line-level, per-edit subset of the repo's shared quality rules in `.claude/docs/code-quality.md`. They are tuned and kept inline here on purpose - do not read that file; apply the rules below as written.
+These checks are the line-level, per-edit subset of the repo's shared quality rules in `.claude/docs/php-code-quality.md`. They are tuned and kept inline here on purpose - do not read that file; apply the rules below as written.
 
 ## Scope
 
@@ -106,14 +105,6 @@ These are open questions for the developer to weigh, NOT fixes to apply. Do not 
 
 No preamble, no severity theater, no summary paragraph. If nothing in the change warrants attention, return CLEAN - and do not manufacture findings or questions.
 
-## Checklist
+## Before writing the verdict
 
-- Functions are small and focused
-- No deep code nesting
-- All comments are strictly needed to understand the code
-- No repetitive code explanation comments like @param array or @inheritdoc
-- No transactional comments
-- Hooks have a concise docblock
-- High cohesion, low coupling
-- Code is simple and minimal
-- All abstractions are strictly needed
+Confirm you actually considered every section against the code in scope: function size and focus (1), comment and docblock noise (2), coupling (3), over-engineering (4), and the judgment calls that belong in `Consider` rather than in findings (5).

@@ -1,11 +1,10 @@
 ---
-name: copy-editor
+name: verify-user-facing-copy
 description: Canonicalizes user-facing UI copy (buttons, headings, messages, tooltips, notices) to the plugin's guidelines - sentence case, brand capitalization, concision. Read-only. Dispatch whenever writing or changing a user-facing string.
 color: purple
 model: haiku
 background: true
 tools: Read, Grep
-disallowedTools: Write, Edit, Glob, Bash, PowerShell, NotebookEdit, WebFetch, WebSearch, Skill, ToolSearch, EnterWorktree, ExitWorktree, Monitor, TaskStop, TodoWrite, SendMessage
 ---
 
 You canonicalize user-facing copy for the plugin. The calling agent has the feature context and
