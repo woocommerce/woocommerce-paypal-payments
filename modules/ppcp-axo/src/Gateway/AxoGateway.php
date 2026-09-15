@@ -130,9 +130,8 @@ class AxoGateway extends WC_Payment_Gateway
      * @param ExperienceContextBuilder  $experience_context_builder  The experience context builder.
      * @param SettingsModel             $settings_model              The settings model.
      * @param ReturnUrlSecret|null      $return_url_secret           Issues the return URL secret.
-     *                                                               Defaults to a real instance, so
-     *                                                               that the 3DS return URL always
-     *                                                               carries proof of origin.
+     *                                                               Defaults to a real instance, so the
+     *                                                               3DS return URL always carries proof.
      */
     public function __construct(CardPaymentsConfiguration $dcc_configuration, SessionHandler $session_handler, OrderProcessor $order_processor, array $card_icons, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, TransactionUrlProvider $transaction_url_provider, Environment $environment, LoggerInterface $logger, ExperienceContextBuilder $experience_context_builder, SettingsModel $settings_model, ?ReturnUrlSecret $return_url_secret = null)
     {
@@ -206,12 +205,9 @@ class AxoGateway extends WC_Payment_Gateway
             // If 3DS verification is required, redirect with token in return URL.
             if ($payer_action) {
                 $return_url = add_query_arg('token', $order->id(), home_url(WC_AJAX::get_endpoint(ReturnUrlEndpoint::ENDPOINT)));
-                // This method builds the URL that the buyer comes back through, so
-                // the secret must be bound to this PayPal order. Without it
-                // ReturnUrlEndpoint refuses the return. build_order_data() already
-                // bound one for the experience context of the same order, so reuse it
-                // rather than issue a second: a new secret would replace the bound one
-                // and leave the return URL of the experience context without a proof.
+                // ReturnUrlEndpoint refuses a return with no proof. build_order_data()
+                // already bound a secret to this same order, so reuse it: issuing a
+                // second one would replace it and invalidate the URL built there.
                 $return_url = add_query_arg('ppcp_return_nonce', $this->return_url_secret->secret_for($order->id()), $return_url);
                 $redirect_url = add_query_arg('redirect_uri', rawurlencode($return_url), $payer_action);
                 return array('result' => 'success', 'redirect' => $redirect_url);

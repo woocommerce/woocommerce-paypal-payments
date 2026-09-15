@@ -5,9 +5,9 @@
  * handed out by this shop for a specific PayPal order.
  *
  * The secret travels in the return URL as the `ppcp_return_nonce` query argument
- * and is kept server side against the PayPal order ID. It therefore does not
- * depend on the WC session cookie, on a login, or on the browser that the buyer
- * comes back in.
+ * and is kept server side against the PayPal order ID, so does not
+ * depend on the WC session cookie, on a login, or on the browser the buyer
+ * returns in.
  */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
@@ -30,8 +30,10 @@ class ReturnUrlSecret
     /**
      * Makes a secret for a return URL whose PayPal order does not exist yet.
      *
-     * The caller puts the value in the URL. bind() attaches it to the order as
-     * soon as PayPal returns the new order ID.
+     * The caller puts the value in the URL, and bind() attaches it to the order as
+     * soon as PayPal returns the new order ID. The pair is request-scoped instance
+     * state: if bind() never runs, no transient is written and verify() then
+     * refuses the return, so the mechanism fails closed.
      */
     public function issue_pending(): string
     {
@@ -41,8 +43,8 @@ class ReturnUrlSecret
     /**
      * Attaches the pending secret to a PayPal order, and clears it.
      *
-     * Does nothing when no secret is pending. Order creation that uses no return
-     * URL, such as a subscription renewal, thus keeps no transient.
+     * Does nothing when no secret is pending, so order creation that ships no
+     * endpoint return URL keeps no transient.
      *
      * @param string $paypal_order_id The ID of the new PayPal order.
      */
@@ -57,11 +59,8 @@ class ReturnUrlSecret
     /**
      * Drops the pending secret, but only when it is the one the caller issued.
      *
-     * A builder that hands out an endpoint return URL and then replaces that URL
-     * with a custom one uses this to withdraw its secret, so that bind() keeps no
-     * transient for a URL that the request payload does not carry. The comparison
-     * makes the withdrawal safe: a caller can never drop a secret that a different
-     * caller issued in the same request.
+     * A builder that replaces its endpoint return URL with a custom one withdraws
+     * its secret here, so bind() keeps no transient for a URL that never ships.
      *
      * @param string $secret The secret that the caller issued earlier.
      */
@@ -77,9 +76,12 @@ class ReturnUrlSecret
     /**
      * Makes a secret for a PayPal order that already exists, and keeps it.
      *
+     * Private because it replaces whatever secret the order already carries.
+     * Callers use secret_for(), which only issues when nothing is bound yet.
+     *
      * @param string $paypal_order_id The PayPal order ID.
      */
-    public function issue_for(string $paypal_order_id): string
+    private function issue_for(string $paypal_order_id): string
     {
         $secret = $this->generate();
         $this->store($paypal_order_id, $secret);
@@ -88,9 +90,8 @@ class ReturnUrlSecret
     /**
      * Gives the secret of a PayPal order, and makes one when none is bound yet.
      *
-     * A caller that builds a second return URL for an order which already carries a
-     * secret uses this instead of issue_for(), so that both URLs hold the same proof
-     * and the transient is written one time only.
+     * A second return URL for the same order must reuse the bound secret, so that
+     * both URLs hold the same proof and neither is invalidated by the other.
      *
      * @param string $paypal_order_id The PayPal order ID.
      */
@@ -131,8 +132,7 @@ class ReturnUrlSecret
     /**
      * Tells whether a secret is bound to the PayPal order.
      *
-     * A return for an order that has no secret is a return for an order that
-     * this version of the plugin did not create.
+     * An order with no secret is one that a version before this.
      *
      * @param string $paypal_order_id The PayPal order ID.
      */
