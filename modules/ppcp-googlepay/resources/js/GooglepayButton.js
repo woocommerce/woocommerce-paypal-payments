@@ -3,6 +3,7 @@ import {
 	combineWrapperIds,
 } from '@ppcp-button/Helper/PaymentButtonHelpers';
 import PaymentButton from '@ppcp-button/Renderer/PaymentButton';
+import { describeError } from '@ppcp-button/Helper/FrontendLog';
 import widgetBuilder from '@ppcp-button/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { PaymentMethods } from '@ppcp-button/Helper/CheckoutMethodState';
@@ -741,7 +742,10 @@ class GooglepayButton extends PaymentButton {
 
 				resolve( paymentDataRequestUpdate );
 			} catch ( error ) {
-				this.error( 'Error during onPaymentDataChanged:', error );
+				this.reportFailure(
+					'shipping-update-failed',
+					describeError( error )
+				);
 				reject( error );
 			}
 		} );
@@ -862,7 +866,7 @@ class GooglepayButton extends PaymentButton {
 		};
 
 		const paymentError = ( reason ) => {
-			this.error( reason );
+			this.reportFailure( 'payment-failed', reason );
 
 			return paymentResponse( 'ERROR', 'PAYMENT_AUTHORIZATION', reason );
 		};
@@ -887,6 +891,13 @@ class GooglepayButton extends PaymentButton {
 					return ORDER_INCOMPLETE;
 
 				default:
+					// confirmOrder goes straight from the browser to PayPal,
+					// so this status is the only account of the refusal.
+					this.reportFailure(
+						'confirm-order-not-approved',
+						`status=${ confirmOrderResponse?.status }`
+					);
+
 					return ORDER_FAILED;
 			}
 		};
