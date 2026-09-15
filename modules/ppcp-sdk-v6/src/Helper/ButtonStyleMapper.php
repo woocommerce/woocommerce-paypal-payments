@@ -28,9 +28,9 @@ class ButtonStyleMapper
      * Returns v6-compatible styles for a given context.
      *
      * Color and shape come from the styling DTOs, the same source the v5
-     * SmartButton reads. There is no height: the styling DTOs have no
-     * height field (the legacy button_*_height keys are unmaintained
-     * fossils that current v5 no longer honors either).
+     * SmartButton reads. There is no height, because the styling DTOs have no
+     * height field; SdkV6Manager::button_height() supplies one per context
+     * instead, matching the per-location defaults v5 sends.
      *
      * @param string $context The page context (product, cart, checkout, mini-cart).
      * @return array{colorClass: string, borderRadius: string}
