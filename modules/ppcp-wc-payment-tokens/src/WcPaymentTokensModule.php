@@ -194,6 +194,30 @@ class WcPaymentTokensModule implements ServiceModule, ExecutableModule {
 			2
 		);
 
+		add_filter(
+			'woocommerce_credit_card_type_labels',
+			/**
+			 * Registers the PayPal brand label.
+			 *
+			 * wc_get_credit_card_type_label() lowercases the brand and ucfirst()s
+			 * anything it does not recognise, which renders PayPal as "Paypal" on the
+			 * My Account payment methods table.
+			 *
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $labels ) {
+				if ( ! is_array( $labels ) ) {
+					return $labels;
+				}
+
+				$labels['paypal'] = 'PayPal';
+
+				return $labels;
+			}
+		);
+
 		add_action(
 			'wp',
 			function () use ( $container ) {
