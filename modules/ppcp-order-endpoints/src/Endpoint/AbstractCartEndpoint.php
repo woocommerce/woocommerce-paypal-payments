@@ -181,4 +181,27 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	protected function remove_cart_items(): void {
 		$this->cart_products->remove_cart_items();
 	}
+
+	/**
+	 * Stops WooCommerce writing the session at the end of this request.
+	 *
+	 * Calculating totals writes shipping rates into the live session, and
+	 * save_data() then replaces the whole row on shutdown from the snapshot this
+	 * request began with, discarding an add-to-cart that completed in between.
+	 *
+	 * Only for requests with nothing to persist: the write happens on shutdown,
+	 * so this cannot be re-enabled once the work is done.
+	 */
+	protected function prevent_session_persistence(): void {
+		if ( ! function_exists( 'WC' ) ) {
+			return;
+		}
+
+		$session = WC()->session;
+		if ( ! $session instanceof \WC_Session ) {
+			return;
+		}
+
+		remove_action( 'shutdown', array( $session, 'save_data' ), 20 );
+	}
 }
