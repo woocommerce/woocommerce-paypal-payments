@@ -36,7 +36,11 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 			setApplePayLoaded( true );
 		} );
 
-		ppcpConfig.url_params.components += ',applepay';
+		// Absent when the v6 SDK owns the page: the v5 smart button is disabled
+		// there and localizes no script data.
+		if ( ppcpConfig.url_params ) {
+			ppcpConfig.url_params.components += ',applepay';
+		}
 
 		// Load PayPal
 		loadPayPalScript( namespace, ppcpConfig )

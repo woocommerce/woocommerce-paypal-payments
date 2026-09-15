@@ -107,7 +107,8 @@ return array(
 		return new CreatePaymentToken(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-method-tokens' ),
-			$container->get( 'wc-payment-tokens.wc-payment-tokens' )
+			$container->get( 'wc-payment-tokens.wc-payment-tokens' ),
+			$container->get( 'wc-subscriptions.free-trial-subscription-helper' )
 		);
 	},
 	'save-payment-methods.endpoint.create-payment-token-for-guest' => static function ( ContainerInterface $container ): CreatePaymentTokenForGuest {

@@ -26,20 +26,8 @@ import { paypalOrderToWcAddresses } from './address';
 import { prefillFromPayPalOrder } from './prefillAddresses';
 import { buildBlocksShippingHandlers } from './blocksShippingHandlers';
 import { V6ButtonContainer } from './V6ButtonContainer';
-import { minorUnitsToDecimal } from '../utils/amount';
-
-/**
- * Derives a decimal amount string from the Blocks billing prop.
- *
- * @param {Object} billing - The Blocks billing prop (cart total in minor units).
- * @return {string} The amount as a decimal string, or '' when unknown.
- */
-function amountFromBilling( billing ) {
-	return minorUnitsToDecimal(
-		billing?.cartTotal?.value,
-		billing?.currency?.minorUnit
-	);
-}
+import { amountFromBilling } from '../utils/amount';
+import { isFreeTrialCart } from '../utils/freeTrial';
 
 /**
  * @param {Object}                    props                     - Props from the Blocks express payment registry.
@@ -79,20 +67,18 @@ export function V6ExpressComponent( {
 	const context = config.page_context;
 	const methodId = `ppcp-gateway-${ fundingSource }`;
 
-	// A $0 free-trial subscription is vaulted through the PayPal save flow rather
-	// than a one-time order: the buyer approves a setup token, it is exchanged for
-	// a stored token, and the Blocks checkout submit places the $0 WC order. Only
-	// PayPal is offered on such carts (see checkout-block.js), so guard on it.
-	const isFreeTrial =
-		Boolean( config.is_free_trial_cart ) &&
-		fundingSource === FundingSources.PAYPAL;
-
 	const [ sdk, setSdk ] = useState( null );
 	const [ eligibility, setEligibility ] = useState( null );
 	const [ paypalOrder, setPaypalOrder ] = useState( null );
 
 	// Pay Later thresholds are amount-sensitive, so follow the live cart total.
 	const amount = amountFromBilling( billing ) || config.amount;
+
+	// Vaulted through the save flow instead of a one-time order. Only PayPal is
+	// offered on such carts (see checkout-block.js), so guard on it.
+	const isFreeTrial =
+		isFreeTrialCart( config, amount ) &&
+		fundingSource === FundingSources.PAYPAL;
 
 	// loadSdkV6 is promise-memoized, so this shares the instance
 	// canMakePayment already created.

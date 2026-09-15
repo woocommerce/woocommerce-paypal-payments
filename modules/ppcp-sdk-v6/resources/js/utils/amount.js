@@ -28,3 +28,30 @@ export function minorUnitsToDecimal( value, minorUnit ) {
 
 	return ( minor / Math.pow( 10, exponent ) ).toFixed( exponent );
 }
+
+/**
+ * Derives a decimal amount string from the WooCommerce Blocks billing prop.
+ *
+ * @param {Object} billing - The Blocks billing prop (cart total in minor units).
+ * @return {string} The amount as a decimal string, or '' when unknown.
+ */
+export function amountFromBilling( billing ) {
+	return minorUnitsToDecimal(
+		billing?.cartTotal?.value,
+		billing?.currency?.minorUnit
+	);
+}
+
+/**
+ * Derives a decimal amount string from cart totals, the shape used by
+ * canMakePayment, the wc/store/cart store and the Store API cart response.
+ *
+ * @param {Object} cartTotals - The cart totals (amounts in minor units).
+ * @return {string} The amount as a decimal string, or '' when unknown.
+ */
+export function amountFromCartTotals( cartTotals ) {
+	return minorUnitsToDecimal(
+		cartTotals?.total_price,
+		cartTotals?.currency_minor_unit
+	);
+}

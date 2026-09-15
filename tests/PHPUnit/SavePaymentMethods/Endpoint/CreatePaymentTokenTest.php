@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -29,6 +30,9 @@ class CreatePaymentTokenTest extends TestCase {
 
 	/** @var WooCommercePaymentTokens&\Mockery\MockInterface */
 	private $wc_payment_tokens;
+
+	/** @var FreeTrialSubscriptionHelper&\Mockery\MockInterface */
+	private $free_trial_helper;
 
 	/** @var CreatePaymentToken */
 	private $sut;
@@ -59,11 +63,14 @@ class CreatePaymentTokenTest extends TestCase {
 		$this->request_data      = Mockery::mock( RequestData::class );
 		$this->tokens_endpoint   = Mockery::mock( PaymentMethodTokensEndpoint::class );
 		$this->wc_payment_tokens = Mockery::mock( WooCommercePaymentTokens::class );
+		$this->free_trial_helper = Mockery::mock( FreeTrialSubscriptionHelper::class );
+		$this->free_trial_helper->shouldReceive( 'is_free_trial_cart' )->andReturn( false )->byDefault();
 
 		$this->sut = new CreatePaymentToken(
 			$this->request_data,
 			$this->tokens_endpoint,
-			$this->wc_payment_tokens
+			$this->wc_payment_tokens,
+			$this->free_trial_helper
 		);
 
 		// Common WP stubs.
@@ -121,6 +128,106 @@ class CreatePaymentTokenTest extends TestCase {
 		$this->sut->handle_request();
 
 		$this->assertSame( 4242, $sent_value, 'wp_send_json_success should receive the WC token id from create_payment_token_card()' );
+	}
+
+	/**
+	 * Builds a WC() session stub that records set() calls under a given key.
+	 *
+	 * @return \Mockery\MockInterface
+	 */
+	private function wc_session_spy() {
+		$session = Mockery::mock();
+		when( 'WC' )->justReturn( (object) array( 'session' => $session ) );
+
+		return $session;
+	}
+
+	/**
+	 * GIVEN a FreeTrialSubscriptionHelper reporting the cart as a free trial
+	 * WHEN handle_request() saves a card token, regardless of what the request body claims
+	 * THEN the ppcp_card_payment_token_for_free_trial session value is set to the new WC token id -
+	 *      the server holds the real cart state, so a coupon applied after the page rendered
+	 *      cannot leave a stale request claim in charge of this decision
+	 * AND the posted is_free_trial_cart flag is ignored entirely
+	 *
+	 * @dataProvider request_body_free_trial_claim_provider
+	 */
+	public function test_card_success_sets_free_trial_session_value_ignoring_posted_flag( array $request_data ): void {
+		$free_trial_helper = Mockery::mock( FreeTrialSubscriptionHelper::class );
+		$free_trial_helper->shouldReceive( 'is_free_trial_cart' )->andReturn( true );
+
+		$this->sut = new CreatePaymentToken(
+			$this->request_data,
+			$this->tokens_endpoint,
+			$this->wc_payment_tokens,
+			$free_trial_helper
+		);
+
+		$this->request_data
+			->shouldReceive( 'read_request' )
+			->once()
+			->andReturn( array_merge( array( 'vault_setup_token' => 'setup-tok-010' ), $request_data ) );
+
+		$fixture = $this->card_result_fixture();
+		$this->tokens_endpoint->shouldReceive( 'create_payment_token' )->once()->andReturn( $fixture );
+		$this->wc_payment_tokens->shouldReceive( 'create_payment_token_card' )->once()->andReturn( 5151 );
+
+		$session = $this->wc_session_spy();
+		$session->shouldReceive( 'set' )
+			->once()
+			->with( 'ppcp_card_payment_token_for_free_trial', 5151 );
+
+		expect( 'wp_send_json_success' )->once();
+		expect( 'update_user_meta' )->once();
+
+		$this->sut->handle_request();
+	}
+
+	public function request_body_free_trial_claim_provider(): array {
+		return array(
+			'request body claims not a free trial' => array( array( 'is_free_trial_cart' => '0' ) ),
+			'request body omits the field entirely' => array( array() ),
+		);
+	}
+
+	/**
+	 * GIVEN a FreeTrialSubscriptionHelper reporting the cart as not a free trial
+	 * WHEN handle_request() saves a card token, even though the request body claims '1'
+	 * THEN the ppcp_card_payment_token_for_free_trial session value is never set - a stale
+	 *      client-side claim cannot override the server's own read of the cart
+	 */
+	public function test_card_success_does_not_set_free_trial_session_value_ignoring_posted_flag(): void {
+		$free_trial_helper = Mockery::mock( FreeTrialSubscriptionHelper::class );
+		$free_trial_helper->shouldReceive( 'is_free_trial_cart' )->andReturn( false );
+
+		$this->sut = new CreatePaymentToken(
+			$this->request_data,
+			$this->tokens_endpoint,
+			$this->wc_payment_tokens,
+			$free_trial_helper
+		);
+
+		$this->request_data
+			->shouldReceive( 'read_request' )
+			->once()
+			->andReturn(
+				array(
+					'vault_setup_token'  => 'setup-tok-011',
+					'is_free_trial_cart' => '1',
+				)
+			);
+
+		$fixture = $this->card_result_fixture();
+		$this->tokens_endpoint->shouldReceive( 'create_payment_token' )->once()->andReturn( $fixture );
+		$this->wc_payment_tokens->shouldReceive( 'create_payment_token_card' )->once()->andReturn( 6161 );
+
+		$session = $this->wc_session_spy();
+		$session->shouldNotReceive( 'set' );
+
+		expect( 'wp_send_json_success' )->once();
+		expect( 'update_user_meta' )->once();
+
+		$this->sut->handle_request();
 	}
 
 	/**

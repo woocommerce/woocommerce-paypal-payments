@@ -20,11 +20,6 @@ class CartEndpoint {
 
 	private LoggerInterface $logger;
 
-	/**
-	 * Unused (for trait).
-	 */
-	private string $host = '';
-
 	public function __construct( CartFactory $cart_factory, LoggerInterface $logger ) {
 		$this->cart_factory = $cart_factory;
 		$this->logger       = $logger;

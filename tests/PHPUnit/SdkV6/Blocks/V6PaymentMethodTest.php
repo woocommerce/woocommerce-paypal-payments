@@ -28,7 +28,7 @@ class V6PaymentMethodTest extends TestCase
         $this->card_gateway = Mockery::mock(CreditCardGateway::class);
     }
 
-    private function createTestee(): V6PaymentMethod
+    private function createTestee(?callable $place_order_data = null): V6PaymentMethod
     {
         return new V6PaymentMethod(
             $this->manager,
@@ -38,7 +38,8 @@ class V6PaymentMethodTest extends TestCase
             $this->card_gateway,
             null,
             null,
-            ''
+            '',
+            $place_order_data
         );
     }
 
@@ -92,5 +93,98 @@ class V6PaymentMethodTest extends TestCase
         $handles = $testee->get_payment_method_script_handles();
 
         $this->assertSame([], $handles);
+    }
+
+    private function stubGatewayForPaymentMethodData(): void
+    {
+        $this->manager->shouldReceive('script_data')->andReturn([]);
+        $this->gateway->shouldReceive('get_description')->andReturn('Pay with PayPal.');
+        $this->gateway->title    = 'PayPal';
+        $this->gateway->icon     = 'https://example.com/paypal-icon.png';
+        $this->gateway->supports = ['products'];
+    }
+
+    /**
+     * GIVEN a PayPal gateway with an icon URL configured
+     * WHEN the block payment method data is built
+     * THEN the icon is exposed as a single-entry array shaped for WooCommerce
+     *      Blocks' PaymentMethodIcons, carrying the gateway's own icon URL
+     */
+    public function test_get_payment_method_data_exposes_icon_shaped_for_payment_method_icons(): void
+    {
+        $this->stubGatewayForPaymentMethodData();
+
+        $testee = $this->createTestee();
+        $data   = $testee->get_payment_method_data();
+
+        $this->assertSame(
+            [
+                [
+                    'id'  => 'paypal',
+                    'alt' => 'PayPal',
+                    'src' => 'https://example.com/paypal-icon.png',
+                ],
+            ],
+            $data['icon']
+        );
+    }
+
+    /**
+     * GIVEN no place-order data provider was supplied to the payment method
+     * WHEN the block payment method data is built
+     * THEN no "place_order" key is present, so no non-express PayPal row is offered
+     */
+    public function test_get_payment_method_data_omits_place_order_when_no_provider_supplied(): void
+    {
+        $this->stubGatewayForPaymentMethodData();
+
+        $testee = $this->createTestee();
+        $data   = $testee->get_payment_method_data();
+
+        $this->assertArrayNotHasKey('place_order', $data);
+    }
+
+    /**
+     * GIVEN a place-order data provider whose answer depends on the current cart
+     * WHEN the block payment method data is built more than once, after the cart's
+     *      state (and therefore the provider's answer) has changed
+     * THEN each call exposes the provider's current answer under "place_order",
+     *      not the answer captured on the first call
+     */
+    public function test_get_payment_method_data_reflects_current_place_order_state_on_each_call(): void
+    {
+        $this->stubGatewayForPaymentMethodData();
+
+        $cartHasSubscription = false;
+        $place_order_data    = static function () use (&$cartHasSubscription): array {
+            return [
+                'enabled'     => ! $cartHasSubscription,
+                'text'        => 'Place order',
+                'description' => '',
+            ];
+        };
+
+        $testee = $this->createTestee($place_order_data);
+
+        $firstCallData = $testee->get_payment_method_data();
+        $this->assertSame(
+            [
+                'enabled'     => true,
+                'text'        => 'Place order',
+                'description' => '',
+            ],
+            $firstCallData['place_order']
+        );
+
+        $cartHasSubscription = true;
+        $secondCallData      = $testee->get_payment_method_data();
+        $this->assertSame(
+            [
+                'enabled'     => false,
+                'text'        => 'Place order',
+                'description' => '',
+            ],
+            $secondCallData['place_order']
+        );
     }
 }

@@ -21,10 +21,12 @@ use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\CartQuoteEndpoint;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MerchantCountrySupport;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedShippingRate;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedQuote;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedTaxBasis;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -225,6 +227,21 @@ class SdkV6Module implements ServiceModule, ExtendingModule, ExecutableModule {
 				add_action( 'wp_enqueue_scripts', $suppress_v5_methods, 5 );
 				add_action( 'enqueue_block_editor_assets', $suppress_v5_methods, 5 );
 			}
+		);
+
+		// Priority 20: the country is resolved by the priority 10 handler.
+		add_action(
+			'woocommerce_paypal_payments_authenticated_merchant',
+			static function () use ( $c ) {
+				$settings_provider = $c->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
+
+				$support = new MerchantCountrySupport( $settings_provider->merchant_country() );
+				if ( ! $support->is_supported() ) {
+					update_option( 'woocommerce-ppcp-sdk-v6-eligible', 'no' );
+				}
+			},
+			20
 		);
 
 		return true;

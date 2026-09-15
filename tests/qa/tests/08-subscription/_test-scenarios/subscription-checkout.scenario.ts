@@ -32,7 +32,11 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await utils.fillVisitorsCart( products );
 				await checkout.visit();
 				await checkout.completeCheckoutDetails( testOrder );
-				await checkout.payPalUi.makePayment( { merchant, payment } );
+				await checkout.payPalUi.makePayment( {
+					merchant,
+					payment,
+					isPayPalSubscription: payment.isPayPalSubscription,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const subscriptionId =
@@ -103,7 +107,11 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await utils.fillVisitorsCart( products );
 				await checkout.visit();
 				await checkout.completeCheckoutDetails( testOrder );
-				await checkout.payPalUi.makePayment( { merchant, payment } );
+				await checkout.payPalUi.makePayment( {
+					merchant,
+					payment,
+					isPayPalSubscription: payment.isPayPalSubscription,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const subscriptionId =

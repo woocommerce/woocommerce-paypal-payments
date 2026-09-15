@@ -90,9 +90,9 @@ describe( 'SingleProductHandler', () => {
 					null
 				);
 
-				await expect( disabledHandler.transactionInfo() ).rejects.toThrow(
-					'Cart simulation is disabled.'
-				);
+				await expect(
+					disabledHandler.transactionInfo()
+				).rejects.toThrow( 'Cart simulation is disabled.' );
 				expect( mockSimulate ).not.toHaveBeenCalled();
 			} );
 
@@ -113,31 +113,43 @@ describe( 'SingleProductHandler', () => {
 		} );
 
 		describe( 'variation_id guard', () => {
-			test( 'rejects immediately when variation_id is empty', async () => {
-				document.body.innerHTML = `
+			// Falling back rather than rejecting is what lets the button render at
+			// all: the manager skips a button it has no transaction info for, and
+			// nothing re-runs that init when a variation is later chosen, so a
+			// rejection here removed Google Pay from the product for good.
+			// ProductButtonGate keeps the rendered button disabled, and
+			// onButtonClick() re-reads this method before opening the sheet.
+			test.each( [
+				[ 'empty', '' ],
+				[ '"0"', '0' ],
+			] )(
+				'falls back to the cart totals, without simulating, when variation_id is %s',
+				async ( _label, value ) => {
+					document.body.innerHTML = `
 					<form class="cart">
-						<input type="hidden" name="variation_id" value="" />
+						<input type="hidden" name="variation_id" value="${ value }" />
 					</form>
 				`;
 
-				await expect( handler.transactionInfo() ).rejects.toThrow(
-					'No variation selected.'
-				);
-				expect( mockSimulate ).not.toHaveBeenCalled();
-			} );
+					const fallback = Symbol( 'cart transaction info' );
+					const baseTransactionInfo = jest
+						.spyOn(
+							Object.getPrototypeOf(
+								Object.getPrototypeOf( handler )
+							),
+							'transactionInfo'
+						)
+						.mockResolvedValue( fallback );
 
-			test( 'rejects immediately when variation_id is "0"', async () => {
-				document.body.innerHTML = `
-					<form class="cart">
-						<input type="hidden" name="variation_id" value="0" />
-					</form>
-				`;
+					await expect( handler.transactionInfo() ).resolves.toBe(
+						fallback
+					);
+					expect( baseTransactionInfo ).toHaveBeenCalled();
+					expect( mockSimulate ).not.toHaveBeenCalled();
 
-				await expect( handler.transactionInfo() ).rejects.toThrow(
-					'No variation selected.'
-				);
-				expect( mockSimulate ).not.toHaveBeenCalled();
-			} );
+					baseTransactionInfo.mockRestore();
+				}
+			);
 
 			test( 'calls simulate_cart when variation_id is set', async () => {
 				document.body.innerHTML = `
@@ -184,7 +196,9 @@ describe( 'SingleProductHandler', () => {
 
 			test( 'resolves with TransactionInfo built from response data', async () => {
 				const mockTransactionInstance = { totalPrice: '45.00' };
-				TransactionInfo.mockImplementation( () => mockTransactionInstance );
+				TransactionInfo.mockImplementation(
+					() => mockTransactionInstance
+				);
 
 				mockSimulate.mockImplementation( ( onResolve ) =>
 					Promise.resolve(
@@ -199,12 +213,19 @@ describe( 'SingleProductHandler', () => {
 
 				const result = await handler.transactionInfo();
 
-				expect( TransactionInfo ).toHaveBeenCalledWith( 45, 5, 'USD', 'US' );
+				expect( TransactionInfo ).toHaveBeenCalledWith(
+					45,
+					5,
+					'USD',
+					'US'
+				);
 				expect( result ).toBe( mockTransactionInstance );
 			} );
 
 			test( 'propagates rejection from simulate_cart', async () => {
-				const serverError = { message: 'Error adding products to cart.' };
+				const serverError = {
+					message: 'Error adding products to cart.',
+				};
 				mockSimulate.mockRejectedValue( serverError );
 
 				await expect( handler.transactionInfo() ).rejects.toEqual(

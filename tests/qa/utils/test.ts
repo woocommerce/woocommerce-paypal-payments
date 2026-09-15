@@ -2,17 +2,15 @@
  * External dependencies
  */
 import fs from 'fs';
-import {
-	APIRequestContext,
-	Page,
-	VideoMode,
-	ViewportSize,
-} from '@playwright/test';
+import { APIRequestContext, Page } from '@playwright/test';
 import {
 	test as base,
 	expect,
 	WooCommerceApi,
 	BaseExtend as BaseExtendBase,
+	shouldRecordScreencast,
+	startPageScreencast,
+	stopPageScreencast,
 } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
@@ -51,10 +49,6 @@ import {
 } from './frontend';
 
 export type BaseExtend = BaseExtendBase & {
-	recordVideoOptions?: {
-		mode: VideoMode;
-		size?: ViewportSize;
-	};
 	payPalApi: PayPalApi;
 	pcpApi: PcpApi;
 	visitorPage: Page;
@@ -95,7 +89,6 @@ export type BaseExtend = BaseExtendBase & {
 };
 
 const test = base.extend< BaseExtend >( {
-	recordVideoOptions: [ null, { option: true } ],
 	payPalApi: async ( { request }, use ) => {
 		await use( new PayPalApi( { request } ) );
 	},
@@ -103,7 +96,7 @@ const test = base.extend< BaseExtend >( {
 		await use( new PcpApi( { request, requestUtils } ) );
 	},
 	visitorPage: async (
-		{ browser, recordVideoOptions, httpCredentials },
+		{ browser, screencastOptions, httpCredentials },
 		use,
 		testInfo
 	) => {
@@ -119,30 +112,35 @@ const test = base.extend< BaseExtend >( {
 			httpCredentials,
 			storageState: fs.existsSync( storageStatePath )
 				? storageStatePath
-				: undefined,
-			...( recordVideoOptions && {
-				recordVideo: {
-					...recordVideoOptions,
-					dir: testInfo.outputDir, // Override recordVideo to use correct output dir
-				},
-			} ),
+				: undefined
 		} );
+
 		const page = await context.newPage();
+
+		const record = shouldRecordScreencast( screencastOptions, testInfo );
+
+		if ( record ) {
+			await startPageScreencast(
+				page,
+				screencastOptions,
+				testInfo,
+				'visitorPage'
+			);
+		}
+
 		await use( page );
 
-		// Save video path BEFORE closing
-		const video = page.video();
+		if ( record ) {
+			await stopPageScreencast(
+				page,
+				screencastOptions,
+				testInfo,
+				'visitorPage'
+			);
+		}
+
 		await page.close();
 		await context.close();
-
-		// Attach video to report after context is closed
-		if ( video ) {
-			const videoPath = await video.path();
-			await testInfo.attach( 'video', {
-				path: videoPath,
-				contentType: 'video/webm',
-			} );
-		}
 	},
 	visitorRequest: async ( { visitorPage }, use ) => {
 		const request = visitorPage.request;

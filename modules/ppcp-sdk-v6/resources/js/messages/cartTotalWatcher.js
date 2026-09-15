@@ -11,7 +11,7 @@
 
 import { select, subscribe } from '@wordpress/data';
 
-import { minorUnitsToDecimal } from '../utils/amount';
+import { amountFromCartTotals } from '../utils/amount';
 
 const CART_STORE_KEY = 'wc/store/cart';
 
@@ -21,12 +21,7 @@ const CART_STORE_KEY = 'wc/store/cart';
  * @return {string} The total, or '' when the store is unavailable.
  */
 function readCartTotal() {
-	const totals = select( CART_STORE_KEY )?.getCartTotals?.();
-	if ( ! totals ) {
-		return '';
-	}
-
-	return minorUnitsToDecimal( totals.total_price, totals.currency_minor_unit );
+	return amountFromCartTotals( select( CART_STORE_KEY )?.getCartTotals?.() );
 }
 
 /**

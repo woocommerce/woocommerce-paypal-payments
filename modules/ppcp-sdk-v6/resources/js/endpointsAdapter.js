@@ -13,7 +13,7 @@ import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProduct
 import { payerData } from '@ppcp-button/Helper/PayerData';
 import { postJson, postStoreApi } from './utils/api';
 import { FundingSources } from './utils/fundingSources';
-import { minorUnitsToDecimal } from './utils/amount';
+import { amountFromCartTotals } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
 
 // The gateway that processes an order unless a caller names another one.
@@ -480,10 +480,7 @@ export async function fetchCart( config ) {
 export async function fetchCartTotal( config ) {
 	const cart = await fetchCart( config );
 
-	return minorUnitsToDecimal(
-		cart?.totals?.total_price,
-		cart?.totals?.currency_minor_unit
-	);
+	return amountFromCartTotals( cart?.totals );
 }
 
 /**

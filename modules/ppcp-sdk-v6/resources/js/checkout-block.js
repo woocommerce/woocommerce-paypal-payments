@@ -19,6 +19,7 @@ import {
 	registerPaymentMethod,
 } from '@woocommerce/blocks-registry';
 import { createElement } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
 import { __, sprintf } from '@wordpress/i18n';
 import { loadSdkV6 } from './sdkLoader';
 import { checkEligibility } from './eligibility';
@@ -30,9 +31,14 @@ import { V6EditorPreview } from './blocks/V6EditorPreview';
 // Reused as-is from the blocks module: renders the saved-PayPal vault approval
 // into the selected saved-token row (its own namespaced SDK, no v6 clash).
 import { PayPalSavedToken } from '@ppcp-blocks/Components/paypal-saved-token';
+// Reused for the same reason, so the regular PayPal row cannot drift from the
+// v5 one it exists to match.
+import { PaypalLabel } from '@ppcp-blocks/Components/paypal-label';
+import { PayPalPlaceOrderContent } from '@ppcp-blocks/Components/paypal-place-order-content';
 import { FundingSources } from './utils/fundingSources';
 import { fundingSourceLabel } from './utils/fundingSourceLabel';
-import { minorUnitsToDecimal } from './utils/amount';
+import { amountFromCartTotals } from './utils/amount';
+import { isFreeTrialCart } from './utils/freeTrial';
 import { setErrorLabels } from './utils/errorHandler';
 import {
 	methodConfig,
@@ -72,22 +78,46 @@ const paymentMethodData =
 	window.wc?.wcSettings?.getSetting?.( 'paymentMethodData' ) || {};
 const config = paymentMethodData[ 'ppcp-sdk-v6' ];
 
+// The gateway that processes every method registered here; also the name the
+// regular PayPal row registers under. Undefined when v6 does not run on this
+// page, where nothing below registers anything either.
+const PAYPAL_GATEWAY_ID = config?.id;
+
 // Wording for the error notices the bridges raise.
 setErrorLabels( config?.labels );
 
-// A free-trial ($0) subscription is vaulted through the PayPal save flow, which
-// only PayPal offers; Venmo/Pay Later cannot save without a purchase, so they are
-// suppressed on a free-trial cart (mirrors the v5 blocks checkout).
-//
 // Pay Later carries a per-context merchant setting on top of eligibility;
 // renderButtons() applies the same flag for the classic stack.
-const FUNDING_SOURCES = config?.is_free_trial_cart
-	? [ FundingSources.PAYPAL ]
-	: ALL_FUNDING_SOURCES.filter(
-			( fundingSource ) =>
-				fundingSource !== FundingSources.PAYLATER ||
-				Boolean( config?.pay_later_button?.[ config.page_context ] )
-	  );
+const FUNDING_SOURCES = ALL_FUNDING_SOURCES.filter( ( fundingSource ) => {
+	if ( fundingSource !== FundingSources.PAYLATER ) {
+		return true;
+	}
+
+	return Boolean( config?.pay_later_button?.[ config.page_context ] );
+} );
+
+/**
+ * Whether a method may be offered for the cart the shopper has right now.
+ *
+ * A free-trial ($0) subscription is vaulted through the save flow, which only
+ * PayPal offers, so such a cart offers PayPal alone (mirrors the v5 blocks
+ * checkout).
+ *
+ * Asked per cart update rather than at registration, which cannot be undone:
+ * canMakePayment is the only lever left once a coupon zeroes the cart, and it
+ * restores the methods when the coupon is removed again.
+ *
+ * @param {string} fundingSource - The method's funding source.
+ * @param {string} amount        - The live cart total as a decimal string.
+ * @return {boolean} False when only PayPal may be offered and this is not it.
+ */
+function expressMethodAllowedForCart( fundingSource, amount ) {
+	if ( fundingSource === FundingSources.PAYPAL ) {
+		return true;
+	}
+
+	return ! isFreeTrialCart( config, amount );
+}
 
 /**
  * Blocks drops a method whose features miss a cart requirement, so a method
@@ -101,21 +131,33 @@ function gatewayFeatures( features ) {
 }
 
 /**
- * Derives a decimal amount string from the WC Blocks cart totals.
+ * Relabels "Place order" while a redirect method is selected.
  *
- * @param {Object} cartTotals - The canMakePayment cartTotals (minor units).
- * @return {string} The amount as a decimal string, or '' when unknown.
+ * The registration's own placeOrderButtonLabel is not enough: the Checkout
+ * Actions block reads the label through this filter. Same pair as v5.
+ *
+ * @param {string} gatewayId - The method whose selection changes the label.
+ * @param {string} label     - The label to show while it is selected.
  */
-function amountFromCartTotals( cartTotals ) {
-	return minorUnitsToDecimal(
-		cartTotals?.total_price,
-		cartTotals?.currency_minor_unit
-	);
+function registerPlaceOrderLabel( gatewayId, label ) {
+	if ( ! label ) {
+		return;
+	}
+
+	window.wc?.blocksCheckout?.registerCheckoutFilters?.( gatewayId, {
+		placeOrderButtonLabel: ( defaultLabel ) => {
+			const payment = window.wp?.data?.select( 'wc/store/payment' );
+
+			return payment?.getActivePaymentMethod?.() === gatewayId
+				? label
+				: defaultLabel;
+		},
+	} );
 }
 
 if ( config && config.page_context && config.continuation ) {
 	registerPaymentMethod( {
-		name: 'ppcp-gateway',
+		name: PAYPAL_GATEWAY_ID,
 		// The session's actual funding source, so the label cannot contradict
 		// the server-rendered cancel text ("You are currently paying with X").
 		label: createElement(
@@ -145,9 +187,8 @@ if ( config && config.page_context && config.continuation ) {
 		},
 	} );
 } else if ( config && config.page_context ) {
-	// WooCommerce re-invokes canMakePayment on every cart update, so the current
-	// amount is cached to avoid a lookup per funding source per update. Only the
-	// current one: a stale amount is never asked for again.
+	// canMakePayment runs per funding source on every cart update; caching the
+	// current amount keeps that to one lookup per update.
 	let cached = { amount: null, eligibility: null };
 	const getEligibility = ( amount ) => {
 		if ( cached.amount !== amount ) {
@@ -213,9 +254,9 @@ if ( config && config.page_context && config.continuation ) {
 			 * paymentMethodId: Clears the gateway from the editor's
 			 *   "incompatible with block-based checkout" list.
 			 * gatewayId: Links to the gateway's settings.
-			 * supports.features: ppcp_continuation is declared up front
-			 *   because approving in the wallet sheet raises that cart
-			 *   requirement mid-flow, after the method is chosen.
+			 * supports.features: ppcp_continuation is declared up front,
+			 *   since approving in the wallet sheet raises that cart
+			 *   requirement after the method is chosen.
 			 * supports.style: Exposes the block's height/borderRadius controls.
 			 */
 			name,
@@ -234,6 +275,24 @@ if ( config && config.page_context && config.continuation ) {
 
 				const amount =
 					amountFromCartTotals( cartTotals ) || config.amount;
+
+				// A free-trial ($0) subscription is vaulted through the PayPal
+				// save flow (see V6ExpressComponent), which the amount-based
+				// eligibility check would reject for a zero amount. Only PayPal
+				// is offered on such carts, so guard on it and bypass eligibility
+				// (mirrors boot.js). Read live from the amount, not the server's
+				// page-load flag, so a coupon that zeroes or un-zeroes the cart
+				// after render is honoured.
+				if ( isFreeTrialCart( config, amount ) ) {
+					return fundingSource === FundingSources.PAYPAL;
+				}
+
+				// Before the SDK is asked, so a cart that only PayPal can pay
+				// for costs no eligibility lookup for the other methods.
+				if ( ! expressMethodAllowedForCart( fundingSource, amount ) ) {
+					return false;
+				}
+
 				const eligibility = await getEligibility( amount );
 				return Boolean( eligibility[ fundingSource ] );
 			},
@@ -250,7 +309,7 @@ if ( config && config.page_context && config.continuation ) {
 	for ( const fundingSource of FUNDING_SOURCES ) {
 		registerExpress( {
 			name: `ppcp-gateway-${ fundingSource }`,
-			gatewayId: 'ppcp-gateway',
+			gatewayId: PAYPAL_GATEWAY_ID,
 			fundingSource,
 			content: createElement( V6ExpressComponent, {
 				config,
@@ -260,14 +319,10 @@ if ( config && config.page_context && config.continuation ) {
 		} );
 	}
 
-	// No wallet can vault, and a free trial has to be. Ordinary subscription
-	// carts are dropped by the features gate instead.
-	let walletMethods = MERCHANT_PRESENTED_METHODS;
-	if ( config.is_free_trial_cart ) {
-		walletMethods = [];
-	}
-
-	for ( const method of walletMethods ) {
+	// No wallet can vault, and a free trial has to be, so the express gate keeps
+	// every wallet row off such a cart (it answers for anything but PayPal).
+	// Ordinary subscription carts are dropped by the features gate instead.
+	for ( const method of MERCHANT_PRESENTED_METHODS ) {
 		const settings = methodConfig( config, method );
 
 		// No styles for this context means PHP withheld the wallet here.
@@ -295,12 +350,45 @@ if ( config && config.page_context && config.continuation ) {
 	}
 }
 
+// BCDC, redirecting rather than using the SDK: its card form only renders
+// inline, which needs an express placement that WooCommerce then disables.
+// CardButtonGateway returns PayPal's hosted checkout URL when the session holds
+// no approved order. Skipped in continuation mode, like the card fields.
+if ( config?.card_button?.block_method && ! config.continuation ) {
+	const cardButtonId = config.card_button.payment_method;
+	// Shared with the non-express PayPal row, so a merchant retitling the button
+	// moves both.
+	const placeOrder = config.place_order || {};
+
+	registerPaymentMethod( {
+		name: cardButtonId,
+		label: createElement( 'div', null, config.card_button.title ),
+		ariaLabel: config.card_button.title,
+		content: createElement( PayPalPlaceOrderContent, {
+			description: config.card_button.description,
+			placeOrderButtonDescription: placeOrder.description,
+		} ),
+		edit: createElement( PayPalPlaceOrderContent, {
+			description: config.card_button.description,
+		} ),
+		placeOrderButtonLabel: placeOrder.text,
+		canMakePayment: () => true,
+		supports: {
+			features: gatewayFeatures( config.card_button.supported_features ),
+			// PayPal's hosted card page cannot vault into WooCommerce.
+			showSaveOption: false,
+		},
+	} );
+
+	registerPlaceOrderLabel( cardButtonId, placeOrder.text );
+}
+
 /**
  * The card method label: the gateway title plus the supported-card logos.
  *
- * PaymentMethodIcons comes off the `components` prop that WooCommerce Blocks
- * injects into the label (not an import), matching the v5 block. card_icons is
- * empty when "Show logos of supported cards" is disabled, so nothing renders.
+ * PaymentMethodIcons comes off the `components` prop WooCommerce Blocks injects
+ * into a label, not an import. card_icons is empty when "Show logos of supported
+ * cards" is off.
  *
  * @param {Object} props            - Label props from the Blocks registry.
  * @param {Object} props.components - Blocks-provided label components.
@@ -345,77 +433,174 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 		canMakePayment: () => true,
 		supports: {
 			features: gatewayFeatures( config.card_fields.supported_features ),
-			// WooCommerce Blocks renders its native "Save payment information…"
-			// checkbox and exposes the choice as the shouldSavePayment prop;
-			// only offered when card vaulting is enabled. Suppressed on a
-			// subscription cart, where the card must always be vaulted for
-			// renewals: the card component renders its own checked-and-disabled
-			// checkbox instead (the native one cannot be locked), matching the
-			// classic checkout.
+			// Blocks' native save checkbox, whose choice arrives as the
+			// shouldSavePayment prop. Suppressed on a subscription cart: the
+			// native checkbox cannot be locked, so the card component renders
+			// its own checked-and-disabled one instead.
 			showSaveOption:
 				Boolean( config.card_fields.is_vaulting_enabled ) &&
-				! config.card_fields.has_subscriptions,
+				! config.has_subscriptions,
 		},
 	} );
 }
 
-// Returning-buyer saved-PayPal selector. Registered as the regular ppcp-gateway
-// method (alongside the express ones) only when the buyer has an eligible saved
-// PayPal token, so WooCommerce Blocks renders its saved-token list and this
-// method supplies the in-row vault approval. New PayPal payments go through the
-// express button above, so this method exists for the saved token.
-if ( config?.vault_component?.is_eligible && ! config.continuation ) {
-	const vaultConfig = {
-		scriptData: {
-			vault_component: config.vault_component,
-			is_free_trial_cart: config.is_free_trial_cart,
-			client_id: config.vault_client_id,
-			script_attributes: config.script_attributes || {},
-		},
+// The regular (non-express) ppcp-gateway method. One registration serving two
+// purposes, because registerPaymentMethod keeps only the last call for a name:
+//
+// - the "Place order" row, which redirects to PayPal server-side. v5 offers this
+//   by default, so v6 must too, or PayPal vanishes from the payment-method list
+//   and only the express buttons remain.
+// - the returning-buyer saved-PayPal row, which hosts the in-row vault approval.
+//
+// Either alone is enough to register; in continuation mode the branch at the top
+// of this file owns the name instead.
+const savedPayPalEligible =
+	Boolean( config?.vault_component?.is_eligible ) && ! config?.continuation;
+const placeOrderEnabled =
+	Boolean( config?.place_order?.enabled ) && ! config?.continuation;
+
+/**
+ * Whether the regular PayPal row may be offered for the current cart.
+ *
+ * A zero-total cart normally needs no payment method, but a subscription cart
+ * does: the method is vaulted to pay the renewals. The total is read live, so a
+ * coupon applied on the checkout is taken into account. Mirrors v5's
+ * paypalPaymentMethodAllowed().
+ *
+ * A free-trial ($0) subscription is the exception: it cannot be paid through
+ * this row. The "Place order" flow redirects to a PayPal order that cannot be
+ * created for a zero total, and PayPal can only vault a payment method without a
+ * purchase through an approval the buyer opens from a button. So the row is
+ * withheld and the express "Pay with PayPal" button (which runs that save flow)
+ * is offered instead. Read live, so a coupon that zeroes or un-zeroes the cart
+ * after render is honoured.
+ *
+ * @param {Object} [cartTotals] - The canMakePayment cart totals.
+ * @return {boolean} Whether the row may show.
+ */
+function regularRowAllowedForCart( cartTotals ) {
+	const amount = amountFromCartTotals( cartTotals ) || config.amount;
+
+	if ( isFreeTrialCart( config, amount ) ) {
+		return false;
+	}
+
+	if ( config.has_subscriptions ) {
+		return true;
+	}
+
+	return parseFloat( amount ) > 0;
+}
+
+/**
+ * The note shown when the row exists only to host a saved PayPal token: there is
+ * no "Place order" flow to describe, and a new PayPal payment goes through the
+ * express button instead.
+ *
+ * @return {Object} The content element.
+ */
+const SavedTokenNote = () =>
+	createElement(
+		'p',
+		{ className: 'ppcp-sdk-v6-saved-paypal-note' },
+		__(
+			'To pay with a different PayPal account, use the PayPal button at the top of the page.',
+			'woocommerce-paypal-payments'
+		)
+	);
+
+if ( savedPayPalEligible || placeOrderEnabled ) {
+	/**
+	 * The saved-PayPal row, with its free-trial state answered per render.
+	 *
+	 * PayPalSavedToken suppresses its Vault Component on a zero-total cart, which
+	 * would create a $0 order. It reads that from the config it is handed, so the
+	 * config is rebuilt per render against the live total.
+	 *
+	 * @param {Object} props - The props WooCommerce Blocks injects into a
+	 *                       saved-token component.
+	 * @return {Object} The wrapped saved-token element.
+	 */
+	const SavedPayPalToken = ( props ) => {
+		const total = useSelect( ( selectStore ) => {
+			const cartStore = selectStore( 'wc/store/cart' );
+
+			return amountFromCartTotals( cartStore?.getCartTotals?.() );
+		}, [] );
+
+		return createElement( PayPalSavedToken, {
+			...props,
+			config: {
+				scriptData: {
+					vault_component: config.vault_component,
+					is_free_trial_cart: isFreeTrialCart( config, total ),
+					client_id: config.vault_client_id,
+					script_attributes: config.script_attributes || {},
+				},
+			},
+		} );
 	};
 
+	// The props that differ between this row's two variants, so which belongs to
+	// which is one decision rather than a test per field.
+	let rowProps;
+	if ( placeOrderEnabled ) {
+		rowProps = {
+			content: createElement( PayPalPlaceOrderContent, {
+				description: config.description,
+				placeOrderButtonDescription: config.place_order.description,
+			} ),
+			placeOrderButtonLabel: config.place_order.text,
+			// Gone on a zero-total cart that needs no payment method, but kept
+			// on a subscription cart, which needs one even at $0.
+			canMakePayment: ( { cartTotals } = {} ) =>
+				regularRowAllowedForCart( cartTotals ),
+		};
+	} else {
+		rowProps = {
+			// The row exists because a saved token does, so it is always
+			// available; a new PayPal payment uses the express button. A saved
+			// token completes a free-trial order too (the gateway attaches it),
+			// so this variant carries no broken redirect to withhold.
+			content: createElement( SavedTokenNote ),
+			canMakePayment: () => true,
+		};
+	}
+
+	if ( savedPayPalEligible ) {
+		// WooCommerce Blocks injects the selected token plus event props here.
+		rowProps.savedTokenComponent = createElement( SavedPayPalToken );
+	}
+
 	registerPaymentMethod( {
-		name: 'ppcp-gateway',
-		label: createElement(
-			'div',
-			null,
-			fundingSourceLabel( FundingSources.PAYPAL )
-		),
-		ariaLabel: fundingSourceLabel( FundingSources.PAYPAL ),
-		content: createElement(
-			'p',
-			{ className: 'ppcp-sdk-v6-saved-paypal-note' },
-			__(
-				'To pay with a different PayPal account, use the PayPal button at the top of the page.',
-				'woocommerce-paypal-payments'
-			)
-		),
+		name: PAYPAL_GATEWAY_ID,
+		label: createElement( PaypalLabel, { config } ),
+		ariaLabel: config.title,
 		edit: createElement( V6EditorPreview, {
 			fundingSource: FundingSources.PAYPAL,
 		} ),
-		// WooCommerce Blocks injects the selected token plus event props here.
-		savedTokenComponent: createElement( PayPalSavedToken, {
-			config: vaultConfig,
-		} ),
-		canMakePayment: () => true,
+		...rowProps,
 		supports: {
 			features: gatewayFeatures( config.supported_features ),
 			// Renders WooCommerce Blocks' saved-token radio list for this gateway.
-			showSavedCards: true,
+			showSavedCards: savedPayPalEligible,
 			showSaveOption: false,
 		},
 	} );
+
+	if ( placeOrderEnabled ) {
+		registerPlaceOrderLabel( PAYPAL_GATEWAY_ID, config.place_order.text );
+	}
 }
 
 /**
  * Pay Later messages on the block cart and checkout.
  *
- * Done at module scope: messaging needs only the config and the DOM, not eligibility
- * or a session. Skipped in continuation mode, where the buyer has approved an
- * order and sees the review instead.
+ * At module scope, since messaging needs only the config and the DOM. Skipped in
+ * continuation mode, which shows the order review instead.
  *
- * Placeholders arrive with the React tree, so the body observer that
- * initMessages() installs is what actually fills them.
+ * Placeholders arrive with the React tree, so initMessages()'s body observer is
+ * what fills them.
  */
 if ( config?.messages?.enabled && ! config.continuation ) {
 	initMessages( config, config.page_context ).catch( ( error ) => {
