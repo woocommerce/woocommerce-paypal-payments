@@ -87,7 +87,7 @@
     "e2e:env:setup:tax:exc": "npx playwright test --project \"setup\" --grep \"setup:tax:exc;\"",
 
     "e2e:lint:md:fix": "wp-scripts lint-md-docs --fix ./tests/qa/**/*.md ./E2E-TESTS.md",
-    "e2e:lint:js:fix": "wp-scripts lint-js --fix --ext .ts,.tsx,.mjs ./tests/qa"
+    "e2e:lint:js:fix": "wp-scripts lint-js --fix ./tests/qa"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
@@ -136,7 +136,6 @@
     "@wordpress/scripts": "^34.0.0",
     "@wordpress/url": "^4.40.0",
     "babel-plugin-explicit-exports-references": "^1.0.2",
-    "eslint-import-resolver-webpack": "^0.13.10",
     "jquery": "^3.7.1",
     "otplib": "^13.5.0"
   },
