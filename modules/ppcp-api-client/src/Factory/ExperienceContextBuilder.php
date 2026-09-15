@@ -38,16 +38,16 @@ class ExperienceContextBuilder {
 	/**
 	 * Issues the single-use secret that the endpoint return URL carries.
 	 *
-	 * Optional, so that a caller which builds no endpoint return URL keeps
-	 * working with the two-argument constructor.
+	 * Optional, so a caller that builds no endpoint return URL keeps working with
+	 * the two-argument constructor.
 	 */
 	private ?ReturnUrlSecret $return_url_secret;
 
 	/**
 	 * The secret that this builder put in its endpoint return URL, if it did.
 	 *
-	 * The builder is immutable, so the value travels with the clone that carries the
-	 * URL. A later call that replaces the return URL uses it to withdraw the secret.
+	 * Every with_* method clones, and a clone copies this value, so it travels down
+	 * the chain to a later call that replaces the return URL.
 	 */
 	private string $pending_return_url_secret = '';
 
@@ -97,10 +97,9 @@ class ExperienceContextBuilder {
 
 		$return_url = home_url( WC_AJAX::get_endpoint( ReturnUrlEndpoint::ENDPOINT ) );
 
-		// The return URL is public and PayPal keeps its query string, so a
-		// single-use secret in the URL is the proof that ReturnUrlEndpoint
-		// compares. It does not depend on the WC session cookie, so a buyer who
-		// comes back in a different browser is still accepted.
+		// The return URL is public and PayPal keeps its query string, so a single-use
+		// secret in the URL is the proof that ReturnUrlEndpoint compares. It needs no
+		// WC session cookie, so a buyer returning in another browser is still accepted.
 		if ( $this->return_url_secret instanceof ReturnUrlSecret ) {
 			$secret = $this->return_url_secret->issue_pending();
 
@@ -145,11 +144,8 @@ class ExperienceContextBuilder {
 	public function with_custom_return_url( string $url ): ExperienceContextBuilder {
 		$builder = clone $this;
 
-		// This URL replaces the endpoint return URL, so the secret that the endpoint
-		// URL carried is not in the request payload any more. Withdraw it, so that
-		// bind() keeps no transient that no return URL can present. Leaving it bound
-		// would also mask the migration period, because has_secret() would report a
-		// proof that no buyer is able to send.
+		// This URL replaces the endpoint return URL, so the secret that URL carried
+		// never ships.
 		if ( '' !== $builder->pending_return_url_secret ) {
 			if ( $this->return_url_secret instanceof ReturnUrlSecret ) {
 				$this->return_url_secret->discard_pending( $builder->pending_return_url_secret );

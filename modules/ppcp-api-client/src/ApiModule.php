@@ -52,15 +52,14 @@ class ApiModule implements ServiceModule, FactoryModule, ExecutableModule {
 	public function run( ContainerInterface $c ): bool {
 		/**
 		 * Marks the moment from which each PayPal order that this plugin creates
-		 * carries a return-URL secret. ReturnUrlEndpoint accepts a return that has
-		 * no secret only inside one day after this moment, so that an order which a
-		 * buyer started before the update still completes. add_option() writes
-		 * nothing when the option exists, so the value stays at the first write.
-		 * The write happens on 'init', and not while the module boots, because the
-		 * option API is not available at boot time.
+		 * carries a return-URL secret, so that ReturnUrlEndpoint can still accept an
+		 * order that a buyer started before the update. The action fires only on an
+		 * update from an installed earlier version, never on a fresh install, which
+		 * has no order in transit to rescue. add_option() writes nothing when the
+		 * option exists, so the moment stays at the first update that stamped it.
 		 */
 		add_action(
-			'init',
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			static function (): void {
 				add_option( 'ppcp_return_url_binding_since', time() );
 			}

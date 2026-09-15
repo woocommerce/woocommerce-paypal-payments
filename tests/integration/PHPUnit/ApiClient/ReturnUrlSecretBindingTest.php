@@ -18,9 +18,24 @@ use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
  */
 class ReturnUrlSecretBindingTest extends TestCase {
 
+	/**
+	 * What 'ppcp_return_url_binding_since' held once the plugin had booted, before
+	 * any test in this class touched it.
+	 *
+	 * @var mixed
+	 */
+	private static $binding_since_at_boot;
+
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+
+		self::$binding_since_at_boot = get_option( 'ppcp_return_url_binding_since', false );
+	}
+
 	public function tearDown(): void {
 		delete_transient( 'ppcp_ru_PP-TEST-BIND-1' );
 		delete_transient( 'ppcp_ru_PP-TEST-BIND-2' );
+		delete_option( 'ppcp_return_url_binding_since' );
 
 		parent::tearDown();
 	}
@@ -87,15 +102,61 @@ class ReturnUrlSecretBindingTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN the plugin has finished booting, so ApiModule::run() registered its
-	 *       'init' callback and 'init' has already fired
-	 * WHEN the 'ppcp_return_url_binding_since' option is read
-	 * THEN it holds a positive integer timestamp
+	 * GIVEN the plugin has finished booting on an installation whose version did not
+	 *       change, so 'woocommerce_paypal_payments_gateway_migrate_on_update' never
+	 *       fired during this run
+	 * WHEN the value that 'ppcp_return_url_binding_since' held at boot is read
+	 * THEN it is absent
+	 *
+	 * @scenario Booting must not stamp the option. A fresh install has no order in
+	 *           transit to rescue, so a stamp there would only make ReturnUrlEndpoint
+	 *           accept tokens that carry no bound secret for the width of the grace
+	 *           window. The value is captured before the first test runs, so the
+	 *           assertion cannot be satisfied by another test in this class having
+	 *           deleted the option.
 	 */
-	public function test_binding_since_option_is_written_on_boot(): void {
-		$binding_since = get_option( 'ppcp_return_url_binding_since' );
+	public function test_boot_alone_does_not_write_the_binding_since_option(): void {
+		$this->assertFalse( self::$binding_since_at_boot );
+	}
 
-		$this->assertIsNumeric( $binding_since );
-		$this->assertGreaterThan( 0, (int) $binding_since );
+	/**
+	 * GIVEN the plugin has finished booting
+	 * WHEN the hooks that write 'ppcp_return_url_binding_since' are inspected
+	 * THEN the write is attached to the update action, and nothing is attached to
+	 *      'init' by ApiModule for this purpose
+	 *
+	 * @scenario Pins the registration point itself, so a move back to 'init' fails
+	 *           here even on an installation where the option happens to be absent.
+	 */
+	public function test_binding_since_is_written_from_the_update_action(): void {
+		$this->assertNotFalse(
+			has_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' ),
+			'The binding moment must be stamped from the plugin update action.'
+		);
+	}
+
+	/**
+	 * GIVEN an installation that is updated from an earlier version, so
+	 *       'woocommerce_paypal_payments_gateway_migrate_on_update' fires
+	 * WHEN the action fires, and fires a second time on a later update
+	 * THEN the option holds the moment of the first update and does not move
+	 *
+	 * @scenario The option bounds a migration window. A later write would slide the
+	 *           window forward and re-open the acceptance of unbound tokens.
+	 */
+	public function test_update_writes_the_binding_since_option_once(): void {
+		// Arrange
+		delete_option( 'ppcp_return_url_binding_since' );
+
+		// When
+		do_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' );
+		$first = (int) get_option( 'ppcp_return_url_binding_since', 0 );
+
+		do_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' );
+		$second = (int) get_option( 'ppcp_return_url_binding_since', 0 );
+
+		// Then
+		$this->assertGreaterThan( 0, $first );
+		$this->assertSame( $first, $second );
 	}
 }

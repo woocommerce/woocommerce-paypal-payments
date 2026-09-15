@@ -63,10 +63,16 @@ class ReturnUrlEndpoint {
 	protected ReturnUrlSecret $return_url_secret;
 
 	/**
-	 * The one-day period, after the correction is installed, in which a return for
-	 * a PayPal order that carries no secret is still accepted.
+	 * Holds the moment at which an update bound return-URL secrets to new orders.
 	 */
 	private const BINDING_SINCE_OPTION = 'ppcp_return_url_binding_since';
+
+	/**
+	 * How long after that moment a return that carries no secret is still accepted.
+	 * A PayPal order token lives about as long, so the window covers every order
+	 * that could have been in transit when the update landed, and no longer.
+	 */
+	private const BINDING_GRACE_PERIOD = 3 * HOUR_IN_SECONDS;
 
 	/**
 	 * ReturnUrlEndpoint constructor.
@@ -229,25 +235,28 @@ class ReturnUrlEndpoint {
 	 * Several proofs are accepted. The first one that holds ends the test, so a proof
 	 * that costs more is only used when a cheaper one does not apply.
 	 *
+	 * No proof may require the WC session cookie or a login on its own: a buyer can
+	 * come back in a different browser or through an application switch.
+	 *
 	 * @param \WC_Order|null $wc_order       The WC order, when the custom_id gives one.
 	 * @param string         $token          The PayPal order ID from the request.
 	 * @param string         $provided_nonce The secret from the request.
 	 * @param string         $custom_id      The custom_id of the first purchase unit.
 	 */
 	private function is_authorized_return( ?\WC_Order $wc_order, string $token, string $provided_nonce, string $custom_id ): bool {
-		// Proof A — the secret that this shop put in the return URL.
+		// The secret that this shop put in the return URL.
 		if ( $this->return_url_secret->verify( $token, $provided_nonce ) ) {
 			return true;
 		}
 
-		// Proof B — the session still holds the same PayPal order.
+		// The session still holds the same PayPal order.
 		$session_order = $this->session_handler->order();
 		if ( $session_order instanceof Order && hash_equals( $session_order->id(), $token ) ) {
 			return true;
 		}
 
-		// Proof B — the custom_id carries the session that made the order. This is
-		// the binding that PurchaseUnitFactory writes for a cart-context order.
+		// The custom_id carries the session that made the order. This is the
+		// binding that PurchaseUnitFactory writes for a cart-context order.
 		if ( 0 === strpos( $custom_id, CustomIds::CUSTOMER_ID_PREFIX ) ) {
 			$expected = substr( $custom_id, strlen( CustomIds::CUSTOMER_ID_PREFIX ) );
 			$session  = WC()->session ?? null;
@@ -258,8 +267,8 @@ class ReturnUrlEndpoint {
 			}
 		}
 
-		// Proof C — the user that sends the request owns the WC order. A guest order
-		// holds the customer ID 0, so 0 never counts as ownership.
+		// The user that sends the request owns the WC order. A guest order holds
+		// the customer ID 0, so 0 never counts as ownership.
 		if ( $wc_order instanceof \WC_Order ) {
 			$current_user_id = get_current_user_id();
 			if ( $current_user_id && $current_user_id === $wc_order->get_customer_id() ) {
@@ -267,11 +276,13 @@ class ReturnUrlEndpoint {
 			}
 		}
 
-		// Proof D — the order was made before this correction was installed.
+		// The order was made before the update that started binding secrets. The
+		// window is short and an update opens it at most once, so the log line below
+		// makes a code path that issues no secret visible before it closes.
 		if ( ! $this->return_url_secret->has_secret( $token ) ) {
 			$binding_since = (int) get_option( self::BINDING_SINCE_OPTION, 0 );
 
-			if ( $binding_since && time() < $binding_since + DAY_IN_SECONDS ) {
+			if ( $binding_since && time() < $binding_since + self::BINDING_GRACE_PERIOD ) {
 				$this->logger->warning(
 					"Return URL endpoint $token: accepted with no bound secret inside the migration period."
 				);

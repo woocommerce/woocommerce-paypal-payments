@@ -146,9 +146,8 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param ExperienceContextBuilder  $experience_context_builder  The experience context builder.
 	 * @param SettingsModel             $settings_model              The settings model.
 	 * @param ReturnUrlSecret|null      $return_url_secret           Issues the return URL secret.
-	 *                                                               Defaults to a real instance, so
-	 *                                                               that the 3DS return URL always
-	 *                                                               carries proof of origin.
+	 *                                                               Defaults to a real instance, so the
+	 *                                                               3DS return URL always carries proof.
 	 */
 	public function __construct(
 		CardPaymentsConfiguration $dcc_configuration,
@@ -282,12 +281,9 @@ class AxoGateway extends WC_Payment_Gateway {
 					home_url( WC_AJAX::get_endpoint( ReturnUrlEndpoint::ENDPOINT ) )
 				);
 
-				// This method builds the URL that the buyer comes back through, so
-				// the secret must be bound to this PayPal order. Without it
-				// ReturnUrlEndpoint refuses the return. build_order_data() already
-				// bound one for the experience context of the same order, so reuse it
-				// rather than issue a second: a new secret would replace the bound one
-				// and leave the return URL of the experience context without a proof.
+				// ReturnUrlEndpoint refuses a return with no proof. build_order_data()
+				// already bound a secret to this same order, so reuse it: issuing a
+				// second one would replace it and invalidate the URL built there.
 				$return_url = add_query_arg(
 					'ppcp_return_nonce',
 					$this->return_url_secret->secret_for( $order->id() ),

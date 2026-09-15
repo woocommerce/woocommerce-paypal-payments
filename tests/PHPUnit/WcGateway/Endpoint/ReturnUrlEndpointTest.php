@@ -410,7 +410,7 @@ class ReturnUrlEndpointTest extends TestCase {
 	/**
 	 * GIVEN a token that has no bound secret (the order was made before the fix shipped)
 	 *       while the option ppcp_return_url_binding_since places "now" inside the
-	 *       one-day grace window
+	 *       three-hour grace window
 	 * WHEN handle_request() processes the return, with no nonce, no session and no login
 	 * THEN processing proceeds
 	 * AND the logger receives a warning naming the token
@@ -440,7 +440,7 @@ class ReturnUrlEndpointTest extends TestCase {
 		expect( 'get_option' )
 			->once()
 			->with( 'ppcp_return_url_binding_since', Mockery::any() )
-			->andReturn( time() - HOUR_IN_SECONDS );
+			->andReturn( time() - ( ( 3 * HOUR_IN_SECONDS ) - 60 ) );
 
 		$this->gateway->shouldReceive( 'process_payment' )
 			->once()
@@ -465,7 +465,7 @@ class ReturnUrlEndpointTest extends TestCase {
 
 	/**
 	 * GIVEN a token that has no bound secret and the option ppcp_return_url_binding_since
-	 *       places "now" outside the one-day grace window, with no session and no login
+	 *       places "now" outside the three-hour grace window, with no session and no login
 	 * WHEN handle_request() processes the return
 	 * THEN capture(), replace_order() and process_payment() are never called
 	 * AND the notice shown to the requester names neither the WC order id, the token,
@@ -496,7 +496,7 @@ class ReturnUrlEndpointTest extends TestCase {
 		expect( 'get_option' )
 			->once()
 			->with( 'ppcp_return_url_binding_since', Mockery::any() )
-			->andReturn( time() - ( DAY_IN_SECONDS * 2 ) );
+			->andReturn( time() - ( ( 3 * HOUR_IN_SECONDS ) + 60 ) );
 
 		$this->gateway->shouldReceive( 'process_payment' )->never();
 
@@ -815,6 +815,116 @@ class ReturnUrlEndpointTest extends TestCase {
 		expect( 'wc_add_notice' )
 			->once()
 			->with( 'Order not found. Please try placing your order again.', 'error' );
+
+		// When / Then
+		try {
+			$this->sut->handle_request();
+			$this->fail( 'Expected handle_request() to redirect.' );
+		} catch ( ReturnUrlRedirected $redirected ) {
+			$this->assertSame( 'https://example.com/checkout', $redirected->url );
+		}
+	}
+
+	/**
+	 * GIVEN a token that has no bound secret on an installation that has never been
+	 *       updated, so the option ppcp_return_url_binding_since was never written
+	 *       and get_option() gives the 0 default
+	 * WHEN handle_request() processes the return, with no nonce, no session and no login
+	 * THEN the return is refused: capture(), replace_order() and process_payment()
+	 *      are never called
+	 *
+	 * @scenario A fresh install has no order in transit to rescue, so the grace
+	 *           branch has nothing to do there. If the option were stamped on a fresh
+	 *           install, every token that carries no bound secret would be accepted
+	 *           for the width of the window.
+	 */
+	public function test_refuses_unbound_token_when_binding_since_was_never_written(): void {
+		// Arrange
+		$_GET['token'] = 'TOKEN-FRESH-INSTALL';
+		unset( $_GET['ppcp_return_nonce'] );
+
+		$order = $this->make_order( 'TOKEN-FRESH-INSTALL', OrderStatus::APPROVED, '113' );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'TOKEN-FRESH-INSTALL' )->andReturn( $order );
+		$this->order_endpoint->shouldReceive( 'capture' )->never();
+
+		$wc_order = $this->make_wc_order( 0 );
+		expect( 'wc_get_order' )->with( 113 )->andReturn( $wc_order );
+
+		$this->return_url_secret->shouldReceive( 'verify' )->with( 'TOKEN-FRESH-INSTALL', '' )->andReturn( false );
+		$this->return_url_secret->shouldReceive( 'has_secret' )
+			->once()
+			->with( 'TOKEN-FRESH-INSTALL' )
+			->andReturn( false );
+		$this->return_url_secret->shouldReceive( 'consume' )->never();
+
+		$this->session_handler->shouldReceive( 'order' )->andReturn( null );
+		$this->session_handler->shouldReceive( 'replace_order' )->never();
+
+		when( 'get_current_user_id' )->justReturn( 0 );
+
+		// The option is absent, so get_option() gives back the default it was handed.
+		expect( 'get_option' )
+			->once()
+			->with( 'ppcp_return_url_binding_since', Mockery::any() )
+			->andReturnUsing( static function ( string $name, $default ) {
+				return $default;
+			} );
+
+		$this->gateway->shouldReceive( 'process_payment' )->never();
+
+		expect( 'wc_add_notice' )->once()->with( Mockery::type( 'string' ), 'error' );
+
+		// When / Then
+		try {
+			$this->sut->handle_request();
+			$this->fail( 'Expected handle_request() to redirect.' );
+		} catch ( ReturnUrlRedirected $redirected ) {
+			$this->assertSame( 'https://example.com/checkout', $redirected->url );
+		}
+	}
+
+	/**
+	 * GIVEN a token that has no bound secret, and the option
+	 *       ppcp_return_url_binding_since places "now" exactly on the far edge of
+	 *       the grace window
+	 * WHEN handle_request() processes the return, with no nonce, no session and no login
+	 * THEN the return is refused, because the window is an exclusive bound
+	 *
+	 * @scenario Pins the comparison as time() < $binding_since + BINDING_GRACE_PERIOD.
+	 *           Without this the boundary could drift to <= and widen the window by a
+	 *           request, and no other test would notice.
+	 */
+	public function test_refuses_unbound_token_exactly_at_the_grace_window_edge(): void {
+		// Arrange
+		$_GET['token'] = 'TOKEN-GRACE-EDGE';
+		unset( $_GET['ppcp_return_nonce'] );
+
+		$order = $this->make_order( 'TOKEN-GRACE-EDGE', OrderStatus::APPROVED, '114' );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'TOKEN-GRACE-EDGE' )->andReturn( $order );
+		$this->order_endpoint->shouldReceive( 'capture' )->never();
+
+		$wc_order = $this->make_wc_order( 0 );
+		expect( 'wc_get_order' )->with( 114 )->andReturn( $wc_order );
+
+		$this->return_url_secret->shouldReceive( 'verify' )->with( 'TOKEN-GRACE-EDGE', '' )->andReturn( false );
+		$this->return_url_secret->shouldReceive( 'has_secret' )
+			->once()
+			->with( 'TOKEN-GRACE-EDGE' )
+			->andReturn( false );
+		$this->return_url_secret->shouldReceive( 'consume' )->never();
+
+		$this->session_handler->shouldReceive( 'order' )->andReturn( null );
+		$this->session_handler->shouldReceive( 'replace_order' )->never();
+
+		when( 'get_current_user_id' )->justReturn( 0 );
+		expect( 'get_option' )
+			->once()
+			->with( 'ppcp_return_url_binding_since', Mockery::any() )
+			->andReturn( time() - ( 3 * HOUR_IN_SECONDS ) );
+
+		$this->gateway->shouldReceive( 'process_payment' )->never();
+
+		expect( 'wc_add_notice' )->once()->with( Mockery::type( 'string' ), 'error' );
 
 		// When / Then
 		try {

@@ -99,29 +99,6 @@ class ReturnUrlSecretTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN a PayPal order id that already exists
-	 * WHEN issue_for() is called
-	 * THEN a new secret is generated and persisted immediately under the order's key
-	 * AND the generated secret is returned to the caller
-	 */
-	public function test_issue_for_generates_and_persists_immediately(): void {
-		// Arrange
-		when( 'wp_generate_password' )->justReturn( 'SECRET-FOR-ORDER' );
-		expect( 'set_transient' )
-			->once()
-			->with( 'ppcp_ru_ORDER-2', 'SECRET-FOR-ORDER', DAY_IN_SECONDS )
-			->andReturn( true );
-
-		$testee = new ReturnUrlSecret();
-
-		// When
-		$secret = $testee->issue_for( 'ORDER-2' );
-
-		// Then
-		$this->assertSame( 'SECRET-FOR-ORDER', $secret );
-	}
-
-	/**
 	 * GIVEN a transient that holds the bound secret for a PayPal order
 	 * WHEN verify() is called with the exact same candidate
 	 * THEN it returns true

@@ -280,4 +280,56 @@ class ExperienceContextBuilderTest extends TestCase
 		// Then
 		self::assertSame( 'https://example.com/custom', $result->to_array()['return_url'] ?? null );
 	}
+
+	/**
+	 * GIVEN the exact chain that CreateOrderEndpoint::create_paypal_order() builds,
+	 *       where with_default_paypal_config() calls with_endpoint_return_urls()
+	 *       internally and with_custom_return_url() comes two clones later
+	 * WHEN the experience context is built
+	 * THEN discard_pending() is called with the secret that was issued internally
+	 * AND the return_url is the custom URL, carrying no ppcp_return_nonce
+	 *
+	 * @scenario This is the production call site of the discard branch. It is asserted
+	 *           through the real chain, and not through a hand-built one, because the
+	 *           pending secret is set inside with_default_paypal_config() and survives
+	 *           the intervening clones.
+	 * @covers \WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder::with_custom_return_url
+	 */
+	public function test_create_order_endpoint_chain_retracts_the_pending_endpoint_nonce(): void
+	{
+		// Arrange
+		$issued_secret = 'pending-secret-from-default-config';
+
+		$return_url_secret = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret::class );
+		$return_url_secret->allows( 'issue_pending' )->andReturn( $issued_secret );
+		$return_url_secret->expects( 'discard_pending' )->once()->with( $issued_secret );
+
+		$this->settings->allows( 'brand_name' )->andReturn( 'Shop' );
+		$this->settings->allows( 'landing_page_enum' )->andReturn( '' );
+		$this->settings->allows( 'instant_payments_only' )->andReturn( false );
+
+		expect( 'get_user_locale' )->andReturn( 'de-DE' );
+		expect( 'home_url' )->andReturn( 'https://example.com/wc-ajax/ppc-return-url' );
+		expect( 'wc_get_checkout_url' )->andReturn( 'https://example.com/checkout' );
+		expect( 'add_query_arg' )->andReturnUsing( function ( $key, $value, $url ) {
+			$separator = strpos( $url, '?' ) === false ? '?' : '&';
+			return $url . $separator . $key . '=' . $value;
+		} );
+
+		$sut = new ExperienceContextBuilder(
+			$this->settings,
+			$this->shipping_callback_url_factory,
+			$return_url_secret
+		);
+
+		// When
+		$result = $sut
+			->with_default_paypal_config()
+			->with_contact_preference( null )
+			->with_custom_return_url( 'https://example.com/cart' )
+			->build();
+
+		// Then
+		self::assertSame( 'https://example.com/cart', $result->to_array()['return_url'] ?? null );
+	}
 }
