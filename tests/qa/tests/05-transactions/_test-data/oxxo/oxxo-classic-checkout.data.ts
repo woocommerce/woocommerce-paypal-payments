@@ -16,7 +16,7 @@ const merchant = merchants.mexico;
 
 export const oxxoClassicCheckout: ShopOrder[] = [
 	{
-		title: 'PCP-1219 | Transaction - Classic checkout - OXXO - Mexico - Default order @Critical',
+		title: 'PCP-1219 | Transaction - Classic checkout - OXXO - Mexico - Default order @Critical @Smoke',
 		...orders.default,
 		payment: payments.oxxo,
 		customer: guest,

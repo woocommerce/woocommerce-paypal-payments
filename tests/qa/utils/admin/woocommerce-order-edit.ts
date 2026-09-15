@@ -33,13 +33,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 		} );
 
 	productsTable = () => this.page.locator( '#order_line_items' );
-	productRow = ( name ) => this.productsTable().getByRole( 'row', { name } );
-	productRefundQtyInput = ( name ) =>
-		this.productRow( name ).locator( '.refund_order_item_qty' );
-	productRefundTotalInput = ( name ) =>
-		this.productRow( name ).locator( '.refund_line_total' );
-	productRefundTaxInput = ( name ) =>
-		this.productRow( name ).locator( '.refund_line_tax' );
 
 	firstRefundTotalInput = () =>
 		this.productsTable().locator( '.refund_line_total' ).first();
@@ -50,16 +43,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 
 	seeOXXOVoucherButton = () =>
 		this.page.getByRole( 'link', { name: 'See OXXO voucher' } ).first();
-
-	payPalPackageTrackingSection = () =>
-		this.page.locator( '#ppcp_order-tracking' );
-
-	cvv2MatchOrderNote = () =>
-		this.orderNoteContent().filter( { hasText: 'CVV2 Match: Y' } );
-	addressVerificationOrderNote = () =>
-		this.orderNoteContent().filter( {
-			hasText: 'Address Verification Result',
-		} );
 
 	notCapturedIndicator = () => this.page.getByText( 'Not captured' );
 	voidButton = () => this.page.locator( '#pcpVoid' );

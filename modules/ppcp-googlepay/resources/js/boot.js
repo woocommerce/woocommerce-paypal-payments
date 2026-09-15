@@ -13,6 +13,7 @@ import GooglepayManager from './GooglepayManager';
 import { setupButtonEvents } from '@ppcp-button/Helper/ButtonRefreshHelper';
 import { CheckoutBootstrap } from './ContextBootstrap/CheckoutBootstrap';
 import moduleStorage from './Helper/GooglePayStorage';
+import { initProductButtonGate } from './Helper/ProductButtonGate';
 
 ( function ( { buttonConfig, ppcpConfig = {} } ) {
 	const context = ppcpConfig.context;
@@ -32,6 +33,8 @@ import moduleStorage from './Helper/GooglePayStorage';
 		setupButtonEvents( function () {
 			manager.reinit();
 		} );
+
+		initProductButtonGate( buttonConfig?.button?.wrapper, context );
 	}
 
 	function bootstrapCheckout() {

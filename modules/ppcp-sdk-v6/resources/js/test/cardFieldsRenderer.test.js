@@ -268,6 +268,137 @@ describe( 'initCardFields', () => {
 		expect( numberInput.nextSibling.style.height ).toBe( '45px' );
 	} );
 
+	test( 'leaves no bogus height on the field when the original input has no layout box at mount time, and does not throw without ResizeObserver support', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		const numberInput = document.querySelector(
+			'#ppcp-credit-card-gateway-card-number'
+		);
+		numberInput.style.width = '300px';
+		// With no height set, jsdom reports "" rather than a px value, the
+		// same as a real "auto" from display:none.
+
+		const cardSession = makeCardSession();
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+
+		await expect(
+			initCardFields( baseConfig() )
+		).resolves.not.toThrow();
+		await flushPromises();
+
+		expect( numberInput.nextSibling.style.height ).toBe( '' );
+	} );
+
+	describe( 'correcting the field height once the input gains a box', () => {
+		let observers;
+
+		function fireObserverFor( target ) {
+			const observer = observers.find( ( o ) => o.target === target );
+			observer.callback();
+		}
+
+		function disconnectMockFor( target ) {
+			return observers.find( ( o ) => o.target === target )
+				.disconnectMock;
+		}
+
+		beforeEach( () => {
+			observers = [];
+			global.ResizeObserver = class {
+				constructor( callback ) {
+					this.callback = callback;
+					this.disconnectMock = jest.fn();
+				}
+				observe( target ) {
+					observers.push( {
+						target,
+						callback: this.callback,
+						disconnectMock: this.disconnectMock,
+					} );
+				}
+				disconnect( ...args ) {
+					this.disconnectMock( ...args );
+				}
+			};
+		} );
+
+		afterEach( () => {
+			delete global.ResizeObserver;
+		} );
+
+		test( 'applies the height and disconnects once the input gains a box', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const numberInput = document.querySelector(
+				'#ppcp-credit-card-gateway-card-number'
+			);
+			const cardSession = makeCardSession();
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () => cardSession,
+			} );
+
+			await initCardFields( baseConfig() );
+			await flushPromises();
+			expect( observers.length ).toBe( 3 );
+
+			numberInput.style.height = '45px';
+			fireObserverFor( numberInput.nextSibling );
+
+			expect( numberInput.nextSibling.style.height ).toBe( '45px' );
+			expect( disconnectMockFor( numberInput.nextSibling ) ).toHaveBeenCalled();
+		} );
+
+		test( 'does not write a height or disconnect when the observer fires while the input is still unmeasurable', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const numberInput = document.querySelector(
+				'#ppcp-credit-card-gateway-card-number'
+			);
+			const cardSession = makeCardSession();
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () => cardSession,
+			} );
+
+			await initCardFields( baseConfig() );
+			await flushPromises();
+
+			fireObserverFor( numberInput.nextSibling );
+
+			expect( numberInput.nextSibling.style.height ).toBe( '' );
+			expect(
+				disconnectMockFor( numberInput.nextSibling )
+			).not.toHaveBeenCalled();
+		} );
+
+		test( 'restores the input\'s own hidden state and !important display after reading through them', async () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const numberInput = document.querySelector(
+				'#ppcp-credit-card-gateway-card-number'
+			);
+			const cardSession = makeCardSession();
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () => cardSession,
+			} );
+
+			await initCardFields( baseConfig() );
+			await flushPromises();
+			// The real hide() is mocked away in this suite, so its !important
+			// display:none is applied here instead.
+			numberInput.style.setProperty( 'display', 'none', 'important' );
+
+			numberInput.style.height = '45px';
+			fireObserverFor( numberInput.nextSibling );
+
+			expect( numberInput.nextSibling.style.height ).toBe( '45px' );
+			expect( numberInput.hidden ).toBe( true );
+			expect( numberInput.style.getPropertyValue( 'display' ) ).toBe(
+				'none'
+			);
+			expect(
+				numberInput.style.getPropertyPriority( 'display' )
+			).toBe( 'important' );
+		} );
+	} );
+
 	test( 're-attaches to the fresh #payment DOM after WC replaces it on updated_checkout', async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		const firstSession = makeCardSession();
