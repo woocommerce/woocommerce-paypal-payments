@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -49,6 +50,39 @@ class ApiModule implements ServiceModule, FactoryModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): bool {
+		/**
+		 * Marks the moment from which each PayPal order that this plugin creates
+		 * carries a return-URL secret, so that ReturnUrlEndpoint can still accept an
+		 * order that a buyer started before the update. The action fires only on an
+		 * update from an installed earlier version, never on a fresh install, which
+		 * has no order in transit to rescue. add_option() writes nothing when the
+		 * option exists, so the moment stays at the first update that stamped it.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			static function (): void {
+				add_option( 'ppcp_return_url_binding_since', time() );
+			}
+		);
+
+		/**
+		 * Attaches the pending return-URL secret to the new PayPal order. The URL was
+		 * built before the order existed, so this is the first moment at which the
+		 * secret can be kept against the order ID that ReturnUrlEndpoint compares.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_paypal_order_created',
+			static function ( Order $order ) use ( $c ) {
+				$secret = $c->has( 'api.helper.return-url-secret' ) ? $c->get( 'api.helper.return-url-secret' ) : null;
+
+				if ( $secret instanceof ReturnUrlSecret ) {
+					$secret->bind( $order->id() );
+				}
+			},
+			10,
+			1
+		);
+
 		add_action(
 			'woocommerce_after_calculate_totals',
 			function ( \WC_Cart $cart ) {
