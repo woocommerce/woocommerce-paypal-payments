@@ -48,16 +48,9 @@ const FIELD_LABELS = {
 	cvv: __( 'CVV', 'woocommerce-paypal-payments' ),
 };
 
-const CARD_NAME_LABEL = __(
-	'Cardholder name (optional)',
-	'woocommerce-paypal-payments'
-);
-
 // Each event payload carries the state of all three fields, so these four
 // events keep every label in sync.
 const FIELD_STATE_EVENTS = [ 'focus', 'blur', 'empty', 'notempty' ];
-
-const NAME_FIELD_ID = 'ppcp-sdk-v6-card-name';
 
 /**
  * Creates the order, confirms it through the card session (which runs 3D
@@ -70,7 +63,6 @@ const NAME_FIELD_ID = 'ppcp-sdk-v6-card-name';
  * @param {Object}  args.session           - The v6 card-fields session.
  * @param {Object}  args.responseTypes     - The Blocks response-type constants.
  * @param {boolean} args.savePaymentMethod - Whether to vault the card.
- * @param {string} args.cardName       - The cardholder name (v6 has no name field).
  * @param {Object} [args.billingAddress] - Billing address for AVS/3D Secure.
  * @return {Promise<Object>} A Blocks onPaymentSetup response object.
  */
@@ -80,7 +72,6 @@ async function submitCardPayment( {
 	session,
 	responseTypes,
 	savePaymentMethod,
-	cardName,
 	billingAddress,
 } ) {
 	if ( ! session ) {
@@ -97,7 +88,6 @@ async function submitCardPayment( {
 		const { orderId } = await createCardOrder(
 			config,
 			context,
-			cardName,
 			savePaymentMethod
 		);
 		const result = billingAddress
@@ -229,7 +219,6 @@ export function V6CardFieldsComponent( {
 
 	const context = config.page_context;
 	const methodId = config.card_fields.payment_method;
-	const hasNameField = Boolean( config.card_fields.name_field );
 
 	const hasSubscriptions = Boolean( config.has_subscriptions );
 
@@ -240,8 +229,6 @@ export function V6CardFieldsComponent( {
 	const [ session, setSession ] = useState( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
 	const [ textStyle, setTextStyle ] = useState( null );
-	const [ cardName, setCardName ] = useState( '' );
-	const [ nameFocused, setNameFocused ] = useState( false );
 	const [ floatingLabel, setFloatingLabel ] = useState( false );
 	const [ fieldStates, setFieldStates ] = useState( {} );
 	const referenceRef = useRef( null );
@@ -252,7 +239,6 @@ export function V6CardFieldsComponent( {
 	const savePaymentRef = useLatestRef(
 		Boolean( shouldSavePayment ) || hasSubscriptions
 	);
-	const cardNameRef = useLatestRef( cardName );
 
 	// The native save option is suppressed on a subscription cart (see
 	// checkout-block.js), which shows this component's own locked checkbox.
@@ -390,7 +376,6 @@ export function V6CardFieldsComponent( {
 						session: sessionRef.current,
 						responseTypes,
 						savePaymentMethod: savePaymentRef.current,
-						cardName: cardNameRef.current?.trim() || '',
 						// null when no billing address is available.
 						billingAddress: billingRef.current,
 				  } );
@@ -453,15 +438,6 @@ export function V6CardFieldsComponent( {
 		} );
 	}, [ onCheckoutFail, activePaymentMethod, methodId, responseTypes ] );
 
-	const nameFieldClassName = [
-		'ppcp-sdk-v6-card-field',
-		'ppcp-sdk-v6-card-field--name',
-		floatingLabel && 'wc-block-components-text-input',
-		floatingLabel && ( nameFocused || cardName !== '' ) && 'is-active',
-	]
-		.filter( Boolean )
-		.join( ' ' );
-
 	const fieldsReady = session && inputStyle && textStyle;
 
 	return createElement(
@@ -488,37 +464,6 @@ export function V6CardFieldsComponent( {
 			createElement(
 				Fragment,
 				null,
-				// The SDK has no name component, so this is a plain input whose
-				// value is forwarded to create-order.
-				hasNameField &&
-					createElement(
-						'div',
-						{
-							className: nameFieldClassName,
-						},
-						createElement( 'input', {
-							id: NAME_FIELD_ID,
-							type: 'text',
-							className: 'input-text',
-							value: cardName,
-							onChange: ( event ) =>
-								setCardName( event.target.value ),
-							onFocus: () => setNameFocused( true ),
-							onBlur: () => setNameFocused( false ),
-							placeholder: floatingLabel
-								? undefined
-								: CARD_NAME_LABEL,
-							style: { width: '100%', ...inputStyle },
-						} ),
-						// A real input, so this label uses for/id where the
-						// hosted fields' labels are aria-hidden.
-						floatingLabel &&
-							createElement(
-								'label',
-								{ htmlFor: NAME_FIELD_ID },
-								CARD_NAME_LABEL
-							)
-					),
 				createElement( V6CardFieldContainer, {
 					session,
 					type: 'number',
