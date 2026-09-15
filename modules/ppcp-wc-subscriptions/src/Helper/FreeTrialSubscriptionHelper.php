@@ -12,11 +12,27 @@ class FreeTrialSubscriptionHelper
      */
     public function is_free_trial_cart(): bool
     {
+        $cart = WC()->cart;
+        // Cheap check first: cart_requires_vaulting() walks every item.
+        if (!$cart || (float) $cart->get_total('numeric') > 0) {
+            return \false;
+        }
+        return $this->cart_requires_vaulting();
+    }
+    /**
+     * Whether the cart holds a subscription whose renewals are paid from a
+     * vaulted payment method rather than billed by PayPal against a plan.
+     *
+     * `is_free_trial_cart()` without the total, i.e. the half a coupon cannot
+     * change, for callers that pair it with a live total of their own.
+     */
+    public function cart_requires_vaulting(): bool
+    {
         if (!$this->is_wcs_plugin_active()) {
             return \false;
         }
         $cart = WC()->cart;
-        if (!$cart || $cart->is_empty() || (float) $cart->get_total('numeric') > 0) {
+        if (!$cart || $cart->is_empty()) {
             return \false;
         }
         foreach ($cart->get_cart() as $item) {

@@ -128,7 +128,26 @@ return array(
         return new ApplePayButton($container->get('settings.settings-provider'), $container->get('settings.data.payment'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.order-processor'), $container->get('applepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('applepay.data_to_scripts'), $container->get('button.helper.cart-products'), $container->get('button.helper.context'));
     },
     'applepay.blocks-payment-method' => static function (ContainerInterface $container): PaymentMethodTypeInterface {
-        return new BlocksPaymentMethod('ppcp-applepay', $container->get('applepay.asset_getter'), $container->get('ppcp.asset-version'), $container->get('applepay.button'), $container->get('blocks.method'), $container->get('button.helper.context'), $container->get('settings.settings-provider'));
+        return new BlocksPaymentMethod(
+            'ppcp-applepay',
+            $container->get('applepay.asset_getter'),
+            $container->get('ppcp.asset-version'),
+            $container->get('applepay.button'),
+            $container->get('blocks.method'),
+            $container->get('button.helper.context'),
+            $container->get('settings.settings-provider'),
+            /**
+             * The v6 module is feature-flagged and may not be loaded, hence the has()
+             * guard. Resolved on each call so it reflects the page being rendered.
+             */
+            static function () use ($container): bool {
+                if (!$container->has('sdk-v6.owns-current-page')) {
+                    return \false;
+                }
+                $owns_current_page = $container->get('sdk-v6.owns-current-page');
+                return $owns_current_page();
+            }
+        );
     },
     /**
      * The list of which countries can be used for ApplePay.

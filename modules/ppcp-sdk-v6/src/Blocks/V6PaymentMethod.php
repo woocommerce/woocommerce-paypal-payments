@@ -41,7 +41,15 @@ class V6PaymentMethod extends AbstractPaymentMethodType
      */
     private $vault_eligibility;
     private string $vault_client_id;
-    public function __construct(SdkV6Manager $manager, AssetGetter $asset_getter, string $version, PayPalGateway $gateway, CreditCardGateway $card_gateway, ?VaultComponentData $vault_data, ?callable $vault_eligibility, string $vault_client_id)
+    /**
+     * Cart-dependent state of the non-express "Place order" method:
+     * array{enabled: bool, text: string, description: string}.
+     * Null when that method is not offered.
+     *
+     * @var callable():array|null
+     */
+    private $place_order_data;
+    public function __construct(SdkV6Manager $manager, AssetGetter $asset_getter, string $version, PayPalGateway $gateway, CreditCardGateway $card_gateway, ?VaultComponentData $vault_data, ?callable $vault_eligibility, string $vault_client_id, ?callable $place_order_data = null)
     {
         $this->manager = $manager;
         $this->asset_getter = $asset_getter;
@@ -51,12 +59,14 @@ class V6PaymentMethod extends AbstractPaymentMethodType
         $this->vault_data = $vault_data;
         $this->vault_eligibility = $vault_eligibility;
         $this->vault_client_id = $vault_client_id;
+        $this->place_order_data = $place_order_data;
     }
     /**
      * @return void
      */
     public function initialize()
     {
+        add_action('wp_enqueue_scripts', array($this, 'enqueue_style'));
     }
     public function is_active()
     {
@@ -73,18 +83,40 @@ class V6PaymentMethod extends AbstractPaymentMethodType
         wp_register_script($handle, $script_url, $asset['dependencies'], $asset['version'], \true);
         return array($handle);
     }
-    public function get_payment_method_data()
+    /**
+     * Enqueues the styles for the express buttons on block pages.
+     *
+     * Block pages bypass SdkV6Manager::enqueue(), which serves the classic
+     * pages only, so their styles are registered here instead.
+     */
+    public function enqueue_style(): void
     {
-        $data = array_merge($this->manager->script_data(), array(
-            'id' => PayPalGateway::ID,
-            'title' => $this->gateway->title,
-            'description' => $this->gateway->get_description(),
-            // The gateway's (subscription-aware) supported features, so the
-            // block methods declare them to WooCommerce Blocks and are not
-            // filtered out when the cart requires one (e.g. `subscriptions`).
-            // Mirrors the v5 PayPalPaymentMethod::get_payment_method_data().
-            'supported_features' => array_values((array) $this->gateway->supports),
-        ));
+        if (!$this->is_active()) {
+            return;
+        }
+        $style_url = $this->asset_getter->get_asset_url('checkout-block.css');
+        if (!$style_url) {
+            return;
+        }
+        $handle = 'wc-ppcp-sdk-v6-blocks-style';
+        wp_register_style($handle, $style_url, array(), $this->version);
+        wp_enqueue_style($handle);
+    }
+    public function get_payment_method_data(): array
+    {
+        /*
+         * - id: the WC gateway that processes the order. The block methods
+         *   registered from this data are several; the gateway behind them is one.
+         * - icon: WooCommerce Blocks' PaymentMethodIcons shape.
+         * - supported_features: without the gateway's own supports, Blocks filters
+         *   the method out of a cart that requires one.
+         */
+        $gateway_data = array('id' => PayPalGateway::ID, 'title' => $this->gateway->title, 'description' => $this->gateway->get_description(), 'icon' => array(array('id' => 'paypal', 'alt' => 'PayPal', 'src' => $this->gateway->icon)), 'supported_features' => array_values((array) $this->gateway->supports));
+        $data = array_merge($this->manager->script_data(), $gateway_data);
+        // The non-express row: a "Place order" button that redirects to PayPal.
+        if ($this->place_order_data) {
+            $data['place_order'] = ($this->place_order_data)();
+        }
         // The card method registers under the credit-card gateway, so it must
         // advertise that gateway's own supports (independently vaulting-gated).
         if (isset($data['card_fields']) && is_array($data['card_fields'])) {
