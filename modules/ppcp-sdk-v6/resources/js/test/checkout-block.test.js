@@ -629,7 +629,7 @@ describe( 'checkout-block', () => {
 			).toBeUndefined();
 		} );
 
-		test( 'registers a placeOrderButtonLabel checkout filter for the card gateway id when an override is filtered in, without a label prop on the registration itself', () => {
+		test( 'applies a filtered override to both the registration and the checkout filter for the card gateway id', () => {
 			loadCheckoutBlock(
 				baseConfig( {
 					card_button: cardButtonConfig(),
@@ -639,7 +639,8 @@ describe( 'checkout-block', () => {
 
 			expect(
 				regularCallFor( 'ppcp-card-button-gateway' )
-			).not.toHaveProperty( 'placeOrderButtonLabel' );
+					.placeOrderButtonLabel
+			).toBe( 'Proceed to PayPal' );
 			expect(
 				checkoutFiltersFor( 'ppcp-card-button-gateway' )
 			).toBeDefined();
