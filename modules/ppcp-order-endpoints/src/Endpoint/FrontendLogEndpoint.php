@@ -39,6 +39,12 @@ class FrontendLogEndpoint implements EndpointInterface
              * Disable front-end logging without disabling logging completely.
              */
             if (apply_filters('woocommerce_paypal_payments_frontend_log_enabled', \true)) {
+                // The line reports what the browser saw, not the WC-AJAX
+                // request that carried it, and it already names everything a
+                // [New Request] entry would.
+                add_filter('woocommerce_paypal_payments_log_request_kind', static function (): string {
+                    return 'FRONT';
+                });
                 add_filter('woocommerce_paypal_payments_skip_new_request_log', '__return_true');
                 $this->logger->log($this->level($data), $this->line($data));
             }
