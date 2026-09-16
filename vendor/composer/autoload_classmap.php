@@ -253,6 +253,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Compat\\PPEC\\SubscriptionsHandler' => $baseDir . '/modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php',
     'WooCommerce\\PayPalCommerce\\Compat\\PluginDetector\\PluginDetector' => $baseDir . '/modules/ppcp-compat/src/PluginDetector/PluginDetector.php',
     'WooCommerce\\PayPalCommerce\\Compat\\PluginDetector\\ProductCustomizationDetector' => $baseDir . '/modules/ppcp-compat/src/PluginDetector/ProductCustomizationDetector.php',
+    'WooCommerce\\PayPalCommerce\\Compat\\WcAccountFundsCompat' => $baseDir . '/modules/ppcp-compat/src/WcAccountFundsCompat.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WcGiftCardsCompat' => $baseDir . '/modules/ppcp-compat/src/WcGiftCardsCompat.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\ConnectionDataSanitizer' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/ConnectionDataSanitizer.php',
     'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalBlueprintBootstrap' => $baseDir . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalBlueprintBootstrap.php',
