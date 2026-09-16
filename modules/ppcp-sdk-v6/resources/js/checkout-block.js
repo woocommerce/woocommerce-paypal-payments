@@ -449,7 +449,7 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 const savedPayPalEligible =
 	Boolean( config?.vault_component?.is_eligible ) && ! config?.continuation;
 const placeOrderEnabled =
-	Boolean( config?.place_order?.enabled ) && ! config?.continuation;
+	Boolean( config?.place_order_enabled ) && ! config?.continuation;
 
 /**
  * Whether the regular PayPal row may be offered for the current cart.
