@@ -364,6 +364,11 @@ if ( config?.card_button?.block_method && ! config.continuation ) {
 		edit: createElement( PayPalPlaceOrderContent, {
 			description: config.card_button.description,
 		} ),
+		// Same belt-and-braces pair as the PayPal row: the registration property
+		// and the Checkout Actions filter both have to carry an override.
+		...( config.placeOrderButtonLabel
+			? { placeOrderButtonLabel: config.placeOrderButtonLabel }
+			: {} ),
 		canMakePayment: () => true,
 		supports: {
 			features: gatewayFeatures( config.card_button.supported_features ),

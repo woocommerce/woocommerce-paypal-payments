@@ -67,14 +67,14 @@ class V6PaymentMethod extends AbstractPaymentMethodType {
 		string $vault_client_id,
 		?callable $place_order_enabled = null
 	) {
-		$this->manager           = $manager;
-		$this->asset_getter      = $asset_getter;
-		$this->version           = $version;
-		$this->gateway           = $gateway;
-		$this->card_gateway      = $card_gateway;
-		$this->vault_data        = $vault_data;
-		$this->vault_eligibility = $vault_eligibility;
-		$this->vault_client_id   = $vault_client_id;
+		$this->manager             = $manager;
+		$this->asset_getter        = $asset_getter;
+		$this->version             = $version;
+		$this->gateway             = $gateway;
+		$this->card_gateway        = $card_gateway;
+		$this->vault_data          = $vault_data;
+		$this->vault_eligibility   = $vault_eligibility;
+		$this->vault_client_id     = $vault_client_id;
 		$this->place_order_enabled = $place_order_enabled;
 	}
 
