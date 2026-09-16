@@ -105,28 +105,48 @@ class WooCommerceLogger implements LoggerInterface {
 	private static function request_prefix(): string {
 		$id = wp_rand( 1000, 9999 );
 
+		/**
+		 * Names the kind of request, for a caller that knows it better than
+		 * the detection below. Must be set before the first log message of
+		 * that request, since the prefix is built once.
+		 *
+		 * @param string $kind The detected kind, empty for a page load.
+		 */
+		$kind = apply_filters( 'woocommerce_paypal_payments_log_request_kind', self::request_kind() );
+
+		if ( ! is_string( $kind ) || '' === $kind ) {
+			return "#$id - ";
+		}
+
+		return "#$id.$kind - ";
+	}
+
+	/**
+	 * The kind of the current request, empty for a normal page load.
+	 */
+	private static function request_kind(): string {
 		if ( defined( 'WP_CLI' ) && \WP_CLI ) {
-			return "#$id.CLI - ";
+			return 'CLI';
 		}
 
 		if ( wp_doing_cron() ) {
-			return "#$id.CRON - ";
+			return 'CRON';
 		}
 
 		if ( function_exists( 'wp_is_serving_rest_request' ) && wp_is_serving_rest_request() ) {
-			return "#$id.REST - ";
+			return 'REST';
 		}
 
 		// WooCommerce defines DOING_AJAX as well, so this comes first.
 		if ( defined( 'WC_DOING_AJAX' ) && \WC_DOING_AJAX ) {
-			return "#$id.WC - ";
+			return 'WC';
 		}
 
 		if ( wp_doing_ajax() ) {
-			return "#$id.AJAX - ";
+			return 'AJAX';
 		}
 
-		return "#$id - ";
+		return '';
 	}
 
 	/**
