@@ -99,27 +99,31 @@ class WooCommerceLogger implements LoggerInterface {
 	}
 
 	/**
-	 * A random ID for the current request, tagged with the kind of request it
+	 * A random ID for the current request, followed by the kind of request it
 	 * is, so that lines of one kind can be told apart at a glance.
 	 */
 	private static function request_prefix(): string {
 		$id = wp_rand( 1000, 9999 );
 
+		if ( defined( 'WP_CLI' ) && \WP_CLI ) {
+			return "#$id.CLI - ";
+		}
+
 		if ( wp_doing_cron() ) {
-			return "cron-$id - ";
+			return "#$id.CRON - ";
 		}
 
 		if ( function_exists( 'wp_is_serving_rest_request' ) && wp_is_serving_rest_request() ) {
-			return "rest-$id - ";
+			return "#$id.REST - ";
 		}
 
 		// WooCommerce defines DOING_AJAX as well, so this comes first.
 		if ( defined( 'WC_DOING_AJAX' ) && \WC_DOING_AJAX ) {
-			return "wc-$id - ";
+			return "#$id.WC - ";
 		}
 
 		if ( wp_doing_ajax() ) {
-			return "ajax-$id - ";
+			return "#$id.AJAX - ";
 		}
 
 		return "#$id - ";
