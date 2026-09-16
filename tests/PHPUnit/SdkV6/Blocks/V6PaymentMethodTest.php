@@ -28,7 +28,7 @@ class V6PaymentMethodTest extends TestCase
         $this->card_gateway = Mockery::mock(CreditCardGateway::class);
     }
 
-    private function createTestee(?callable $place_order_data = null): V6PaymentMethod
+    private function createTestee(?callable $place_order_enabled = null): V6PaymentMethod
     {
         return new V6PaymentMethod(
             $this->manager,
@@ -39,7 +39,7 @@ class V6PaymentMethodTest extends TestCase
             null,
             null,
             '',
-            $place_order_data
+            $place_order_enabled
         );
     }
 
@@ -130,55 +130,44 @@ class V6PaymentMethodTest extends TestCase
     }
 
     /**
-     * GIVEN no place-order data provider was supplied to the payment method
+     * GIVEN no place-order-enabled provider was supplied to the payment method
      * WHEN the block payment method data is built
-     * THEN no "place_order" key is present, so no non-express PayPal row is offered
+     * THEN no "place_order_enabled" key is present, so no non-express PayPal row is
+     *      offered
      */
-    public function test_get_payment_method_data_omits_place_order_when_no_provider_supplied(): void
+    public function test_get_payment_method_data_omits_place_order_enabled_when_no_provider_supplied(): void
     {
         $this->stubGatewayForPaymentMethodData();
 
         $testee = $this->createTestee();
         $data   = $testee->get_payment_method_data();
 
-        $this->assertArrayNotHasKey('place_order', $data);
+        $this->assertArrayNotHasKey('place_order_enabled', $data);
     }
 
     /**
-     * GIVEN a place-order data provider whose answer depends on the current cart
+     * GIVEN a place-order-enabled provider whose answer depends on the current cart
      * WHEN the block payment method data is built more than once, after the cart's
      *      state (and therefore the provider's answer) has changed
-     * THEN each call exposes the provider's current answer under "place_order",
-     *      not the answer captured on the first call
+     * THEN each call exposes the provider's current answer under
+     *      "place_order_enabled", not the answer captured on the first call
      */
-    public function test_get_payment_method_data_reflects_current_place_order_state_on_each_call(): void
+    public function test_get_payment_method_data_reflects_current_place_order_enabled_state_on_each_call(): void
     {
         $this->stubGatewayForPaymentMethodData();
 
         $cartHasSubscription = false;
-        $place_order_data    = static function () use (&$cartHasSubscription): array {
-            return [
-                'enabled'     => ! $cartHasSubscription,
-            ];
+        $place_order_enabled = static function () use (&$cartHasSubscription): bool {
+            return ! $cartHasSubscription;
         };
 
-        $testee = $this->createTestee($place_order_data);
+        $testee = $this->createTestee($place_order_enabled);
 
         $firstCallData = $testee->get_payment_method_data();
-        $this->assertSame(
-            [
-                'enabled'     => true,
-            ],
-            $firstCallData['place_order']
-        );
+        $this->assertTrue($firstCallData['place_order_enabled']);
 
         $cartHasSubscription = true;
         $secondCallData      = $testee->get_payment_method_data();
-        $this->assertSame(
-            [
-                'enabled'     => false,
-            ],
-            $secondCallData['place_order']
-        );
+        $this->assertFalse($secondCallData['place_order_enabled']);
     }
 }

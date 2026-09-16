@@ -321,7 +321,7 @@ describe( 'checkout-block', () => {
 			test( 'registers ppcp-gateway as a regular payment method even with no vault component', () => {
 				loadCheckoutBlock(
 					baseConfig( {
-						place_order: { enabled: true },
+						place_order_enabled: true,
 					} )
 				);
 
@@ -331,7 +331,7 @@ describe( 'checkout-block', () => {
 			test( 'does not show saved cards when the vault component is not eligible', () => {
 				loadCheckoutBlock(
 					baseConfig( {
-						place_order: { enabled: true },
+						place_order_enabled: true,
 					} )
 				);
 
@@ -376,7 +376,7 @@ describe( 'checkout-block', () => {
 				} ) => {
 					loadCheckoutBlock(
 						baseConfig( {
-							place_order: { enabled: true },
+							place_order_enabled: true,
 							has_subscriptions: hasSubscriptions,
 							cart_needs_vaulting: cartNeedsVaulting,
 							amount: '10.00',
@@ -427,7 +427,7 @@ describe( 'checkout-block', () => {
 			loadCheckoutBlock(
 				baseConfig( {
 					id: 'ppcp-gateway-custom',
-					place_order: { enabled: true },
+					place_order_enabled: true,
 				} )
 			);
 
@@ -445,7 +445,7 @@ describe( 'checkout-block', () => {
 			loadCheckoutBlock(
 				baseConfig( {
 					continuation: { funding_source: 'paypal' },
-					place_order: { enabled: true },
+					place_order_enabled: true,
 					vault_component: { is_eligible: true },
 				} )
 			);
@@ -478,7 +478,7 @@ describe( 'checkout-block', () => {
 
 		test( 'leaves the label alone when no override is filtered in', () => {
 			loadCheckoutBlock(
-				baseConfig( { place_order: { enabled: true } } )
+				baseConfig( { place_order_enabled: true } )
 			);
 
 			expect( regularCallFor( 'ppcp-gateway' ) ).not.toHaveProperty(
@@ -490,7 +490,7 @@ describe( 'checkout-block', () => {
 		test( 'applies a filtered override to both the registration and the checkout filter', () => {
 			loadCheckoutBlock(
 				baseConfig( {
-					place_order: { enabled: true },
+					place_order_enabled: true,
 					placeOrderButtonLabel: 'Complete order',
 				} )
 			);
@@ -515,7 +515,7 @@ describe( 'checkout-block', () => {
 			loadCheckoutBlock(
 				baseConfig( {
 					continuation: { funding_source: 'venmo' },
-					place_order: { enabled: true },
+					place_order_enabled: true,
 					placeOrderButtonLabel: 'Complete order',
 				} )
 			);
