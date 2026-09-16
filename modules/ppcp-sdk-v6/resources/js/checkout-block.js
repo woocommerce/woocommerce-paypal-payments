@@ -130,6 +130,31 @@ function gatewayFeatures( features ) {
 	return features || [ 'products' ];
 }
 
+/**
+ * Relabels "Place order" while a redirect method is selected.
+ *
+ * The registration's own placeOrderButtonLabel is not enough: the Checkout
+ * Actions block reads the label through this filter. Same pair as v5.
+ *
+ * @param {string} gatewayId - The method whose selection changes the label.
+ * @param {string} label     - The label to show while it is selected.
+ */
+function registerPlaceOrderLabel( gatewayId, label ) {
+	if ( ! label ) {
+		return;
+	}
+
+	window.wc?.blocksCheckout?.registerCheckoutFilters?.( gatewayId, {
+		placeOrderButtonLabel: ( defaultLabel ) => {
+			const payment = window.wp?.data?.select( 'wc/store/payment' );
+
+			return payment?.getActivePaymentMethod?.() === gatewayId
+				? label
+				: defaultLabel;
+		},
+	} );
+}
+
 if ( config && config.page_context && config.continuation ) {
 	registerPaymentMethod( {
 		name: PAYPAL_GATEWAY_ID,
@@ -247,6 +272,17 @@ if ( config && config.page_context && config.continuation ) {
 				const amount =
 					amountFromCartTotals( cartTotals ) || config.amount;
 
+				// A free-trial ($0) subscription is vaulted through the PayPal
+				// save flow (see V6ExpressComponent), which the amount-based
+				// eligibility check would reject for a zero amount. Only PayPal
+				// is offered on such carts, so guard on it and bypass eligibility
+				// (mirrors boot.js). Read live from the amount, not the server's
+				// page-load flag, so a coupon that zeroes or un-zeroes the cart
+				// after render is honoured.
+				if ( isFreeTrialCart( config, amount ) ) {
+					return fundingSource === FundingSources.PAYPAL;
+				}
+
 				// Before the SDK is asked, so a cart that only PayPal can pay
 				// for costs no eligibility lookup for the other methods.
 				if ( ! expressMethodAllowedForCart( fundingSource, amount ) ) {
@@ -308,6 +344,35 @@ if ( config && config.page_context && config.continuation ) {
 			features: settings.supported_features,
 		} );
 	}
+}
+
+// BCDC, redirecting rather than using the SDK: its card form only renders
+// inline, which needs an express placement that WooCommerce then disables.
+// CardButtonGateway returns PayPal's hosted checkout URL when the session holds
+// no approved order. Skipped in continuation mode, like the card fields.
+if ( config?.card_button?.block_method && ! config.continuation ) {
+	const cardButtonId = config.card_button.payment_method;
+
+	registerPaymentMethod( {
+		name: cardButtonId,
+		label: createElement( 'div', null, config.card_button.title ),
+		ariaLabel: config.card_button.title,
+		content: createElement( PayPalPlaceOrderContent, {
+			description: config.card_button.description,
+			placeOrderButtonDescription: config.placeOrderButtonDescription,
+		} ),
+		edit: createElement( PayPalPlaceOrderContent, {
+			description: config.card_button.description,
+		} ),
+		canMakePayment: () => true,
+		supports: {
+			features: gatewayFeatures( config.card_button.supported_features ),
+			// PayPal's hosted card page cannot vault into WooCommerce.
+			showSaveOption: false,
+		},
+	} );
+
+	registerPlaceOrderLabel( cardButtonId, config.placeOrderButtonLabel );
 }
 
 /**
@@ -394,15 +459,27 @@ const placeOrderEnabled =
  * coupon applied on the checkout is taken into account. Mirrors v5's
  * paypalPaymentMethodAllowed().
  *
+ * A free-trial ($0) subscription is the exception: it cannot be paid through
+ * this row. The "Place order" flow redirects to a PayPal order that cannot be
+ * created for a zero total, and PayPal can only vault a payment method without a
+ * purchase through an approval the buyer opens from a button. So the row is
+ * withheld and the express "Pay with PayPal" button (which runs that save flow)
+ * is offered instead. Read live, so a coupon that zeroes or un-zeroes the cart
+ * after render is honoured.
+ *
  * @param {Object} [cartTotals] - The canMakePayment cart totals.
  * @return {boolean} Whether the row may show.
  */
 function regularRowAllowedForCart( cartTotals ) {
+	const amount = amountFromCartTotals( cartTotals ) || config.amount;
+
+	if ( isFreeTrialCart( config, amount ) ) {
+		return false;
+	}
+
 	if ( config.has_subscriptions ) {
 		return true;
 	}
-
-	const amount = amountFromCartTotals( cartTotals ) || config.amount;
 
 	return parseFloat( amount ) > 0;
 }
@@ -478,7 +555,9 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 	} else {
 		rowProps = {
 			// The row exists because a saved token does, so it is always
-			// available; a new PayPal payment uses the express button.
+			// available; a new PayPal payment uses the express button. A saved
+			// token completes a free-trial order too (the gateway attaches it),
+			// so this variant carries no broken redirect to withhold.
 			content: createElement( SavedTokenNote ),
 			canMakePayment: () => true,
 		};
@@ -505,23 +584,12 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 		},
 	} );
 
-	// placeOrderButtonLabel above is not honoured on its own by the Checkout
-	// Actions block, which reads the label through this filter instead, so an
-	// override has to be applied in both places. Same belt-and-braces pair as v5.
-	if ( placeOrderEnabled && config.placeOrderButtonLabel ) {
-		const placeOrderButtonLabel = ( defaultLabel ) => {
-			const payment = window.wp?.data?.select( 'wc/store/payment' );
-
-			if ( payment?.getActivePaymentMethod?.() !== PAYPAL_GATEWAY_ID ) {
-				return defaultLabel;
-			}
-
-			return config.placeOrderButtonLabel;
-		};
-
-		window.wc?.blocksCheckout?.registerCheckoutFilters?.(
+	// Only when a filter supplies an override: the label is WooCommerce's
+	// otherwise. registerPlaceOrderLabel() ignores a missing one.
+	if ( placeOrderEnabled ) {
+		registerPlaceOrderLabel(
 			PAYPAL_GATEWAY_ID,
-			{ placeOrderButtonLabel }
+			config.placeOrderButtonLabel
 		);
 	}
 }

@@ -14,6 +14,8 @@ import {
 
 const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo, pui } = gateways;
 
+setup.use( { screencastOptions: null } );
+
 // =====================================================================
 // Layer 2 — PCP country: configureStore + installPcp + resetDb + connect
 // =====================================================================
@@ -120,6 +122,7 @@ setup( 'setup:vaulting;', async ( { pcpApi } ) => {
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
+		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
 } );
 

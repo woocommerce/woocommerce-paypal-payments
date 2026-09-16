@@ -1,5 +1,7 @@
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
-import SimulateCart, { isSimulateCartEnabled } from '@ppcp-button/Helper/SimulateCart';
+import SimulateCart, {
+	isSimulateCartEnabled,
+} from '@ppcp-button/Helper/SimulateCart';
 import ErrorHandler from '@ppcp-button/ErrorHandler';
 import UpdateCart from '@ppcp-button/Helper/UpdateCart';
 import BaseHandler from './BaseHandler';
@@ -14,18 +16,32 @@ class SingleProductHandler extends BaseHandler {
 	}
 
 	transactionInfo() {
-		// Simulation is this method's only mechanism for fetching product data;
-		// reject early to avoid a pointless AJAX call.
-		if ( ! isSimulateCartEnabled( this.ppcpConfig ) ) {
-			return Promise.reject( new Error( 'Cart simulation is disabled.' ) );
-		}
-
 		const form = document.querySelector( 'form.cart' );
 		const variationIdInput = form?.querySelector(
 			'input[name="variation_id"]'
 		);
 		if ( variationIdInput && ! parseInt( variationIdInput.value ) ) {
-			return Promise.reject( new Error( 'No variation selected.' ) );
+			/*
+			 * No variation chosen, so there is no product total to price yet.
+			 * Rejecting here left the manager without transaction info and it
+			 * skipped the button entirely, so a variable product with no default
+			 * attributes never offered Google Pay at all - not even once the
+			 * shopper picked one, since nothing re-runs the init on that event.
+			 *
+			 * Fall back to the cart-based figures purely so the button renders.
+			 * ProductButtonGate keeps it disabled until a variation exists, and
+			 * onButtonClick() re-reads this method before opening the sheet, so
+			 * this total is never the one presented to the shopper.
+			 */
+			return super.transactionInfo();
+		}
+
+		// Simulation is this method's only mechanism for fetching product data;
+		// reject early to avoid a pointless AJAX call.
+		if ( ! isSimulateCartEnabled( this.ppcpConfig ) ) {
+			return Promise.reject(
+				new Error( 'Cart simulation is disabled.' )
+			);
 		}
 
 		const errorHandler = new ErrorHandler(

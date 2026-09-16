@@ -909,16 +909,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return bool
 	 */
 	public function can_save_vault_token(): bool {
-		$merchant_data = $this->settings_provider->merchant_data();
-		if ( ! $merchant_data->client_id ) {
-			return false;
-		}
-
-		if ( ! $this->settings_provider->save_paypal_and_venmo() ) {
-			return false;
-		}
-
-		return true;
+		return $this->settings_provider->can_save_vault_token();
 	}
 
 	/**

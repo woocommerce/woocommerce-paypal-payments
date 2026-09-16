@@ -22,7 +22,7 @@ import {
 	buildReadyToPayRequest,
 } from './googlePayRequest';
 import { buildPaymentDataCallbacks } from './googlePayShipping';
-import { buttonStyle } from '../methods/buttonStyle';
+import { buttonHeight, buttonStyle } from '../methods/buttonStyle';
 import {
 	googlePayPayer,
 	googlePayShippingAddress,
@@ -73,7 +73,8 @@ export async function renderGooglePay( {
 	const settings = methodConfig( config, method );
 
 	const container = document.createElement( 'div' );
-	container.style.height = overrides.height || config.button_height;
+	container.style.height =
+		overrides.height || buttonHeight( config, context );
 	wrapper.appendChild( container );
 
 	// Independent: fetching PayPal's config does not need Google's global,

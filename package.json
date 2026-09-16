@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "4.1.2",
+  "version": "4.1.3",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
@@ -64,6 +64,9 @@
     "e2e:test:shard:subscription:smoke": "npx playwright test --project \"shard:subscription\" --grep \"@Smoke\"",
     "e2e:test:shard:subscription:critical": "npx playwright test --project \"shard:subscription\" --grep \"@Critical\"",
 
+    "e2e:test:shard:transaction-international": "npx playwright test --project \"shard:transaction-international\"",
+    "e2e:test:shard:transaction-international:smoke": "npx playwright test --project \"shard:transaction-international\" --grep \"@Smoke\"",
+
     "e2e:test:stress": "npx playwright test --project \"stress\"",
 
     "e2e:env:reset": "npx playwright test --project \"setup\" --grep \"env:reset;\"",
@@ -84,7 +87,7 @@
     "e2e:env:setup:tax:exc": "npx playwright test --project \"setup\" --grep \"setup:tax:exc;\"",
 
     "e2e:lint:md:fix": "wp-scripts lint-md-docs --fix ./tests/qa/**/*.md ./E2E-TESTS.md",
-    "e2e:lint:js:fix": "wp-scripts lint-js --fix --ext .ts,.tsx,.mjs ./tests/qa"
+    "e2e:lint:js:fix": "wp-scripts lint-js --fix ./tests/qa"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
@@ -107,7 +110,7 @@
     "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/preset-env": "^7.29.5",
     "@babel/preset-react": "^7.28.5",
-    "@inpsyde/playwright-utils": "^5.1.0",
+    "@inpsyde/playwright-utils": "^5.2.0",
     "@playwright/test": "^1.59.0",
     "@testing-library/dom": "^10.1.0",
     "@testing-library/jest-dom": "^6.4.6",
@@ -133,8 +136,8 @@
     "@wordpress/scripts": "^34.0.0",
     "@wordpress/url": "^4.40.0",
     "babel-plugin-explicit-exports-references": "^1.0.2",
-    "eslint-import-resolver-webpack": "^0.13.10",
-    "jquery": "^3.7.1"
+    "jquery": "^3.7.1",
+    "otplib": "^13.5.0"
   },
   "overrides": {
     "@wordpress/scripts": {
