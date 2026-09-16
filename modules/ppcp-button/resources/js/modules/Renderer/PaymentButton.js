@@ -705,38 +705,23 @@ export default class PaymentButton {
 	}
 
 	/**
-	 * Records a failure in the WooCommerce log.
+	 * Records an event in the WooCommerce log.
 	 *
 	 * Distinct from error(), which reaches the console only, and only for a
 	 * merchant who turned button debugging on. A wallet sheet fails inside
 	 * native UI where no console is readable at all.
 	 *
 	 * @param {string} event    - What happened, as a stable slug.
-	 * @param {string} [detail] - Named facts about the failure.
+	 * @param {string} [detail] - Named facts about the event.
+	 * @param {string} [level]  - The level to record it at.
 	 */
-	reportFailure( event, detail = '' ) {
-		logFrontendEvent(
-			this.ppcpConfig?.ajax?.frontend_log,
-			this.methodId,
-			event,
-			detail
-		);
-	}
-
-	/**
-	 * Records a lifecycle step, so that a sheet which ends without one of the
-	 * terminal events can be told apart from a buyer who walked away.
-	 *
-	 * @param {string} event    - What happened, as a stable slug.
-	 * @param {string} [detail] - Named facts about the step.
-	 */
-	reportEvent( event, detail = '' ) {
+	logEvent( event, detail = '', level = 'error' ) {
 		logFrontendEvent(
 			this.ppcpConfig?.ajax?.frontend_log,
 			this.methodId,
 			event,
 			detail,
-			'info'
+			level
 		);
 	}
 

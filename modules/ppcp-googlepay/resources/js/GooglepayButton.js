@@ -742,7 +742,7 @@ class GooglepayButton extends PaymentButton {
 
 				resolve( paymentDataRequestUpdate );
 			} catch ( error ) {
-				this.reportFailure(
+				this.logEvent(
 					'shipping-update-failed',
 					describeError( error )
 				);
@@ -866,7 +866,7 @@ class GooglepayButton extends PaymentButton {
 		};
 
 		const paymentError = ( reason ) => {
-			this.reportFailure( 'payment-failed', reason );
+			this.logEvent( 'payment-failed', reason );
 
 			return paymentResponse( 'ERROR', 'PAYMENT_AUTHORIZATION', reason );
 		};
@@ -893,7 +893,7 @@ class GooglepayButton extends PaymentButton {
 				default:
 					// confirmOrder goes straight from the browser to PayPal,
 					// so this status is the only account of the refusal.
-					this.reportFailure(
+					this.logEvent(
 						'confirm-order-not-approved',
 						`status=${ confirmOrderResponse?.status }`
 					);

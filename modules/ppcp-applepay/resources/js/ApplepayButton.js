@@ -350,7 +350,7 @@ class ApplePayButton extends PaymentButton {
 			.catch( ( error ) => {
 				// The button reinits with the previous total, so a stale sheet
 				// is the visible symptom.
-				this.reportFailure(
+				this.logEvent(
 					'transaction-info-failed',
 					describeError( error )
 				);
@@ -379,7 +379,7 @@ class ApplePayButton extends PaymentButton {
 			this.isEligible = !! this.#applePayConfig.isEligible;
 		} catch ( error ) {
 			this.isEligible = false;
-			this.reportFailure(
+			this.logEvent(
 				'eligibility-check-failed',
 				describeError( error )
 			);
@@ -511,7 +511,7 @@ class ApplePayButton extends PaymentButton {
 			paymentRequest = this.paymentRequest();
 		} catch ( error ) {
 			// Thrown before a session exists, so there is no sheet to abort.
-			this.reportFailure(
+			this.logEvent(
 				'payment-request-failed',
 				describeError( error )
 			);
@@ -537,7 +537,7 @@ class ApplePayButton extends PaymentButton {
 
 				this.updateRequestDataWithForm( paymentRequest );
 			} catch ( error ) {
-				this.reportFailure( 'form-data-failed', describeError( error ) );
+				this.logEvent( 'form-data-failed', describeError( error ) );
 			}
 
 			this.log( '=== paymentRequest', paymentRequest );
@@ -561,7 +561,7 @@ class ApplePayButton extends PaymentButton {
 						jQuery( document.body ).trigger( 'checkout_error', [
 							errorHandler.currentHtml(),
 						] );
-						this.reportFailure(
+						this.logEvent(
 							'checkout-validation-abort',
 							`errors=${ errors.length }`
 						);
@@ -571,7 +571,7 @@ class ApplePayButton extends PaymentButton {
 				} catch ( error ) {
 					// Falling through would leave the sheet up on data nobody
 					// validated.
-					this.reportFailure(
+					this.logEvent(
 						'form-validation-failed',
 						describeError( error )
 					);
@@ -791,7 +791,7 @@ class ApplePayButton extends PaymentButton {
 					this.adminValidation( true );
 				} )
 				.catch( ( validateError ) => {
-					this.reportFailure(
+					this.logEvent(
 						'merchant-validation-failed',
 						describeError( validateError )
 					);
@@ -843,7 +843,7 @@ class ApplePayButton extends PaymentButton {
 
 						session.completeShippingMethodSelection( response );
 					} catch ( error ) {
-						this.reportFailure(
+						this.logEvent(
 							'shipping-method-invalid-response',
 							`${ describeError( error ) } keys=${ Object.keys(
 								applePayShippingMethodUpdate ?? {}
@@ -854,7 +854,7 @@ class ApplePayButton extends PaymentButton {
 				},
 				error: ( jqXHR, textStatus, errorThrown ) => {
 					// Apple words an aborted sheet exactly like a buyer's dismissal.
-					this.reportFailure(
+					this.logEvent(
 						'shipping-method-abort',
 						`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
 					);
@@ -898,7 +898,7 @@ class ApplePayButton extends PaymentButton {
 
 						session.completeShippingContactSelection( response );
 					} catch ( error ) {
-						this.reportFailure(
+						this.logEvent(
 							'shipping-contact-invalid-response',
 							`${ describeError( error ) } keys=${ Object.keys(
 								applePayShippingContactUpdate ?? {}
@@ -909,7 +909,7 @@ class ApplePayButton extends PaymentButton {
 				},
 				error: ( jqXHR, textStatus, errorThrown ) => {
 					// Apple words an aborted sheet exactly like a buyer's dismissal.
-					this.reportFailure(
+					this.logEvent(
 						'shipping-contact-abort',
 						`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
 					);
@@ -1048,7 +1048,7 @@ class ApplePayButton extends PaymentButton {
 								resolve( authorizationResult );
 							},
 							error: ( jqXHR, textStatus, errorThrown ) => {
-								this.reportFailure(
+								this.logEvent(
 									'capture-request-failed',
 									`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
 								);
@@ -1063,7 +1063,7 @@ class ApplePayButton extends PaymentButton {
 					} catch ( error ) {
 						// Without the reject the awaited promise never settles
 						// and the sheet spins until Apple gives up.
-						this.reportFailure(
+						this.logEvent(
 							'capture-exception',
 							describeError( error )
 						);
@@ -1077,7 +1077,7 @@ class ApplePayButton extends PaymentButton {
 			try {
 				id = await this.contextHandler.createOrder();
 			} catch ( error ) {
-				this.reportFailure(
+				this.logEvent(
 					'create-order-failed',
 					describeError( error )
 				);
@@ -1087,7 +1087,7 @@ class ApplePayButton extends PaymentButton {
 			}
 
 			if ( ! id ) {
-				this.reportFailure( 'create-order-failed', 'no order id' );
+				this.logEvent( 'create-order-failed', 'no order id' );
 				session.completePayment( ApplePaySession.STATUS_FAILURE );
 				session.abort();
 				return;
@@ -1158,9 +1158,7 @@ class ApplePayButton extends PaymentButton {
 										ApplePaySession.STATUS_SUCCESS
 									);
 								} else {
-									this.reportFailure(
-										'approve-order-failed'
-									);
+									this.logEvent( 'approve-order-failed' );
 									session.completePayment(
 										ApplePaySession.STATUS_FAILURE
 									);
@@ -1187,7 +1185,7 @@ class ApplePayButton extends PaymentButton {
 									window.location.href =
 										authorizationResult.redirect;
 								} else {
-									this.reportFailure(
+									this.logEvent(
 										'capture-failed',
 										`result=${ authorizationResult?.result }`
 									);
@@ -1197,7 +1195,7 @@ class ApplePayButton extends PaymentButton {
 								}
 							}
 						} catch ( error ) {
-							this.reportFailure(
+							this.logEvent(
 								'authorization-failed',
 								describeError( error )
 							);
@@ -1209,7 +1207,7 @@ class ApplePayButton extends PaymentButton {
 					} else {
 						// confirmOrder goes straight from the browser to PayPal,
 						// so this status is the only account of the refusal.
-						this.reportFailure(
+						this.logEvent(
 							'confirm-order-not-approved',
 							`status=${ confirmOrderResponse.approveApplePayPayment.status }`
 						);
@@ -1218,14 +1216,14 @@ class ApplePayButton extends PaymentButton {
 						);
 					}
 				} else {
-					this.reportFailure(
+					this.logEvent(
 						'confirm-order-unrecognized',
 						`keys=${ Object.keys( confirmOrderResponse ?? {} ).join( ',' ) }`
 					);
 					session.completePayment( ApplePaySession.STATUS_FAILURE );
 				}
 			} catch ( error ) {
-				this.reportFailure(
+				this.logEvent(
 					'confirm-order-failed',
 					describeError( error )
 				);
