@@ -200,7 +200,7 @@ return array(
         return new LoginLinkRestEndpoint($container->get('settings.service.connection-url-generator'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.rest.webhooks' => static function (ContainerInterface $container): WebhookSettingsEndpoint {
-        return new WebhookSettingsEndpoint($container->get('api.endpoint.webhook'), $container->get('webhook.registrar'), $container->get('webhook.status.simulation'));
+        return new WebhookSettingsEndpoint($container->get('api.endpoint.webhook'), $container->get('webhook.registrar'), $container->get('webhook.status.simulation'), $container->get('webhook.own-resolver'));
     },
     'settings.rest.pay_later_messaging' => static function (ContainerInterface $container): PayLaterMessagingEndpoint {
         return new PayLaterMessagingEndpoint($container->get('settings.data.paylater-messaging-settings'), $container->get('paylater-configurator.endpoint.save-config'));

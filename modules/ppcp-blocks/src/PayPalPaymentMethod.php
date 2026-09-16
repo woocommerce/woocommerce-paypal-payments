@@ -19,6 +19,8 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 /**
  * Class PayPalPaymentMethod
@@ -98,6 +100,8 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType
      * @var array
      */
     private $all_funding_sources;
+    private FreeTrialSubscriptionHelper $free_trial_helper;
+    private WooCommercePaymentTokens $wc_payment_tokens;
     /**
      * @param AssetGetter                   $asset_getter
      * @param string                        $version    The assets version.
@@ -113,7 +117,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType
      * @param bool                          $use_place_order Whether to use the standard "Place order" button instead of PayPal buttons.
      * @param array                         $all_funding_sources All existing funding sources for PayPal buttons.
      */
-    public function __construct(AssetGetter $asset_getter, string $version, $smart_button, SettingsProvider $plugin_settings, SettingsStatus $settings_status, PayPalGateway $gateway, bool $final_review_enabled, CancelView $cancellation_view, SessionHandler $session_handler, SubscriptionHelper $subscription_helper, bool $add_place_order_method, bool $use_place_order, array $all_funding_sources)
+    public function __construct(AssetGetter $asset_getter, string $version, $smart_button, SettingsProvider $plugin_settings, SettingsStatus $settings_status, PayPalGateway $gateway, bool $final_review_enabled, CancelView $cancellation_view, SessionHandler $session_handler, SubscriptionHelper $subscription_helper, bool $add_place_order_method, bool $use_place_order, array $all_funding_sources, FreeTrialSubscriptionHelper $free_trial_helper, WooCommercePaymentTokens $wc_payment_tokens)
     {
         $this->name = PayPalGateway::ID;
         $this->asset_getter = $asset_getter;
@@ -129,6 +133,8 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType
         $this->add_place_order_method = $add_place_order_method;
         $this->use_place_order = $use_place_order;
         $this->all_funding_sources = $all_funding_sources;
+        $this->free_trial_helper = $free_trial_helper;
+        $this->wc_payment_tokens = $wc_payment_tokens;
     }
     /**
      * {@inheritDoc}
@@ -174,7 +180,15 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType
         // A subscription cart may still use the standard "Place order" flow when a vault
         // token can be saved (vaulting mode) or when manual renewals are accepted (the
         // subscription is charged as a plain, one-time Orders API payment).
-        $place_order_enabled = ($this->use_place_order || $this->add_place_order_method) && (!$this->subscription_helper->cart_contains_subscription() || ($script_data['can_save_vault_token'] ?? \false) || $this->subscription_helper->accept_manual_renewals());
+        //
+        // The vaulting capability comes from the settings, not $script_data: under SDK v6
+        // the smart button is a DisabledSmartButton whose script_data() is empty.
+        //
+        // A free-trial (vaulting) cart needs an already-saved PayPal account for the
+        // standard "Place order" flow; without one it fails with "No saved PayPal account."
+        // Hide the gateway so the customer uses the express button (which vaults the
+        // account) instead. The token lookup is short-circuited to free-trial carts only.
+        $place_order_enabled = ($this->use_place_order || $this->add_place_order_method) && (!$this->subscription_helper->cart_contains_subscription() || $this->plugin_settings->can_save_vault_token() || $this->subscription_helper->accept_manual_renewals()) && (!$this->free_trial_helper->is_free_trial_cart() || $this->customer_has_saved_paypal());
         $cart = WC()->cart;
         $data = array(
             'id' => $this->gateway->id,
@@ -204,6 +218,14 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType
          * @param array $data The payment method data.
          */
         return (array) apply_filters('woocommerce_paypal_payments_blocks_payment_method_data', $data);
+    }
+    /**
+     * Whether the current customer has a saved PayPal or Venmo payment token.
+     */
+    private function customer_has_saved_paypal(): bool
+    {
+        $user_id = get_current_user_id();
+        return $user_id > 0 && $this->wc_payment_tokens->has_paypal_or_venmo_token($user_id);
     }
     /**
      * Checks if it is the block editing mode.

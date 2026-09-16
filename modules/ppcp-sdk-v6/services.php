@@ -177,14 +177,14 @@ return array(
     'sdk-v6.rate-limiter' => static function (): RateLimiter {
         return new RateLimiter('ppcp_sdk_v6_rl_', 10, 60);
     },
-    'sdk-v6.blocks.place-order-data' => static function (ContainerInterface $container): callable {
-        // The non-express PayPal row's state. A callable, since neither the cart
-        // nor the filtered values below are settled while the container is built.
+    'sdk-v6.blocks.place-order-enabled' => static function (ContainerInterface $container): callable {
+        // Whether the non-express PayPal row is offered. A callable, since neither
+        // the cart nor the filtered value below is settled while the container is built.
         $settings_provider = $container->get('settings.settings-provider');
         assert($settings_provider instanceof SettingsProvider);
         $subscription_helper = $container->get('wc-subscriptions.helper');
         assert($subscription_helper instanceof SubscriptionHelper);
-        return static function () use ($container, $settings_provider, $subscription_helper): array {
+        return static function () use ($container, $settings_provider, $subscription_helper): bool {
             /**
              * Whether to offer the non-express PayPal method.
              *
@@ -196,13 +196,13 @@ return array(
             // because extensions.php swaps in DisabledSmartButton on v6's pages.
             $can_vault = $settings_provider->save_paypal_and_venmo() && (bool) $container->get('button.client_id');
             $usable_for_cart = !$subscription_helper->cart_contains_subscription() || $can_vault;
-            return array('enabled' => $offer_method && $usable_for_cart);
+            return $offer_method && $usable_for_cart;
         };
     },
     'sdk-v6.blocks.payment-method' => static function (ContainerInterface $container): V6PaymentMethod {
         // The saved-PayPal vault component lives in its own feature-flagged module,
         // so its services may be absent; fall back to no saved-token support.
         $has_vault = $container->has('vault-component.data') && $container->has('vault-component.eligibility.check');
-        return new V6PaymentMethod($container->get('sdk-v6.manager'), $container->get('sdk-v6.asset-getter'), $container->get('ppcp.asset-version'), $container->get('wcgateway.paypal-gateway'), $container->get('wcgateway.credit-card-gateway'), $has_vault ? $container->get('vault-component.data') : null, $has_vault ? $container->get('vault-component.eligibility.check') : null, $container->get('button.client_id'), $container->get('sdk-v6.blocks.place-order-data'));
+        return new V6PaymentMethod($container->get('sdk-v6.manager'), $container->get('sdk-v6.asset-getter'), $container->get('ppcp.asset-version'), $container->get('wcgateway.paypal-gateway'), $container->get('wcgateway.credit-card-gateway'), $has_vault ? $container->get('vault-component.data') : null, $has_vault ? $container->get('vault-component.eligibility.check') : null, $container->get('button.client_id'), $container->get('sdk-v6.blocks.place-order-enabled'));
     },
 );
