@@ -127,15 +127,17 @@ class CompatModuleSdkV6MigrationTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN a store held back, whose merchant country is withheld from SDK v6 by default (Mexico)
+	 * GIVEN a third party widens the unsupported-countries filter to include the merchant's country
 	 * WHEN the migration callback runs
-	 * THEN the eligible option is written as 'no', since an absent value would now default to v6
+	 * THEN the eligible option is written as 'no', regardless of whether the store previously
+	 * had no answer or was already held back
 	 * AND the marker is still set
 	 *
 	 * @dataProvider eligible_no_or_absent_cases
 	 */
-	public function test_unsupported_country_by_default_is_written_no( $eligible_value ): void {
+	public function test_country_withheld_by_filter_is_written_no( $eligible_value ): void {
 		$this->stub_add_action_autorun();
+		expectApplied( self::FILTER )->andReturn( array( 'MX', 'BR' ) );
 
 		when( 'get_option' )->alias(
 			static function ( string $key ) use ( $eligible_value ) {
@@ -144,37 +146,6 @@ class CompatModuleSdkV6MigrationTest extends TestCase {
 				}
 				if ( $key === self::ELIGIBLE_OPTION ) {
 					return $eligible_value;
-				}
-				return false;
-			}
-		);
-
-		$container = $this->container_resolving_to( 'MX' );
-
-		expect( 'update_option' )->once()->with( self::ELIGIBLE_OPTION, 'no' );
-		expect( 'update_option' )->once()->with( self::MARKER_OPTION, true );
-
-		$this->testee->run_migration( $container );
-		$this->addToAssertionCount( 1 );
-	}
-
-	/**
-	 * GIVEN a third party widens the unsupported-countries filter to include the merchant's country
-	 * WHEN the migration callback runs
-	 * THEN the eligible option is written as 'no', since an absent value would now default to v6
-	 * AND the marker is still set
-	 */
-	public function test_country_withheld_by_filter_is_written_no(): void {
-		$this->stub_add_action_autorun();
-		expectApplied( self::FILTER )->andReturn( array( 'MX', 'BR' ) );
-
-		when( 'get_option' )->alias(
-			static function ( string $key ) {
-				if ( $key === self::MARKER_OPTION ) {
-					return false;
-				}
-				if ( $key === self::ELIGIBLE_OPTION ) {
-					return 'no';
 				}
 				return false;
 			}
