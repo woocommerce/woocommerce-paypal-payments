@@ -126,6 +126,16 @@ class WcPaymentTokensModule implements ServiceModule, ExecutableModule
         add_filter(
             'woocommerce_payment_methods_list_item',
             /**
+             * Labels a saved token for the payment methods list.
+             *
+             * WooCommerce labels a saved token as "<brand> ending in <last4>", and
+             * falls back to "Saved token for <gateway id>" whenever either is missing.
+             * A wallet has no card number for last4, so the block checkout shows the
+             * raw gateway id. Passing the account email as last4 buys the readable
+             * branch.
+             *
+             * TODO: drop this once WooCommerce lets a token supply its own label.
+             *
              * Param types removed to avoid third-party issues.
              *
              * @psalm-suppress MissingClosureParamType
@@ -135,11 +145,19 @@ class WcPaymentTokensModule implements ServiceModule, ExecutableModule
                     return $item;
                 }
                 if ($payment_token instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal) {
-                    $item['method']['brand'] = 'PayPal / ' . $payment_token->get_email();
+                    $item['method']['brand'] = 'PayPal';
+                    $email = $payment_token->get_email();
+                    if ($email) {
+                        $item['method']['last4'] = $email;
+                    }
                     return $item;
                 }
                 if ($payment_token instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo) {
-                    $item['method']['brand'] = 'Venmo / ' . $payment_token->get_email();
+                    $item['method']['brand'] = 'Venmo';
+                    $email = $payment_token->get_email();
+                    if ($email) {
+                        $item['method']['last4'] = $email;
+                    }
                     return $item;
                 }
                 if ($payment_token instanceof \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenApplePay) {
@@ -150,6 +168,27 @@ class WcPaymentTokensModule implements ServiceModule, ExecutableModule
             },
             10,
             2
+        );
+        add_filter(
+            'woocommerce_credit_card_type_labels',
+            /**
+             * Registers the PayPal brand label.
+             *
+             * WooCommerce's wc_get_credit_card_type_label() lowercases the brand and
+             * ucfirst()s anything it does not recognise, which renders PayPal as
+             * "Paypal" on the My Account payment methods table.
+             *
+             * Param types removed to avoid third-party issues.
+             *
+             * @psalm-suppress MissingClosureParamType
+             */
+            function ($labels) {
+                if (!is_array($labels)) {
+                    return $labels;
+                }
+                $labels['paypal'] = 'PayPal';
+                return $labels;
+            }
         );
         add_action('wp', function () use ($container) {
             global $wp;

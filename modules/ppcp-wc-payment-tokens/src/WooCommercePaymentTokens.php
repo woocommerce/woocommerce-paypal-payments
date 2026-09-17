@@ -212,6 +212,22 @@ class WooCommercePaymentTokens
         return $customer_tokens;
     }
     /**
+     * Whether the given WP user has a saved PayPal or Venmo payment token.
+     *
+     * @param int $user_id WP user id.
+     * @return bool
+     */
+    public function has_paypal_or_venmo_token(int $user_id): bool
+    {
+        foreach ($this->customer_tokens($user_id) as $token) {
+            $name = $token['payment_source']->name() ?? '';
+            if ('paypal' === $name || 'venmo' === $name) {
+                return \true;
+            }
+        }
+        return \false;
+    }
+    /**
      * Creates WC payment tokens for the given WP user id using PayPal payment tokens as source.
      *
      * @param array $customer_tokens PayPal customer payment tokens.

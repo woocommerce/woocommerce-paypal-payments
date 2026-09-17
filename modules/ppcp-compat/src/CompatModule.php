@@ -57,6 +57,9 @@ class CompatModule implements ServiceModule, ExecutableModule
             assert($context instanceof Context);
             (new \WooCommerce\PayPalCommerce\Compat\WcGiftCardsCompat($context))->register();
         }
+        if (class_exists('\Kestrel\Account_Funds\Cart')) {
+            (new \WooCommerce\PayPalCommerce\Compat\WcAccountFundsCompat())->register();
+        }
         $this->migrate_pay_later_settings($c);
         $this->migrate_smart_button_settings($c);
         $this->migrate_three_d_secure_setting();
