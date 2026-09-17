@@ -29,13 +29,7 @@ jest.mock( '../sessions/freeTrialSave', () => ( {
 	exchangeSetupToken: ( ...args ) => mockExchangeSetupToken( ...args ),
 } ) );
 
-import {
-	render,
-	waitFor,
-	act,
-	screen,
-	fireEvent,
-} from '@testing-library/react';
+import { render, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { createElement } from '@wordpress/element';
 import { V6CardFieldsComponent } from './V6CardFieldsComponent';
@@ -60,7 +54,6 @@ function cardConfig( overrides = {} ) {
 			payment_method: 'ppcp-credit-card-gateway',
 			funding_source: 'card',
 			title: 'Debit & Credit Cards',
-			name_field: true,
 			fields: {},
 		},
 		ajax: {
@@ -294,7 +287,6 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'',
 			false
 		);
 		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
@@ -319,7 +311,6 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'',
 			true
 		);
 	} );
@@ -345,7 +336,6 @@ describe( 'V6CardFieldsComponent', () => {
 				has_subscriptions: true,
 			} ),
 			'checkout-block',
-			'',
 			true
 		);
 	} );
@@ -413,7 +403,6 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'',
 			false
 		);
 	} );
@@ -509,16 +498,12 @@ describe( 'V6CardFieldsComponent', () => {
 		}
 	} );
 
-	test( 'renders the cardholder name as a plain input, not a V6CardFieldContainer, when card_fields.name_field is enabled', async () => {
+	test( 'renders only number/expiry/cvv field containers, with no cardholder-name field', async () => {
 		renderComponent();
 
 		await waitFor( () =>
 			expect( mockCardFieldContainer ).toHaveBeenCalled()
 		);
-
-		expect(
-			screen.getByPlaceholderText( 'Cardholder name (optional)' )
-		).toBeInTheDocument();
 
 		const types = mockCardFieldContainer.mock.calls.map(
 			( call ) => call[ 0 ].type
@@ -530,12 +515,12 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCardFieldContainer ).toHaveBeenCalledTimes( 3 );
 	} );
 
-	test( 'does not render the name input when card_fields.name_field is disabled', async () => {
+	test( 'renders no name input even with a stale name_field: true left over in config', async () => {
 		renderComponent( {
 			config: cardConfig( {
 				card_fields: {
 					...cardConfig().card_fields,
-					name_field: false,
+					name_field: true,
 				},
 			} ),
 		} );
@@ -545,17 +530,11 @@ describe( 'V6CardFieldsComponent', () => {
 		);
 
 		expect(
-			screen.queryByPlaceholderText( 'Cardholder name (optional)' )
+			document.getElementById( 'ppcp-sdk-v6-card-name' )
 		).not.toBeInTheDocument();
-
-		const types = mockCardFieldContainer.mock.calls.map(
-			( call ) => call[ 0 ].type
-		);
-		expect( types ).not.toContain( 'name' );
-		expect( types ).toContain( 'number' );
 	} );
 
-	test( 'keeps the plain placeholder and passes floatingLabel false to each field when no Blocks text-input markup is on the page', async () => {
+	test( 'keeps floatingLabel false for each field when no Blocks text-input markup is on the page', async () => {
 		renderComponent();
 		await waitForSessionReady();
 
@@ -565,37 +544,6 @@ describe( 'V6CardFieldsComponent', () => {
 			);
 			expect( call[ 0 ].floatingLabel ).toBe( false );
 		} );
-
-		expect(
-			screen.getByPlaceholderText( 'Cardholder name (optional)' )
-		).toBeInTheDocument();
-		expect(
-			document.querySelector( 'label[for="ppcp-sdk-v6-card-name"]' )
-		).not.toBeInTheDocument();
-	} );
-
-	test( 'forwards the typed cardholder name to createCardOrder on submit', async () => {
-		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
-		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
-
-		renderComponent();
-		await waitForSessionReady();
-
-		const nameInput = screen.getByPlaceholderText(
-			'Cardholder name (optional)'
-		);
-		fireEvent.change( nameInput, { target: { value: 'Jane Doe' } } );
-
-		await act( async () => {
-			await paymentSetupCb();
-		} );
-
-		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
-			cardConfig(),
-			'checkout-block',
-			'Jane Doe',
-			false
-		);
 	} );
 
 	test( 'submits the session with the billing address derived from the Blocks billing prop', async () => {
@@ -913,59 +861,6 @@ describe( 'V6CardFieldsComponent', () => {
 					);
 				}
 			);
-		} );
-
-		describe( 'cardholder name field', () => {
-			test( 'the label is associated with the input via for/id', async () => {
-				renderComponent();
-				await waitForSessionReady();
-
-				const input = screen.getByLabelText(
-					'Cardholder name (optional)'
-				);
-				expect( input ).toHaveAttribute(
-					'id',
-					'ppcp-sdk-v6-card-name'
-				);
-			} );
-
-			test( 'the wrapper carries the Blocks text-input class the stylesheet margin rule targets', async () => {
-				renderComponent();
-				await waitForSessionReady();
-
-				const input = screen.getByLabelText(
-					'Cardholder name (optional)'
-				);
-				const wrapper = input.closest( 'div' );
-
-				expect( wrapper ).toHaveClass(
-					'wc-block-components-text-input'
-				);
-			} );
-
-			test( 'the wrapper becomes active on focus and stays active once the field holds a value', async () => {
-				renderComponent();
-				await waitForSessionReady();
-
-				const input = screen.getByLabelText(
-					'Cardholder name (optional)'
-				);
-				const wrapper = input.closest( 'div' );
-
-				expect( wrapper ).not.toHaveClass( 'is-active' );
-
-				fireEvent.focus( input );
-				expect( wrapper ).toHaveClass( 'is-active' );
-
-				fireEvent.blur( input );
-				expect( wrapper ).not.toHaveClass( 'is-active' );
-
-				fireEvent.change( input, {
-					target: { value: 'Jane Doe' },
-				} );
-				fireEvent.blur( input );
-				expect( wrapper ).toHaveClass( 'is-active' );
-			} );
 		} );
 	} );
 } );

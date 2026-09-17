@@ -64,6 +64,8 @@ const assertWebhookPubliclyReachable = async (
 	).toBeTruthy();
 };
 
+setup.use( { screencastOptions: null } );
+
 // =====================================================================
 // Layer 2 — PCP country: configureStore + installPcp + resetDb + connect
 // =====================================================================

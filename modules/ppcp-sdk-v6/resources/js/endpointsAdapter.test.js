@@ -701,7 +701,7 @@ describe( 'createCardOrder', () => {
 		mockPayerData.mockReturnValueOnce( null );
 		postJson.mockResolvedValueOnce( { id: 'CARDORDER5' } );
 
-		await createCardOrder( config, 'checkout', '', true );
+		await createCardOrder( config, 'checkout', true );
 
 		expect( postJson ).toHaveBeenCalledWith(
 			config.ajax.create_order,
@@ -735,20 +735,7 @@ describe( 'createCardOrder', () => {
 		);
 	} );
 
-	test( 'adds the cardholder name to the body when provided', async () => {
-		document.body.innerHTML = '<form class="checkout"></form>';
-		mockPayerData.mockReturnValueOnce( null );
-		postJson.mockResolvedValueOnce( { id: 'CARDORDER5' } );
-
-		await createCardOrder( config, 'checkout', 'Jane Doe' );
-
-		expect( postJson ).toHaveBeenCalledWith(
-			config.ajax.create_order,
-			expect.objectContaining( { card_name: 'Jane Doe' } )
-		);
-	} );
-
-	test( 'omits the cardholder name from the body when not provided', async () => {
+	test( 'never sends card_name', async () => {
 		document.body.innerHTML = '<form class="checkout"></form>';
 		mockPayerData.mockReturnValueOnce( null );
 		postJson.mockResolvedValueOnce( { id: 'CARDORDER6' } );

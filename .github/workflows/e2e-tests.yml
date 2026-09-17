@@ -25,6 +25,7 @@ on:
           - shard:refund
           - shard:vaulting
           - shard:subscription
+          - shard:transaction-international
           - stress
       XRAY_TEST_EXEC_KEY:
         description: 'Xray Test Execution Key'
@@ -34,7 +35,7 @@ on:
       SDK_VERSION:
         description: 'PayPal JS SDK version to test'
         required: true
-        default: 'v6'
+        default: 'v5'
         type: choice
         options:
           - v6
@@ -50,7 +51,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
-    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@4a700901a67a357918707df71312b51535f27238 # pinning PR #278
+    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@f414e0b4da6c51adeee419cdd5fbbf299ae0167e # pinning PR #290
     secrets:
       GITHUB_USER_EMAIL: ${{ secrets.DEPLOYBOT_EMAIL }}
       GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
@@ -85,31 +86,45 @@ jobs:
             refund
             vaulting
             subscription
+            transaction-international
           )
 
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'
+          SDK_VERSION='${{ inputs.SDK_VERSION || 'both' }}'
 
-          # Default to v6 so automatic (workflow_run) triggers, which carry no
-          # inputs, keep today's behavior. Always suffix names/artifacts with
-          # the version so it's visible per job/shard which one ran.
-          SDK_VERSION='${{ inputs.SDK_VERSION || 'v6' }}'
+          sdk_versions() {
+            if [[ "$SDK_VERSION" == "both" ]]; then
+              echo "v5 v6"
+            else
+              echo "$SDK_VERSION"
+            fi
+          }
 
           if [[ "$TEST_SUITE" == *':parallel' ]]; then
             SUFFIX=""
             [[ "$TEST_SUITE" != "all:parallel" ]] && SUFFIX=":${TEST_SUITE%:parallel}"
 
-            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1} / ${SDK_VERSION}\",\"artifact_name\":\"playwright-artifact-${1}-${SDK_VERSION}\",\"sdk_version\":\"${SDK_VERSION}\",\"slug\":\"${1}\"}"; }
+            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1} / ${2}\",\"artifact_name\":\"playwright-artifact-${1}-${2}\",\"sdk_version\":\"${2}\"}"; }
 
             ITEMS=()
             for shard in "${SHARDS[@]}"; do
-              ITEMS+=("$(entry "$shard")")
+              for v in $(sdk_versions); do
+                ITEMS+=("$(entry "$shard" "$v")")
+              done
             done
             JOINED=$(IFS=,; echo "${ITEMS[*]}")
 
             echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
           else
             NAME="${TEST_SUITE#shard:}"
-            echo "matrix={\"include\":[{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME} / ${SDK_VERSION}\",\"artifact_name\":\"playwright-artifact-${NAME}-${SDK_VERSION}\",\"sdk_version\":\"${SDK_VERSION}\",\"slug\":\"${NAME}\"}]}" >> "$GITHUB_OUTPUT"
+
+            ITEMS=()
+            for v in $(sdk_versions); do
+              ITEMS+=("{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME} / ${v}\",\"artifact_name\":\"playwright-artifact-${NAME}-${v}\",\"sdk_version\":\"${v}\"}")
+            done
+            JOINED=$(IFS=,; echo "${ITEMS[*]}")
+
+            echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
           fi
 
   e2e-playwright:
@@ -152,11 +167,8 @@ jobs:
         )
 
         # 2. Add private composer repository and download WooCommerce Subscriptions
-        # Pinned below 9.0.0: that release folded "All Products for Subscriptions" into
-        # core and replaced the legacy `type: subscription` + `_subscription_*` meta
-        # product-creation API our test data relies on with a plan-based model.
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
-        composer require "inpsyde-mirror/woocommerce-subscriptions:<9.0"
+        composer require "inpsyde-mirror/woocommerce-subscriptions"
     secrets:
       ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
       NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}

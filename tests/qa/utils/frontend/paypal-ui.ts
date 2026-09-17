@@ -113,8 +113,17 @@ export class PayPalUi {
 	payPalVaultComponent = () =>
 		this.page.locator( '#ppcp-vault-component' );
 
-	payLaterMessageContainer = () =>
+	/** v5 (legacy): the Message component's zoid iframe. */
+	payLaterMessageIframeV5 = () =>
 		this.page.locator( 'iframe[title^="PayPal Message"]' ).first();
+
+	/** v6: the Message component's own custom element (no wrapping iframe). */
+	payLaterMessageElementV6 = () => this.page.locator( 'paypal-message' ).first();
+
+	payLaterMessageContainer = () =>
+		sdkVersion() === 'v5'
+			? this.payLaterMessageIframeV5()
+			: this.payLaterMessageElementV6();
 
 	fastlaneContinueButton = () =>
 		this.page
@@ -879,11 +888,19 @@ export class PayPalUi {
 	};
 
 	/**
-	 * Asserts Pay Later Messaging iframe is visible. Uses retry-with-reload for SDK-loaded content.
+	 * Asserts the Pay Later Messaging container is visible (v5: its zoid
+	 * iframe; v6: the `<paypal-message>` custom element — see
+	 * modules/ppcp-sdk-v6/resources/js/messages/renderer.js). Uses
+	 * retry-with-reload for SDK-loaded content.
 	 * Returns false if not found after retry (caller should test.skip()).
 	 */
 	assertPayLaterMessageVisibleWithContent = async (): Promise< boolean > =>
-		assertIframeWithRetry( this.page, 'iframe[title^="PayPal Message"]' );
+		assertIframeWithRetry(
+			this.page,
+			sdkVersion() === 'v5'
+				? 'iframe[title^="PayPal Message"]'
+				: 'paypal-message'
+		);
 
 	/**
 	 * Asserts PayPal buttons block container is visible and contains PayPal payment button.

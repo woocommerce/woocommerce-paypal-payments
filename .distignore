@@ -2,7 +2,6 @@
 .editorconfig
 .gitattributes
 .gitignore
-.eslintrc
 .ddev*
 .git*
 .phpstorm*
@@ -34,13 +33,13 @@ AGENTS.md
 CLAUDE.md
 .claude/
 E2E-TESTS.md
+eslint.config.js
 wordpress_org_assets*
 .DS_Store
 auth.json
 *.log
 scoper.inc.php
 jsconfig.json
-.eslintignore
 .wp-env.json
 playwright.config.ts
 tsconfig.json

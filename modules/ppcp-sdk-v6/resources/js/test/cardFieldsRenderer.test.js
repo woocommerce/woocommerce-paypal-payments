@@ -102,7 +102,6 @@ const baseConfig = ( overrides = {} ) => ( {
 			number: '#ppcp-credit-card-gateway-card-number',
 			expiry: '#ppcp-credit-card-gateway-card-expiry',
 			cvv: '#ppcp-credit-card-gateway-card-cvc',
-			name: null,
 		},
 	},
 	...overrides,
@@ -210,7 +209,7 @@ describe( 'initCardFields', () => {
 		);
 	} );
 
-	test( 'never mounts the name field even when fields.name points to a WC input, since v6 has no name field component', async () => {
+	test( 'never mounts a name field, since the server no longer emits a name selector', async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		document.body.insertAdjacentHTML(
 			'beforeend',
@@ -221,17 +220,7 @@ describe( 'initCardFields', () => {
 			createCardFieldsOneTimePaymentSession: () => cardSession,
 		} );
 
-		await initCardFields(
-			baseConfig( {
-				card_fields: {
-					...baseConfig().card_fields,
-					fields: {
-						...baseConfig().card_fields.fields,
-						name: '#ppcp-credit-card-gateway-card-name',
-					},
-				},
-			} )
-		);
+		await initCardFields( baseConfig() );
 		await flushPromises();
 
 		expect(
@@ -570,7 +559,6 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			baseConfig(),
 			'checkout',
-			'',
 			false
 		);
 		expect( cardSession.submit ).toHaveBeenCalledWith( 'CARDORDER1' );
@@ -582,43 +570,6 @@ describe( 'initCardFields', () => {
 		// that second click through instead of re-intercepting it.
 		expect( nativeSubmits ).toBe( 1 );
 		expect( mockHandleError ).not.toHaveBeenCalled();
-	} );
-
-	test( 'forwards the cardholder name from the plain WC input to createCardOrder', async () => {
-		buildCheckoutDom( 'ppcp-credit-card-gateway' );
-		document.body.insertAdjacentHTML(
-			'beforeend',
-			'<input id="ppcp-credit-card-gateway-card-name" value="Jane Doe" />'
-		);
-		const cardSession = makeCardSession( { state: 'succeeded' } );
-		mockLoadSdkV6.mockResolvedValue( {
-			createCardFieldsOneTimePaymentSession: () => cardSession,
-		} );
-		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
-		mockApproveCardOrder.mockResolvedValue( undefined );
-
-		const config = baseConfig( {
-			card_fields: {
-				...baseConfig().card_fields,
-				fields: {
-					...baseConfig().card_fields.fields,
-					name: '#ppcp-credit-card-gateway-card-name',
-				},
-			},
-		} );
-
-		await initCardFields( config );
-		await flushPromises();
-
-		document.querySelector( '#place_order' ).click();
-		await flushPromises();
-
-		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
-			config,
-			'checkout',
-			'Jane Doe',
-			false
-		);
 	} );
 
 	test( 'submits the card session with the billing address when the checkout form has a postcode', async () => {
@@ -667,7 +618,6 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			baseConfig(),
 			'checkout',
-			'',
 			true
 		);
 	} );
@@ -694,7 +644,6 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			baseConfig(),
 			'checkout',
-			'',
 			false
 		);
 	} );

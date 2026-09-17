@@ -80,3 +80,7 @@ add_filter(
   `WcGiftCardsCompat` for the classic cart/checkout, express button shipping callback, and order
   paths. No manual
   integration is needed for that plugin.
+- Account Funds for WooCommerce (`woocommerce-account-funds`) is handled automatically via
+  `WcAccountFundsCompat` across the same three paths. No manual integration is needed.
+- An unreported discount is not only a wrong total. `AmountFactory` reconciles the gap through the
+  tax line, so it can surface as `CANNOT_BE_NEGATIVE` on `tax_total` in the Level 2 card data.

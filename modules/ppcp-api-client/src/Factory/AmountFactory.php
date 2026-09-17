@@ -84,25 +84,30 @@ class AmountFactory {
 
 		$item_total = new Money( $item_total_val, $this->currency->get() );
 		$shipping   = new Money( $shipping_val, $this->currency->get() );
-		$taxes      = new Money( $taxes_val, $this->currency->get() );
+
+		// The cart's own total is authoritative. A plugin can reduce it through
+		// WC_Cart::set_total() or the woocommerce_cart_get_total filter without
+		// registering a coupon or a fee, which leaves the reduction invisible to
+		// the getters above; a component sum would then charge the undiscounted
+		// amount. Reconciling against the cart total keeps PayPal's invariant that
+		// amount.value equals the sum of the breakdown fields.
+		$wc_total = (float) $cart->get_total( 'edit' );
+
+		list( $taxes_cents, $discount_cents ) = $this->reconcile_with_total(
+			(int) round( $wc_total * 100 ),
+			(int) round( $item_total_val * 100 ),
+			(int) round( $shipping_val * 100 ),
+			(int) round( $taxes_val * 100 ),
+			(int) round( $discount_val * 100 )
+		);
+
+		$taxes = new Money( $taxes_cents / 100, $this->currency->get() );
+		$total = new Money( $wc_total, $this->currency->get() );
 
 		$discount = null;
-		if ( $discount_val ) {
-			$discount = new Money( $discount_val, $this->currency->get() );
+		if ( $discount_cents ) {
+			$discount = new Money( $discount_cents / 100, $this->currency->get() );
 		}
-
-		// Derive the total from breakdown components in integer cents rather than
-		// using get_total(), which can diverge from the component sum by ±$0.01
-		// due to WooCommerce per-item tax rounding. PayPal requires amount.value to
-		// exactly equal the sum of its breakdown fields or it rejects the PATCH.
-		// Formatting through a string avoids floating-point representation issues
-		// when converting the integer-cent sum back to a decimal (e.g. 1001/100).
-		$total_cents = (int) round( $item_total_val * 100 )
-			+ (int) round( $shipping_val * 100 )
-			+ (int) round( $taxes_val * 100 )
-			- (int) round( $discount_val * 100 );
-		$total_str   = number_format( $total_cents / 100, 2, '.', '' );
-		$total       = new Money( (float) $total_str, $this->currency->get() );
 
 		$breakdown = new AmountBreakdown(
 			$item_total,
@@ -123,8 +128,6 @@ class AmountFactory {
 		// Store API values are in integer minor units (e.g. cents), so integer
 		// arithmetic here is exact. Fees are included in items to match
 		// from_wc_cart() and to avoid a breakdown mismatch when fees are present.
-		// Total is derived from the breakdown sum rather than total_price() so
-		// PayPal's amount.value === sum(breakdown) invariant always holds.
 		$items_minor    = (int) $cart_totals->total_items()->value()
 			+ (int) $cart_totals->total_fees()->value();
 		$shipping_minor = (int) $cart_totals->total_shipping()->value();
@@ -138,7 +141,17 @@ class AmountFactory {
 		 */
 		$discount_minor += max( 0, (int) apply_filters( 'woocommerce_paypal_payments_store_api_cart_extra_discount', 0, $cart_totals ) );
 
-		$total_minor = $items_minor + $shipping_minor + $tax_minor - $discount_minor;
+		// total_price() is authoritative for the same reason the cart total is in
+		// from_wc_cart(): it carries reductions the component getters never see.
+		$total_minor = (int) $cart_totals->total_price()->value();
+
+		list( $tax_minor, $discount_minor ) = $this->reconcile_with_total(
+			$total_minor,
+			$items_minor,
+			$shipping_minor,
+			$tax_minor,
+			$discount_minor
+		);
 
 		$currency   = $cart_totals->total_price()->currency_code();
 		$minor_unit = $cart_totals->total_price()->currency_minor_unit();
@@ -214,27 +227,19 @@ class AmountFactory {
 			$taxes = new Money( $taxes_val, $currency );
 			$total = new Money( 1.0, $currency );
 		} else {
-			$wc_total              = (float) $order->get_total();
-			$wc_total_cents        = (int) round( $wc_total * 100 );
-			$discount_cents        = (int) round( $discount_value * 100 );
-			$component_total_cents = (int) round( $item_total_val * 100 )
-				+ (int) round( $shipping_val * 100 )
-				+ (int) round( $taxes_val * 100 )
-				- $discount_cents;
-			$delta_cents           = $wc_total_cents - $component_total_cents;
-			$taxes_cents           = (int) round( $taxes_val * 100 ) + $delta_cents;
+			$wc_total       = (float) $order->get_total();
+			$discount_cents = (int) round( $discount_value * 100 );
 
-			// Deeper than the tax means an unreported discount, not rounding. Book it as
-			// one: PayPal rejects a negative tax_total on Level 2 card data.
-			if ( $taxes_cents < 0 ) {
-				$taxes_cents = max( 0, (int) round( $taxes_val * 100 ) );
-				$discount    = new Money(
-					( (int) round( $item_total_val * 100 )
-						+ (int) round( $shipping_val * 100 )
-						+ $taxes_cents
-						- $wc_total_cents ) / 100,
-					$currency
-				);
+			list( $taxes_cents, $adjusted_discount_cents ) = $this->reconcile_with_total(
+				(int) round( $wc_total * 100 ),
+				(int) round( $item_total_val * 100 ),
+				(int) round( $shipping_val * 100 ),
+				(int) round( $taxes_val * 100 ),
+				$discount_cents
+			);
+
+			if ( $adjusted_discount_cents !== $discount_cents ) {
+				$discount = new Money( $adjusted_discount_cents / 100, $currency );
 			}
 
 			$taxes = new Money( $taxes_cents / 100, $currency );
@@ -320,6 +325,48 @@ class AmountFactory {
 		}
 
 		return new AmountBreakdown( ...$money );
+	}
+
+	/**
+	 * Reconciles a breakdown against the total WooCommerce reports, which is the
+	 * amount the buyer was shown and the one PayPal must charge.
+	 *
+	 * Any gap goes into tax, where a cent of per-item rounding belongs. A gap
+	 * deeper than the tax is an unreported discount rather than rounding, so the
+	 * tax is restored and the gap is booked as a discount instead: PayPal rejects
+	 * a negative tax_total on Level 2 card data.
+	 *
+	 * All amounts are in the currency's minor unit, and the returned pair keeps
+	 * PayPal's invariant that amount.value equals the sum of the breakdown.
+	 *
+	 * @param int $total_minor    The total WooCommerce reports.
+	 * @param int $items_minor    The item total, fees included.
+	 * @param int $shipping_minor The shipping total.
+	 * @param int $taxes_minor    The tax total.
+	 * @param int $discount_minor The discount total.
+	 *
+	 * @return int[] The reconciled tax and discount totals, in that order.
+	 */
+	private function reconcile_with_total(
+		int $total_minor,
+		int $items_minor,
+		int $shipping_minor,
+		int $taxes_minor,
+		int $discount_minor
+	): array {
+		$components_minor = $items_minor + $shipping_minor + $taxes_minor - $discount_minor;
+		$adjusted_taxes   = $taxes_minor + ( $total_minor - $components_minor );
+
+		if ( $adjusted_taxes >= 0 ) {
+			return array( $adjusted_taxes, $discount_minor );
+		}
+
+		$adjusted_taxes = max( 0, $taxes_minor );
+
+		return array(
+			$adjusted_taxes,
+			$items_minor + $shipping_minor + $adjusted_taxes - $total_minor,
+		);
 	}
 
 	/**
