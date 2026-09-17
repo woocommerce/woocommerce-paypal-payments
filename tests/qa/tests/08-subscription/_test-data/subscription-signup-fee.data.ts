@@ -17,7 +17,7 @@ const merchant = merchants.usa;
 
 const vaultingGuest: ShopOrder[] = [
 	{
-		title: 'PCP-0000 | Vaulting subscription - Transaction - Checkout - PayPal - Sign-up fee order by guest',
+		title: 'PCP-6959 | Vaulting subscription - Transaction - Checkout - PayPal - Sign-up fee order by guest',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
@@ -39,7 +39,7 @@ const vaultingCustomer: ShopOrder[] = [
 
 const payPalGuest: ShopOrder[] = [
 	{
-		title: 'PCP-0000 | PayPal subscription - Transaction - Checkout - Sign-up fee order by guest',
+		title: 'PCP-6960 | PayPal subscription - Transaction - Checkout - Sign-up fee order by guest',
 		...orders.default,
 		payment: {
 			...payments.payPal,
