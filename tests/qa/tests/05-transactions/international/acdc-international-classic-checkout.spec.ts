@@ -6,6 +6,7 @@ import { shopSettings, gateways, orders, payments } from '../../../resources';
 import { transactionsOnClassicCheckout } from '../_test-scenarios';
 import {
 	acdcInternationalCountries,
+	acdcInternationalSmokeCountry,
 	guests,
 } from '../_test-data/acdc/acdc-international.data';
 
@@ -30,7 +31,9 @@ for ( const { key, label, merchant } of acdcInternationalCountries ) {
 		} );
 
 		transactionsOnClassicCheckout( {
-			title: `Transaction - Classic checkout - ACDC - ${ label } - Default order`,
+			title: `Transaction - Classic checkout - ACDC - ${ label } - Default order${
+				key === acdcInternationalSmokeCountry ? ' @Smoke' : ''
+			}`,
 			...orders.default,
 			payment: payments.acdcVisa,
 			customer: guests[ key ],

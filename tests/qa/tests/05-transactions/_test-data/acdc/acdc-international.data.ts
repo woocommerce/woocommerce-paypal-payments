@@ -24,3 +24,10 @@ export const acdcInternationalCountries: {
 	{ key: 'spain', label: 'Spain', merchant: merchants.spain },
 	{ key: 'canada', label: 'Canada', merchant: merchants.canada },
 ];
+
+const smokeRotationPool = acdcInternationalCountries
+	.map( ( { key } ) => key )
+	.filter( ( key ) => key !== 'usa' );
+
+export const acdcInternationalSmokeCountry =
+	smokeRotationPool[ Math.floor( Math.random() * smokeRotationPool.length ) ];
