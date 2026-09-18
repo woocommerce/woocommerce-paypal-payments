@@ -88,6 +88,7 @@ A recorded decision must never affect anything but the wallet payment that creat
 - Rapid address or rate changes are chained rather than raced by [`createShippingController()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/methods/methodShipping.js), so the buyer always ends on the total for their newest choice.
 - Apple presents the first shipping method in the list as the chosen one, so [`applePayShipping`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/applePayShipping.js) moves the selected rate to the front.
 - Google renders no price beside a shipping option, so [`googlePayShipping`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/wallets/googlePayShipping.js) writes each option's cost into its description.
+- A shipping update that cannot be priced is reported to the server log as `apple-pay-shipping-abort` or `google-pay-shipping-failed`, which is the only record it leaves: Apple's sheet words an abort exactly like a buyer's dismissal. See [Diagnostics](wallets.md#diagnostics).
 
 ## Source layout
 
@@ -103,6 +104,7 @@ A recorded decision must never affect anything but the wallet payment that creat
 | `resources/js/wallets/walletContacts.js`    | Wallet contacts mapped to WooCommerce address fields     |
 | `resources/js/wallets/applePayShipping.js`  | Apple sheet protocol only                                |
 | `resources/js/wallets/googlePayShipping.js` | Google sheet protocol only                               |
+| `resources/js/utils/diagnostics.js`         | Reports a failure to the server log                      |
 
 ---
 
