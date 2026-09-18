@@ -39,9 +39,7 @@ return array(
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'blocks.add-place-order-method' ),
 			$container->get( 'wcgateway.use-place-order-button' ),
-			$container->get( 'wcgateway.place-order-button-text' ),
-			$container->get( 'wcgateway.place-order-button-description' ),
-			$container->get( 'wcgateway.all-funding-sources' )
+			$container->get( 'wcgateway.all-funding-sources' ),
 		);
 	},
 	'blocks.advanced-card-method'          => static function ( ContainerInterface $container ): AdvancedCardPaymentMethod {
