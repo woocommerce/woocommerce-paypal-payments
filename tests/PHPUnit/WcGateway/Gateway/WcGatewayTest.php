@@ -154,6 +154,31 @@ class WcGatewayTest extends TestCase
 		);
 	}
 
+	private function createFreeTrialStubGateway(): PayPalGatewayFreeTrialStub
+	{
+		return new PayPalGatewayFreeTrialStub(
+			$this->funding_source_renderer,
+			$this->orderProcessor,
+			$this->settingsProvider,
+			$this->sessionHandler,
+			$this->refundProcessor,
+			$this->isConnected,
+			$this->transactionUrlProvider,
+			$this->subscriptionHelper,
+			$this->environment,
+			$this->logger,
+			$this->apiShopCountry,
+			static fn ($id) => 'checkoutnow=' . $id,
+			$this->paymentTokensEndpoint,
+			$this->wcPaymentTokens,
+			$this->assetGetter,
+			false,
+			$this->capturePayPalPayment,
+			Mockery::mock(OrderEndpoint::class),
+			$this->context
+		);
+	}
+
 	private function createReturnUrlStubGateway(): PayPalGatewayReturnUrlStub
 	{
 		return new PayPalGatewayReturnUrlStub(
@@ -737,6 +762,235 @@ class WcGatewayTest extends TestCase
 
 		$this->assertEquals('failure', $result['result']);
 	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @scenario A buyer who just vaulted their PayPal account through the save-payment
+	 * flow (SDK v6 free-trial checkout) submits a $0 free-trial order. The local WC
+	 * payment token created by that vaulting is trusted directly, since PayPal's
+	 * payment-tokens list endpoint is eventually consistent and can omit a
+	 * just-created token for a few seconds. The order must complete without ever
+	 * consulting the PayPal API for the token list.
+	 */
+	public function test_process_payment_completes_free_trial_when_local_paypal_token_exists(): void {
+		$orderId = 1;
+		$_POST = array( 'ppcp-funding-source' => 'paypal' );
+
+		$wcOrder = Mockery::mock( \WC_Order::class );
+		$wcOrder->shouldReceive( 'set_payment_method_title' );
+		$wcOrder->allows( 'save' );
+		$wcOrder->shouldReceive( 'get_customer_id' )->andReturn( 1 );
+		$wcOrder->shouldReceive( 'get_total' )->with( 'numeric' )->andReturn( 0 );
+		$wcOrder->shouldReceive( 'payment_complete' )->once();
+		when( 'wc_get_order' )->justReturn( $wcOrder );
+
+		when( 'get_current_user_id' )->justReturn( 1 );
+		when( 'wcs_get_subscriptions_for_order' )->justReturn( array( 'sub-1' ) );
+
+		$this->subscriptionHelper->shouldReceive( 'paypal_subscription_id' )->andReturn( '' );
+
+		$woocommerce = Mockery::mock( \WooCommerce::class );
+		$session     = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->allows( 'get' )
+			->with( 'ppcp_guest_payment_for_free_trial' )
+			->andReturn( null );
+		$session->allows( 'set' );
+
+		$local_token = Mockery::mock( \WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal::class );
+		$wc_tokens   = Mockery::mock( 'alias:WC_Payment_Tokens' );
+		$wc_tokens->shouldReceive( 'get_customer_tokens' )
+			->with( 1, 'ppcp-gateway' )
+			->andReturn( array( $local_token ) );
+
+		$this->paymentTokensEndpoint->shouldNotReceive( 'payment_tokens_for_customer' );
+
+		$this->sessionHandler->allows( 'destroy_session_data' );
+
+		$result = $this->createFreeTrialStubGateway()->process_payment( $orderId );
+
+		$this->assertEquals( 'success', $result['result'] );
+	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @scenario A $0 free-trial order is submitted with neither a local WC PayPal
+	 * token (no vaulting happened locally) nor a token reported by PayPal's
+	 * payment-tokens list for the stored target customer. The order must fail with
+	 * the "no saved PayPal account" error rather than completing.
+	 */
+	public function test_process_payment_fails_free_trial_when_no_local_or_remote_paypal_token(): void {
+		$orderId = 1;
+		$_POST = array( 'ppcp-funding-source' => 'paypal' );
+
+		$wcOrder = Mockery::mock( \WC_Order::class );
+		$wcOrder->shouldReceive( 'set_payment_method_title' );
+		$wcOrder->allows( 'save' );
+		$wcOrder->shouldReceive( 'get_customer_id' )->andReturn( 1 );
+		$wcOrder->shouldReceive( 'get_total' )->with( 'numeric' )->andReturn( 0 );
+		$wcOrder->shouldNotReceive( 'payment_complete' );
+		$wcOrder->shouldReceive( 'update_status' )->with( 'failed', Mockery::any() );
+		when( 'wc_get_order' )->justReturn( $wcOrder );
+
+		when( 'get_current_user_id' )->justReturn( 1 );
+		when( 'wcs_get_subscriptions_for_order' )->justReturn( array( 'sub-1' ) );
+		when( 'get_user_meta' )->justReturn( 'CUST123' );
+		when( 'wc_add_notice' )->justReturn( null );
+		when( 'wc_get_checkout_url' )->justReturn( 'http://example.test/checkout' );
+		when( 'is_checkout_pay_page' )->justReturn( false );
+
+		$this->subscriptionHelper->shouldReceive( 'paypal_subscription_id' )->andReturn( '' );
+
+		$woocommerce = Mockery::mock( \WooCommerce::class );
+		$session     = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->allows( 'get' )
+			->with( 'ppcp_guest_payment_for_free_trial' )
+			->andReturn( null );
+		$session->allows( 'get' )
+			->with( 'ppcp_delete_wc_order_on_payment_failure' )
+			->andReturn( false );
+		$session->allows( 'set' );
+
+		$wc_tokens = Mockery::mock( 'alias:WC_Payment_Tokens' );
+		$wc_tokens->shouldReceive( 'get_customer_tokens' )
+			->with( 1, 'ppcp-gateway' )
+			->andReturn( array() );
+
+		$this->paymentTokensEndpoint->shouldReceive( 'payment_tokens_for_customer' )
+			->with( 'CUST123' )
+			->andReturn( array() );
+
+		$this->sessionHandler->allows( 'destroy_session_data' );
+
+		$result = $this->createFreeTrialStubGateway()->process_payment( $orderId );
+
+		$this->assertEquals( 'failure', $result['result'] );
+	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @scenario A first-time free-trial buyer has no saved PayPal account, either
+	 * locally or on PayPal's side. The save-payment-methods module wires the
+	 * `woocommerce_paypal_payments_free_trial_vault_redirect_url` filter to build a
+	 * PayPal vault-approval URL for this situation; when that filter supplies one,
+	 * the buyer must be redirected to PayPal to approve saving their account instead
+	 * of the order failing outright.
+	 */
+	public function test_process_payment_redirects_free_trial_when_vault_redirect_filter_returns_url(): void {
+		$orderId = 1;
+		$_POST = array( 'ppcp-funding-source' => 'paypal' );
+
+		$wcOrder = Mockery::mock( \WC_Order::class );
+		$wcOrder->shouldReceive( 'set_payment_method_title' );
+		$wcOrder->allows( 'save' );
+		$wcOrder->shouldReceive( 'get_customer_id' )->andReturn( 1 );
+		$wcOrder->shouldReceive( 'get_total' )->with( 'numeric' )->andReturn( 0 );
+		$wcOrder->shouldNotReceive( 'payment_complete' );
+		when( 'wc_get_order' )->justReturn( $wcOrder );
+
+		when( 'get_current_user_id' )->justReturn( 1 );
+		when( 'wcs_get_subscriptions_for_order' )->justReturn( array( 'sub-1' ) );
+		when( 'get_user_meta' )->justReturn( '' );
+
+		$this->subscriptionHelper->shouldReceive( 'paypal_subscription_id' )->andReturn( '' );
+
+		$woocommerce = Mockery::mock( \WooCommerce::class );
+		$session     = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->allows( 'get' )
+			->with( 'ppcp_guest_payment_for_free_trial' )
+			->andReturn( null );
+		$session->allows( 'set' );
+
+		$wc_tokens = Mockery::mock( 'alias:WC_Payment_Tokens' );
+		$wc_tokens->shouldReceive( 'get_customer_tokens' )
+			->with( 1, 'ppcp-gateway' )
+			->andReturn( array() );
+
+		$this->paymentTokensEndpoint->shouldNotReceive( 'payment_tokens_for_customer' );
+
+		$vault_redirect_url = 'https://www.paypal.com/agreements/approve?token=XYZ';
+		\Brain\Monkey\Filters\expectApplied( 'woocommerce_paypal_payments_free_trial_vault_redirect_url' )
+			->andReturn( $vault_redirect_url );
+
+		$this->sessionHandler->allows( 'destroy_session_data' );
+
+		$result = $this->createFreeTrialStubGateway()->process_payment( $orderId );
+
+		$this->assertEquals(
+			array(
+				'result'   => 'success',
+				'redirect' => $vault_redirect_url,
+			),
+			$result
+		);
+	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @scenario A first-time free-trial buyer has no saved PayPal account, either
+	 * locally or on PayPal's side, and no vault-redirect URL is supplied (the
+	 * default, empty filter return value). The order must still fail with the
+	 * "no saved PayPal account" error rather than redirecting anywhere.
+	 */
+	public function test_process_payment_fails_free_trial_when_vault_redirect_filter_returns_empty(): void {
+		$orderId = 1;
+		$_POST = array( 'ppcp-funding-source' => 'paypal' );
+
+		$wcOrder = Mockery::mock( \WC_Order::class );
+		$wcOrder->shouldReceive( 'set_payment_method_title' );
+		$wcOrder->allows( 'save' );
+		$wcOrder->shouldReceive( 'get_customer_id' )->andReturn( 1 );
+		$wcOrder->shouldReceive( 'get_total' )->with( 'numeric' )->andReturn( 0 );
+		$wcOrder->shouldNotReceive( 'payment_complete' );
+		$wcOrder->shouldReceive( 'update_status' )->with( 'failed', Mockery::any() );
+		when( 'wc_get_order' )->justReturn( $wcOrder );
+
+		when( 'get_current_user_id' )->justReturn( 1 );
+		when( 'wcs_get_subscriptions_for_order' )->justReturn( array( 'sub-1' ) );
+		when( 'get_user_meta' )->justReturn( '' );
+		when( 'wc_add_notice' )->justReturn( null );
+		when( 'wc_get_checkout_url' )->justReturn( 'http://example.test/checkout' );
+		when( 'is_checkout_pay_page' )->justReturn( false );
+
+		$this->subscriptionHelper->shouldReceive( 'paypal_subscription_id' )->andReturn( '' );
+
+		$woocommerce = Mockery::mock( \WooCommerce::class );
+		$session     = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->allows( 'get' )
+			->with( 'ppcp_guest_payment_for_free_trial' )
+			->andReturn( null );
+		$session->allows( 'get' )
+			->with( 'ppcp_delete_wc_order_on_payment_failure' )
+			->andReturn( false );
+		$session->allows( 'set' );
+
+		$wc_tokens = Mockery::mock( 'alias:WC_Payment_Tokens' );
+		$wc_tokens->shouldReceive( 'get_customer_tokens' )
+			->with( 1, 'ppcp-gateway' )
+			->andReturn( array() );
+
+		$this->paymentTokensEndpoint->shouldNotReceive( 'payment_tokens_for_customer' );
+
+		\Brain\Monkey\Filters\expectApplied( 'woocommerce_paypal_payments_free_trial_vault_redirect_url' )
+			->andReturnFirstArg();
+
+		$this->sessionHandler->allows( 'destroy_session_data' );
+
+		$result = $this->createFreeTrialStubGateway()->process_payment( $orderId );
+
+		$this->assertEquals( 'failure', $result['result'] );
+	}
 }
 
 /**
@@ -748,6 +1002,22 @@ class PayPalGatewayReturnUrlStub extends PayPalGateway
 {
 	protected function get_return_url( $order = null ) {
 		return 'http://example.test/return';
+	}
+}
+
+/**
+ * Testable subclass that forces WooCommerce Subscriptions to be considered
+ * active, without depending on whether the real WC_Subscriptions class is
+ * loaded, so free-trial process_payment() scenarios can be exercised.
+ */
+class PayPalGatewayFreeTrialStub extends PayPalGateway
+{
+	protected function get_return_url( $order = null ) {
+		return 'http://example.test/return';
+	}
+
+	protected function is_wcs_plugin_active(): bool {
+		return true;
 	}
 }
 
