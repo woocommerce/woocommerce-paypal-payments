@@ -90,8 +90,6 @@ class PayPalPaymentMethodTest extends TestCase
             $this->subscription_helper,
             $add_place_order_method,
             $use_place_order,
-            'Place order',
-            'Pay with PayPal',
             array(),
             $this->free_trial_helper,
             $this->wc_payment_tokens

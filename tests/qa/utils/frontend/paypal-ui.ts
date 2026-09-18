@@ -43,8 +43,7 @@ export class PayPalUi {
 		this.page
 			.getByRole( 'button', { name: 'Place order' } )
 			.or( this.page.getByRole( 'button', { name: 'Pay for order' } ) )
-			.or( this.page.getByRole( 'button', { name: 'Sign up now' } ) )
-			.or( this.page.getByRole( 'button', { name: 'Proceed to PayPal' } ) );
+			.or( this.page.getByRole( 'button', { name: 'Sign up now' } ) );
 
 	payPalButtonsBlockContainer = () =>
 		this.page.locator(
