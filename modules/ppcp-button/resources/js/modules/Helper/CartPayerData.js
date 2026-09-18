@@ -1,11 +1,13 @@
 /**
- * The payer details the block checkout can supply when creating a PayPal order.
+ * The payer details a block checkout can supply when creating a PayPal order.
  *
  * PayPal's risk engine identifies a buyer partly by their email address. Without
  * one, a card it has never seen has nothing to be matched against, and the first
- * attempts on a brand-new card are declined until a fingerprint builds up. The
- * classic checkout has always sent this along with the serialised form; the block
- * checkout sent nothing, so the same shopper fared worse there.
+ * attempts on a brand-new card are declined until a fingerprint builds up.
+ *
+ * The block checkout keeps these details in the cart store rather than in billing
+ * inputs, so this is the counterpart to PayerData.js, which reads the DOM for the
+ * classic checkout. Both v5 blocks and the v6 stack use it.
  *
  * @package
  */
@@ -34,7 +36,7 @@ function billingAddress() {
  *
  * @return {?Object} The payer, or null when there is nothing worth sending.
  */
-export function payerData() {
+export function cartPayerData() {
 	const billing = billingAddress();
 	const email = billing?.email?.trim();
 

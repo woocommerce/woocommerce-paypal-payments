@@ -3,15 +3,15 @@ import {
 	paypalSubscriptionToWcAddresses,
 } from './Helper/Address';
 import { shouldEnableAppSwitch } from './Components/paypal';
-import { payerData } from './Helper/PayerData';
+import { cartPayerData } from '@ppcp-button/Helper/CartPayerData';
 
 export const createOrder = async ( data, config, onError, onClose ) => {
 	try {
-		const payer = payerData();
+		const payer = cartPayerData();
 
 		const requestBody = {
 			nonce: config.scriptData.ajax.create_order.nonce,
-			// Omitted when the shopper has given no email; see payerData().
+			// Omitted when the shopper has given no email; see cartPayerData().
 			...( payer && { payer } ),
 			bn_code: '',
 			context: config.scriptData.context,
