@@ -20,43 +20,24 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
-/**
- * Class FreeTrialVaultReturnEndpoint
- */
 class FreeTrialVaultReturnEndpoint {
 
-	const ENDPOINT = 'ppc-free-trial-vault-return';
+	public const ENDPOINT = 'ppc-free-trial-vault-return';
 
 	/**
 	 * The order meta key holding the approved setup token id.
 	 */
-	const SETUP_TOKEN_META = '_ppcp_free_trial_setup_token';
+	public const SETUP_TOKEN_META = '_ppcp_free_trial_setup_token';
 
 	/**
 	 * The order meta key holding the one-time return nonce.
 	 */
-	const RETURN_NONCE_META = '_ppcp_free_trial_vault_nonce';
+	public const RETURN_NONCE_META = '_ppcp_free_trial_vault_nonce';
 
-	/**
-	 * The payment method tokens endpoint.
-	 *
-	 * @var PaymentMethodTokensEndpoint
-	 */
-	private $payment_method_tokens_endpoint;
+	private PaymentMethodTokensEndpoint $payment_method_tokens_endpoint;
 
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
+	private LoggerInterface $logger;
 
-	/**
-	 * FreeTrialVaultReturnEndpoint constructor.
-	 *
-	 * @param PaymentMethodTokensEndpoint $payment_method_tokens_endpoint The payment method tokens endpoint.
-	 * @param LoggerInterface             $logger                         The logger.
-	 */
 	public function __construct(
 		PaymentMethodTokensEndpoint $payment_method_tokens_endpoint,
 		LoggerInterface $logger
@@ -100,8 +81,13 @@ class FreeTrialVaultReturnEndpoint {
 			return;
 		}
 
-		$customer_id = is_user_logged_in()
-			? (string) get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true )
+		// Key off the order's customer, not whoever opens the return URL. The PayPal
+		// round trip can drop the session (logged-out on return), and the nonce
+		// travels in the URL. The gateway's free-trial branch keys off this same
+		// order customer, so both must resolve the target customer identically.
+		$order_customer = $wc_order->get_customer_id();
+		$customer_id    = $order_customer
+			? (string) get_user_meta( $order_customer, '_ppcp_target_customer_id', true )
 			: '';
 
 		try {
@@ -133,6 +119,16 @@ class FreeTrialVaultReturnEndpoint {
 		// Hand the exchanged token to the gateway's existing free-trial branch, which
 		// stores it against the customer and completes the $0 order. Works for both
 		// logged-in and guest buyers (the branch keys off the order's customer id).
+		//
+		// This endpoint is reached by a browser redirect from PayPal, not by our own
+		// JS, so the WC session is not guaranteed. A null here would fatal after the
+		// token was already exchanged; fail gracefully instead. Retrying the order
+		// then completes it from the now-saved local token.
+		if ( ! ( function_exists( 'WC' ) && WC()->session instanceof \WC_Session ) ) {
+			$this->fail( __( 'Payment processing failed. Please try again or contact support.', 'woocommerce-paypal-payments' ) );
+			return;
+		}
+
 		WC()->session->set( 'ppcp_guest_payment_for_free_trial', $result );
 
 		$gateway = $this->paypal_gateway();

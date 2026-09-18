@@ -22,31 +22,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\FreeTrialVaultReturnEndpoint;
 
-/**
- * Class FreeTrialVaultRedirect
- */
 class FreeTrialVaultRedirect {
 
-	/**
-	 * The payment method tokens endpoint.
-	 *
-	 * @var PaymentMethodTokensEndpoint
-	 */
-	private $payment_method_tokens_endpoint;
+	private PaymentMethodTokensEndpoint $payment_method_tokens_endpoint;
 
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
+	private LoggerInterface $logger;
 
-	/**
-	 * FreeTrialVaultRedirect constructor.
-	 *
-	 * @param PaymentMethodTokensEndpoint $payment_method_tokens_endpoint The payment method tokens endpoint.
-	 * @param LoggerInterface             $logger                         The logger.
-	 */
 	public function __construct(
 		PaymentMethodTokensEndpoint $payment_method_tokens_endpoint,
 		LoggerInterface $logger
