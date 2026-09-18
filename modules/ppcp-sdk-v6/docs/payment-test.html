@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html lang='en'>
+<!--
+URL: https://wc-pp.ddev.site/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-sdk-v6/docs/payment-test.html
+
+Standalone harness for the PayPal Web SDK v6 flows, with no WordPress in the
+way. Sandbox only: it keeps the sandbox client ID and secret in localStorage and
+calls the PayPal API straight from the browser.
+
+The query string carries the configuration, so a URL describes a whole test case
+and a reload keeps the current setup.
+
+Layout of this file:
+  1. Markup            - credentials gate, configuration bar, results
+  2. Script - plumbing - logging, sections, credentials, form values
+  3. Script - SDK      - client token, instance, eligibility
+  4. Script - orders   - stands in for the store's server
+  5. Script - methods  - one banner-delimited section per payment method
+  6. Styles            - Pico CSS plus a handful of overrides
+
+See sdk-loading.md, three-d-secure.md and fastlane.md in this folder.
+-->
+<head>
+	<meta charset='utf-8'>
+	<meta name='viewport' content='width=device-width, initial-scale=1'>
+	<title>PayPal Web SDK v6 test page</title>
+	<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css'>
+</head>
+<body>
+<!-- The flex container is this wrapper, not the body: see the styles. -->
+<div id='page'>
+	<header>
+		<h1>PayPal Web SDK v6 test page</h1>
+		<small id='creds' hidden>
+			<code id='current-client-id'></code>
+			<button class='secondary outline' id='clear-credentials'>Clear</button>
+		</small>
+	</header>
+
+	<!-- Credentials gate: replaced by the workspace below once credentials exist -->
+	<article id='credentials-panel'>
+		<h2>Sandbox credentials</h2>
+		<label>
+			Client ID
+			<input type='text' id='form-client-id' autocomplete='off'>
+		</label>
+		<label>
+			Client secret
+			<input type='password' id='form-client-secret' autocomplete='off'>
+		</label>
+		<button id='save-credentials'>Save and reload</button>
+	</article>
+
+	<div id='app' hidden>
+
+		<!-- Configuration: set once, then run -->
+		<section id='config'>
+			<div class='group'>
+				<span class='caption'>Components</span>
+				<div id='component-list'></div>
+			</div>
+
+			<div class='group'>
+				<span class='caption'>Transaction</span>
+				<div class='fields'>
+					<label for='currency'>Currency<input type='text' id='currency' value='USD'></label>
+					<label for='country'>Country<input type='text' id='country' value='US'></label>
+					<label for='amount'>Amount<input type='text' id='amount' value='10.00'></label>
+					<!-- The enum each option sends is on its title attribute, and in the log. -->
+					<label for='sca-method'>3D Secure<select id='sca-method'>
+						<option value=''>No 3D Secure</option>
+						<option value='SCA_WHEN_REQUIRED' title='SCA_WHEN_REQUIRED'>3DS when required</option>
+						<option value='SCA_ALWAYS' title='SCA_ALWAYS'>3DS always</option>
+					</select></label>
+					<label for='shipping'>Shipping<select id='shipping'>
+						<option value=''>No shipping</option>
+						<option value='collect'>Collect in the sheet</option>
+						<option value='prefill'>Collect and prefill</option>
+					</select></label>
+				</div>
+			</div>
+
+			<div class='group cta'>
+				<button id='btn-create' disabled>Create buttons</button>
+				<small id='create-hint'>Select at least one component.</small>
+			</div>
+		</section>
+
+		<!-- What the collapsed configuration bar leaves visible -->
+		<section id='summary' hidden>
+			<span id='summary-text'></span>
+			<span id='run-status' aria-busy='true' hidden>Running</span>
+			<button class='secondary outline' id='btn-edit'>Edit</button>
+		</section>
+
+		<!-- Output: two independently scrolling panes filling the viewport -->
+		<div class='workspace'>
+			<div id='methods'></div>
+			<div id='log-pane'>
+				<div id='log-bar'>
+					<input type='search' id='log-filter' placeholder='Filter the log' autocomplete='off'>
+					<small id='log-count'></small>
+				</div>
+				<ol id='log'></ol>
+			</div>
+		</div>
+
+	</div>
+
+</div>
+
+<script>
+	'use strict';
+
+	const SANDBOX_API = 'https://api-m.sandbox.paypal.com';
+	const SANDBOX_SDK = 'https://www.sandbox.paypal.com/web-sdk/v6/core';
+	const GOOGLE_SDK = 'https://pay.google.com/gp/p/js/pay.js';
+	const APPLE_SDK = 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
+
+	/*
+	 * The scope entries the SDK needs, and what each one pays for.
+	 *
+	 * A token minted without intent=sdk_init carries neither. createInstance()
+	 * still succeeds, then findEligibleMethods() answers 403 NOT_AUTHORIZED and
+	 * every button disappears at once.
+	 */
+	const SDK_SCOPES = {
+		'client-payments-eligibility': 'findEligibleMethods()',
+		'client_sdk_orders_api': 'a session\'s order calls',
+	};
+
+	// What a card field dispatches on itself. The names come from the card-fields
+	// bundle. focus and blur also arrive as plain DOM events on the same element.
+	const FIELD_EVENTS = [
+		'blur', 'cardtypechange', 'change', 'empty', 'focus', 'inputsubmit', 'notempty', 'validitychange',
+	];
+
+	/*
+	 * One entry per requestable component, in render order.
+	 *
+	 * `name` mirrors sdkLoader.js: 'fastlane' is the real component name, the
+	 * published docs' 'fastlane-payments' does not exist in the bundle.
+	 * `source` is the payment_source key that carries the 3D Secure attribute,
+	 * absent for the methods PayPal authenticates inside its own flow.
+	 * The render functions are hoisted declarations, defined further down.
+	 */
+	const COMPONENTS = [
+		{
+			name: 'paypal-payments',
+			title: 'PayPal',
+			render: renderPayPal,
+		}, {
+			name: 'venmo-payments',
+			title: 'Venmo',
+			render: renderVenmo,
+		}, {
+			name: 'googlepay-payments',
+			title: 'Google Pay',
+			source: 'google_pay',
+			render: renderGooglePay,
+		}, {
+			name: 'applepay-payments',
+			title: 'Apple Pay',
+			render: renderApplePay,
+		}, {
+			name: 'card-fields',
+			title: 'Card Fields',
+			source: 'card',
+			render: renderCardFields,
+		}, {
+			name: 'paypal-guest-payments',
+			title: 'Guest Payment',
+			render: renderCardButton,
+		}, {
+			name: 'fastlane',
+			title: 'Fastlane',
+			source: 'card',
+			render: renderFastlane,
+		},
+	];
+
+	const APPROVED_NEXT = 'The order is approved.';
+
+	const clientId = localStorage.getItem( 'PPCP_V6_CLIENT_ID' ) || '';
+	const clientSecret = localStorage.getItem( 'PPCP_V6_CLIENT_SECRET' ) || '';
+
+	const state = {
+		sdkInstance: null,
+		fastlane: null,
+		cardComponent: null,
+	};
+
+	/* ==========================================================================
+	 * PLUMBING
+	 * ========================================================================== */
+
+	// A signed wallet token is not usable, only its length is interesting.
+	function trimLongStrings( key, value ) {
+		return typeof value === 'string' && value.length > 200 ? '[' + value.length + ' characters omitted]' : value;
+	}
+
+	// Within a line of the bottom counts as the bottom: a rounded scroll position
+	// rarely lands on the last pixel.
+	function atBottom( element ) {
+		return element.scrollHeight - element.scrollTop - element.clientHeight < 24;
+	}
+
+	function log( message, data, level ) {
+		const logger = document.getElementById( 'log' );
+		const line = document.createElement( 'li' );
+		const label = document.createElement( 'span' );
+
+		// Read the position before the line goes in, while it still describes
+		// where the reader is rather than where the new line put them.
+		const pinned = atBottom( logger );
+
+		label.className = level || '';
+		label.textContent = message;
+		line.appendChild( label );
+		line.tabIndex = -1;
+
+		// An explicit number, because a hidden line stops counting: a filter would
+		// otherwise renumber what is left from 1 and lose the position in the run.
+		line.value = logger.children.length + 1;
+
+		if ( undefined !== data ) {
+			const pre = document.createElement( 'pre' );
+			pre.textContent = typeof data === 'string' ? data : JSON.stringify( data, trimLongStrings, 2 );
+			line.appendChild( pre );
+		}
+
+		logger.appendChild( line );
+
+		if ( logFilter() ) {
+			filterLog();
+		}
+
+		// Only from the bottom. A reader who scrolled up to study a payload stays
+		// where they are while the rest of the run arrives.
+		if ( pinned ) {
+			logger.scrollTop = logger.scrollHeight;
+		}
+
+		console.log( message, data );
+	}
+
+	function logFilter() {
+		return document.getElementById( 'log-filter' ).value.trim().toLowerCase();
+	}
+
+	/*
+	 * Hides the lines that do not hold the search text.
+	 *
+	 * A line matches on all of its own text, so a payload counts as much as the
+	 * label above it. The count says how much is hidden, because a filter that
+	 * matches nothing leaves an empty pane that looks like a broken run.
+	 */
+	function filterLog() {
+		const needle = logFilter();
+		const lines = document.querySelectorAll( '#log > li' );
+		let shown = 0;
+
+		lines.forEach( ( line ) => {
+			line.hidden = !! needle && -1 === line.textContent.toLowerCase().indexOf( needle );
+			shown += line.hidden ? 0 : 1;
+		} );
+
+		document.getElementById( 'log-count' ).textContent = needle
+			? shown + ' of ' + lines.length
+			: '';
+	}
+
+	// The configuration bar is collapsed during a run, so the summary row carries
+	// the busy state.
+	function setBusy( busy ) {
+		document.getElementById( 'run-status' ).hidden = ! busy;
+	}
+
+	// Wallets reject with plain objects rather than Errors, and those
+	// have no message to print, so the whole object goes to the log instead.
+	function logError( message, error ) {
+		if ( error && error.message ) {
+			log( message + ' ' + error.message, undefined, 'err' );
+		} else {
+			log( message, error, 'err' );
+		}
+
+		console.error( message, error );
+	}
+
+	/*
+	 * Every line names who acted, so a reader can follow the exchange:
+	 *
+	 *   SDK call    this page calls the SDK, or a wallet API
+	 *   SDK result  the value that call returned
+	 *   SDK event   the SDK, or a payment sheet, calls this page
+	 *   Reply       the value this page returns from an event handler
+	 *   Test store  this page acting as the store server
+	 *
+	 * A line with none of those prefixes is a remark about the flow.
+	 */
+	function logCall( name, data ) {
+		log( 'SDK call: ' + name, data );
+	}
+
+	function logResult( name, data ) {
+		log( 'SDK result: ' + name, data, 'ok' );
+	}
+
+	function logEvent( name, data, level ) {
+		log( 'SDK event: ' + name, data, level );
+	}
+
+	function logReply( name, data ) {
+		log( 'Reply to ' + name, data );
+	}
+
+	function logStore( message, data ) {
+		log( 'Test store: ' + message, data );
+	}
+
+	// One captioned row per selected component, in the methods pane.
+	function methodBox( title ) {
+		const box = document.createElement( 'section' );
+		const caption = document.createElement( 'span' );
+
+		caption.className = 'caption';
+		caption.textContent = title;
+		box.appendChild( caption );
+		document.getElementById( 'methods' ).appendChild( box );
+
+		return box;
+	}
+
+	// A short explanation in the row itself, for a method that rendered nothing.
+	function note( box, message ) {
+		const small = document.createElement( 'small' );
+
+		small.textContent = message;
+		box.appendChild( small );
+	}
+
+	function loadScript( url ) {
+		return new Promise( ( resolve, reject ) => {
+			const script = document.createElement( 'script' );
+			script.src = url;
+			script.async = true;
+			script.onload = resolve;
+			script.onerror = () => reject( new Error( 'Failed to load script: ' + url ) );
+			document.head.appendChild( script );
+		} );
+	}
+
+	function initCredentials() {
+		if ( ! clientId || ! clientSecret ) {
+			document.getElementById( 'save-credentials' ).addEventListener( 'click', () => {
+				const id = document.getElementById( 'form-client-id' ).value.trim();
+				const secret = document.getElementById( 'form-client-secret' ).value.trim();
+
+				if ( ! id || ! secret ) {
+					return;
+				}
+
+				localStorage.setItem( 'PPCP_V6_CLIENT_ID', id );
+				localStorage.setItem( 'PPCP_V6_CLIENT_SECRET', secret );
+				window.location.reload();
+			} );
+
+			return false;
+		}
+
+		document.getElementById( 'credentials-panel' ).hidden = true;
+		document.getElementById( 'app' ).hidden = false;
+		document.getElementById( 'creds' ).hidden = false;
+		document.getElementById( 'current-client-id' ).textContent = clientId;
+
+		document.getElementById( 'clear-credentials' ).addEventListener( 'click', () => {
+			localStorage.removeItem( 'PPCP_V6_CLIENT_ID' );
+			localStorage.removeItem( 'PPCP_V6_CLIENT_SECRET' );
+			window.location.reload();
+		} );
+
+		return true;
+	}
+
+	// Nothing preselected, so the page never runs a flow nobody asked for.
+	function renderComponentPicker() {
+		const list = document.getElementById( 'component-list' );
+
+		COMPONENTS.forEach( ( component ) => {
+			const label = document.createElement( 'label' );
+			const input = document.createElement( 'input' );
+
+			input.type = 'checkbox';
+			input.dataset.component = component.name;
+
+			label.appendChild( input );
+			label.appendChild( document.createTextNode( component.title ) );
+			label.title = component.name;
+			list.appendChild( label );
+		} );
+
+		list.addEventListener( 'change', syncCreateButton );
+	}
+
+	/*
+	 * The configuration lives in the query string.
+	 *
+	 * A reload keeps the setup, and a URL describes a whole test, so one developer
+	 * can hand a case to another. The credentials stay in localStorage, because
+	 * they do not belong in a link.
+	 */
+	const URL_FIELDS = {
+		currency: 'currency',
+		country: 'country',
+		amount: 'amount',
+		sca: 'sca-method',
+		shipping: 'shipping',
+	};
+
+	function readUrlConfig() {
+		const params = new URLSearchParams( location.search );
+
+		Object.keys( URL_FIELDS ).forEach( ( key ) => {
+			const field = document.getElementById( URL_FIELDS[key] );
+			const value = params.get( key );
+
+			if ( null === value ) {
+				return;
+			}
+
+			// A select keeps its own default unless the value is one it offers.
+			const offered = 'SELECT' !== field.tagName
+				|| Array.from( field.options ).some( ( option ) => option.value === value );
+
+			if ( offered ) {
+				field.value = value;
+			}
+		} );
+
+		const wanted = ( params.get( 'components' ) || '' ).split( ',' );
+
+		document.querySelectorAll( '#component-list input' ).forEach( ( input ) => {
+			input.checked = -1 !== wanted.indexOf( input.dataset.component );
+		} );
+	}
+
+	function writeUrlConfig() {
+		const params = new URLSearchParams();
+		const components = selectedComponents();
+
+		Object.keys( URL_FIELDS ).forEach( ( key ) => {
+			const value = document.getElementById( URL_FIELDS[key] ).value.trim();
+
+			// An empty value is left out, so a default setup keeps a short URL.
+			if ( value ) {
+				params.set( key, value );
+			}
+		} );
+
+		if ( components.length ) {
+			params.set( 'components', components.join( ',' ) );
+		}
+
+		const query = params.toString();
+
+		// replaceState, so the back button does not walk back through keystrokes.
+		history.replaceState( null, '', location.pathname + ( query ? '?' + query : '' ) );
+	}
+
+	function selectedComponents() {
+		return Array.from( document.querySelectorAll( '#component-list input:checked' ) )
+			.map( ( input ) => input.dataset.component );
+	}
+
+	function syncCreateButton() {
+		const empty = selectedComponents().length === 0;
+
+		document.getElementById( 'btn-create' ).disabled = empty;
+		document.getElementById( 'create-hint' ).textContent = empty ? 'Select at least one component.' : '';
+	}
+
+	/*
+	 * The configuration in one line, for the collapsed state.
+	 *
+	 * Transaction only: which components are loaded is already answered by the
+	 * methods pane and by the log.
+	 */
+	function summaryText() {
+		const values = transaction();
+		const chosen = ( id ) => document.getElementById( id ).selectedOptions[0].textContent;
+
+		return [
+			values.countryCode, values.amount + ' ' + values.currencyCode, chosen( 'sca-method' ), chosen( 'shipping' ),
+		].join( ' | ' );
+	}
+
+	// Collapsed once a run starts, so the output panes get the height back.
+	function collapseConfig( collapsed ) {
+		document.getElementById( 'summary-text' ).textContent = summaryText();
+		document.getElementById( 'config' ).hidden = collapsed;
+		document.getElementById( 'summary' ).hidden = ! collapsed;
+	}
+
+	function transaction() {
+		return {
+			currencyCode: document.getElementById( 'currency' ).value.trim().toUpperCase(),
+			countryCode: document.getElementById( 'country' ).value.trim().toUpperCase(),
+			amount: document.getElementById( 'amount' ).value.trim(),
+		};
+	}
+
+	function scaMethod() {
+		return document.getElementById( 'sca-method' ).value;
+	}
+
+	/*
+	 * Wallet sheets only: no other method collects an address of its own.
+	 *
+	 * Without a prefill the sheet opens empty and the first shipping callback has
+	 * to bootstrap the rate list, which is what a product or cart page does.
+	 */
+	function shippingMode() {
+		return document.getElementById( 'shipping' ).value;
+	}
+
+	function collectsShipping() {
+		return '' !== shippingMode();
+	}
+
+	function prefillsShipping() {
+		return 'prefill' === shippingMode();
+	}
+
+	/* ==========================================================================
+	 * SDK: client token, instance, eligibility
+	 * ========================================================================== */
+
+	function basicAuth() {
+		return 'Basic ' + btoa( clientId + ':' + clientSecret );
+	}
+
+	async function postToken( query ) {
+		const response = await fetch( SANDBOX_API + '/v1/oauth2/token?' + query, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+				'Authorization': basicAuth(),
+			},
+		} );
+
+		const json = await response.json();
+
+		if ( ! response.ok ) {
+			throw new Error( 'Token request failed (' + response.status + '): ' + (json.error_description || json.error || 'unknown error') );
+		}
+
+		return json;
+	}
+
+	// The domain the token is bound to, matching SdkClientToken's own handling.
+	function tokenDomain() {
+		return location.hostname.replace( /^www\./, '' );
+	}
+
+	function mintClientToken() {
+		// domains%5B%5D, not domains[]: raw square brackets in the query string
+		// make PayPal answer the CORS preflight with a 400 carrying no
+		// Access-Control-Allow-Origin, so the request never leaves the browser.
+		// The store hits the same endpoint from PHP, where no preflight applies.
+		return postToken( 'grant_type=client_credentials&response_type=client_token&intent=sdk_init&domains%5B%5D=' + encodeURIComponent( tokenDomain() ) );
+	}
+
+	function mintAccessToken() {
+		return postToken( 'grant_type=client_credentials' );
+	}
+
+	/*
+	 * Reports the scope, and names the entries the SDK reads.
+	 *
+	 * The API returns one space-separated string, which is how OAuth 2 defines a
+	 * scope. The log splits it because the entries are long. Each entry is a
+	 * capability the token carries, and PayPal writes most of them as a URI.
+	 */
+	function reportScope( token ) {
+		const scopes = (token.scope || '').trim().split( /\s+/ ).filter( Boolean );
+
+		log( 'Client token scope, ' + scopes.length + ' entries, expires in ' + token.expires_in + 's', scopes );
+
+		const missing = Object.keys( SDK_SCOPES )
+			.filter( ( name ) => ! scopes.some( ( entry ) => entry.indexOf( name ) !== -1 ) );
+
+		if ( ! missing.length ) {
+			log( 'The token carries both entries the SDK reads: ' + Object.keys( SDK_SCOPES ).join( ' and ' ) + '.', undefined, 'ok' );
+
+			return true;
+		}
+
+		log( 'The token has no ' + missing.map( ( name ) => name + ' entry (needed by ' + SDK_SCOPES[name] + ')' ).join( ', and no ' ) + '. This is what a vault token looks like, so intent=sdk_init was ignored. Onboard through OAuth instead of manual API keys, or use a different sandbox merchant.', undefined, 'err' );
+
+		return false;
+	}
+
+	// createInstance() rejects when the fastlane component is requested without one.
+	function clientMetadataId() {
+		if ( ! window.__ppcpTestMetadataId ) {
+			window.__ppcpTestMetadataId = (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID() : 'ppcp-test-' + Date.now();
+		}
+
+		return window.__ppcpTestMetadataId;
+	}
+
+	/*
+	 * The single run: token, instance, eligibility, then every selected
+	 * renderer. That is the only workable order, because eligibility is a method
+	 * on the instance and the instance needs the token.
+	 */
+	async function createButtons() {
+		const components = selectedComponents();
+
+		if ( ! components.length ) {
+			return;
+		}
+
+		const cta = document.getElementById( 'btn-create' );
+
+		collapseConfig( true );
+		setBusy( true );
+		cta.disabled = true;
+		document.getElementById( 'log' ).innerHTML = '';
+		document.getElementById( 'methods' ).innerHTML = '';
+		state.sdkInstance = null;
+		state.fastlane = null;
+		state.cardComponent = null;
+
+		try {
+			if ( ! await createInstance( components ) ) {
+				return;
+			}
+
+			const methods = await checkEligibility();
+
+			for ( const component of COMPONENTS ) {
+				if ( components.indexOf( component.name ) === -1 ) {
+					continue;
+				}
+
+				const box = methodBox( component.title );
+
+				try {
+					await component.render( box, methods, component );
+				} catch ( error ) {
+					logError( component.title + ' render failed:', error );
+					note( box, 'Render failed, see the log.' );
+				}
+			}
+
+			log( 'Done.', undefined, 'ok' );
+		} finally {
+			setBusy( false );
+			syncCreateButton();
+		}
+	}
+
+	async function createInstance( components ) {
+		try {
+			log( 'Loading the core bundle and minting a client token...' );
+
+			const [ , clientToken ] = await Promise.all( [ loadScript( SANDBOX_SDK ), mintClientToken() ] );
+
+			if ( ! reportScope( clientToken ) ) {
+				// Only worth requesting when the scope came back wrong: it proves
+				// the credentials are fine, so the fault is the token rather than
+				// the account.
+				const accessToken = await mintAccessToken();
+				log( 'Full-access token scope, for comparison', accessToken.scope );
+				log( 'The credentials work. It is the client token that comes back wrong.', undefined, 'warn' );
+			}
+
+			if ( ! window.paypal || ! window.paypal.createInstance ) {
+				throw new Error( 'window.paypal.createInstance not found after the script load.' );
+			}
+
+			const args = {
+				components: components,
+				pageType: 'checkout',
+				locale: 'en-US',
+				clientMetadataId: clientMetadataId(),
+			};
+
+			logCall( 'createInstance()', args );
+
+			state.sdkInstance = await window.paypal.createInstance( {
+				clientToken: clientToken.access_token, ...args,
+			} );
+
+			logResult( 'createInstance()' );
+
+			return true;
+		} catch ( error ) {
+			logError( 'Instance creation failed:', error );
+
+			return false;
+		}
+	}
+
+	async function checkEligibility() {
+		const {
+			currencyCode,
+			countryCode,
+			amount,
+		} = transaction();
+
+		try {
+			logCall( 'findEligibleMethods()', {
+				currencyCode,
+				countryCode,
+				amount,
+			} );
+
+			const methods = await state.sdkInstance.findEligibleMethods( {
+				currencyCode: currencyCode,
+				countryCode: countryCode,
+				amount: amount,
+			} );
+
+			const report = {};
+			[ 'paypal', 'venmo', 'paylater', 'card', 'advanced_cards', 'googlepay', 'applepay' ]
+				.forEach( ( method ) => {
+					report[method] = isEligible( methods, method );
+				} );
+
+			logResult( 'findEligibleMethods()', report );
+
+			return methods;
+		} catch ( error ) {
+			logError( 'findEligibleMethods() failed:', error );
+			log( 'A 403 here with a legacy token scope above is the known client-token problem, not a per-method fault. The renderers still run, so the SDK reports its own verdict too.', undefined, 'warn' );
+
+			return null;
+		}
+	}
+
+	// isEligible() throws rather than returning false for a component that was
+	// never requested, which is why eligibility.js guards each call too.
+	function isEligible( methods, method ) {
+		if ( ! methods ) {
+			return 'unknown (eligibility call failed)';
+		}
+
+		try {
+			return methods.isEligible( method );
+		} catch ( e ) {
+			return 'threw (component not loaded)';
+		}
+	}
+
+	function eligibleOrSkip( box, methods, method ) {
+		const verdict = isEligible( methods, method );
+
+		if ( verdict === true ) {
+			return true;
+		}
+
+		// Rendered anyway when eligibility could not be established, so a broken
+		// eligibility call does not hide a method that would otherwise work.
+		if ( verdict !== false ) {
+			log( method + ': eligibility ' + verdict + ', rendering anyway.', undefined, 'warn' );
+
+			return true;
+		}
+
+		note( box, 'Not eligible for this currency, country or amount.' );
+		log( method + ' is not eligible, nothing rendered.', undefined, 'warn' );
+
+		return false;
+	}
+
+	/* ==========================================================================
+	 * ORDERS: stands in for the store's server
+	 *
+	 * A vanilla integration creates the order on its own server. The body is
+	 * built inline here so it can be inspected in the log, and to compare against
+	 * what the plugin sends from ppc-create-order.
+	 * ========================================================================== */
+
+	async function createOrder( paymentSource ) {
+		const {
+			currencyCode,
+			amount,
+		} = transaction();
+		const accessToken = await mintAccessToken();
+
+		const body = {
+			intent: 'CAPTURE',
+			purchase_units: [
+				{
+					amount: {
+						currency_code: currencyCode,
+						value: amount,
+					},
+					description: 'SDK v6 test page',
+				},
+			],
+		};
+
+		const sca = scaMethod();
+		if ( sca && paymentSource ) {
+			body.payment_source = {};
+			body.payment_source[paymentSource] = { attributes: { verification: { method: sca } } };
+		}
+
+		logStore( 'POST /v2/checkout/orders', body );
+
+		const response = await fetch( SANDBOX_API + '/v2/checkout/orders', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': 'Bearer ' + accessToken.access_token,
+				'PayPal-Request-Id': 'ppcp-test-' + Date.now(),
+			},
+			body: JSON.stringify( body ),
+		} );
+
+		const json = await response.json();
+
+		if ( ! response.ok ) {
+			throw new Error( 'Order creation failed (' + response.status + '): ' + JSON.stringify( json ) );
+		}
+
+		logStore( 'order ' + json.id + ' created.' );
+
+		return json.id;
+	}
+
+	// session.start() wants a Promise of the payload, not a function returning
+	// one, so this is called rather than passed by reference.
+	async function orderPayload( paymentSource ) {
+		return { orderId: await createOrder( paymentSource ) };
+	}
+
+	/*
+	 * The handlers every PayPal-run session accepts.
+	 *
+	 * onShippingAddressChange and onShippingOptionsChange are accepted as well.
+	 * They are left unset because each one has to answer with a repriced order,
+	 * and PayPal shows its own shipping step as soon as either is present.
+	 */
+	function sessionHandlers( method ) {
+		return {
+			onApprove: reportApproval( method ),
+			onComplete: ( data ) => logEvent( 'onComplete (' + method + ')', data ),
+			onCancel: ( data ) => logEvent( 'onCancel (' + method + ')', data, 'warn' ),
+			onError: ( error ) => logError( 'SDK event: onError (' + method + ') -', error ),
+		};
+	}
+
+	function reportApproval( method ) {
+		return ( data ) => {
+			logEvent( 'onApprove (' + method + ')', data );
+			log( APPROVED_NEXT );
+		};
+	}
+
+	/*
+	 * Reads the outcome of a wallet confirmOrder(). The session types disagree on
+	 * both nesting and vocabulary, so this mirrors sessionPayment.js.
+	 */
+	async function reportConfirmation( result, session, orderId ) {
+		logResult( 'confirmOrder()', result );
+
+		const payment = (result && result.approveApplePayPayment) || result;
+		const status = payment && (payment.status || payment.state);
+
+		if ( status === 'APPROVED' || status === 'succeeded' ) {
+			log( APPROVED_NEXT, undefined, 'ok' );
+		} else if ( status === 'PAYER_ACTION_REQUIRED' ) {
+			log( 'The order needs a 3D Secure challenge.', undefined, 'warn' );
+
+			// Only the Google Pay session carries this method. Apple Pay sends no
+			// contingency, so its own session has no way to run a challenge.
+			if ( typeof session.initiatePayerAction !== 'function' ) {
+				log( 'This session has no initiatePayerAction(). The challenge cannot run here.', undefined, 'err' );
+			} else {
+				logCall( 'initiatePayerAction()', { orderId: orderId } );
+				logResult( 'initiatePayerAction()', await session.initiatePayerAction( { orderId: orderId } ) );
+				log( 'The SDK offers no re-confirm after this. Read the order on the server to learn the outcome.' );
+			}
+		} else {
+			log( 'Not approved, status "' + status + '". No order would be created.', undefined, 'err' );
+		}
+
+		log( '---------- end of the payment attempt' );
+	}
+
+	/* ==========================================================================
+	 *
+	 *   SHIPPING  (wallet sheets only)
+	 *
+	 *   Only one surface may collect the shipping address for a payment. A store
+	 *   page that already has address fields does not let the sheet ask; a
+	 *   product or cart page does. This harness has no page of its own, so the
+	 *   selector stands in for that decision.
+	 *
+	 *   quoteShipping() is the rate service any integration has to supply to
+	 *   answer these callbacks; the numbers below are invented. Both wallets
+	 *   share it and only translate their own sheet protocol.
+	 *
+	 *   Compare with wallet-shipping-and-tax.md for what the plugin does on top.
+	 *
+	 * ========================================================================== */
+
+	// Countries this pretend store ships to, and what it charges. An address
+	// outside the table gets no rates, which is what makes a sheet reject it.
+	const SHIPPING_RATES = {
+		US: [
+			{
+				id: 'standard',
+				label: 'Standard',
+				cost: '5.00',
+			}, {
+				id: 'express',
+				label: 'Express',
+				cost: '15.00',
+			},
+		],
+		DE: [
+			{
+				id: 'standard',
+				label: 'Standard',
+				cost: '7.50',
+			}, {
+				id: 'express',
+				label: 'Express',
+				cost: '20.00',
+			},
+		],
+		GB: [
+			{
+				id: 'standard',
+				label: 'Standard',
+				cost: '6.00',
+			}, {
+				id: 'express',
+				label: 'Express',
+				cost: '18.00',
+			},
+		],
+	};
+
+	/*
+	 * The initial selection the 'prefill' mode offers the sheet.
+	 *
+	 * Which wallet can take which half of it is the point of that mode:
+	 *
+	 *   Apple Pay   address yes (request.shippingContact), rate yes (shippingMethods)
+	 *   Google Pay  address no  (no such field),           rate yes (shippingOptionParameters)
+	 *
+	 * Google's sheet always offers the addresses saved in the shopper's Google
+	 * account, so a store that already knows the address cannot seed it there.
+	 */
+	const PREFILL_CONTACT = {
+		givenName: 'Jane',
+		familyName: 'Doe',
+		addressLines: [ '456 Elm Street' ],
+		locality: 'Seattle',
+		administrativeArea: 'WA',
+		postalCode: '98101',
+		countryCode: 'US',
+		emailAddress: 'jane.doe@personal.example.com',
+		phoneNumber: '5552223365',
+	};
+
+	const PREFILL_RATE = 'express';
+
+	// What the sheet last priced, so a rate change can be costed against the
+	// address the contact callback set.
+	let lastQuote = null;
+
+	/*
+	 * Prices one selection.
+	 *
+	 * A quote carries the parts the sheet itemises plus the options it offers, so
+	 * one round trip answers both "what does it cost" and "what can they pick".
+	 */
+	async function quoteShipping( countryCode, rateId ) {
+		const options = SHIPPING_RATES[(countryCode || '').toUpperCase()] || [];
+
+		// The prefilled rate outranks the first option in the list: Google's
+		// INITIALIZE callback arrives with nothing selected yet, and answering it
+		// with options[0] would undo the pre-selection the request just made.
+		const fallback = prefillsShipping() ? PREFILL_RATE : null;
+		const selected = options.find( ( option ) => option.id === rateId ) || options.find( ( option ) => option.id === fallback ) || options[0];
+		const subtotal = parseFloat( transaction().amount ) || 0;
+		const shippingFee = selected ? parseFloat( selected.cost ) : 0;
+
+		const quote = {
+			options: options,
+			selectedId: selected ? selected.id : null,
+			subtotal: subtotal.toFixed( 2 ),
+			shippingFee: shippingFee.toFixed( 2 ),
+			tax: '0.00',
+			total: (subtotal + shippingFee).toFixed( 2 ),
+		};
+
+		logStore( 'priced ' + options.length + ' rate(s) for ' + (countryCode || 'an unknown country'), quote );
+		lastQuote = quote;
+
+		return quote;
+	}
+
+	// Google sends 'shipping_option_unselected' before the shopper has picked,
+	// and a rate id the new destination may not offer.
+	function resolveRateId( id ) {
+		return lastQuote && lastQuote.options.some( ( option ) => option.id === id ) ? id : null;
+	}
+
+	function formatCost( cost, currencyCode ) {
+		try {
+			return new Intl.NumberFormat( undefined, {
+				style: 'currency',
+				currency: currencyCode,
+			} ).format( parseFloat( cost ) );
+		} catch ( error ) {
+			// An unknown currency code must not take the sheet down with it.
+			return cost + ' ' + currencyCode;
+		}
+	}
+
+	/* ==========================================================================
+	 *
+	 *   PAYPAL  and  VENMO
+	 *
+	 *   A web component plus a one-time payment session. The popup and the
+	 *   approval are PayPal's own, so there is no confirmOrder step and no 3D
+	 *   Secure attribute on the order.
+	 *
+	 * ========================================================================== */
+
+	function renderPayPal( box, methods, component ) {
+		return renderSessionButton( box, methods, component, {
+			method: 'paypal',
+			tagName: 'paypal-button',
+			className: 'paypal-gold',
+			factory: 'createPayPalOneTimePaymentSession',
+		} );
+	}
+
+	function renderVenmo( box, methods, component ) {
+		return renderSessionButton( box, methods, component, {
+			method: 'venmo',
+			tagName: 'venmo-button',
+			className: 'venmo-blue',
+			factory: 'createVenmoOneTimePaymentSession',
+		} );
+	}
+
+	function renderSessionButton( box, methods, component, spec ) {
+		if ( ! eligibleOrSkip( box, methods, spec.method ) ) {
+			return;
+		}
+
+		// An unregistered custom element renders 0x0 with no console error, so the
+		// absence is reported rather than left looking like a styling bug.
+		if ( ! window.customElements.get( spec.tagName ) ) {
+			note( box, 'The <' + spec.tagName + '> element is not registered by this bundle.' );
+			log( spec.tagName + ' is not a registered custom element.', undefined, 'err' );
+
+			return;
+		}
+
+		const session = state.sdkInstance[spec.factory]( sessionHandlers( spec.method ) );
+
+		const button = document.createElement( spec.tagName );
+		button.setAttribute( 'type', 'pay' );
+		button.className = spec.className;
+
+		button.addEventListener( 'click', async () => {
+			try {
+				logCall( 'start()', { presentationMode: 'auto' } );
+				await session.start( { presentationMode: 'auto' }, orderPayload( component.source ) );
+			} catch ( error ) {
+				logError( spec.method + ' payment failed:', error );
+			}
+		} );
+
+		box.appendChild( button );
+		log( spec.tagName + ' rendered.', undefined, 'ok' );
+	}
+
+	/* ==========================================================================
+	 *
+	 *   GOOGLE PAY
+	 *
+	 *   The googlepay-payments component neither loads pay.js nor touches
+	 *   PaymentsClient: the merchant owns the button and the sheet, as in
+	 *   wallets/googlePay.js.
+	 *
+	 * ========================================================================== */
+
+	async function renderGooglePay( box, methods, component ) {
+		if ( ! eligibleOrSkip( box, methods, 'googlepay' ) ) {
+			return;
+		}
+
+		// No arguments: the shipped component builds the session from the client
+		// token alone and accepts no handlers, so a cancelled sheet surfaces as a
+		// CANCELED rejection instead.
+		const session = state.sdkInstance.createGooglePayOneTimePaymentSession();
+
+		// Used as returned, without formatConfigForPaymentRequest(): that helper
+		// renames a key this config does not have and breaks isReadyToPay.
+		logCall( 'getGooglePayConfig()' );
+
+		const [ , config ] = await Promise.all( [ loadScript( GOOGLE_SDK ), session.getGooglePayConfig() ] );
+
+		logResult( 'getGooglePayConfig()', config );
+
+		if ( ! window.google || ! window.google.payments ) {
+			throw new Error( 'Google Pay global not found after the script load.' );
+		}
+
+		// Callbacks must be handed to the constructor: Google does not accept
+		// them on an existing client.
+		const clientOptions = { environment: 'TEST' };
+		if ( collectsShipping() ) {
+			clientOptions.paymentDataCallbacks = googleShippingCallbacks();
+		}
+
+		const client = new window.google.payments.api.PaymentsClient( clientOptions );
+
+		logCall( 'isReadyToPay()' );
+
+		const ready = await client.isReadyToPay( {
+			apiVersion: 2,
+			apiVersionMinor: 0,
+			allowedPaymentMethods: config.allowedPaymentMethods,
+		} );
+
+		logResult( 'isReadyToPay()', ready );
+
+		if ( ! ready.result ) {
+			note( box, 'Google Pay is not available in this browser.' );
+			log( 'Google Pay is not available in this browser.', undefined, 'warn' );
+
+			return;
+		}
+
+		const button = client.createButton( {
+			buttonType: 'plain',
+			buttonColor: 'black',
+			buttonSizeMode: 'fill',
+			allowedPaymentMethods: [ config.allowedPaymentMethods[0] ],
+			onClick: () => payWithGooglePay( client, session, config, component ),
+		} );
+
+		const holder = document.createElement( 'div' );
+		holder.style.height = '48px';
+		holder.appendChild( button );
+		box.appendChild( holder );
+
+		log( 'Google Pay button rendered.', undefined, 'ok' );
+	}
+
+	async function payWithGooglePay( client, session, config, component ) {
+		const {
+			currencyCode,
+			countryCode,
+			amount,
+		} = transaction();
+
+		const request = {
+			apiVersion: 2,
+			apiVersionMinor: 0,
+			allowedPaymentMethods: config.allowedPaymentMethods,
+			merchantInfo: config.merchantInfo,
+			transactionInfo: {
+				countryCode: countryCode,
+				currencyCode: currencyCode,
+				totalPriceStatus: 'FINAL',
+				totalPrice: amount,
+			},
+			emailRequired: true, ...googleShippingRequest(),
+		};
+
+		try {
+			logCall( 'loadPaymentData()', request );
+
+			// The sheet reports the authorisation by resolving this promise. Google
+			// offers an onPaymentAuthorized event instead, but only for a request
+			// that lists PAYMENT_AUTHORIZATION in callbackIntents.
+			const paymentData = await client.loadPaymentData( request );
+
+			logResult( 'loadPaymentData()', paymentData );
+
+			const orderId = await createOrder( component.source );
+
+			logCall( 'confirmOrder()', {
+				orderId: orderId,
+				paymentMethodData: '(from the sheet)',
+			} );
+
+			await reportConfirmation( await session.confirmOrder( {
+				orderId: orderId,
+				paymentMethodData: paymentData.paymentMethodData,
+			} ), session, orderId );
+		} catch ( error ) {
+			if ( error && error.statusCode === 'CANCELED' ) {
+				log( 'loadPaymentData() rejected with CANCELED. The buyer closed the sheet.', undefined, 'warn' );
+
+				return;
+			}
+
+			logError( 'Google Pay payment failed:', error );
+		}
+	}
+
+	// Omitted rather than sent empty: Google rejects loadPaymentData with
+	// "paymentDataCallbacks must be set" whenever callbackIntents is present at
+	// all, an empty array included.
+	function googleShippingRequest() {
+		if ( ! collectsShipping() ) {
+			return {};
+		}
+
+		const request = {
+			callbackIntents: [ 'SHIPPING_ADDRESS', 'SHIPPING_OPTION' ],
+			shippingAddressRequired: true,
+			shippingOptionRequired: true,
+			shippingAddressParameters: {
+				phoneNumberRequired: true,
+				allowedCountryCodes: Object.keys( SHIPPING_RATES ),
+			},
+		};
+
+		if ( prefillsShipping() ) {
+			// The rate can be pre-selected. The address cannot: Google offers only
+			// the addresses saved in the shopper's account, so PREFILL_CONTACT has
+			// nowhere to go and the first callback will price whatever they pick.
+			const rates = SHIPPING_RATES[PREFILL_CONTACT.countryCode];
+
+			request.shippingOptionParameters = {
+				defaultSelectedOptionId: PREFILL_RATE,
+				shippingOptions: rates.map( ( option ) => ({
+					id: option.id,
+					label: option.label,
+					description: formatCost( option.cost, transaction().currencyCode ),
+				}) ),
+			};
+
+			log( 'The request pre-selects the rate "' + PREFILL_RATE + '". It cannot pre-set the address: Google offers only the addresses in the buyer\'s own account.', undefined, 'warn' );
+		}
+
+		return request;
+	}
+
+	function googleShippingCallbacks() {
+		const {
+			currencyCode,
+			countryCode,
+		} = transaction();
+
+		// Google rejects newShippingOptionParameters on a SHIPPING_OPTION
+		// trigger: the shopper is picking from the list it already has.
+		const optionListTriggers = [ 'INITIALIZE', 'SHIPPING_ADDRESS' ];
+
+		return {
+			onPaymentDataChanged: async ( paymentData ) => {
+				logEvent( 'onPaymentDataChanged (' + paymentData.callbackTrigger + ')', paymentData );
+
+				const quote = await quoteShipping( paymentData.shippingAddress ? paymentData.shippingAddress.countryCode : countryCode, resolveRateId( paymentData.shippingOptionData ? paymentData.shippingOptionData.id : null ) );
+
+				if ( ! quote.options.length ) {
+					log( 'The test store has no rate for that address. The sheet stays open.', undefined, 'warn' );
+
+					const rejection = {
+						error: {
+							reason: 'SHIPPING_ADDRESS_UNSERVICEABLE',
+							intent: 'SHIPPING_ADDRESS',
+							message: 'We do not ship to that address.',
+						},
+					};
+
+					logReply( 'onPaymentDataChanged', rejection );
+
+					return rejection;
+				}
+
+				const update = {
+					newTransactionInfo: {
+						countryCode: countryCode,
+						currencyCode: currencyCode,
+						totalPriceStatus: 'FINAL',
+						totalPrice: quote.total,
+					},
+				};
+
+				if ( optionListTriggers.indexOf( paymentData.callbackTrigger ) !== -1 ) {
+					update.newShippingOptionParameters = {
+						defaultSelectedOptionId: quote.selectedId, // Stripped to the three keys Google accepts: it throws on any other.
+						shippingOptions: quote.options.map( ( option ) => ({
+							id: option.id,
+							label: option.label,
+							description: formatCost( option.cost, currencyCode ),
+						}) ),
+					};
+				}
+
+				logReply( 'onPaymentDataChanged', update );
+
+				return update;
+			},
+		};
+	}
+
+	/* ==========================================================================
+	 *
+	 *   APPLE PAY
+	 *
+	 *   Safari only, and the merchant answers the sheet's validation challenge
+	 *   from PayPal. The capability check comes before anything is loaded, so
+	 *   other browsers touch neither the SDK nor the DOM.
+	 *
+	 * ========================================================================== */
+
+	async function renderApplePay( box, methods, component ) {
+		if ( ! window.ApplePaySession || ! window.ApplePaySession.canMakePayments() ) {
+			note( box, 'Apple Pay needs Safari on macOS or iOS.' );
+			log( 'Apple Pay is unavailable in this browser, nothing loaded.', undefined, 'warn' );
+
+			return;
+		}
+
+		if ( ! eligibleOrSkip( box, methods, 'applepay' ) ) {
+			return;
+		}
+
+		await loadScript( APPLE_SDK );
+
+		const session = state.sdkInstance.createApplePayOneTimePaymentSession();
+
+		// config(), as in wallets/applePay.js. getApplePayConfig is the name of the
+		// GraphQL operation behind it, and no member of the session carries it.
+		logCall( 'config()' );
+
+		const config = await session.config();
+
+		logResult( 'config()', config );
+
+		const button = document.createElement( 'apple-pay-button' );
+		button.setAttribute( 'buttonstyle', 'black' );
+		button.setAttribute( 'type', 'buy' );
+		button.setAttribute( 'locale', 'en' );
+		button.style.setProperty( '--apple-pay-button-width', '240px' );
+		button.style.setProperty( '--apple-pay-button-height', '48px' );
+		button.addEventListener( 'click', () => payWithApplePay( session, config, component ) );
+
+		box.appendChild( button );
+		log( 'Apple Pay button rendered.', undefined, 'ok' );
+	}
+
+	function payWithApplePay( session, config, component ) {
+		const {
+			currencyCode,
+			countryCode,
+			amount,
+		} = transaction();
+
+		const request = {
+			countryCode: countryCode,
+			currencyCode: currencyCode,
+			merchantCapabilities: config.merchantCapabilities,
+			supportedNetworks: config.supportedNetworks, // postalAddress alone for billing: Apple never returns a billing email
+			// or phone. Shipping still asks for both, with the address only where
+			// the sheet prices it. Mirrors applePayRequest.js.
+			requiredBillingContactFields: [ 'postalAddress' ],
+			requiredShippingContactFields: collectsShipping() ? [ 'postalAddress', 'email', 'phone' ] : [ 'email', 'phone' ],
+			total: {
+				label: 'SDK v6 test page',
+				amount: amount,
+				type: 'final',
+			}, ...appleShippingRequest(),
+		};
+
+		logCall( 'new ApplePaySession( 4, request )', request );
+
+		const native = new window.ApplePaySession( 4, request );
+
+		if ( collectsShipping() ) {
+			attachAppleShipping( native );
+		}
+
+		native.onvalidatemerchant = ( event ) => {
+			logEvent( 'onvalidatemerchant', { validationURL: event.validationURL } );
+			logCall( 'validateMerchant()', { validationUrl: event.validationURL } );
+
+			session.validateMerchant( { validationUrl: event.validationURL } )
+				.then( ( payload ) => native.completeMerchantValidation( payload.merchantSession ) )
+				.catch( ( error ) => {
+					logError( 'Merchant validation failed:', error );
+					native.abort();
+				} );
+		};
+
+		native.onpaymentauthorized = async ( event ) => {
+			logEvent( 'onpaymentauthorized', event.payment );
+
+			try {
+				const orderId = await createOrder( component.source );
+
+				logCall( 'confirmOrder()', {
+					orderId: orderId,
+					token: '(from the sheet)',
+					billingContact: event.payment.billingContact,
+				} );
+
+				await reportConfirmation( await session.confirmOrder( {
+					orderId: orderId,
+					token: event.payment.token,
+					billingContact: event.payment.billingContact,
+				} ), session, orderId );
+
+				native.completePayment( { status: window.ApplePaySession.STATUS_SUCCESS } );
+			} catch ( error ) {
+				logError( 'Apple Pay payment failed:', error );
+				native.completePayment( { status: window.ApplePaySession.STATUS_FAILURE } );
+			}
+		};
+
+		native.oncancel = () => logEvent( 'oncancel', undefined, 'warn' );
+
+		// Apple holds the sheet until this handler answers, even when the total
+		// does not change, so the last priced total goes back unchanged.
+		native.onpaymentmethodselected = ( event ) => {
+			logEvent( 'onpaymentmethodselected', event.paymentMethod );
+
+			const update = {
+				newTotal: {
+					label: 'SDK v6 test page',
+					type: 'final',
+					amount: lastQuote ? lastQuote.total : amount,
+				},
+			};
+
+			logReply( 'onpaymentmethodselected', update );
+			native.completePaymentMethodSelection( update );
+		};
+
+		logCall( 'begin()' );
+		native.begin();
+	}
+
+	/*
+	 * The shipping half of the Apple request.
+	 *
+	 * Apple takes both halves of an initial selection, which is what separates it
+	 * from Google here. shippingMethods is otherwise left deliberately empty: the
+	 * first onshippingcontactselected fills it, once there is an address to price
+	 * against. In prefill mode there already is one, so the rates go in upfront
+	 * with the preferred one first, which is how Apple marks it selected.
+	 */
+	function appleShippingRequest() {
+		if ( ! collectsShipping() ) {
+			return {};
+		}
+
+		const request = {
+			shippingType: 'shipping',
+			shippingMethods: [],
+		};
+
+		if ( prefillsShipping() ) {
+			const rates = SHIPPING_RATES[PREFILL_CONTACT.countryCode];
+			const methods = rates.map( ( option ) => ({
+				label: option.label,
+				detail: '',
+				amount: option.cost,
+				identifier: option.id,
+			}) );
+			const preferredAt = methods.findIndex( ( method ) => method.identifier === PREFILL_RATE );
+
+			if ( preferredAt > 0 ) {
+				methods.unshift( methods.splice( preferredAt, 1 )[0] );
+			}
+
+			// An initial selection only; the callbacks still price whatever the
+			// shopper ends up picking.
+			request.shippingContact = PREFILL_CONTACT;
+			request.shippingMethods = methods;
+
+			log( 'The request pre-selects both the address and the rate "' + PREFILL_RATE + '".', undefined, 'ok' );
+		}
+
+		return request;
+	}
+
+	/*
+	 * Apple's two shipping callbacks, both answered from the shared quote.
+	 *
+	 * The address callback carries a redacted contact: enough to resolve a
+	 * shipping zone, not enough to complete an order. The full street arrives
+	 * only at authorization.
+	 */
+	function attachAppleShipping( native ) {
+		let country = null;
+
+		async function respond( name, complete, rateId ) {
+			const quote = await quoteShipping( country, rateId );
+
+			if ( ! quote.options.length ) {
+				log( 'The test store has no rate for that address. The sheet stays open.', undefined, 'warn' );
+
+				// Apple rejects a completion with no total at all, so the last
+				// priced one is carried and the error goes against the address.
+				const rejection = {
+					newTotal: {
+						label: 'SDK v6 test page',
+						type: 'pending',
+						amount: quote.subtotal,
+					},
+					newLineItems: [],
+					newShippingMethods: [],
+					errors: typeof window.ApplePayError === 'function' ? [ new window.ApplePayError( 'shippingContactInvalid', 'postalAddress', 'We do not ship to that address.' ) ] : [],
+				};
+
+				logReply( name, rejection );
+				complete( rejection );
+
+				return;
+			}
+
+			// The selected method goes first: Apple presents the head of the list
+			// as chosen.
+			const methods = quote.options.map( ( option ) => ({
+				label: option.label,
+				detail: '',
+				amount: option.cost,
+				identifier: option.id,
+			}) );
+			const selectedAt = methods.findIndex( ( method ) => method.identifier === quote.selectedId );
+			if ( selectedAt > 0 ) {
+				methods.unshift( methods.splice( selectedAt, 1 )[0] );
+			}
+
+			const update = {
+				newTotal: {
+					label: 'SDK v6 test page',
+					type: 'final',
+					amount: quote.total,
+				},
+				newLineItems: [
+					{
+						label: 'Subtotal',
+						amount: quote.subtotal,
+						type: 'final',
+					}, {
+						label: 'Shipping',
+						amount: quote.shippingFee,
+						type: 'final',
+					},
+				],
+				newShippingMethods: methods,
+			};
+
+			logReply( name, update );
+			complete( update );
+		}
+
+		native.onshippingcontactselected = ( event ) => {
+			logEvent( 'onshippingcontactselected', event.shippingContact );
+			country = event.shippingContact ? event.shippingContact.countryCode : null;
+			respond( 'onshippingcontactselected', ( update ) => native.completeShippingContactSelection( update ), null );
+		};
+
+		native.onshippingmethodselected = ( event ) => {
+			logEvent( 'onshippingmethodselected', event.shippingMethod );
+			respond( 'onshippingmethodselected', ( update ) => native.completeShippingMethodSelection( update ), event.shippingMethod ? event.shippingMethod.identifier : null );
+		};
+	}
+
+	/* ==========================================================================
+	 *
+	 *   CARD FIELDS (ACDC)
+	 *
+	 *   createCardFieldsComponent() returns the element itself rather than
+	 *   something with a render() method, so each field is appended directly.
+	 *   The fields fill their container, which therefore needs its own height.
+	 *
+	 *   The session takes no handlers. Each field element dispatches its own
+	 *   CustomEvents instead, and submit() reports the payment outcome, the 3D
+	 *   Secure popup included, in its own result.
+	 *
+	 * ========================================================================== */
+
+	async function renderCardFields( box, methods, component ) {
+		if ( ! eligibleOrSkip( box, methods, 'advanced_cards' ) ) {
+			return;
+		}
+
+		const cardSession = state.sdkInstance.createCardFieldsOneTimePaymentSession();
+
+		[
+			{
+				type: 'number',
+				placeholder: 'Card number',
+			}, {
+			type: 'expiry',
+			placeholder: 'MM/YY',
+		}, {
+			type: 'cvv',
+			placeholder: 'CVV',
+		},
+		].forEach( ( field ) => {
+			const holder = document.createElement( 'div' );
+			const element = cardSession.createCardFieldsComponent( field );
+
+			holder.className = 'card-field';
+			holder.appendChild( element );
+			box.appendChild( holder );
+
+			FIELD_EVENTS.forEach( ( name ) => {
+				element.addEventListener( name, ( event ) => logEvent( name + ' (' + field.type + ')', event.detail ) );
+			} );
+		} );
+
+		const pay = document.createElement( 'button' );
+		pay.textContent = 'Pay with card';
+		pay.addEventListener( 'click', async () => {
+			try {
+				const orderId = await createOrder( component.source );
+
+				logCall( 'submit()', orderId );
+
+				const result = await cardSession.submit( orderId );
+
+				logResult( 'submit()', result );
+
+				if ( result.state === 'succeeded' ) {
+					log( 'The card is approved. liabilityShift: ' + (result.data && result.data.liabilityShift), undefined, 'ok' );
+					log( APPROVED_NEXT );
+				} else if ( result.state === 'canceled' ) {
+					log( 'The buyer closed the 3D Secure challenge. A retry is allowed.', undefined, 'warn' );
+				} else {
+					log( 'The card submission failed.', result.data, 'err' );
+				}
+			} catch ( error ) {
+				logError( 'Card payment failed:', error );
+			}
+		} );
+
+		box.appendChild( pay );
+		log( 'Card fields rendered.', undefined, 'ok' );
+	}
+
+	/* ==========================================================================
+	 *
+	 *   CARD BUTTON (BCDC)
+	 *
+	 *   Three things set this apart from the other buttons, all mirrored from
+	 *   cardButton/renderCardButton.js: the button checks on connect that its
+	 *   parent is a <paypal-basic-card-container>, so the tree is assembled
+	 *   detached; it dispatches its own 'bcdc-click' rather than 'click'; and
+	 *   start() is given a targetElement, which beats the SDK's "last clicked
+	 *   button" fallback. PayPal collects the card in its own popup, so no 3D
+	 *   Secure attribute goes on the order.
+	 *
+	 * ========================================================================== */
+
+	function renderCardButton( box, methods, component ) {
+		if ( ! eligibleOrSkip( box, methods, 'card' ) ) {
+			return;
+		}
+
+		const missing = [ 'paypal-basic-card-container', 'paypal-basic-card-button' ]
+			.filter( ( tag ) => ! window.customElements.get( tag ) );
+
+		if ( missing.length ) {
+			note( box, 'Elements not registered by this bundle: ' + missing.join( ', ' ) + '.' );
+			log( 'Card button elements missing: ' + missing.join( ', ' ), undefined, 'err' );
+
+			return;
+		}
+
+		const session = state.sdkInstance.createPayPalGuestOneTimePaymentSession( sessionHandlers( 'card button' ) );
+
+		const container = document.createElement( 'paypal-basic-card-container' );
+		const button = document.createElement( 'paypal-basic-card-button' );
+
+		// The element ships a fixed 225px width; an outer declaration wins over
+		// its own :host rule.
+		container.style.width = '100%';
+		button.style.width = '100%';
+
+		const { countryCode } = transaction();
+		if ( countryCode ) {
+			button.buyerCountry = countryCode;
+		}
+
+		button.addEventListener( 'bcdc-click', async () => {
+			logEvent( 'bcdc-click, the element\'s own event instead of a click' );
+
+			try {
+				logCall( 'start()', {
+					presentationMode: 'auto',
+					targetElement: 'paypal-basic-card-button',
+				} );
+				await session.start( {
+					presentationMode: 'auto',
+					targetElement: button,
+				}, orderPayload( component.source ) );
+			} catch ( error ) {
+				logError( 'Card button payment failed:', error );
+			}
+		} );
+
+		container.appendChild( button );
+		box.appendChild( container );
+
+		log( 'paypal-basic-card-button rendered.', undefined, 'ok' );
+	}
+
+	/* ==========================================================================
+	 *
+	 *   FASTLANE
+	 *
+	 *   v6 does not reimplement the Fastlane UI. This mirrors what
+	 *   ppcp-axo/resources/js/Connection/Fastlane.js takes off the instance, and
+	 *   reports the member set rather than assuming it: that set is the contract
+	 *   AxoManager consumes, and a missing member is the first thing to check.
+	 *
+	 * ========================================================================== */
+
+	async function renderFastlane( box ) {
+		const args = {
+			locale: 'en_us',
+			cardOptions: {},
+			shippingAddressOptions: {},
+		};
+
+		logCall( 'createFastlane()', args );
+
+		try {
+			state.fastlane = await state.sdkInstance.createFastlane( args );
+		} catch ( error ) {
+			logError( 'createFastlane() failed:', error );
+			log( 'Check that Fastlane is enabled for this sandbox account, and that clientMetadataId was passed to createInstance().', undefined, 'warn' );
+			note( box, 'createFastlane() failed, see the log.' );
+
+			return;
+		}
+
+		const expected = [ 'identity', 'profile', 'FastlaneCardComponent', 'FastlanePaymentComponent', 'FastlaneWatermarkComponent' ];
+		const members = {};
+
+		expected.forEach( ( name ) => {
+			members[name] = typeof state.fastlane[name];
+		} );
+
+		logResult( 'createFastlane()', members );
+
+		const missing = expected.filter( ( name ) => ! state.fastlane[name] );
+		if ( missing.length ) {
+			log( 'Missing members: ' + missing.join( ', ' ), undefined, 'err' );
+		}
+
+		if ( typeof state.fastlane.setLocale === 'function' ) {
+			state.fastlane.setLocale( 'en_us' );
+		}
+
+		const watermark = document.createElement( 'div' );
+		watermark.id = 'fastlane-watermark';
+		box.appendChild( watermark );
+
+		const email = document.createElement( 'input' );
+		email.type = 'email';
+		email.placeholder = 'buyer@example.com';
+
+		const lookup = document.createElement( 'button' );
+		lookup.className = 'secondary outline';
+		lookup.textContent = 'Look up';
+		lookup.addEventListener( 'click', () => lookupCustomer( email.value.trim() ) );
+
+		const row = document.createElement( 'div' );
+		row.className = 'row';
+		row.appendChild( email );
+		row.appendChild( lookup );
+		box.appendChild( row );
+
+		const card = document.createElement( 'div' );
+		card.id = 'fastlane-card';
+		box.appendChild( card );
+
+		await renderWatermark();
+		await renderFastlaneCard( box );
+	}
+
+	async function renderWatermark() {
+		if ( ! state.fastlane.FastlaneWatermarkComponent ) {
+			return;
+		}
+
+		try {
+			logCall( 'FastlaneWatermarkComponent()', { includeAdditionalInfo: true } );
+
+			const watermark = await state.fastlane.FastlaneWatermarkComponent( { includeAdditionalInfo: true } );
+
+			await watermark.render( '#fastlane-watermark' );
+			log( 'The watermark is rendered.', undefined, 'ok' );
+		} catch ( error ) {
+			logError( 'Watermark render failed:', error );
+		}
+	}
+
+	async function renderFastlaneCard( box ) {
+		if ( ! state.fastlane.FastlaneCardComponent ) {
+			return;
+		}
+
+		try {
+			logCall( 'FastlaneCardComponent()', {} );
+
+			state.cardComponent = await state.fastlane.FastlaneCardComponent( {} );
+			await state.cardComponent.render( '#fastlane-card' );
+
+			const token = document.createElement( 'button' );
+			token.className = 'secondary outline';
+			token.textContent = 'Get payment token';
+			token.addEventListener( 'click', getPaymentToken );
+			box.appendChild( token );
+
+			log( 'The card component is rendered.', undefined, 'ok' );
+		} catch ( error ) {
+			logError( 'Card component render failed:', error );
+			log( 'An unregistered custom element renders 0x0 with no console error. Check customElements.get("fastlane") in the console.', undefined, 'warn' );
+		}
+	}
+
+	async function lookupCustomer( email ) {
+		if ( ! email ) {
+			log( 'Enter an email address first.', undefined, 'warn' );
+
+			return;
+		}
+
+		try {
+			logCall( 'identity.lookupCustomerByEmail()', email );
+
+			const lookup = await state.fastlane.identity.lookupCustomerByEmail( email );
+
+			logResult( 'identity.lookupCustomerByEmail()', lookup );
+
+			if ( ! lookup || ! lookup.customerContextId ) {
+				log( 'There is no Fastlane profile for that address. This buyer is a guest.', undefined, 'warn' );
+
+				return;
+			}
+
+			logCall( 'identity.triggerAuthenticationFlow()', lookup.customerContextId );
+
+			const auth = await state.fastlane.identity.triggerAuthenticationFlow( lookup.customerContextId );
+
+			logResult( 'identity.triggerAuthenticationFlow()', auth );
+
+			if ( auth && auth.authenticationState === 'succeeded' ) {
+				log( 'The buyer is authenticated. The member experience renders here.', undefined, 'ok' );
+			} else {
+				log( 'The buyer is not authenticated. The guest experience renders here.', undefined, 'warn' );
+			}
+		} catch ( error ) {
+			logError( 'Customer lookup failed:', error );
+		}
+	}
+
+	async function getPaymentToken() {
+		try {
+			logCall( 'getPaymentToken()', {} );
+			logResult( 'getPaymentToken()', await state.cardComponent.getPaymentToken( {} ) );
+			log( 'The token is single-use and lasts about three hours. It goes on the order as payment_source.card.single_use_token.' );
+		} catch ( error ) {
+			logError( 'getPaymentToken() failed:', error );
+		}
+	}
+
+	/* ==========================================================================
+	 * BOOT
+	 * ========================================================================== */
+
+	if ( initCredentials() ) {
+		renderComponentPicker();
+		readUrlConfig();
+		syncCreateButton();
+
+		// One listener for the whole bar: an input event covers the text fields,
+		// the selects and the checkboxes alike.
+		document.getElementById( 'config' ).addEventListener( 'input', writeUrlConfig );
+
+		document.getElementById( 'log-filter' ).addEventListener( 'input', filterLog );
+		document.getElementById( 'btn-create' ).addEventListener( 'click', createButtons );
+		document.getElementById( 'btn-edit' ).addEventListener( 'click', () => collapseConfig( false ) );
+		log( 'Ready. Select the components to test, then choose "Create buttons".' );
+	}
+</script>
+
+<style>
+	/*
+	 * The page fills the viewport and never scrolls itself: the two output panes
+	 * scroll instead, so the configuration stays put while a run produces output.
+	 *
+	 * The flex container is #page rather than the body, because the SDKs append
+	 * their iframes to the body. As body children those would be flex items and
+	 * would each claim a share of the height, so the panes would shrink a little
+	 * further on every run.
+	 *
+	 * Chained percentages rather than 100vh: a vh is a fixed slice of the unzoomed
+	 * viewport, so at any zoom but 100% the page would stop short of the window.
+	 */
+	html,
+	body {
+		height: 100%;
+		overflow: hidden;
+	}
+
+	#page {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		padding: 1rem;
+		gap: .75rem;
+	}
+
+	/* Pico pads a body-level header as a page band; this one is just a title row. */
+	header {
+		display: flex;
+		align-items: baseline;
+		gap: 1rem;
+		flex: 0 0 auto;
+		padding: 0;
+		margin: 0;
+	}
+
+	h1 {
+		font-size: 1.2rem;
+		margin: 0;
+	}
+
+	h2 {
+		font-size: 1rem;
+	}
+
+	#credentials-panel {
+		max-width: 30rem;
+		margin: 0;
+	}
+
+	/* A caption names a group without claiming a heading's vertical space. */
+	.caption {
+		display: block;
+		font-size: .68rem;
+		text-transform: uppercase;
+		letter-spacing: .07em;
+		color: var(--pico-muted-color);
+	}
+
+	#app {
+		display: flex;
+		flex-direction: column;
+		gap: .75rem;
+		flex: 1 1 auto;
+		min-height: 0;
+	}
+
+	#config {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		gap: 1.75rem;
+		flex: 0 0 auto;
+		padding: .75rem 1rem;
+		border: 1px solid var(--pico-muted-border-color);
+		border-radius: var(--pico-border-radius);
+		background: var(--pico-card-background-color);
+	}
+
+	#config .group {
+		display: flex;
+		flex-direction: column;
+		gap: .4rem;
+	}
+
+	#config .cta {
+		margin-left: auto;
+		align-self: flex-end;
+	}
+
+	#component-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: .3rem 1rem;
+	}
+
+	#component-list label {
+		display: flex;
+		align-items: center;
+		gap: .4rem;
+		margin: 0;
+	}
+
+	/* Opts the box out of flexing, which would otherwise stretch it out of square. */
+	#component-list input[type='checkbox'] {
+		flex: none;
+		margin: 0;
+	}
+
+	#config .fields {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		gap: .5rem;
+	}
+
+	#config .fields label {
+		display: flex;
+		flex-direction: column;
+		gap: .15rem;
+		margin: 0;
+	}
+
+	#config input,
+	#config select {
+		margin: 0;
+	}
+
+	#currency,
+	#country {
+		width: 5rem;
+	}
+
+	#amount {
+		width: 6rem;
+	}
+
+	#sca-method {
+		width: 12rem;
+	}
+
+	#shipping {
+		width: 11rem;
+	}
+
+	#btn-create {
+		margin: 0;
+		width: auto;
+	}
+
+	#create-hint {
+		display: block;
+		margin-top: .3rem;
+		text-align: right;
+		color: var(--pico-muted-color);
+	}
+
+	#summary {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex: 0 0 auto;
+		padding: .4rem 1rem;
+		border: 1px solid var(--pico-muted-border-color);
+		border-radius: var(--pico-border-radius);
+		background: var(--pico-card-background-color);
+		font-size: .8rem;
+	}
+
+	#btn-edit {
+		font-size: inherit;
+		width: auto;
+		margin: 0 0 0 auto;
+	}
+
+	/* Pico's button padding is in rem, so a smaller font alone does not bring
+	   these two down to the height of the single-line rows they sit in. */
+	#btn-edit,
+	#clear-credentials {
+		padding: .2rem .8rem;
+	}
+
+	.workspace {
+		display: grid;
+		grid-template-columns: 288px minmax(0, 1fr);
+		gap: .75rem;
+		flex: 1 1 auto;
+		min-height: 0;
+	}
+
+	#methods,
+	#log-pane {
+		padding: .75rem 1rem;
+		border: 1px solid var(--pico-muted-border-color);
+		border-radius: var(--pico-border-radius);
+		background: var(--pico-card-background-color);
+	}
+
+	#methods {
+		overflow-y: auto;
+	}
+
+	/* The filter stays put and the list scrolls under it. */
+	#log-pane {
+		display: flex;
+		flex-direction: column;
+		gap: .5rem;
+		min-height: 0;
+	}
+
+	/* Two explicit tracks: the field takes the room, the count takes its text. */
+	#log-bar {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		align-items: center;
+		gap: .5rem;
+		flex: 0 0 auto;
+	}
+
+	/* Pico gives a search input its own padding for the magnifier, so only the
+	   width and the margin are set here. */
+	#log-filter {
+		width: 100%;
+		margin: 0;
+		/* Block only, so Pico keeps the room it reserves for the magnifier. */
+		padding-block: .3rem;
+		height: auto;
+		font-size: .75rem;
+	}
+
+	#log-count {
+		white-space: nowrap;
+		color: var(--pico-muted-color);
+		font-size: .7rem;
+	}
+
+	#run-status {
+		font-size: .75rem;
+		color: var(--pico-muted-color);
+	}
+
+	/* A list of controls, separated by a rule rather than boxed individually. */
+	#methods section {
+		padding-bottom: .8rem;
+		margin-bottom: .8rem;
+		border-bottom: 1px solid var(--pico-muted-border-color);
+	}
+
+	#methods section:last-child {
+		padding-bottom: 0;
+		margin-bottom: 0;
+		border-bottom: 0;
+	}
+
+	#methods .caption {
+		margin-bottom: .45rem;
+	}
+
+	#methods button {
+		margin: 0;
+	}
+
+	/* The Fastlane lookup row, built by its renderer. */
+	#methods .row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: .5rem;
+		margin-bottom: .6rem;
+	}
+
+	#methods .row > * {
+		margin-bottom: 0;
+		flex: 0 0 auto;
+	}
+
+	#methods .row input {
+		width: 100%;
+		margin: 0;
+	}
+
+	.card-field {
+		height: 2.6rem;
+		margin-bottom: .5rem;
+	}
+
+	#log {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow-y: auto;
+		margin: 0;
+		font-family: var(--pico-font-family-monospace);
+		font-size: .72rem;
+		line-height: 1.5;
+		padding-left: 1rem;
+
+		li {
+			opacity: 0.9;
+			padding: .25rem;
+			border-bottom: 1px solid var(--pico-muted-border-color);
+			word-break: break-word;
+			margin: 0 0 0 1.5em;
+			transition: background-color 0.5s, opacity 0.25s;
+
+			pre {
+				opacity: 0.9;
+				margin: .25rem .25rem .25rem .75rem;
+				font-size: .68rem;
+				transition: background-color 0.5s, opacity 0.25s;
+			}
+
+			&:hover {
+				background-color: var(--pico-code-background-color);
+
+				&, pre {
+					opacity: 1;
+				}
+			}
+
+			&:focus {
+				opacity: 1;
+
+				&, pre {
+					background-color: var(--pico-mark-background-color);
+				}
+			}
+
+			&::marker {
+				font-size: 0.75em;
+			}
+		}
+	}
+
+	/* Least-used control on the page: truncated rather than given a row. */
+	#creds {
+		display: flex;
+		align-items: center;
+		gap: .4rem;
+		margin-left: auto;
+		max-width: 18rem;
+		font-size: .7rem;
+	}
+
+	#current-client-id {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: .65rem;
+	}
+
+	#clear-credentials {
+		font-size: inherit;
+		width: auto;
+		flex: none;
+	}
+
+	.ok {
+		color: #0a7f55;
+	}
+
+	.warn {
+		color: #b25e09;
+	}
+
+	.err {
+		color: #c0362c;
+	}
+
+	/* Below this the panes cannot both hold a payment sheet's worth of width. */
+	@media (max-width: 900px) {
+		html,
+		body,
+		#page {
+			height: auto;
+			overflow: auto;
+		}
+
+		#summary {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			flex: 0 0 auto;
+			padding: .4rem 1rem;
+			border: 1px solid var(--pico-muted-border-color);
+			border-radius: var(--pico-border-radius);
+			background: var(--pico-card-background-color);
+			font-size: .8rem;
+		}
+
+		#btn-edit {
+			font-size: inherit;
+			width: auto;
+			margin: 0 0 0 auto;
+		}
+
+		/* Pico's button padding is in rem, so a smaller font alone does not bring
+		   these two down to the height of the single-line rows they sit in. */
+		#btn-edit,
+		#clear-credentials {
+			padding: .2rem .8rem;
+		}
+
+		.workspace {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		#log-pane {
+			height: 30rem;
+		}
+	}
+</style>
+</body>
+</html>
