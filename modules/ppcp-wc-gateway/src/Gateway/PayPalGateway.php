@@ -577,6 +577,24 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				}
 			}
 
+			/**
+			 * Filters the PayPal vault-approval redirect URL for a first-time
+			 * free-trial buyer who has no saved account yet (the native "Place order"
+			 * path). A non-empty URL redirects the buyer to PayPal to approve saving
+			 * their account; the return endpoint then stores the token and completes
+			 * this order. An empty string keeps the "No saved PayPal account." failure.
+			 *
+			 * @param string   $redirect_url The redirect URL (empty by default).
+			 * @param WC_Order $wc_order     The pending WC order.
+			 */
+			$vault_redirect_url = apply_filters( 'woocommerce_paypal_payments_free_trial_vault_redirect_url', '', $wc_order );
+			if ( is_string( $vault_redirect_url ) && '' !== $vault_redirect_url ) {
+				return array(
+					'result'   => 'success',
+					'redirect' => $vault_redirect_url,
+				);
+			}
+
 			return $this->handle_payment_failure( $wc_order, new Exception( 'No saved PayPal account.' ) );
 		}
 

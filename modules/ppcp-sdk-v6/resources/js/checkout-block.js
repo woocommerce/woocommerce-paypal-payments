@@ -467,23 +467,16 @@ const placeOrderEnabled =
  * coupon applied on the checkout is taken into account. Mirrors v5's
  * paypalPaymentMethodAllowed().
  *
- * A free-trial ($0) subscription is the exception: it cannot be paid through
- * this row. The "Place order" flow redirects to a PayPal order that cannot be
- * created for a zero total, and PayPal can only vault a payment method without a
- * purchase through an approval the buyer opens from a button. So the row is
- * withheld and the express "Pay with PayPal" button (which runs that save flow)
- * is offered instead. Read live, so a coupon that zeroes or un-zeroes the cart
- * after render is honoured.
+ * A free-trial ($0) subscription is shown too: a first-time buyer's "Place order"
+ * is completed through the gateway's server-side vault-approval redirect (see
+ * PayPalGateway::process_payment), so it no longer needs the express button. It
+ * reaches this row through the has_subscriptions branch below.
  *
  * @param {Object} [cartTotals] - The canMakePayment cart totals.
  * @return {boolean} Whether the row may show.
  */
 function regularRowAllowedForCart( cartTotals ) {
 	const amount = amountFromCartTotals( cartTotals ) || config.amount;
-
-	if ( isFreeTrialCart( config, amount ) ) {
-		return false;
-	}
 
 	if ( config.has_subscriptions ) {
 		return true;
