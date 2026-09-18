@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
@@ -140,7 +141,11 @@ class PurchaseUnitFactory
             $shipping = $this->shipping_factory->from_wc_customer(\WC()->customer, $with_shipping_options);
             $shipping_address = $shipping->address();
             if (!$shipping_address || !$this->can_use_shipping_address($shipping_address)) {
-                $shipping = null;
+                // GET_FROM_FILE: PayPal withholds the street until after approval, so the address
+                // stays unusable for the whole flow. The options must survive it, or the order
+                // carries no shipping method to select. The result is shipping data with options
+                // and no address, which every consumer must tolerate.
+                $shipping = $shipping->options() ? new Shipping($shipping->name(), null, null, null, $shipping->options()) : null;
             }
         }
         $reference_id = 'default';

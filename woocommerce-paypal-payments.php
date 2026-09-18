@@ -4,8 +4,8 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version: 4.1.3-alpha20260915+pcp-6853-v3-free-trial-subscription-pay-pal-gateway-is-missing-on-block-checkout-and-pay-pal-button-is-missing-on-classic-checkout.78df2d0
- * SHA: 78df2d09e7e9e4ef1119afedb631a0db504d6b2d
+ * Version: 4.1.3-alpha20260915+pcp-6853-v3-free-trial-subscription-pay-pal-gateway-is-missing-on-block-checkout-and-pay-pal-button-is-missing-on-classic-checkout.4b03bc2
+ * SHA: 4b03bc24d0d2519e6eac9ad91e6b5cb16f09bda8
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
@@ -109,11 +109,6 @@ define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
             $installed_plugin_version = get_option('woocommerce-ppcp-version');
             if ($installed_plugin_version !== $current_plugin_version) {
                 update_option('woocommerce-ppcp-version', $current_plugin_version);
-                // Set once: fresh installs opt into the SDK v6 default, existing
-                // stores stay on v5. Guarded so it is never recomputed later.
-                if (\false === get_option('woocommerce-ppcp-sdk-v6-eligible', \false)) {
-                    update_option('woocommerce-ppcp-sdk-v6-eligible', $installed_plugin_version ? 'no' : 'yes');
-                }
                 /**
                  * The hook fired when the plugin is installed or updated.
                  */
