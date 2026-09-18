@@ -140,9 +140,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		SubscriptionHelper $subscription_helper,
 		bool $add_place_order_method,
 		bool $use_place_order,
-		array $all_funding_sources,
-		FreeTrialSubscriptionHelper $free_trial_helper,
-		WooCommercePaymentTokens $wc_payment_tokens
+		array $all_funding_sources
 	) {
 		$this->name                   = PayPalGateway::ID;
 		$this->asset_getter           = $asset_getter;
@@ -158,8 +156,6 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		$this->add_place_order_method = $add_place_order_method;
 		$this->use_place_order        = $use_place_order;
 		$this->all_funding_sources    = $all_funding_sources;
-		$this->free_trial_helper      = $free_trial_helper;
-		$this->wc_payment_tokens      = $wc_payment_tokens;
 	}
 
 	/**

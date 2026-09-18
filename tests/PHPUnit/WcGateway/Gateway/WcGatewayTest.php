@@ -169,7 +169,6 @@ class WcGatewayTest extends TestCase
 			$this->logger,
 			$this->apiShopCountry,
 			static fn ($id) => 'checkoutnow=' . $id,
-			'Pay via PayPal',
 			$this->paymentTokensEndpoint,
 			$this->wcPaymentTokens,
 			$this->assetGetter,
