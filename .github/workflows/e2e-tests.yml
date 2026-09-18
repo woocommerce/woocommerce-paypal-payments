@@ -104,7 +104,7 @@ jobs:
             SUFFIX=""
             [[ "$TEST_SUITE" != "all:parallel" ]] && SUFFIX=":${TEST_SUITE%:parallel}"
 
-            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1} / ${2}\",\"artifact_name\":\"playwright-artifact-${1}-${2}\",\"sdk_version\":\"${2}\"}"; }
+            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1} / ${2}\",\"artifact_name\":\"playwright-artifact-${1}-${2}\",\"sdk_version\":\"${2}\",\"slug\":\"${1}\"}"; }
 
             ITEMS=()
             for shard in "${SHARDS[@]}"; do
@@ -120,7 +120,7 @@ jobs:
 
             ITEMS=()
             for v in $(sdk_versions); do
-              ITEMS+=("{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME} / ${v}\",\"artifact_name\":\"playwright-artifact-${NAME}-${v}\",\"sdk_version\":\"${v}\"}")
+              ITEMS+=("{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME} / ${v}\",\"artifact_name\":\"playwright-artifact-${NAME}-${v}\",\"sdk_version\":\"${v}\",\"slug\":\"${NAME}\"}")
             done
             JOINED=$(IFS=,; echo "${ITEMS[*]}")
 
@@ -149,7 +149,11 @@ jobs:
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
       NGROK_ENABLED: ${{ contains(fromJson('["transaction-usa","transaction-mexico","transaction-germany","refund","vaulting","subscription"]'), matrix.slug) }}
       NGROK_WILDCARD_DOMAIN: e2e.paypal.syde.wpinfra.cloud
-      NGROK_SUBDOMAIN: ${{ matrix.slug }}-${{ github.run_id }}
+      # Deliberately stable (no run id): a constant hostname per shard+SDK means
+      # the next run's webhook URL matches the one already registered on the app,
+      # so the plugin's own-webhook check recognizes and replaces it instead of
+      # leaving an orphan behind on every run.
+      NGROK_SUBDOMAIN: ${{ matrix.slug }}-${{ matrix.sdk_version }}
       NGROK_HOST_FILE: tests/qa/resources/e2e-snippets/ngrok-host.txt
       PRE_SCRIPT: |
         # 0. Record which SDK version this matrix job tests. playwright.config.ts
