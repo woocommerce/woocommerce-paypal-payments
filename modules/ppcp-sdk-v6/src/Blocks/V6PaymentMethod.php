@@ -42,14 +42,13 @@ class V6PaymentMethod extends AbstractPaymentMethodType
     private $vault_eligibility;
     private string $vault_client_id;
     /**
-     * Cart-dependent state of the non-express "Place order" method:
-     * array{enabled: bool, text: string, description: string}.
-     * Null when that method is not offered.
+     * Whether the non-express "Place order" method is offered, which depends on
+     * the cart. Null when the method is not wired up at all.
      *
-     * @var callable():array|null
+     * @var callable():bool|null
      */
-    private $place_order_data;
-    public function __construct(SdkV6Manager $manager, AssetGetter $asset_getter, string $version, PayPalGateway $gateway, CreditCardGateway $card_gateway, ?VaultComponentData $vault_data, ?callable $vault_eligibility, string $vault_client_id, ?callable $place_order_data = null)
+    private $place_order_enabled;
+    public function __construct(SdkV6Manager $manager, AssetGetter $asset_getter, string $version, PayPalGateway $gateway, CreditCardGateway $card_gateway, ?VaultComponentData $vault_data, ?callable $vault_eligibility, string $vault_client_id, ?callable $place_order_enabled = null)
     {
         $this->manager = $manager;
         $this->asset_getter = $asset_getter;
@@ -59,7 +58,7 @@ class V6PaymentMethod extends AbstractPaymentMethodType
         $this->vault_data = $vault_data;
         $this->vault_eligibility = $vault_eligibility;
         $this->vault_client_id = $vault_client_id;
-        $this->place_order_data = $place_order_data;
+        $this->place_order_enabled = $place_order_enabled;
     }
     /**
      * @return void
@@ -114,8 +113,8 @@ class V6PaymentMethod extends AbstractPaymentMethodType
         $gateway_data = array('id' => PayPalGateway::ID, 'title' => $this->gateway->title, 'description' => $this->gateway->get_description(), 'icon' => array(array('id' => 'paypal', 'alt' => 'PayPal', 'src' => $this->gateway->icon)), 'supported_features' => array_values((array) $this->gateway->supports));
         $data = array_merge($this->manager->script_data(), $gateway_data);
         // The non-express row: a "Place order" button that redirects to PayPal.
-        if ($this->place_order_data) {
-            $data['place_order'] = ($this->place_order_data)();
+        if ($this->place_order_enabled) {
+            $data['place_order_enabled'] = (bool) ($this->place_order_enabled)();
         }
         // The card method registers under the credit-card gateway, so it must
         // advertise that gateway's own supports (independently vaulting-gated).
@@ -143,6 +142,15 @@ class V6PaymentMethod extends AbstractPaymentMethodType
                 $data['script_attributes'] = (object) apply_filters('woocommerce_paypal_payments_sdk_script_attributes', array());
             }
         }
-        return $data;
+        /**
+         * Filters the payment method data handed to the v6 block checkout.
+         *
+         * The place order button label and its description are WooCommerce's, so the
+         * plugin no longer sets them. Add `placeOrderButtonLabel` here to rename the
+         * button, or `placeOrderButtonDescription` to render text beneath it.
+         *
+         * @param array $data The payment method data.
+         */
+        return (array) apply_filters('woocommerce_paypal_payments_blocks_payment_method_data', $data);
     }
 }
