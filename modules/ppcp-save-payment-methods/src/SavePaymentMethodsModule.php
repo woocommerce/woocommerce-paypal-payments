@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\FreeTrialVaultReturnEndpoint;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -449,6 +450,36 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 
 						$endpoint->handle_request();
 					}
+				);
+
+				add_action(
+					'wc_ajax_' . FreeTrialVaultReturnEndpoint::ENDPOINT,
+					static function () use ( $c ) {
+						$endpoint = $c->get( 'save-payment-methods.endpoint.free-trial-vault-return' );
+						assert( $endpoint instanceof FreeTrialVaultReturnEndpoint );
+
+						$endpoint->handle_request();
+					}
+				);
+
+				// A $0 free-trial subscription paid with the native "Place order"
+				// button has no saved PayPal account yet; the gateway asks here for a
+				// vault-approval redirect so the buyer can approve saving their account
+				// at PayPal, instead of failing with "No saved PayPal account.".
+				add_filter(
+					'woocommerce_paypal_payments_free_trial_vault_redirect_url',
+					static function ( $url, WC_Order $wc_order ) use ( $c ): string {
+						if ( is_string( $url ) && '' !== $url ) {
+							return $url;
+						}
+
+						$redirect = $c->get( 'save-payment-methods.free-trial-vault-redirect' );
+						assert( $redirect instanceof FreeTrialVaultRedirect );
+
+						return $redirect->create_redirect_url( $wc_order );
+					},
+					10,
+					2
 				);
 
 				add_action(

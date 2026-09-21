@@ -360,11 +360,11 @@ describe( 'checkout-block', () => {
 					expected: true,
 				},
 				{
-					name: 'a free-trial subscription cart at a $0 live total is not allowed: it is vaulted through the express button instead',
+					name: 'a free-trial subscription cart at a $0 live total is allowed: the gateway completes it via a server-side vault-approval redirect',
 					hasSubscriptions: true,
 					totalPrice: '0',
 					cartNeedsVaulting: true,
-					expected: false,
+					expected: true,
 				},
 			] )(
 				'$name',
