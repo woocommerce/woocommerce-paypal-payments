@@ -2,7 +2,12 @@
  * Internal dependencies
  */
 import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
-import { annotateVisitor, test, waitForOrderStatus } from '../../../utils';
+import {
+	annotateVisitor,
+	test,
+	waitForOrderStatus,
+	waitForTransactionId,
+} from '../../../utils';
 
 export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant, orderStatus } = testOrder;
@@ -60,15 +65,17 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 					expectedStatus: orderStatus,
 					timeout: isAsyncCaptureGateway ? 2.5 * 60_000 : undefined,
 				} );
-				const transactionId =
-						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+				const transactionId = await waitForTransactionId(
+					wooCommerceApi,
+					orderId
+				);
 
 				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
 					transactionId,
 					testOrder,
 				);
 
-				if ( payPalPaymentDetails && payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders; undefined for PUI
+				if ( payPalPaymentDetails && payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders
 					await orderReceived.assertTotalEqualsPayPalTotal(
 						payPalPaymentDetails.amount,
 						testOrder.currency
