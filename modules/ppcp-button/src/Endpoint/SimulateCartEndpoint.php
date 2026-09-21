@@ -40,6 +40,9 @@ class SimulateCartEndpoint extends AbstractCartEndpoint
         if (!$products) {
             return;
         }
+        // Nothing here is meant to outlive the response, and persisting the
+        // session would discard a concurrent add-to-cart.
+        $this->prevent_session_persistence();
         $result = $this->cart_simulator->simulate($products);
         $total = $result['total'];
         $shipping_fee = $result['shipping_fee'];
