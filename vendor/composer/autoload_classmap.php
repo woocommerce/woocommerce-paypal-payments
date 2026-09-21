@@ -350,6 +350,8 @@ return array(
     'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Endpoint\\CreatePaymentToken' => $baseDir . '/modules/ppcp-save-payment-methods/src/Endpoint/CreatePaymentToken.php',
     'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Endpoint\\CreatePaymentTokenForGuest' => $baseDir . '/modules/ppcp-save-payment-methods/src/Endpoint/CreatePaymentTokenForGuest.php',
     'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Endpoint\\CreateSetupToken' => $baseDir . '/modules/ppcp-save-payment-methods/src/Endpoint/CreateSetupToken.php',
+    'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Endpoint\\FreeTrialVaultReturnEndpoint' => $baseDir . '/modules/ppcp-save-payment-methods/src/Endpoint/FreeTrialVaultReturnEndpoint.php',
+    'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\FreeTrialVaultRedirect' => $baseDir . '/modules/ppcp-save-payment-methods/src/FreeTrialVaultRedirect.php',
     'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Helper\\SavePaymentMethodsApplies' => $baseDir . '/modules/ppcp-save-payment-methods/src/Helper/SavePaymentMethodsApplies.php',
     'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\SavePaymentMethodsModule' => $baseDir . '/modules/ppcp-save-payment-methods/src/SavePaymentMethodsModule.php',
     'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Service\\PaymentMethodTokensChecker' => $baseDir . '/modules/ppcp-save-payment-methods/src/Service/PaymentMethodTokensChecker.php',
