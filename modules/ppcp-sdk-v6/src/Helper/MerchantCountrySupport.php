@@ -9,7 +9,8 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6\Helper;
 
 /**
- * Mexican merchants are served the v5 stack.
+ * No country is withheld: Mexico, the only entry this list ever carried, ships with
+ * the v6 rollout. The filter stays so a country can be withdrawn without a release.
  */
 class MerchantCountrySupport
 {
@@ -28,7 +29,7 @@ class MerchantCountrySupport
          *
          * @param string[] $countries Two-letter country codes.
          */
-        $countries = apply_filters('woocommerce_paypal_payments_sdk_v6_unsupported_countries', array('MX'));
+        $countries = apply_filters('woocommerce_paypal_payments_sdk_v6_unsupported_countries', array());
         return !in_array($this->merchant_country, (array) $countries, \true);
     }
 }
