@@ -272,11 +272,6 @@ export class PayPalApi {
 		shopOrder: ShopOrder,
 	): Promise< PayPalPaymentDetails > => {
 		const { merchant, payment } = shopOrder;
-		const fundingSource = payment.gateway.shortcut;
-		if ( fundingSource === 'pay_upon_invoice' ) {
-			// PUI is not captured via PayPal payments endpoints
-			return undefined;
-		}
 		const payPalPayment = await this.getPayment( resourceId, merchant, payment.isAuthorized );
 		return {
 			transactionId: resourceId,
