@@ -142,6 +142,33 @@ export class PayPalApi {
 	};
 
 	/**
+	 * Refunds a capture directly through PayPal, the way a merchant refunding
+	 * from the PayPal dashboard would - without WooCommerce being involved.
+	 *
+	 * The resulting PAYMENT.CAPTURE.REFUNDED webhook is then the only route by
+	 * which the shop can learn about the refund, which is what makes this
+	 * usable as a test of real webhook delivery.
+	 *
+	 * @param captureId            PayPal capture id to refund.
+	 * @param merchant             Credentials of the merchant that owns the capture.
+	 * @param amount               Partial amount to refund; omit to refund in full.
+	 * @param amount.currency_code ISO currency code of the partial amount.
+	 * @param amount.value         Decimal value of the partial amount.
+	 */
+	refundCapture = async (
+		captureId: string,
+		merchant: Pcp.Merchant,
+		amount?: { currency_code: string; value: string }
+	) => {
+		return await this.apiRequest(
+			'post',
+			`/payments/captures/${ captureId }/refund`,
+			merchant,
+			amount ? { amount } : {}
+		);
+	};
+
+	/**
 	 * Lists recent webhook events for the merchant's account
 	 * (GET /v1/notifications/webhooks-events). Temporary diagnostic for the
 	 * ngrok webhook-delivery investigation: confirms whether PayPal actually

@@ -95,6 +95,7 @@ jobs:
           WEBHOOK_SHARDS=(
             transaction-germany
             transaction-mexico
+            refund
           )
 
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'
