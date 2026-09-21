@@ -274,7 +274,15 @@ export class PayPalApi {
 		const { merchant, payment } = shopOrder;
 		const fundingSource = payment.gateway.shortcut;
 		if ( fundingSource === 'pay_upon_invoice' ) {
-			// PUI is not captured via PayPal payments endpoints
+			// PUI orders *are* captured, and the capture id does reach the
+			// WooCommerce order - but reading that capture back is refused:
+			// GET /v2/payments/captures/{id} answers 401 NOT_AUTHORIZED /
+			// PERMISSION_DENIED for the PUI merchant's credentials. Verified
+			// 2026-09-21 by removing this guard: all 8 Germany PUI tests then
+			// failed on that 401, with valid capture ids. Returning undefined
+			// here means callers skip assertTotalEqualsPayPalTotal for PUI;
+			// that is a known coverage gap, not an oversight. Re-check only if
+			// the merchant's REST app gains the missing permission.
 			return undefined;
 		}
 		const payPalPayment = await this.getPayment( resourceId, merchant, payment.isAuthorized );
