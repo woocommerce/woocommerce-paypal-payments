@@ -12,21 +12,21 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Filters\expectApplied;
 
 /**
- * Exercises the 'sdk-v6.blocks.place-order-data' service exactly as it is defined in
+ * Exercises the 'sdk-v6.blocks.place-order-enabled' service exactly as it is defined in
  * modules/ppcp-sdk-v6/services.php: the container closure is loaded from the real
  * production file and invoked against a stub container, rather than re-implemented
  * here, so a future edit to that file is what these tests actually protect.
  *
- * V6PaymentMethod exposes the resolved array as the "place_order" entry of its
+ * V6PaymentMethod exposes the resolved bool as the "place_order_enabled" entry of its
  * payment method data, deciding whether the v6 block checkout offers the
  * non-express PayPal row (the standard "Place order" button).
  */
-class PlaceOrderDataServiceTest extends TestCase
+class PlaceOrderEnabledServiceTest extends TestCase
 {
     private const FILTER = 'woocommerce_paypal_payments_blocks_add_place_order_method';
 
     /**
-     * Resolves the 'sdk-v6.blocks.place-order-data' callable from the real
+     * Resolves the 'sdk-v6.blocks.place-order-enabled' callable from the real
      * services.php, backed by a container serving the given config plus sane
      * defaults for everything the factory reads.
      */
@@ -39,8 +39,6 @@ class PlaceOrderDataServiceTest extends TestCase
             [
                 'settings.settings-provider' => $settings_provider,
                 'wc-subscriptions.helper' => $subscription_helper,
-                'wcgateway.place-order-button-text' => 'Place order',
-                'wcgateway.place-order-button-description' => 'Pay with PayPal.',
                 'button.client_id' => '',
             ],
             $config
@@ -54,7 +52,7 @@ class PlaceOrderDataServiceTest extends TestCase
 
         $services = require ROOT_DIR . '/modules/ppcp-sdk-v6/services.php';
 
-        $factory = $services['sdk-v6.blocks.place-order-data'];
+        $factory = $services['sdk-v6.blocks.place-order-enabled'];
 
         return $factory($container);
     }
@@ -77,35 +75,25 @@ class PlaceOrderDataServiceTest extends TestCase
 
     /**
      * GIVEN a non-subscription cart and no filter callback overriding the default
-     * WHEN the place-order data provider is resolved
-     * THEN it reports the row enabled, with the configured button text and description
+     * WHEN the place-order-enabled provider is resolved
+     * THEN it reports the row enabled
      */
-    public function testHappyPathOffersThePlaceOrderRowWithConfiguredCopy(): void
+    public function testHappyPathOffersThePlaceOrderRow(): void
     {
         expectApplied(self::FILTER)->once()->with(true)->andReturnFirstArg();
 
-        $place_order_data = $this->resolveService(
-            [
-                'wcgateway.place-order-button-text' => 'Pay via PayPal',
-                'wcgateway.place-order-button-description' => 'Redirects to PayPal to complete payment.',
-            ],
+        $place_order_enabled = $this->resolveService(
+            [],
             $this->settingsProviderThatCanVault(false),
             $this->subscriptionHelperWithCart(false)
         );
 
-        $this->assertSame(
-            [
-                'enabled' => true,
-                'text' => 'Pay via PayPal',
-                'description' => 'Redirects to PayPal to complete payment.',
-            ],
-            $place_order_data()
-        );
+        $this->assertTrue($place_order_enabled());
     }
 
     /**
      * GIVEN no callback has hooked the filter
-     * WHEN the place-order data provider is resolved
+     * WHEN the place-order-enabled provider is resolved
      * THEN the filter's own default (true) is what decides the outcome, so the row
      *      is enabled
      */
@@ -113,35 +101,35 @@ class PlaceOrderDataServiceTest extends TestCase
     {
         expectApplied(self::FILTER)->once()->with(true)->andReturnFirstArg();
 
-        $place_order_data = $this->resolveService(
+        $place_order_enabled = $this->resolveService(
             [],
             $this->settingsProviderThatCanVault(false),
             $this->subscriptionHelperWithCart(false)
         );
 
-        $this->assertTrue($place_order_data()['enabled']);
+        $this->assertTrue($place_order_enabled());
     }
 
     /**
      * GIVEN a callback that switches the filter off
-     * WHEN the place-order data provider is invoked
+     * WHEN the place-order-enabled provider is invoked
      * THEN the row is disabled
      */
     public function testFilterCallbackDisablesTheRow(): void
     {
         expectApplied(self::FILTER)->once()->with(true)->andReturn(false);
 
-        $place_order_data = $this->resolveService(
+        $place_order_enabled = $this->resolveService(
             [],
             $this->settingsProviderThatCanVault(false),
             $this->subscriptionHelperWithCart(false)
         );
 
-        $this->assertFalse($place_order_data()['enabled']);
+        $this->assertFalse($place_order_enabled());
     }
 
     /**
-     * GIVEN the place-order data provider was already resolved from the container
+     * GIVEN the place-order-enabled provider was already resolved from the container
      * WHEN a callback that switches the filter off is registered only afterwards,
      *      and the provider is then invoked
      * THEN the row is disabled, proving the filter is read inside the returned
@@ -149,7 +137,7 @@ class PlaceOrderDataServiceTest extends TestCase
      */
     public function testFilterCallbackRegisteredAfterResolutionIsStillHonoured(): void
     {
-        $place_order_data = $this->resolveService(
+        $place_order_enabled = $this->resolveService(
             [],
             $this->settingsProviderThatCanVault(false),
             $this->subscriptionHelperWithCart(false)
@@ -158,7 +146,7 @@ class PlaceOrderDataServiceTest extends TestCase
         // Registered only now, after the closure above already exists.
         expectApplied(self::FILTER)->once()->with(true)->andReturn(false);
 
-        $this->assertFalse($place_order_data()['enabled']);
+        $this->assertFalse($place_order_enabled());
     }
 
     /**
@@ -176,13 +164,13 @@ class PlaceOrderDataServiceTest extends TestCase
     ): void {
         expectApplied(self::FILTER)->once()->with(true)->andReturnFirstArg();
 
-        $place_order_data = $this->resolveService(
+        $place_order_enabled = $this->resolveService(
             ['button.client_id' => $client_id],
             $this->settingsProviderThatCanVault($save_paypal_and_venmo),
             $this->subscriptionHelperWithCart(true)
         );
 
-        $this->assertSame($expected_enabled, $place_order_data()['enabled']);
+        $this->assertSame($expected_enabled, $place_order_enabled());
     }
 
     public function vaulting_capability_provider(): array
@@ -198,7 +186,7 @@ class PlaceOrderDataServiceTest extends TestCase
     /**
      * GIVEN a cart without a subscription, and the merchant unable to vault (no
      *       "save PayPal and Venmo" setting, no client ID)
-     * WHEN the place-order data provider is resolved
+     * WHEN the place-order-enabled provider is resolved
      * THEN the row is still enabled, since the vaulting gate only applies to
      *      subscription carts
      */
@@ -206,48 +194,13 @@ class PlaceOrderDataServiceTest extends TestCase
     {
         expectApplied(self::FILTER)->once()->with(true)->andReturnFirstArg();
 
-        $place_order_data = $this->resolveService(
+        $place_order_enabled = $this->resolveService(
             ['button.client_id' => ''],
             $this->settingsProviderThatCanVault(false),
             $this->subscriptionHelperWithCart(false)
         );
 
-        $this->assertTrue($place_order_data()['enabled']);
-    }
-
-    /**
-     * GIVEN the place-order data provider was already resolved from the container
-     * WHEN the button text and description services answer differently on a second
-     *      call
-     * THEN each call returns the copy current at that moment, proving both are read
-     *      inside the closure rather than captured once at resolution time
-     */
-    public function testTextAndDescriptionAreResolvedPerCall(): void
-    {
-        expectApplied(self::FILTER)->twice()->with(true)->andReturnFirstArg();
-
-        $settings_provider = $this->settingsProviderThatCanVault(false);
-        $subscription_helper = $this->subscriptionHelperWithCart(false);
-
-        $container = Mockery::mock(ContainerInterface::class);
-        $container->shouldReceive('get')->with('settings.settings-provider')->andReturn($settings_provider);
-        $container->shouldReceive('get')->with('wc-subscriptions.helper')->andReturn($subscription_helper);
-        $container->shouldReceive('get')->with('button.client_id')->andReturn('');
-        $container->shouldReceive('get')->with('wcgateway.place-order-button-text')
-            ->andReturn('First text', 'Second text');
-        $container->shouldReceive('get')->with('wcgateway.place-order-button-description')
-            ->andReturn('First description', 'Second description');
-
-        $services = require ROOT_DIR . '/modules/ppcp-sdk-v6/services.php';
-        $place_order_data = $services['sdk-v6.blocks.place-order-data']($container);
-
-        $first = $place_order_data();
-        $second = $place_order_data();
-
-        $this->assertSame('First text', $first['text']);
-        $this->assertSame('First description', $first['description']);
-        $this->assertSame('Second text', $second['text']);
-        $this->assertSame('Second description', $second['description']);
+        $this->assertTrue($place_order_enabled());
     }
 
     /**
@@ -267,13 +220,13 @@ class PlaceOrderDataServiceTest extends TestCase
         $subscription_helper->shouldReceive('cart_contains_subscription')
             ->andReturn(false, true);
 
-        $place_order_data = $this->resolveService(
+        $place_order_enabled = $this->resolveService(
             ['button.client_id' => ''],
             $this->settingsProviderThatCanVault(false),
             $subscription_helper
         );
 
-        $this->assertTrue($place_order_data()['enabled']);
-        $this->assertFalse($place_order_data()['enabled']);
+        $this->assertTrue($place_order_enabled());
+        $this->assertFalse($place_order_enabled());
     }
 }

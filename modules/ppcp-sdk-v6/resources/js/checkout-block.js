@@ -170,12 +170,8 @@ if ( config && config.page_context && config.continuation ) {
 		edit: createElement( V6EditorPreview, {
 			fundingSource: FundingSources.PAYPAL,
 		} ),
-		// Set explicitly so the button never reads "Proceed to PayPal", which
-		// would tell the buyer they are heading back to PayPal.
-		placeOrderButtonLabel: __(
-			'Place order',
-			'woocommerce-paypal-payments'
-		),
+		// No placeOrderButtonLabel: nothing renames the button any more, so
+		// WooCommerce's own label stands.
 		canMakePayment: () => true,
 		supports: {
 			// v5's ppcp-gateway is unregistered here, so a dropped method
@@ -356,9 +352,6 @@ if ( config && config.page_context && config.continuation ) {
 // no approved order. Skipped in continuation mode, like the card fields.
 if ( config?.card_button?.block_method && ! config.continuation ) {
 	const cardButtonId = config.card_button.payment_method;
-	// Shared with the non-express PayPal row, so a merchant retitling the button
-	// moves both.
-	const placeOrder = config.place_order || {};
 
 	registerPaymentMethod( {
 		name: cardButtonId,
@@ -366,12 +359,16 @@ if ( config?.card_button?.block_method && ! config.continuation ) {
 		ariaLabel: config.card_button.title,
 		content: createElement( PayPalPlaceOrderContent, {
 			description: config.card_button.description,
-			placeOrderButtonDescription: placeOrder.description,
+			placeOrderButtonDescription: config.placeOrderButtonDescription,
 		} ),
 		edit: createElement( PayPalPlaceOrderContent, {
 			description: config.card_button.description,
 		} ),
-		placeOrderButtonLabel: placeOrder.text,
+		// Same belt-and-braces pair as the PayPal row: the registration property
+		// and the Checkout Actions filter both have to carry an override.
+		...( config.placeOrderButtonLabel
+			? { placeOrderButtonLabel: config.placeOrderButtonLabel }
+			: {} ),
 		canMakePayment: () => true,
 		supports: {
 			features: gatewayFeatures( config.card_button.supported_features ),
@@ -380,7 +377,7 @@ if ( config?.card_button?.block_method && ! config.continuation ) {
 		},
 	} );
 
-	registerPlaceOrderLabel( cardButtonId, placeOrder.text );
+	registerPlaceOrderLabel( cardButtonId, config.placeOrderButtonLabel );
 }
 
 /**
@@ -457,7 +454,7 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 const savedPayPalEligible =
 	Boolean( config?.vault_component?.is_eligible ) && ! config?.continuation;
 const placeOrderEnabled =
-	Boolean( config?.place_order?.enabled ) && ! config?.continuation;
+	Boolean( config?.place_order_enabled ) && ! config?.continuation;
 
 /**
  * Whether the regular PayPal row may be offered for the current cart.
@@ -548,13 +545,17 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 		rowProps = {
 			content: createElement( PayPalPlaceOrderContent, {
 				description: config.description,
-				placeOrderButtonDescription: config.place_order.description,
+				placeOrderButtonDescription: config.placeOrderButtonDescription,
 			} ),
-			placeOrderButtonLabel: config.place_order.text,
 			// Gone on a zero-total cart that needs no payment method, but kept
 			// on a subscription cart, which needs one even at $0.
 			canMakePayment: ( { cartTotals } = {} ) =>
 				regularRowAllowedForCart( cartTotals ),
+			// The label belongs to WooCommerce, so it is only set when a filter
+			// supplies an override.
+			...( config.placeOrderButtonLabel
+				? { placeOrderButtonLabel: config.placeOrderButtonLabel }
+				: {} ),
 		};
 	} else {
 		rowProps = {
@@ -588,8 +589,13 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 		},
 	} );
 
+	// Only when a filter supplies an override: the label is WooCommerce's
+	// otherwise. registerPlaceOrderLabel() ignores a missing one.
 	if ( placeOrderEnabled ) {
-		registerPlaceOrderLabel( PAYPAL_GATEWAY_ID, config.place_order.text );
+		registerPlaceOrderLabel(
+			PAYPAL_GATEWAY_ID,
+			config.placeOrderButtonLabel
+		);
 	}
 }
 

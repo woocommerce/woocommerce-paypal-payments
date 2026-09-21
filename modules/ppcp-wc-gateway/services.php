@@ -115,7 +115,6 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.shop.country' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
-			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'wc-payment-tokens.wc-payment-tokens' ),
 			$container->get( 'wcgateway.asset_getter' ),
@@ -240,8 +239,7 @@ return array(
 			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.factory.paypal-checkout-url' ),
-			$container->get( 'wcgateway.place-order-button-text' )
+			$container->get( 'api.factory.paypal-checkout-url' )
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
@@ -783,25 +781,6 @@ return array(
 			false
 		);
 	},
-	'wcgateway.place-order-button-text'                    => function ( ContainerInterface $container ): string {
-		/**
-		 * The text for the standard "Place order" button, when the "Place order" button mode is enabled.
-		 */
-		return apply_filters(
-			'woocommerce_paypal_payments_place_order_button_text',
-			__( 'Proceed to PayPal', 'woocommerce-paypal-payments' )
-		);
-	},
-	'wcgateway.place-order-button-description'             => function ( ContainerInterface $container ): string {
-		/**
-		 * The text for additional description, when the "Place order" button mode is enabled.
-		 */
-		return apply_filters(
-			'woocommerce_paypal_payments_place_order_button_description',
-			__( 'Clicking "Proceed to PayPal" will redirect you to PayPal to complete your purchase.', 'woocommerce-paypal-payments' )
-		);
-	},
-
 	'wcgateway.helper.vaulting-scope'                      => static function ( ContainerInterface $container ): bool {
 		try {
 			$token = $container->get( 'api.bearer' )->bearer();

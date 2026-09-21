@@ -102,10 +102,18 @@ return static function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-store-sync/module.php" )();
 	}
 
+	/**
+	 * Filters whether the SDK v6 stack loads.
+	 *
+	 * On unless something said no: the merchant country check in SdkV6Module, or a
+	 * store whose handover CompatModule::migrate_sdk_v6_default() withheld.
+	 *
+	 * @param bool $sdk_v6_enabled Whether to load the SDK v6 module.
+	 */
 	if ( apply_filters(
 		'woocommerce.feature-flags.woocommerce_paypal_payments.sdk_v6_enabled',
 		getenv( 'PCP_SDK_V6_ENABLED' ) === '1'
-			|| 'yes' === get_option( 'woocommerce-ppcp-sdk-v6-eligible' )
+			|| 'no' !== get_option( 'woocommerce-ppcp-sdk-v6-eligible' )
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-sdk-v6/module.php" )();
 	}
