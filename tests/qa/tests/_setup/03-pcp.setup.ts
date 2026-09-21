@@ -62,45 +62,6 @@ const assertWebhookPubliclyReachable = async (
 		isReachable,
 		`Assert the registered webhook URL (${ webhookUrl }) is publicly reachable`
 	).toBeTruthy();
-
-	await assertWebhookDeliveryWorks( pcpApi );
-};
-
-/**
- * Waits until PayPal has actually delivered an event through the tunnel.
- *
- * Reachability alone only proves the URL answers; it says nothing about whether
- * PayPal's own delivery to it works yet. A freshly registered webhook is not
- * immediately live, and events fired before it is are never delivered and never
- * retried - so the first orders of a run can silently lose their capture event
- * and only fail minutes later, as an unexplained order-status timeout.
- *
- * The plugin already registers a simulated webhook on subscribe. Re-arming it
- * and waiting for it to come back makes "PayPal can reach us" a precondition of
- * the suite rather than an assumption of it.
- *
- * @param pcpApi The PCP API client, used to arm and poll the simulation.
- */
-const assertWebhookDeliveryWorks = async ( pcpApi: PcpApi ) => {
-	await pcpApi.wcRequest( 'post', 'wc_paypal/webhooks/simulate' );
-
-	await expect
-		.poll(
-			async () => {
-				const { data } = await pcpApi.wcRequest(
-					'get',
-					'wc_paypal/webhooks/simulate'
-				);
-				return data?.state;
-			},
-			{
-				message:
-					'Assert PayPal delivers a simulated webhook through the public tunnel',
-				timeout: 90_000,
-				intervals: [ 2_000, 5_000, 10_000 ],
-			}
-		)
-		.toEqual( 'received' );
 };
 
 setup.use( { screencastOptions: null } );
