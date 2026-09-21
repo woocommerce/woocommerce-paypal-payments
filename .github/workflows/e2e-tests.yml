@@ -10,9 +10,11 @@ on:
       TEST_SUITE:
         description: 'Test suite'
         required: true
-        default: 'smoke:parallel'
+        # TEMPORARY: default to the webhook-dependent shards
+        default: 'shard:webhook'
         type: choice
         options:
+          - shard:webhook
           - all:parallel
           - smoke:parallel
           - critical:parallel
@@ -35,7 +37,7 @@ on:
       SDK_VERSION:
         description: 'PayPal JS SDK version to test'
         required: true
-        default: 'v5'
+        default: 'v6'
         type: choice
         options:
           - v6
@@ -89,6 +91,12 @@ jobs:
             transaction-international
           )
 
+          # TEMPORARY: the only shards whose tests genuinely wait on a webhook
+          WEBHOOK_SHARDS=(
+            transaction-germany
+            transaction-mexico
+          )
+
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'
           SDK_VERSION='${{ inputs.SDK_VERSION || 'both' }}'
 
@@ -100,7 +108,20 @@ jobs:
             fi
           }
 
-          if [[ "$TEST_SUITE" == *':parallel' ]]; then
+          if [[ "$TEST_SUITE" == 'shard:webhook' ]]; then
+            # TEMPORARY, see WEBHOOK_SHARDS above
+            entry() { echo "{\"script\":\"e2e:test:shard:${1}\",\"name_suffix\":\" / ${1} / ${2}\",\"artifact_name\":\"playwright-artifact-${1}-${2}\",\"sdk_version\":\"${2}\",\"slug\":\"${1}\"}"; }
+
+            ITEMS=()
+            for shard in "${WEBHOOK_SHARDS[@]}"; do
+              for v in $(sdk_versions); do
+                ITEMS+=("$(entry "$shard" "$v")")
+              done
+            done
+            JOINED=$(IFS=,; echo "${ITEMS[*]}")
+
+            echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
+          elif [[ "$TEST_SUITE" == *':parallel' ]]; then
             SUFFIX=""
             [[ "$TEST_SUITE" != "all:parallel" ]] && SUFFIX=":${TEST_SUITE%:parallel}"
 
