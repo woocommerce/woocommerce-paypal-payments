@@ -567,6 +567,8 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Endpoint\\CreatePaymentToken' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Endpoint/CreatePaymentToken.php',
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Endpoint\\CreatePaymentTokenForGuest' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Endpoint/CreatePaymentTokenForGuest.php',
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Endpoint\\CreateSetupToken' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Endpoint/CreateSetupToken.php',
+        'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Endpoint\\FreeTrialVaultReturnEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Endpoint/FreeTrialVaultReturnEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\FreeTrialVaultRedirect' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/FreeTrialVaultRedirect.php',
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Helper\\SavePaymentMethodsApplies' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Helper/SavePaymentMethodsApplies.php',
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\SavePaymentMethodsModule' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/SavePaymentMethodsModule.php',
         'WooCommerce\\PayPalCommerce\\SavePaymentMethods\\Service\\PaymentMethodTokensChecker' => __DIR__ . '/../..' . '/modules/ppcp-save-payment-methods/src/Service/PaymentMethodTokensChecker.php',
