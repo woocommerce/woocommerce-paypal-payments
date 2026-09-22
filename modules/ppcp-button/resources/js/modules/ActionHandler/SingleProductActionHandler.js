@@ -69,10 +69,29 @@ class SingleProductActionHandler {
 	 * and paid the order itself, which it does when Pay Now is enabled.
 	 * Otherwise the shopper confirms the payment on the checkout page.
 	 *
+	 * A failed response has no URL either, so it is told apart from that second
+	 * case rather than quietly sending the shopper to checkout as though the
+	 * subscription were waiting for them there.
+	 *
 	 * @param {Object} response - The approve endpoint response.
 	 * @return {string} The URL to navigate to.
+	 * @throws {Error} When the endpoint reported a failure.
 	 */
 	approvalRedirectUrl( response ) {
+		if ( ! response.success ) {
+			const message = response.data?.message;
+
+			this.errorHandler.clear();
+
+			if ( message ) {
+				this.errorHandler.message( message );
+			} else {
+				this.errorHandler.genericError();
+			}
+
+			throw Error( message );
+		}
+
 		return response.data?.order_received_url || this.config.redirect;
 	}
 
