@@ -19,8 +19,13 @@ describe( 'SingleProductActionHandler subscriptionsConfiguration()', () => {
 		...overrides,
 	} );
 
-	const buildHandler = ( config = baseConfig() ) => {
-		return new SingleProductActionHandler( config, null, formElement, {} );
+	const buildHandler = ( config = baseConfig(), errorHandler = {} ) => {
+		return new SingleProductActionHandler(
+			config,
+			null,
+			formElement,
+			errorHandler
+		);
 	};
 
 	const mockFetchResponses = ( changeCartResponse, approveResponse ) => {
@@ -147,6 +152,60 @@ describe( 'SingleProductActionHandler subscriptionsConfiguration()', () => {
 				);
 			}
 		);
+
+		const buildErrorHandler = () => ( {
+			clear: jest.fn(),
+			message: jest.fn(),
+			genericError: jest.fn(),
+		} );
+
+		test( 'throws and reports the endpoint message when the approve endpoint reports a failure', () => {
+			const errorHandler = buildErrorHandler();
+			const handler = buildHandler( baseConfig(), errorHandler );
+
+			expect( () =>
+				handler.approvalRedirectUrl( {
+					success: false,
+					data: { message: 'Subscription approval failed' },
+				} )
+			).toThrow( 'Subscription approval failed' );
+
+			expect( errorHandler.clear ).toHaveBeenCalled();
+			expect( errorHandler.message ).toHaveBeenCalledWith(
+				'Subscription approval failed'
+			);
+			expect( errorHandler.genericError ).not.toHaveBeenCalled();
+		} );
+
+		test( 'reports a generic error when a failed response carries no message', () => {
+			const errorHandler = buildErrorHandler();
+			const handler = buildHandler( baseConfig(), errorHandler );
+
+			expect( () =>
+				handler.approvalRedirectUrl( { success: false, data: {} } )
+			).toThrow();
+
+			expect( errorHandler.clear ).toHaveBeenCalled();
+			expect( errorHandler.genericError ).toHaveBeenCalled();
+			expect( errorHandler.message ).not.toHaveBeenCalled();
+		} );
+
+		test( 'does not return a redirect URL for a failed response', () => {
+			const errorHandler = buildErrorHandler();
+			const handler = buildHandler( baseConfig(), errorHandler );
+			let url;
+
+			try {
+				url = handler.approvalRedirectUrl( {
+					success: false,
+					data: { message: 'Subscription approval failed' },
+				} );
+			} catch ( error ) {
+				// The throw is what stops the redirect from happening.
+			}
+
+			expect( url ).toBeUndefined();
+		} );
 	} );
 
 	test( 'throws with the endpoint message when populating the cart fails, without calling the approval endpoint', async () => {
