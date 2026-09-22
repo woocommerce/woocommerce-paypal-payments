@@ -707,9 +707,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
      */
     private function shopper_is_paying_with_ppcp(): bool
     {
-        if (!function_exists('WC')) {
-            return \false;
-        }
         $session = WC()->session;
         if (!$session instanceof WC_Session) {
             return \false;
