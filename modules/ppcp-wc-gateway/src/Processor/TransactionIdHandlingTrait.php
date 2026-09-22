@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
@@ -90,7 +91,7 @@ trait TransactionIdHandlingTrait {
 		}
 
 		foreach ( $payments->authorizations() as $authorization ) {
-			if ( $authorization->status()->is( AuthorizationStatus::DENIED ) ) {
+			if ( $this->is_dead_authorization( $authorization ) ) {
 				continue;
 			}
 
@@ -114,5 +115,16 @@ trait TransactionIdHandlingTrait {
 	private function is_dead_capture( Capture $capture ): bool {
 		return $capture->status()->is( CaptureStatus::DECLINED )
 			|| $capture->status()->is( CaptureStatus::FAILED );
+	}
+
+	/**
+	 * Whether an authorization never took money and so is not this order's transaction.
+	 *
+	 * The counterpart to is_dead_capture(). Narrower than that one on purpose: VOIDED
+	 * and EXPIRED hold no money either, but listing them changes which id an order
+	 * stores, rather than only keeping a wrong one out.
+	 */
+	private function is_dead_authorization( Authorization $authorization ): bool {
+		return $authorization->status()->is( AuthorizationStatus::DENIED );
 	}
 }
