@@ -31,6 +31,7 @@ import { initCardFields } from './cardFields/renderer';
 import { initCardButton } from './cardButton/renderCardButton';
 import { hasJQuery } from './utils/api';
 import { watchViewedTotal } from './utils/viewedTotal';
+import { watchProductAmount } from './messages/productAmount';
 import { initProductButtonGate } from './utils/productButtonGate';
 import { setErrorLabels } from './utils/errorHandler';
 import { isFreeTrialCart } from './utils/freeTrial';
@@ -433,15 +434,28 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 
 	/**
 	 * A product page prices the product on display, not the cart, so its
-	 * message tracks the product form — quantity and variation — through
-	 * the same watcher Apple Pay reads.
+	 * message tracks the product form — quantity and variation — which it
+	 * reads from the page.
+	 *
+	 * Apple Pay prices the same product through the cart-simulation endpoint,
+	 * because a sheet total has to match what is charged. A message does not,
+	 * so it is not worth a request per quantity change; a store that wants the
+	 * simulated figure here can filter it back on.
 	 */
 	function trackProductTotal() {
 		if ( 'product' !== config.page_context ) {
 			return;
 		}
 
-		watchViewedTotal( config, 'product' ).subscribe( updateMessagesAmount );
+		if ( config.messages?.use_cart_simulation ) {
+			watchViewedTotal( config, 'product' ).subscribe(
+				updateMessagesAmount
+			);
+
+			return;
+		}
+
+		watchProductAmount( config, updateMessagesAmount );
 	}
 
 	function initialRender() {
