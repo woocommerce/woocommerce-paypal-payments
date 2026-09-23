@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -190,6 +191,14 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 			20
 		);
 
+		// Auto-insert the messaging blocks into block-theme (FSE) cart and checkout
+		// templates via the Block Hooks API. No-op on classic themes; on block themes
+		// it covers what the classic `woocommerce_*` hooks and the imperative editor
+		// inserter cannot reach (template parts and the Site Editor canvas).
+		$hooked_blocks_registrar = $c->get( 'paylater-wc-blocks.hooked-blocks-registrar' );
+		assert( $hooked_blocks_registrar instanceof HookedBlocksRegistrar );
+		$hooked_blocks_registrar->register();
+
 		/**
 		 * Registers slugs as block categories with WordPress.
 		 */
@@ -249,7 +258,10 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		// This is a fallback for the default Cart block that haven't been saved with the inserted Pay Later messaging block.
+		// Fallback for cart placements the Block Hooks API does not reach - a classic
+		// theme, or a Cart block on an ordinary page rather than an FSE template. The
+		// strpos guard below also prevents a double insertion: on an FSE template Block
+		// Hooks has already added the block, so its markup is present here and we skip.
 		add_filter(
 			'render_block_woocommerce/cart-totals-block',
 			function ( string $block_content ) use ( $c ) {
@@ -269,7 +281,8 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 			1
 		);
 
-		// This is a fallback for the default Checkout block that haven't been saved with the inserted Checkout - Pay Later messaging block.
+		// Fallback for checkout placements the Block Hooks API does not reach, and the
+		// same strpos guard prevents a double insertion on FSE checkout templates.
 		add_filter(
 			'render_block_woocommerce/checkout-totals-block',
 			function ( string $block_content ) use ( $c ) {
@@ -293,6 +306,14 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 			add_action(
 				'enqueue_block_editor_assets',
 				function () use ( $c ): void {
+					// In the Site Editor the Block Hooks API inserts the messaging
+					// block into the cart/checkout templates, so the imperative
+					// inserter would place a second copy. Let Block Hooks own that
+					// context; keep the inserter for the post/page editor.
+					if ( Context::is_site_editor() ) {
+						return;
+					}
+
 					$handle = 'ppcp-checkout-paylater-block-editor-inserter';
 
 					$asset_getter = $c->get( 'paylater-wc-blocks.asset_getter' );

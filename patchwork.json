@@ -2,6 +2,7 @@
     "redefinable-internals": [
         "json_decode",
         "filter_input",
+        "getenv",
         "gmdate",
         "strtotime",
         "time"

@@ -19,14 +19,25 @@ jest.mock( '@ppcp-paylater-block/hooks/script-params', () => ( {
 	useScriptParams: jest.fn(),
 } ) );
 
+jest.mock(
+	'@ppcp-paylater-block/hooks/use-preview-controller',
+	() => ( {
+		usePreviewController: jest.fn(),
+	} ),
+	{ virtual: true }
+);
+
 jest.mock( '@paypal/react-paypal-js', () => ( {
-	PayPalScriptProvider: ( { children } ) => children,
+	PayPalScriptProvider: jest.fn( ( { children } ) => children ),
 	PayPalMessages: jest.fn( () => null ),
 } ) );
 
 const {
 	useScriptParams,
 } = require( '@ppcp-paylater-block/hooks/script-params' );
+const {
+	usePreviewController,
+} = require( '@ppcp-paylater-block/hooks/use-preview-controller' );
 
 const defaultConfig = {
 	payLaterDisabledByVaulting: false,
@@ -60,6 +71,10 @@ beforeEach( () => {
 	};
 	jest.clearAllMocks();
 	jest.clearAllTimers();
+	usePreviewController.mockReturnValue( {
+		containerRef: { current: null },
+		renderKey: 0,
+	} );
 } );
 
 test( 'shows spinner while script params are loading', () => {
@@ -182,4 +197,47 @@ test( 'passes through a flex preview style when the v6 SDK is inactive', () => {
 	render( <Edit { ...defaultProps } /> );
 
 	expect( PayPalMessages.mock.calls[ 0 ][ 0 ].style.layout ).toBe( 'flex' );
+} );
+
+describe( 'preview controller integration', () => {
+	test( 'attaches the container ref returned by usePreviewController to the overlay child', () => {
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
+		const containerRef = { current: null };
+		usePreviewController.mockReturnValue( { containerRef, renderKey: 0 } );
+
+		render( <Edit { ...defaultProps } /> );
+
+		expect( containerRef.current ).toHaveClass( 'ppcp-overlay-child' );
+	} );
+
+	test( 'remounts the PayPalScriptProvider subtree when the render key changes', () => {
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
+		const { PayPalScriptProvider } = require( '@paypal/react-paypal-js' );
+		let mountCount = 0;
+		PayPalScriptProvider.mockImplementation( ( { children } ) => {
+			useEffect( () => {
+				mountCount++;
+			}, [] );
+			return children;
+		} );
+		usePreviewController.mockReturnValue( {
+			containerRef: { current: null },
+			renderKey: 1,
+		} );
+
+		const { rerender } = render( <Edit { ...defaultProps } /> );
+		expect( mountCount ).toBe( 1 );
+
+		usePreviewController.mockReturnValue( {
+			containerRef: { current: null },
+			renderKey: 2,
+		} );
+		rerender( <Edit { ...defaultProps } /> );
+
+		expect( mountCount ).toBe( 2 );
+	} );
 } );

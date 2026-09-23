@@ -5,6 +5,7 @@ import { PanelBody } from '@wordpress/components';
 import { PayPalScriptProvider, PayPalMessages } from '@paypal/react-paypal-js';
 import { useScriptParams } from '@ppcp-paylater-block/hooks/script-params';
 import { usePreviewTimeout } from '@ppcp-paylater-block/hooks/use-preview-timeout';
+import { usePreviewController } from '@ppcp-paylater-block/hooks/use-preview-controller';
 import { PreviewPlaceholder } from '@ppcp-paylater-block/components/preview-placeholder';
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
@@ -12,6 +13,10 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 
 	const [ loaded, setLoaded ] = useState( false );
 	const timedOut = usePreviewTimeout( loaded );
+	const { containerRef, renderKey } = usePreviewController(
+		loaded,
+		setLoaded
+	);
 
 	let amount;
 	const postContent = String(
@@ -181,8 +186,11 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...props }>
-				<div className="ppcp-overlay-child">
-					<PayPalScriptProvider options={ urlParams }>
+				<div className="ppcp-overlay-child" ref={ containerRef }>
+					<PayPalScriptProvider
+						key={ renderKey }
+						options={ urlParams }
+					>
 						<PayPalMessages
 							style={ previewStyle }
 							onRender={ () => setLoaded( true ) }
@@ -193,9 +201,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				<div className="ppcp-overlay-child ppcp-unclicable-overlay">
 					{ ' ' }
 					{ /* make the message not clickable */ }
-					{ ! loaded && (
-						<PreviewPlaceholder timedOut={ timedOut } />
-					) }
+					{ ! loaded && <PreviewPlaceholder timedOut={ timedOut } /> }
 				</div>
 			</div>
 		</>

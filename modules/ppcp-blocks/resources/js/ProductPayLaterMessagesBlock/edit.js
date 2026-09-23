@@ -18,80 +18,69 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		setLoaded
 	);
 
-	let amount;
-	const postContent = String(
-		wp.data.select( 'core/editor' )?.getEditedPostContent()
-	);
-	if (
-		postContent.includes( 'woocommerce/checkout' ) ||
-		postContent.includes( 'woocommerce/cart' )
-	) {
-		amount = 50.0;
-	}
-
-	const checkoutConfig = PcpCheckoutPayLaterBlock.config.checkout;
+	const productConfig = PcpProductPayLaterBlock.config.product;
 
 	// v6 renders this as text regardless of settings, so the preview follows.
-	const layout = PcpCheckoutPayLaterBlock.isSdkV6Active
+	const layout = PcpProductPayLaterBlock.isSdkV6Active
 		? 'text'
-		: checkoutConfig.layout;
+		: productConfig.layout;
 
 	let previewStyle = {};
 	if ( layout === 'flex' ) {
 		previewStyle = {
 			layout,
-			color: checkoutConfig.color,
-			ratio: checkoutConfig.ratio,
+			color: productConfig.color,
+			ratio: productConfig.ratio,
 		};
 	} else {
 		previewStyle = {
 			layout,
 			logo: {
-				position: checkoutConfig[ 'logo-position' ],
-				type: checkoutConfig[ 'logo-type' ],
+				position: productConfig[ 'logo-position' ],
+				type: productConfig[ 'logo-type' ],
 			},
 			text: {
-				color: checkoutConfig[ 'text-color' ],
-				size: checkoutConfig[ 'text-size' ],
+				color: productConfig[ 'text-color' ],
+				size: productConfig[ 'text-size' ],
 			},
 		};
 	}
 
 	let classes = [ 'ppcp-paylater-block-preview', 'ppcp-overlay-parent' ];
 	if (
-		PcpCheckoutPayLaterBlock.payLaterDisabledByVaulting ||
-		! PcpCheckoutPayLaterBlock.placementEnabled
+		PcpProductPayLaterBlock.payLaterDisabledByVaulting ||
+		! PcpProductPayLaterBlock.placementEnabled
 	) {
 		classes = [
-			'ppcp-paylater-block-preview',
+			...classes,
 			'ppcp-paylater-unavailable',
 			'block-editor-warning',
 		];
 	}
-	const props = useBlockProps( { className: classes } );
+	const props = useBlockProps( { className: classes.join( ' ' ) } );
 
 	useEffect( () => {
 		if ( ! ppcpId ) {
-			setAttributes( { ppcpId: 'ppcp-' + clientId } );
+			setAttributes( { ppcpId: `ppcp-${ clientId }` } );
 		}
 	}, [ ppcpId, clientId ] );
 
-	if ( PcpCheckoutPayLaterBlock.payLaterDisabledByVaulting ) {
+	if ( PcpProductPayLaterBlock.payLaterDisabledByVaulting ) {
 		return (
 			<div { ...props }>
-				<div className={ 'block-editor-warning__contents' }>
-					<p className={ 'block-editor-warning__message' }>
+				<div className="block-editor-warning__contents">
+					<p className="block-editor-warning__message">
 						{ __(
-							'Checkout - Pay Later Messaging cannot be used while PayPal Vaulting is active. Disable PayPal Vaulting in the PayPal Payment settings to reactivate this block',
+							'Product - Pay Later Messaging cannot be used while PayPal Vaulting is active. Disable PayPal Vaulting in the PayPal Payment settings to reactivate this block',
 							'woocommerce-paypal-payments'
 						) }
 					</p>
-					<div className={ 'block-editor-warning__actions' }>
-						<span className={ 'block-editor-warning__action' }>
-							<a href={ PcpCheckoutPayLaterBlock.settingsUrl }>
+					<div className="block-editor-warning__actions">
+						<span className="block-editor-warning__action">
+							<a href={ PcpProductPayLaterBlock.settingsUrl }>
 								<button
-									type={ 'button' }
-									className={ 'components-button is-primary' }
+									type="button"
+									className="components-button is-primary"
 								>
 									{ __(
 										'PayPal Payments Settings',
@@ -106,26 +95,26 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		);
 	}
 
-	if ( ! PcpCheckoutPayLaterBlock.placementEnabled ) {
+	if ( ! PcpProductPayLaterBlock.placementEnabled ) {
 		return (
 			<div { ...props }>
-				<div className={ 'block-editor-warning__contents' }>
-					<p className={ 'block-editor-warning__message' }>
+				<div className="block-editor-warning__contents">
+					<p className="block-editor-warning__message">
 						{ __(
-							'Checkout - Pay Later Messaging cannot be used while the “Checkout” messaging placement is disabled. Enable the placement in the PayPal Payments Pay Later settings to reactivate this block.',
+							'Product - Pay Later Messaging cannot be used while the “Product” messaging placement is disabled. Enable the placement in the PayPal Payments Pay Later settings to reactivate this block.',
 							'woocommerce-paypal-payments'
 						) }
 					</p>
-					<div className={ 'block-editor-warning__actions' }>
-						<span className={ 'block-editor-warning__action' }>
+					<div className="block-editor-warning__actions">
+						<span className="block-editor-warning__action">
 							<a
 								href={
-									PcpCheckoutPayLaterBlock.payLaterSettingsUrl
+									PcpProductPayLaterBlock.payLaterSettingsUrl
 								}
 							>
 								<button
-									type={ 'button' }
-									className={ 'components-button is-primary' }
+									type="button"
+									className="components-button is-primary"
 								>
 									{ __(
 										'PayPal Payments Settings',
@@ -141,7 +130,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	}
 
 	const scriptParams = useScriptParams(
-		PcpCheckoutPayLaterBlock.ajax.cart_script_params
+		PcpProductPayLaterBlock.ajax.cart_script_params
 	);
 	if ( scriptParams === null ) {
 		return (
@@ -154,7 +143,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	const urlParams = {
 		...scriptParams.url_params,
 		components: 'messages',
-		dataNamespace: 'ppcp-block-editor-checkout-paylater-message',
+		dataNamespace: 'ppcp-block-editor-product-paylater-message',
 	};
 
 	return (
@@ -168,14 +157,14 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				>
 					<p>
 						{ __(
-							'Choose the layout and color of your messaging in the PayPal Payments Pay Later settings for the “Checkout” messaging placement.',
+							'Choose the layout and color of your messaging in the PayPal Payments Pay Later settings for the “Product” messaging placement.',
 							'woocommerce-paypal-payments'
 						) }
 					</p>
-					<a href={ PcpCheckoutPayLaterBlock.payLaterSettingsUrl }>
+					<a href={ PcpProductPayLaterBlock.payLaterSettingsUrl }>
 						<button
-							type={ 'button' }
-							className={ 'components-button is-primary' }
+							type="button"
+							className="components-button is-primary"
 						>
 							{ __(
 								'PayPal Payments Settings',
@@ -186,7 +175,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...props }>
-				<div className={ 'ppcp-overlay-child' } ref={ containerRef }>
+				<div className="ppcp-overlay-child" ref={ containerRef }>
 					<PayPalScriptProvider
 						key={ renderKey }
 						options={ urlParams }
@@ -194,11 +183,11 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 						<PayPalMessages
 							style={ previewStyle }
 							onRender={ () => setLoaded( true ) }
-							amount={ amount }
+							amount={ 50.0 }
 						/>
 					</PayPalScriptProvider>
 				</div>
-				<div className={ 'ppcp-overlay-child ppcp-unclicable-overlay' }>
+				<div className="ppcp-overlay-child ppcp-unclicable-overlay">
 					{ ' ' }
 					{ /* make the message not clickable */ }
 					{ ! loaded && <PreviewPlaceholder timedOut={ timedOut } /> }
