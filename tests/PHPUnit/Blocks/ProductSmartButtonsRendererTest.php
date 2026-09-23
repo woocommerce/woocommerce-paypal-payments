@@ -24,7 +24,6 @@ class ProductSmartButtonsRendererTest extends TestCase
         when('wp_kses_data')->returnArg();
         when('get_block_wrapper_attributes')->justReturn('');
         when('apply_filters')->returnArg(2);
-        when('getenv')->justReturn('1');
         when('do_action')->justReturn(null);
 
         $this->settings_status = Mockery::mock(SettingsStatus::class);

@@ -24,8 +24,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
  * page and auto-inserts them into the block-theme Single Product template, where the classic
  * `woocommerce_*` hooks the SDK renders through do not fire.
  *
- * This lives in the always-loaded blocks module rather than a module of its own; the
- * `is_feature_enabled()` flag gates it.
+ * This lives in the always-loaded blocks module rather than a module of its own; the blocks
+ * simply ship with the plugin and appear where the merchant's "Product" button / Pay Later
+ * messaging placement settings enable them.
  */
 class ProductBlocks {
 
@@ -47,32 +48,23 @@ class ProductBlocks {
 	private const NEUTRALIZED_RENDER_HOOK = 'ppcp_product_blocks_render_noop';
 
 	/**
-	 * Whether the Single Product blocks feature is enabled.
-	 */
-	public static function is_feature_enabled(): bool {
-		return apply_filters(
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-			'woocommerce.feature-flags.woocommerce_paypal_payments.product_blocks_enabled',
-			getenv( 'PCP_PRODUCT_BLOCKS' ) !== '0'
-		);
-	}
-
-	/**
-	 * Whether the product Pay Later messaging surface is enabled.
+	 * Whether the product Pay Later messaging surface is enabled, per the merchant's
+	 * "Product" Pay Later messaging placement setting.
 	 *
 	 * @param SettingsStatus $settings_status The settings status helper.
 	 */
 	public static function is_messaging_enabled( SettingsStatus $settings_status ): bool {
-		return self::is_feature_enabled() && $settings_status->is_pay_later_messaging_enabled_for_location( 'product' );
+		return $settings_status->is_pay_later_messaging_enabled_for_location( 'product' );
 	}
 
 	/**
-	 * Whether the product Smart Buttons surface is enabled.
+	 * Whether the product Smart Buttons surface is enabled, per the merchant's "Product"
+	 * button placement setting.
 	 *
 	 * @param SettingsStatus $settings_status The settings status helper.
 	 */
 	public static function is_buttons_enabled( SettingsStatus $settings_status ): bool {
-		return self::is_feature_enabled() && $settings_status->is_smart_button_enabled_for_location( 'product' );
+		return $settings_status->is_smart_button_enabled_for_location( 'product' );
 	}
 
 	/**
@@ -96,16 +88,11 @@ class ProductBlocks {
 	 * Wires the blocks: registration, auto-insertion and the block-theme dedup.
 	 *
 	 * Must be called on the `init` hook - block types register there, and resolving the
-	 * country/settings collaborators is only safe once WooCommerce has booted. No-op when the
-	 * feature flag is off.
+	 * country/settings collaborators is only safe once WooCommerce has booted.
 	 *
 	 * @param ContainerInterface $c The container.
 	 */
 	public static function register( ContainerInterface $c ): void {
-		if ( ! self::is_feature_enabled() ) {
-			return;
-		}
-
 		$messages_apply = $c->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 

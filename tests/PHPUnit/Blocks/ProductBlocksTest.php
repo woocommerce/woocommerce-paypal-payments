@@ -7,7 +7,6 @@ use Mockery;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use function Brain\Monkey\Functions\when;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\Blocks\ProductBlocks
@@ -15,44 +14,14 @@ use function Brain\Monkey\Functions\when;
 class ProductBlocksTest extends TestCase
 {
     /**
-     * GIVEN the feature flag filter is off and the env override is unset
-     * WHEN is_feature_enabled() is asked whether the product blocks feature should load
-     * THEN it defaults to enabled, since 'PCP_PRODUCT_BLOCKS' only disables when explicitly '0'
-     *
-     * @dataProvider feature_enabled_provider
-     */
-    public function testIsFeatureEnabledReflectsTheFeatureFlagAndEnvOverride(
-        $env_value,
-        bool $filter_result,
-        bool $expected
-    ): void {
-        when('getenv')->justReturn($env_value);
-        when('apply_filters')->justReturn($filter_result);
-
-        $this->assertSame($expected, ProductBlocks::is_feature_enabled());
-    }
-
-    public function feature_enabled_provider(): array
-    {
-        return array(
-            'env unset, filter reports enabled'      => array(false, true, true),
-            'env explicitly disables, filter agrees' => array('0', false, false),
-            'filter forces disabled regardless of env' => array(false, false, false),
-        );
-    }
-
-    /**
-     * GIVEN the feature is enabled
+     * GIVEN a settings status that reports the product Pay Later placement on or off
      * WHEN is_messaging_enabled() is asked whether the product Pay Later placement is on
-     * THEN it reflects the settings status answer for the 'product' location
+     * THEN it mirrors the settings status answer for the 'product' location
      *
      * @dataProvider messaging_enabled_provider
      */
     public function testIsMessagingEnabledReflectsSettingsStatusForProductLocation(bool $location_enabled): void
     {
-        when('getenv')->justReturn(false);
-        when('apply_filters')->justReturn(true);
-
         $settings_status = Mockery::mock(SettingsStatus::class);
         $settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
             ->with('product')
@@ -70,35 +39,14 @@ class ProductBlocksTest extends TestCase
     }
 
     /**
-     * GIVEN the feature is disabled (filter forces it off)
-     * WHEN is_messaging_enabled() is asked, even though the location itself is enabled
-     * THEN it reports disabled, since the feature flag gates every product surface
-     */
-    public function testIsMessagingEnabledIsFalseWhenFeatureIsNotEnabledEvenIfLocationIsEnabled(): void
-    {
-        when('getenv')->justReturn(false);
-        when('apply_filters')->justReturn(false);
-
-        $settings_status = Mockery::mock(SettingsStatus::class);
-        $settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
-            ->with('product')
-            ->andReturn(true);
-
-        $this->assertFalse(ProductBlocks::is_messaging_enabled($settings_status));
-    }
-
-    /**
-     * GIVEN the feature is enabled
+     * GIVEN a settings status that reports the product Smart Buttons placement on or off
      * WHEN is_buttons_enabled() is asked whether the product Smart Buttons placement is on
-     * THEN it reflects the settings status answer for the 'product' location
+     * THEN it mirrors the settings status answer for the 'product' location
      *
      * @dataProvider buttons_enabled_provider
      */
     public function testIsButtonsEnabledReflectsSettingsStatusForProductLocation(bool $location_enabled): void
     {
-        when('getenv')->justReturn(false);
-        when('apply_filters')->justReturn(true);
-
         $settings_status = Mockery::mock(SettingsStatus::class);
         $settings_status->shouldReceive('is_smart_button_enabled_for_location')
             ->with('product')
@@ -113,24 +61,6 @@ class ProductBlocksTest extends TestCase
             'location enabled'  => array(true),
             'location disabled' => array(false),
         );
-    }
-
-    /**
-     * GIVEN the feature is disabled (filter forces it off)
-     * WHEN is_buttons_enabled() is asked, even though the location itself is enabled
-     * THEN it reports disabled, since the feature flag gates every product surface
-     */
-    public function testIsButtonsEnabledIsFalseWhenFeatureIsNotEnabledEvenIfLocationIsEnabled(): void
-    {
-        when('getenv')->justReturn(false);
-        when('apply_filters')->justReturn(false);
-
-        $settings_status = Mockery::mock(SettingsStatus::class);
-        $settings_status->shouldReceive('is_smart_button_enabled_for_location')
-            ->with('product')
-            ->andReturn(true);
-
-        $this->assertFalse(ProductBlocks::is_buttons_enabled($settings_status));
     }
 
     /**
