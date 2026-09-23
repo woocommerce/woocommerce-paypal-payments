@@ -1136,7 +1136,7 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN Pay Later messaging is not enabled for the current page
      * WHEN the SDK bootstrap data is generated
-     * THEN the messages payload still carries all six documented keys, with enabled: false
+     * THEN the messages payload still carries all seven documented keys, with enabled: false
      *      rather than the key being omitted — so the bootstrap can branch on it directly
      */
     public function testScriptDataMessagesShapeIncludesAllKeysEvenWhenDisabled(): void
@@ -1152,10 +1152,55 @@ class SdkV6ManagerTest extends TestCase
         $data   = $testee->script_data();
 
         $this->assertSame(
-            ['enabled', 'wrapper', 'is_hidden', 'amount', 'page_type', 'style'],
+            ['enabled', 'wrapper', 'is_hidden', 'amount', 'page_type', 'style', 'use_cart_simulation'],
             array_keys($data['messages'])
         );
         $this->assertFalse($data['messages']['enabled']);
+    }
+
+    /**
+     * GIVEN no merchant filter overrides whether Pay Later messaging re-prices a product
+     *       page through the cart-simulation endpoint
+     * WHEN the SDK bootstrap data is generated
+     * THEN use_cart_simulation defaults to false, since the message now prices locally
+     *      from the product form
+     */
+    public function testScriptDataMessagesUseCartSimulationDefaultsToFalse(): void
+    {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_hidden')->with('checkout')->andReturn(false);
+        $this->message_style_mapper->shouldReceive('styles_for_location')->with('checkout')->andReturn([]);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertFalse($data['messages']['use_cart_simulation']);
+    }
+
+    /**
+     * GIVEN a merchant filter opts back into pricing Pay Later messaging through the
+     *       cart-simulation endpoint
+     * WHEN the SDK bootstrap data is generated
+     * THEN use_cart_simulation is true, and carries a real boolean rather than the
+     *      filter's raw truthy return value
+     */
+    public function testScriptDataMessagesUseCartSimulationTrueWhenFilterEnablesIt(): void
+    {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_hidden')->with('checkout')->andReturn(false);
+        $this->message_style_mapper->shouldReceive('styles_for_location')->with('checkout')->andReturn([]);
+
+        expectApplied('woocommerce_paypal_payments_sdk_v6_messages_use_cart_simulation')
+            ->once()
+            ->andReturn('yes');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertTrue($data['messages']['use_cart_simulation']);
+        $this->assertIsBool($data['messages']['use_cart_simulation']);
     }
 
     // -------------------------------------------------------------------------
