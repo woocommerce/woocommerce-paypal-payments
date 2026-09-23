@@ -1,12 +1,11 @@
 <?php
+
 /**
  * The registered ability slugs and the category they register under.
  *
  * @package WooCommerce\PayPalCommerce\Abilities
  */
-
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Abilities;
 
 /**
@@ -24,30 +23,20 @@ namespace WooCommerce\PayPalCommerce\Abilities;
  *
  * @internal
  */
-final class AbilityNames {
-
-	/**
-	 * Ability category slug shared by every ability this module registers.
-	 * `woocommerce` is owned/registered by Woo Core 10.9+; plugin ownership
-	 * lives in the ability namespace, not here.
-	 */
-	public const CATEGORY_SLUG = 'woocommerce';
-
-	public const GET_CONNECTION_STATUS = 'woocommerce-paypal-payments/get-connection-status';
-
-	public const GET_PAYMENT_METHODS = 'woocommerce-paypal-payments/get-payment-methods';
-
-	public const GET_ORDER_TRACKING = 'woocommerce-paypal-payments/get-order-tracking';
-
-	public const GET_PAYPAL_ORDER = 'woocommerce-paypal-payments/get-paypal-order';
-
-	/**
-	 * Every slug this module registers.
-	 */
-	public const ALL = array(
-		self::GET_CONNECTION_STATUS,
-		self::GET_PAYMENT_METHODS,
-		self::GET_ORDER_TRACKING,
-		self::GET_PAYPAL_ORDER,
-	);
+final class AbilityNames
+{
+    /**
+     * Ability category slug shared by every ability this module registers.
+     * `woocommerce` is owned/registered by Woo Core 10.9+; plugin ownership
+     * lives in the ability namespace, not here.
+     */
+    public const CATEGORY_SLUG = 'woocommerce';
+    public const GET_CONNECTION_STATUS = 'woocommerce-paypal-payments/get-connection-status';
+    public const GET_PAYMENT_METHODS = 'woocommerce-paypal-payments/get-payment-methods';
+    public const GET_ORDER_TRACKING = 'woocommerce-paypal-payments/get-order-tracking';
+    public const GET_PAYPAL_ORDER = 'woocommerce-paypal-payments/get-paypal-order';
+    /**
+     * Every slug this module registers.
+     */
+    public const ALL = array(self::GET_CONNECTION_STATUS, self::GET_PAYMENT_METHODS, self::GET_ORDER_TRACKING, self::GET_PAYPAL_ORDER);
 }
