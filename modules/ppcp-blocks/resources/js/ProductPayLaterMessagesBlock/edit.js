@@ -146,6 +146,18 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		dataNamespace: 'ppcp-block-editor-product-paylater-message',
 	};
 
+	// The preview reuses the button SDK params, which disable the `paylater` funding
+	// source when the Pay Later *button* is off for this location. Messaging is
+	// independent of the button, so keep paylater enabled here or nothing renders.
+	if ( urlParams[ 'disable-funding' ] ) {
+		urlParams[ 'disable-funding' ] = urlParams[ 'disable-funding' ]
+			.split( ',' )
+			.filter(
+				( source ) => source !== 'paylater' && source !== 'credit'
+			)
+			.join( ',' );
+	}
+
 	return (
 		<>
 			<InspectorControls>

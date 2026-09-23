@@ -18,16 +18,10 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		setLoaded
 	);
 
-	let amount;
-	const postContent = String(
-		wp.data.select( 'core/editor' )?.getEditedPostContent()
-	);
-	if (
-		postContent.includes( 'woocommerce/checkout' ) ||
-		postContent.includes( 'woocommerce/cart' )
-	) {
-		amount = 50.0;
-	}
+	// A fixed sample amount for the editor preview only; the front end uses the real
+	// cart total. Reading it from `core/editor` fails in the Site Editor (empty content),
+	// which left the preview without an amount and stuck on the timeout placeholder.
+	const amount = 50.0;
 
 	const checkoutConfig = PcpCheckoutPayLaterBlock.config.checkout;
 
@@ -156,6 +150,18 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		components: 'messages',
 		dataNamespace: 'ppcp-block-editor-checkout-paylater-message',
 	};
+
+	// The preview reuses the button SDK params, which disable the `paylater` funding
+	// source when the Pay Later *button* is off for this location. Messaging is
+	// independent of the button, so keep paylater enabled here or nothing renders.
+	if ( urlParams[ 'disable-funding' ] ) {
+		urlParams[ 'disable-funding' ] = urlParams[ 'disable-funding' ]
+			.split( ',' )
+			.filter(
+				( source ) => source !== 'paylater' && source !== 'credit'
+			)
+			.join( ',' );
+	}
 
 	return (
 		<>
