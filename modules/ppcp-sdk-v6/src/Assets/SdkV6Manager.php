@@ -905,6 +905,30 @@ class SdkV6Manager {
 	}
 
 	/**
+	 * Whether a product page's message re-prices through the cart-simulation endpoint.
+	 *
+	 * It no longer does by default. A message illustrates an instalment, and the
+	 * quantity and variation it has to follow are both on the page, so a request
+	 * per change bought accuracy nobody was reading. The endpoint still prices the
+	 * Apple Pay sheet, where the total has to match what is charged.
+	 *
+	 * A store that would rather have the simulated figure can turn this back on
+	 * while the local calculation settles.
+	 */
+	private function messages_use_cart_simulation(): bool {
+		/**
+		 * Filters whether Pay Later messaging prices a product page through the
+		 * cart-simulation endpoint rather than from the product form.
+		 *
+		 * @param bool $use_cart_simulation Whether to use the endpoint.
+		 */
+		return (bool) apply_filters(
+			'woocommerce_paypal_payments_sdk_v6_messages_use_cart_simulation',
+			false
+		);
+	}
+
+	/**
 	 * The amount the Pay Later message prices.
 	 *
 	 * Product-first, matching v5's message_values(): on a product page the
@@ -1342,12 +1366,13 @@ class SdkV6Manager {
 				'payment_method' => 'ppcp-axo-gateway',
 			),
 			'messages'            => array(
-				'enabled'   => $this->messages_enabled(),
-				'wrapper'   => '.ppcp-messages',
-				'is_hidden' => $this->messages_eligibility->is_hidden( $page_context ),
-				'amount'    => $this->messages_amount(),
-				'page_type' => $this->messages_page_type(),
-				'style'     => $this->message_style_mapper->styles_for_location( $messages_settings_location ),
+				'enabled'             => $this->messages_enabled(),
+				'wrapper'             => '.ppcp-messages',
+				'is_hidden'           => $this->messages_eligibility->is_hidden( $page_context ),
+				'amount'              => $this->messages_amount(),
+				'page_type'           => $this->messages_page_type(),
+				'style'               => $this->message_style_mapper->styles_for_location( $messages_settings_location ),
+				'use_cart_simulation' => $this->messages_use_cart_simulation(),
 			),
 		);
 
