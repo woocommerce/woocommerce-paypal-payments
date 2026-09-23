@@ -566,11 +566,45 @@ describe( 'V6CardFieldsComponent', () => {
 		} );
 	} );
 
-	test( 'submits the session with no options when the Blocks billing prop has no postcode', async () => {
+	test( 'submits the session with only the country when the Blocks billing prop has no postcode', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent( {
+			billing: { billingAddress: { country: 'US' } },
+		} );
+		await waitForSessionReady();
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1', {
+			billingAddress: { countryCode: 'US' },
+		} );
+	} );
+
+	test( 'submits the session with no options when the Blocks billing prop has no country', async () => {
 		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 
 		renderComponent( { billing: { billingAddress: {} } } );
+		await waitForSessionReady();
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
+	} );
+
+	test( 'submits the session with no options when the Blocks billing prop has a postcode but no country', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent( {
+			billing: { billingAddress: { postcode: '90001' } },
+		} );
 		await waitForSessionReady();
 
 		await act( async () => {
