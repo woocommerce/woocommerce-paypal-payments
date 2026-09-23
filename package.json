@@ -66,6 +66,7 @@
 
     "e2e:test:shard:transaction-international": "npx playwright test --project \"shard:transaction-international\"",
     "e2e:test:shard:transaction-international:smoke": "npx playwright test --project \"shard:transaction-international\" --grep \"@Smoke\"",
+    "e2e:test:shard:transaction-international:critical": "npx playwright test --project \"shard:transaction-international\" --grep \"@Critical\"",
 
     "e2e:test:stress": "npx playwright test --project \"stress\"",
 
