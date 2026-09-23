@@ -93,8 +93,11 @@ class ProductBlocks {
 	}
 
 	/**
-	 * Wires the blocks: registration, auto-insertion and the block-theme dedup. Safe to call
-	 * from the blocks module's run(); no-op when the feature flag is off.
+	 * Wires the blocks: registration, auto-insertion and the block-theme dedup.
+	 *
+	 * Must be called on the `init` hook - block types register there, and resolving the
+	 * country/settings collaborators is only safe once WooCommerce has booted. No-op when the
+	 * feature flag is off.
 	 *
 	 * @param ContainerInterface $c The container.
 	 */
@@ -108,15 +111,7 @@ class ProductBlocks {
 
 		// Pay Later is country-restricted; the buttons block does not depend on it, so only
 		// the messaging block is gated on the merchant's country.
-		$messaging_available = $messages_apply->for_country();
-
-		add_action(
-			'init',
-			static function () use ( $c, $messaging_available ): void {
-				self::register_blocks( $c, $messaging_available );
-			},
-			20
-		);
+		self::register_blocks( $c, $messages_apply->for_country() );
 
 		// Auto-insert the blocks into block-theme Single Product templates. No-op on classic themes.
 		$hooked_blocks_registrar = $c->get( 'blocks.product-hooked-blocks-registrar' );
@@ -128,7 +123,8 @@ class ProductBlocks {
 		// the classic path (which CompatModule remaps to woocommerce_after_add_to_cart_form).
 		// Enqueue is unaffected, so the SDK still loads and mounts into the block's wrapper.
 		// Priority 20 wins over CompatModule's remap at priority 5. Classic themes, Elementor
-		// and Divi are untouched.
+		// and Divi are untouched. Registered here (on init, before `wp`) so it is in place when
+		// the classic renderer reads the filter.
 		add_filter(
 			'woocommerce_paypal_payments_single_product_renderer_hook',
 			static function ( $hook ) {
