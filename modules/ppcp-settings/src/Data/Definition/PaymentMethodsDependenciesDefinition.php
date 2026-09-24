@@ -55,11 +55,7 @@ class PaymentMethodsDependenciesDefinition
      */
     public function get_setting_dependencies(): array
     {
-        $dependencies = array();
-        if (!$this->settings_provider->pay_later_with_vaulting_enabled()) {
-            $dependencies['pay-later'] = array('savePaypalAndVenmo' => \false);
-        }
-        return apply_filters('woocommerce_paypal_payments_setting_dependencies', $dependencies);
+        return apply_filters('woocommerce_paypal_payments_setting_dependencies', array());
     }
     /**
      * Get payment method value dependencies for a specific method

@@ -14,7 +14,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\PayLaterWCBlocks\HookedBlocksRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 /**
@@ -123,8 +122,6 @@ class ProductBlocks
         $asset_version = $c->get('ppcp.asset-version');
         $settings_status = $c->get('wcgateway.settings.status');
         assert($settings_status instanceof SettingsStatus);
-        $settings_provider = $c->get('settings.settings-provider');
-        assert($settings_provider instanceof SettingsProvider);
         $script_params_endpoint = \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT);
         $blocks_js_path = $c->get('ppcp.path-to-plugin-folder') . 'modules/ppcp-blocks/resources/js/';
         $settings_url = admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway');
@@ -150,7 +147,7 @@ class ProductBlocks
         assert($paylater_settings instanceof PayLaterMessagingSettings);
         $messaging_handle = 'ppcp-product-paylater-block';
         wp_register_script($messaging_handle, $asset_getter->get_asset_url('ProductPayLaterMessagesBlock/product-paylater-block.js'), array(), $asset_version, \true);
-        wp_localize_script($messaging_handle, 'PcpProductPayLaterBlock', array('ajax' => array('cart_script_params' => array('endpoint' => $script_params_endpoint)), 'config' => $config_factory->from_settings($paylater_settings), 'placementEnabled' => self::is_messaging_enabled($settings_status), 'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(), 'payLaterSettingsUrl' => $settings_url, 'settingsUrl' => $settings_url, 'isSdkV6Active' => $c->has('sdk-v6.owns-current-page')));
+        wp_localize_script($messaging_handle, 'PcpProductPayLaterBlock', array('ajax' => array('cart_script_params' => array('endpoint' => $script_params_endpoint)), 'config' => $config_factory->from_settings($paylater_settings), 'placementEnabled' => self::is_messaging_enabled($settings_status), 'payLaterSettingsUrl' => $settings_url, 'settingsUrl' => $settings_url, 'isSdkV6Active' => $c->has('sdk-v6.owns-current-page')));
         register_block_type($blocks_js_path . 'ProductPayLaterMessagesBlock', array('render_callback' => static function (array $attributes) use ($c): string {
             $renderer = $c->get('blocks.product-messaging-renderer');
             assert($renderer instanceof \WooCommerce\PayPalCommerce\Blocks\ProductPayLaterMessagesRenderer);
