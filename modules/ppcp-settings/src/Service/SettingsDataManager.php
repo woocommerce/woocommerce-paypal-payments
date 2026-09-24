@@ -151,6 +151,9 @@ class SettingsDataManager {
 		// Apply defaults for the "Settings" tab.
 		$this->apply_payment_settings( $flags );
 
+		// Assign defaults for the "Payment Methods" tab.
+		$this->apply_payment_methods( $flags );
+
 		// Assign defaults for the "Styling" tab.
 		$this->apply_location_styles( $flags );
 
@@ -265,6 +268,16 @@ class SettingsDataManager {
 		}
 
 		$this->payment_settings->save();
+	}
+
+	/**
+	 * Applies the payment method defaults that a reconnect must not reset.
+	 *
+	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
+	 */
+	protected function apply_payment_methods( ConfigurationFlagsDTO $flags ): void {
+		$this->payment_methods->toggle_method_state( 'pay-later', true );
+		$this->payment_methods->save();
 	}
 
 	/**
