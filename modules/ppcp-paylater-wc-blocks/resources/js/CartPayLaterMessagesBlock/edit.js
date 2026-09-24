@@ -53,10 +53,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	}
 
 	let classes = [ 'ppcp-paylater-block-preview', 'ppcp-overlay-parent' ];
-	if (
-		PcpCartPayLaterBlock.payLaterDisabledByVaulting ||
-		! PcpCartPayLaterBlock.placementEnabled
-	) {
+	if ( ! PcpCartPayLaterBlock.placementEnabled ) {
 		classes = [
 			...classes,
 			'ppcp-paylater-unavailable',
@@ -70,36 +67,6 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 			setAttributes( { ppcpId: `ppcp-${ clientId }` } );
 		}
 	}, [ ppcpId, clientId ] );
-
-	if ( PcpCartPayLaterBlock.payLaterDisabledByVaulting ) {
-		return (
-			<div { ...props }>
-				<div className="block-editor-warning__contents">
-					<p className="block-editor-warning__message">
-						{ __(
-							'Cart - Pay Later Messaging cannot be used while PayPal Vaulting is active. Disable PayPal Vaulting in the PayPal Payment settings to reactivate this block',
-							'woocommerce-paypal-payments'
-						) }
-					</p>
-					<div className="block-editor-warning__actions">
-						<span className="block-editor-warning__action">
-							<a href={ PcpCartPayLaterBlock.settingsUrl }>
-								<button
-									type="button"
-									className="components-button is-primary"
-								>
-									{ __(
-										'PayPal Payments Settings',
-										'woocommerce-paypal-payments'
-									) }
-								</button>
-							</a>
-						</span>
-					</div>
-				</div>
-			</div>
-		);
-	}
 
 	if ( ! PcpCartPayLaterBlock.placementEnabled ) {
 		return (
