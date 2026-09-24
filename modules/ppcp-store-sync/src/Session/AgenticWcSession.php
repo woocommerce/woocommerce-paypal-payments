@@ -15,6 +15,9 @@ use WC_Session_Handler;
 
 /**
  * Custom session handler for Agentic Commerce.
+ *
+ * Sessions are addressed by cart ID instead of by cookie, so every cookie-driven
+ * part of the parent handler stays inactive.
  */
 class AgenticWcSession extends WC_Session_Handler {
 
@@ -66,5 +69,12 @@ class AgenticWcSession extends WC_Session_Handler {
 	 */
 	public function init_session_cookie(): void {
 		// No-op - sessions are loaded on-demand.
+	}
+
+	/**
+	 * Never registers the global WC session hooks, which would save this cart
+	 * session on shutdown and write its ID into the shopper's session cookie.
+	 */
+	public function init(): void {
 	}
 }

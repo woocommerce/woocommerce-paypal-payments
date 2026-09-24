@@ -36,7 +36,6 @@ class AgenticSessionHandler {
 		}
 
 		$this->session = new AgenticWcSession();
-		$this->session->init();
 	}
 
 	/**
