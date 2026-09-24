@@ -142,6 +142,28 @@ export class PayPalApi {
 	};
 
 	/**
+	 * Refunds a capture directly through PayPal, as from the PayPal dashboard.
+	 *
+	 * @param captureId            PayPal capture id to refund.
+	 * @param merchant             Credentials of the merchant that owns the capture.
+	 * @param amount               Partial amount to refund; omit to refund in full.
+	 * @param amount.currency_code ISO currency code of the partial amount.
+	 * @param amount.value         Decimal value of the partial amount.
+	 */
+	refundCapture = async (
+		captureId: string,
+		merchant: Pcp.Merchant,
+		amount?: { currency_code: string; value: string }
+	) => {
+		return await this.apiRequest(
+			'post',
+			`/payments/captures/${ captureId }/refund`,
+			merchant,
+			amount ? { amount } : {}
+		);
+	};
+
+	/**
 	 * Gets PayPal order ID stored in WooCommerce meta_data
 	 *
 	 * @param wooCommerceOrderJson

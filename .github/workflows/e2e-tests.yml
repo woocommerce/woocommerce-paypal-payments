@@ -147,12 +147,8 @@ jobs:
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
-      # Only the shards whose tests wait on a PayPal webhook get a tunnel. PUI
-      # (Germany) and OXXO (Mexico) capture asynchronously, so their orders reach
-      # the expected status only once PayPal delivers the capture event. Every
-      # other gateway captures during checkout, and subscription renewals are
-      # charged directly, so those shards need no public URL.
-      NGROK_ENABLED: ${{ contains(fromJson('["transaction-germany","transaction-mexico"]'), matrix.slug) }}
+      # Only shards whose tests wait on a PayPal webhook: PUI/OXXO captures and the refund from PayPal
+      NGROK_ENABLED: ${{ contains(fromJson('["transaction-germany","transaction-mexico","refund"]'), matrix.slug) }}
       NGROK_WILDCARD_DOMAIN: e2e.paypal.syde.wpinfra.cloud
       # Stable per shard and SDK version, deliberately without the run id: a
       # constant hostname means the next run's webhook URL matches the one already
