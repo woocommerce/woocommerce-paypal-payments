@@ -49,30 +49,35 @@ class SessionOrderReloader
                 return;
             }
         }
-        $now = time();
-        if ($this->reloaded_recently($order->id(), $now)) {
+        $order_id = $order->id();
+        if ($this->reloaded_recently($order_id)) {
             return;
         }
-        $this->reloaded = \true;
-        WC()->session->set(self::LAST_RELOAD_SESSION_KEY, array('order_id' => $order->id(), 'time' => $now));
+        $this->mark_as_reloaded($order_id);
         try {
-            $session_handler->replace_order($this->order_endpoint->order($order->id()));
+            $session_handler->replace_order($this->order_endpoint->order($order_id));
         } catch (Throwable $exception) {
             if ($this->is_not_found($exception)) {
-                $this->logger->info(sprintf('PayPal order %s no longer exists, removing it from the session.', $order->id()));
+                $this->logger->info(sprintf('PayPal order %s no longer exists, removing it from the session.', $order_id));
                 $session_handler->forget_order();
                 return;
             }
             $this->logger->warning('Failed to reload PayPal order in the session: ' . $exception->getMessage());
         }
     }
-    private function reloaded_recently(string $order_id, int $now): bool
+    private function reloaded_recently(string $order_id): bool
     {
         $last_reload = WC()->session->get(self::LAST_RELOAD_SESSION_KEY);
         if (!is_array($last_reload) || ($last_reload['order_id'] ?? '') !== $order_id) {
             return \false;
         }
-        return $now - (int) ($last_reload['time'] ?? 0) < self::RELOAD_INTERVAL;
+        $last_reload_age = time() - (int) ($last_reload['time'] ?? 0);
+        return $last_reload_age < self::RELOAD_INTERVAL;
+    }
+    private function mark_as_reloaded(string $order_id): void
+    {
+        $this->reloaded = \true;
+        WC()->session->set(self::LAST_RELOAD_SESSION_KEY, array('order_id' => $order_id, 'time' => time()));
     }
     /**
      * The order endpoint also raises code 404 for an empty response body, which
