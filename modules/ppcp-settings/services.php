@@ -244,7 +244,7 @@ return array(
         return new DataSanitizer();
     },
     'settings.service.data-manager' => static function (ContainerInterface $container): SettingsDataManager {
-        return new SettingsDataManager($container->get('settings.data.definition.methods'), $container->get('settings.data.onboarding'), $container->get('settings.data.general'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.payment'), $container->get('settings.data.paylater-messaging'), $container->get('settings.settings-provider'), $container->get('settings.data.todos'));
+        return new SettingsDataManager($container->get('settings.data.definition.methods'), $container->get('settings.data.onboarding'), $container->get('settings.data.general'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.payment'), $container->get('settings.data.paylater-messaging'), $container->get('settings.data.todos'));
     },
     'settings.service.agentic-beta-eligibility' => static function (ContainerInterface $container): AgenticBetaBannerEligibility {
         return new AgenticBetaBannerEligibility($container->get('settings.data.general'), $container->get('wcgateway.store-country'));
