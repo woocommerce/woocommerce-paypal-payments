@@ -14,6 +14,7 @@ use WC_Cart;
 use WC_Customer;
 use WC_Data_Exception;
 use WC_Order;
+use WC_Order_Item_Fee;
 use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
 use WC_Product;
@@ -92,8 +93,13 @@ class WooCommerceOrderCreator
             $this->configure_payment_source($wc_order);
             $this->configure_customer($wc_order, $cart_data);
             $this->configure_line_items($wc_order, $cart_data, $payer, $shipping);
+            $this->configure_fees($wc_order, $cart_data);
             $this->configure_addresses($wc_order, $payer, $shipping, $cart_data->needs_shipping());
             $this->configure_coupons($wc_order, $cart_data->coupons());
+            // Mirror WC_Checkout::create_order() so the order carries the cart hash. Downstream
+            // gates (e.g. the PayPal subscription replay guard) compare this against the hash
+            // captured at approval time; an unset hash makes a legitimate express purchase fail.
+            $wc_order->set_cart_hash($cart_data->cart_hash());
             $wc_order->calculate_totals();
             $wc_order->save();
         } catch (Exception $exception) {
@@ -181,6 +187,40 @@ class WooCommerceOrderCreator
         }
     }
     /**
+     * Copies the cart fees onto the order, mirroring WC_Checkout::create_order_fee_lines().
+     *
+     * Without this the order is built from line items, shipping and coupons alone, so a
+     * cart fee is dropped and the order total no longer matches the amount the buyer
+     * approved: it is charged short by a surcharge, or over by a negative fee.
+     */
+    protected function configure_fees(WC_Order $wc_order, CartData $cart_data): void
+    {
+        foreach ($cart_data->fees() as $fee_key => $fee) {
+            $taxable = (bool) ($fee['taxable'] ?? \false);
+            $item = new WC_Order_Item_Fee();
+            $item->set_name((string) ($fee['name'] ?? ''));
+            $item->set_amount((string) ($fee['amount'] ?? 0));
+            $item->set_total((string) ($fee['total'] ?? 0));
+            /**
+             * The totals are recalculated once the order is assembled, so a fee the cart
+             * left untaxed has to say so here; the item defaults to taxable otherwise.
+             */
+            $item->set_tax_status($taxable ? 'taxable' : 'none');
+            $item->set_tax_class($taxable ? (string) ($fee['tax_class'] ?? '') : '');
+            /**
+             * Fires the standard WooCommerce fee item action so third-party plugins can
+             * augment the item. The fee is passed as an object, as WooCommerce passes it.
+             *
+             * @param WC_Order_Item_Fee $item     The order fee item.
+             * @param string|int        $fee_key  The fee key.
+             * @param object            $fee      The cart fee.
+             * @param WC_Order          $wc_order The order being built.
+             */
+            do_action('woocommerce_checkout_create_order_fee_item', $item, $fee_key, (object) $fee, $wc_order);
+            $wc_order->add_item($item);
+        }
+    }
+    /**
      * Configures the shipping & billing addresses for WC order from given payer.
      *
      * @throws WC_Data_Exception|RuntimeException When failing to configure shipping.
@@ -207,6 +247,15 @@ class WooCommerceOrderCreator
             }
             $email = $wc_email ?: $payer->email_address();
             $billing_address = array('email' => $email ?: '', 'first_name' => $payer_name ? $payer_name->given_name() : '', 'last_name' => $payer_name ? $payer_name->surname() : '', 'address_1' => $address ? $address->address_line_1() : '', 'address_2' => $address ? $address->address_line_2() : '', 'city' => $address ? $address->admin_area_2() : '', 'state' => $address ? $address->admin_area_1() : '', 'postcode' => $address ? $address->postal_code() : '', 'country' => $address ? $address->country_code() : '', 'phone' => $payer_phone ? $payer_phone->phone()->national_number() : '');
+        }
+        // Fall back to the logged-in customer's saved billing address when PayPal returned no
+        // payer address (common with shipping disabled / NO_SHIPPING, where the payer carries
+        // only an email). Without this the order and any subscription are left with an empty
+        // billing address even though the customer has one saved. Only fires when the payer
+        // billing address block is empty, so a valid PayPal address is never overwritten.
+        $has_billing_address = $billing_address && (!empty($billing_address['address_1']) || !empty($billing_address['country']));
+        if (!$has_billing_address && $wc_customer instanceof WC_Customer && $wc_customer->get_billing_address_1()) {
+            $billing_address = array('email' => $billing_address['email'] ?? '' ?: ($wc_customer->get_billing_email() ?: ''), 'first_name' => $wc_customer->get_billing_first_name(), 'last_name' => $wc_customer->get_billing_last_name(), 'address_1' => $wc_customer->get_billing_address_1(), 'address_2' => $wc_customer->get_billing_address_2(), 'city' => $wc_customer->get_billing_city(), 'state' => $wc_customer->get_billing_state(), 'postcode' => $wc_customer->get_billing_postcode(), 'country' => $wc_customer->get_billing_country(), 'phone' => $wc_customer->get_billing_phone());
         }
         if ($shipping) {
             $address = $shipping->address();

@@ -653,7 +653,11 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
      */
     private function register_block_express_payment_method_handler(ContainerInterface $c): void
     {
-        add_action('woocommerce_rest_checkout_process_payment_with_context', function ($context) use ($c): void {
+        // Request-scoped guard for the save listener below: the ID of the WC order this request
+        // routed through PayPal, zero when no such switch happened. Documented in
+        // tests/integration/PHPUnit/WcGateway/BlockExpressPaymentMethodHandlerTest.php.
+        $marked_order_id = 0;
+        add_action('woocommerce_rest_checkout_process_payment_with_context', function ($context) use ($c, &$marked_order_id): void {
             $payment_data = (array) ($context->payment_data ?? array());
             if (empty($payment_data['paypal_order_id'])) {
                 return;
@@ -673,11 +677,15 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
                 $funding_source_renderer = $c->get('wcgateway.funding-source.renderer');
                 $funding_source = $payment_data['funding_source'] ?: ($session_handler->funding_source() ?: 'paypal');
                 $order->set_payment_method_title($funding_source_renderer->render_name($funding_source));
+                $marked_order_id = $order->get_id();
                 $order->save();
             }
         }, 100, 1);
-        add_action('woocommerce_before_order_object_save', function ($order): void {
+        add_action('woocommerce_before_order_object_save', function ($order) use (&$marked_order_id): void {
             if (!$order instanceof WC_Order) {
+                return;
+            }
+            if (!$marked_order_id || $order->get_id() !== $marked_order_id) {
                 return;
             }
             if (!$order->get_meta(PayPalGateway::ORDER_ID_META_KEY)) {
@@ -685,9 +693,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             }
             $payment_method = $order->get_payment_method();
             if ($payment_method && strpos($payment_method, 'ppcp-') === 0) {
-                return;
-            }
-            if ($order->get_payment_method() === CreditCardGateway::ID) {
                 return;
             }
             if (!$this->shopper_is_paying_with_ppcp()) {

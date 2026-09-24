@@ -200,7 +200,7 @@ return array(
         return new LoginLinkRestEndpoint($container->get('settings.service.connection-url-generator'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.rest.webhooks' => static function (ContainerInterface $container): WebhookSettingsEndpoint {
-        return new WebhookSettingsEndpoint($container->get('api.endpoint.webhook'), $container->get('webhook.registrar'), $container->get('webhook.status.simulation'));
+        return new WebhookSettingsEndpoint($container->get('api.endpoint.webhook'), $container->get('webhook.registrar'), $container->get('webhook.status.simulation'), $container->get('webhook.own-resolver'));
     },
     'settings.rest.pay_later_messaging' => static function (ContainerInterface $container): PayLaterMessagingEndpoint {
         return new PayLaterMessagingEndpoint($container->get('settings.data.paylater-messaging-settings'), $container->get('paylater-configurator.endpoint.save-config'));
@@ -287,7 +287,16 @@ return array(
         return new TodosDefinition($container->get('settings.service.todos_eligibilities'), $container->get('settings.data.general'), $container->get('settings.data.todos'));
     },
     'settings.data.definition.methods' => static function (ContainerInterface $container): PaymentMethodsDefinition {
-        return new PaymentMethodsDefinition($container->get('settings.data.payment'), $container->get('settings.data.general'), $container->get('axo.checkout-config-notice.raw'), $container->get('axo.incompatible-plugins-notice.raw'));
+        return new PaymentMethodsDefinition(
+            $container->get('settings.data.payment'),
+            $container->get('settings.data.general'),
+            $container->get('axo.checkout-config-notice.raw'),
+            $container->get('axo.incompatible-plugins-notice.raw'),
+            // The module registers its services only behind its feature flag, so
+            // presence means v6 is active; has() does not instantiate it. Per-page
+            // ownership is moot: one admin screen configures every page.
+            $container->has('sdk-v6.owns-current-page')
+        );
     },
     'settings.data.definition.method_dependencies' => static function (ContainerInterface $container): PaymentMethodsDependenciesDefinition {
         return new PaymentMethodsDependenciesDefinition($container->get('settings.settings-provider'));

@@ -23,7 +23,13 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType
     private PaymentMethodTypeInterface $paypal_payment_method;
     private Context $context;
     private SettingsProvider $settings_provider;
-    public function __construct(string $name, AssetGetter $asset_getter, string $version, ButtonInterface $button, PaymentMethodTypeInterface $paypal_payment_method, Context $context, SettingsProvider $settings_provider)
+    /**
+     * Answers whether the SDK v6 module renders the PayPal stack on the current page.
+     *
+     * @var (callable():bool)|null
+     */
+    private $v6_owns_current_page;
+    public function __construct(string $name, AssetGetter $asset_getter, string $version, ButtonInterface $button, PaymentMethodTypeInterface $paypal_payment_method, Context $context, SettingsProvider $settings_provider, ?callable $v6_owns_current_page = null)
     {
         $this->name = $name;
         $this->asset_getter = $asset_getter;
@@ -32,12 +38,21 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType
         $this->paypal_payment_method = $paypal_payment_method;
         $this->context = $context;
         $this->settings_provider = $settings_provider;
+        $this->v6_owns_current_page = $v6_owns_current_page;
     }
     public function initialize()
     {
     }
     public function is_active(): bool
     {
+        /*
+         * On a page the v6 SDK owns, the v5 smart button is swapped for a disabled
+         * one whose script data is empty, and this block bundle reads that data
+         * expecting the v5 shape. v6 renders Apple Pay on those pages itself.
+         */
+        if (is_callable($this->v6_owns_current_page) && ($this->v6_owns_current_page)()) {
+            return \false;
+        }
         $methods = $this->settings_provider->button_styling($this->context->context())->methods;
         if (!in_array(ApplePayGateway::ID, $methods, \true)) {
             return \false;

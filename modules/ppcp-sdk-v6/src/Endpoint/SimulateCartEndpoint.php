@@ -54,6 +54,9 @@ class SimulateCartEndpoint extends AbstractCartEndpoint
         if (!$products) {
             return;
         }
+        // Nothing here is meant to outlive the response, and persisting the
+        // session would discard a concurrent add-to-cart.
+        $this->prevent_session_persistence();
         $result = $this->cart_simulator->simulate($products);
         wp_send_json_success(array(
             // A string at the currency's own precision, because the caller puts it

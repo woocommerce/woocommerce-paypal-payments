@@ -59,6 +59,13 @@ class SdkV6Manager
      * DTOs carry no height of their own (see ButtonStyleMapper).
      */
     public const PAYMENT_BUTTON_HEIGHT = '48px';
+    /**
+     * The button height in the mini cart, which is narrower than a page column
+     * and so carries a shorter button. Matches the v5 default for the location
+     * (see SmartButton::script_data(), which sends 35 there and 48 for the
+     * block contexts).
+     */
+    public const MINI_CART_BUTTON_HEIGHT = '35px';
     // The pay-for-order page has no pre-payment hook, so the message renders
     // after the submit button and is relocated by SdkV6Module.
     public const PAY_ORDER_MESSAGE_HOOK = 'woocommerce_pay_order_before_submit';
@@ -68,7 +75,6 @@ class SdkV6Manager
     private const CONTEXTS_WITH_GATEWAY_ROWS = array('checkout', 'pay-now');
     // Existing WC credit-card-form field IDs the v6 card fields mount into; see
     // CardFieldsModule's woocommerce_credit_card_form_fields filter.
-    private const CARD_FIELD_NAME_ID = 'ppcp-credit-card-gateway-card-name';
     private const CARD_FIELD_NUMBER_ID = 'ppcp-credit-card-gateway-card-number';
     private const CARD_FIELD_EXPIRY_ID = 'ppcp-credit-card-gateway-card-expiry';
     private const CARD_FIELD_CVV_ID = 'ppcp-credit-card-gateway-card-cvc';
@@ -117,12 +123,12 @@ class SdkV6Manager
      */
     private array $placements;
     /**
-     * Memoizes is_card_button_row(), asked once per request to print the row and
-     * once to build the script data.
+     * Memoizes is_card_button_available(), which the script data asks through
+     * both placement questions on top of the call that prints the classic row.
      *
      * @var bool|null
      */
-    private ?bool $is_card_button_row = null;
+    private ?bool $is_card_button_available = null;
     /**
      * Memoizes available_gateways(), which every placement asks twice.
      *
@@ -225,15 +231,23 @@ class SdkV6Manager
             return array('product' => \false, 'cart' => \false, 'checkout' => \false, 'pay-now' => \false, 'mini-cart' => \false);
         }
         $needs_payment = $this->cart_needs_payment();
+        // A free-trial ($0) subscription cart needs no one-time payment, so
+        // $needs_payment is false, but the checkout still needs the PayPal
+        // save-without-purchase button (boot.js renders it for the checkout /
+        // pay-now contexts only). Confined to checkout: the cart and mini-cart
+        // have no form to submit the vaulted token with.
+        $free_trial_checkout = $this->free_trial_helper->is_free_trial_cart();
         // pay-now is driven by the existing WC order rather than the cart, so
         // the zero-total guard does not apply to it.
-        return array('product' => $this->settings_status->is_smart_button_enabled_for_location('product'), 'cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('cart'), 'checkout' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('checkout'), 'pay-now' => $this->settings_status->is_smart_button_enabled_for_location('pay-now'), 'mini-cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('mini-cart'));
+        return array('product' => $this->settings_status->is_smart_button_enabled_for_location('product'), 'cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('cart'), 'checkout' => ($needs_payment || $free_trial_checkout) && $this->settings_status->is_smart_button_enabled_for_location('checkout'), 'pay-now' => $this->settings_status->is_smart_button_enabled_for_location('pay-now'), 'mini-cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('mini-cart'));
     }
     /**
      * Whether the current cart still needs payment.
      *
-     * Keeps buttons off $0 orders (a full-value coupon, a free trial), where no
-     * payment method should be offered at all.
+     * Keeps buttons off $0 orders (a full-value coupon), where no payment method
+     * should be offered at all. A free-trial subscription cart is $0 too but is
+     * handled separately in determine_render_places(), since it still needs the
+     * PayPal save-without-purchase button on the checkout.
      */
     private function cart_needs_payment(): bool
     {
@@ -384,6 +398,44 @@ class SdkV6Manager
         return array('id' => $placement->gateway_id, 'wrapper' => '#' . $placement->wrapper_id);
     }
     /**
+     * One available gateway, or null when WooCommerce does not offer it here.
+     *
+     * The shared lookup behind the gateway_* readers below, so the guard that
+     * makes them null-safe lives in one place.
+     */
+    private function gateway(string $gateway_id): ?WC_Payment_Gateway
+    {
+        $gateway = $this->available_gateways()[$gateway_id] ?? null;
+        return $gateway instanceof WC_Payment_Gateway ? $gateway : null;
+    }
+    /**
+     * The gateway's own user-facing title, empty when the gateway is unavailable.
+     *
+     * Entity-decoded because get_title() returns it encoded ("Debit &amp; Credit
+     * Cards") and the block renders it as text, which would escape it again. v5
+     * instead sets it as HTML, not worth copying for a shop-manager-editable value.
+     */
+    private function gateway_title(string $gateway_id): string
+    {
+        $gateway = $this->gateway($gateway_id);
+        if (!$gateway) {
+            return '';
+        }
+        return html_entity_decode((string) $gateway->get_title(), \ENT_QUOTES, 'UTF-8');
+    }
+    /**
+     * The gateway's own description, empty when the gateway is unavailable.
+     *
+     * Left encoded, unlike gateway_title(): PayPalPlaceOrderContent sets the
+     * description as HTML so a merchant can format it, which is how gateway
+     * descriptions already reach both the classic checkout and the PayPal row.
+     */
+    private function gateway_description(string $gateway_id): string
+    {
+        $gateway = $this->gateway($gateway_id);
+        return $gateway ? (string) $gateway->get_description() : '';
+    }
+    /**
      * The gateway's own supports list, or `array( 'products' )` when the gateway
      * is unavailable. The narrowest list hides the method rather than offering
      * it on a cart it cannot pay for.
@@ -392,8 +444,8 @@ class SdkV6Manager
      */
     private function gateway_supports(string $gateway_id): array
     {
-        $gateway = $this->available_gateways()[$gateway_id] ?? null;
-        if (!$gateway instanceof WC_Payment_Gateway) {
+        $gateway = $this->gateway($gateway_id);
+        if (!$gateway) {
             return array('products');
         }
         return array_values((array) $gateway->supports);
@@ -459,6 +511,23 @@ class SdkV6Manager
         if ($this->is_fastlane_enabled($page_location)) {
             return \true;
         }
+        // Home and shop, where v5 places a Pay Later message and v6 has no
+        // message hook of its own yet. Whether v5 rendered there came down to the
+        // unrelated mini-cart setting: with the mini-cart on, the fallback below
+        // claimed the page and v5 went dark; with it off, v5 stayed and drew the
+        // banner. Claim the page either way, so one stack owns messaging
+        // everywhere rather than v6 and v5 splitting it per page. The message is
+        // withheld until v6 can draw it itself, at which point should_load_messages()
+        // above claims the page first and this branch stops being reached.
+        //
+        // Scoped to the empty page context so the block and page-context
+        // locations keep deciding without consulting messaging, as
+        // testShouldLoadOnCurrentPageInBlockContextsIsUnaffectedByMessagingEligibility
+        // pins.
+        $message_location = $page_location ? '' : $this->context->location();
+        if ($message_location && $this->settings_status->is_pay_later_messaging_enabled_for_location($message_location)) {
+            return \true;
+        }
         // Sitewide, because the mini-cart can appear on any page as either the
         // classic "Cart" widget or the block Mini-Cart, and is_active_widget()
         // only detects the classic one. boot.js renders into the mini-cart
@@ -479,34 +548,39 @@ class SdkV6Manager
         return in_array($location, array('checkout', 'checkout-block', 'pay-now'), \true) && $this->card_payments_configuration->is_acdc_enabled();
     }
     /**
-     * Whether BCDC is configured for this kind of page, not whether the row
-     * prints here, which is is_card_button_row().
+     * Whether BCDC is configured for this kind of page.
      *
-     * Narrower than its ACDC counterpart: BCDC has no block checkout support.
+     * Whether it renders at all is is_card_button_available(); which surface it
+     * renders on is is_card_button_row() or is_card_button_block_method().
+     *
+     * Same context list as its ACDC counterpart, block checkout included.
      *
      * @param string|null $location Page context to test; defaults to the current page.
      */
     public function is_card_button_enabled(?string $location = null): bool
     {
         $location = $location ?? $this->get_page_context();
-        return in_array($location, array('checkout', 'pay-now'), \true) && $this->card_payments_configuration->is_bcdc_enabled();
+        return in_array($location, array('checkout', 'checkout-block', 'pay-now'), \true) && $this->card_payments_configuration->is_bcdc_enabled();
     }
     /**
-     * Whether the BCDC button renders as its own payment-method row here.
+     * Whether the BCDC button may render on this page at all, on either surface.
      *
-     * Asks the gateway list rather than re-deriving its policy, which already
-     * covers the checkout button location being off, ACDC outside Mexico,
-     * free-trial carts and zero-total carts.
+     * Asking the gateway list rather than re-deriving its policy is what covers
+     * the checkout button location being off, ACDC outside Mexico, free-trial
+     * carts and zero-total carts.
      */
-    private function is_card_button_row(): bool
+    private function is_card_button_available(): bool
     {
-        if (null !== $this->is_card_button_row) {
-            return $this->is_card_button_row;
+        // Checked first, not after the conditions: both placement questions come
+        // through here, so a memo consulted last would still re-run the settings
+        // lookup and the subscription queries on every call.
+        if (null !== $this->is_card_button_available) {
+            return $this->is_card_button_available;
         }
-        if (!$this->is_card_button_enabled() || $this->is_block_context()) {
+        if (!$this->is_card_button_enabled()) {
             return \false;
         }
-        // No row for subscription carts: the v6 guest component has no
+        // Never for subscription carts: the v6 guest component has no
         // equivalent of the SDK URL vault param v5 uses here, so the button
         // would take a payment that can never renew. Not a dead end: without a
         // button "Place order" stays visible, and CardButtonGateway falls back
@@ -515,9 +589,30 @@ class SdkV6Manager
         if ($this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->order_pay_contains_subscription()) {
             return \false;
         }
-        // Memoized only from here on, for the reason is_method_gateway() gives.
-        $this->is_card_button_row = isset($this->available_gateways()[CardButtonGateway::ID]);
-        return $this->is_card_button_row;
+        // Memoized only from here on, for the reason is_method_gateway() gives: a
+        // refusal above can be asked again, since it may have come from a context
+        // that had not resolved yet.
+        $this->is_card_button_available = isset($this->available_gateways()[CardButtonGateway::ID]);
+        return $this->is_card_button_available;
+    }
+    /**
+     * Whether the BCDC button renders as its own payment-method row here, which
+     * only the classic pages have.
+     */
+    private function is_card_button_row(): bool
+    {
+        return !$this->is_block_context() && $this->is_card_button_available();
+    }
+    /**
+     * Whether BCDC renders as a WooCommerce Blocks payment method.
+     *
+     * A regular method, not an express one: the guest session renders its card
+     * form inline, and WooCommerce disables the express area once an express
+     * method starts, leaving that form inert.
+     */
+    private function is_card_button_block_method(): bool
+    {
+        return $this->is_block_context() && $this->is_card_button_available();
     }
     /**
      * Whether the current page involves a native PayPal Subscription that the v5
@@ -771,14 +866,21 @@ class SdkV6Manager
     }
     /**
      * The button styles for one context, carrying the height every button in
-     * the express stack shares.
+     * that context's express stack shares.
      *
      * @param string $context The page context.
      * @return array{colorClass: string, borderRadius: string, height: string}
      */
     private function button_styles(string $context): array
     {
-        return array_merge($this->style_mapper->styles_for_context($context), array('height' => self::PAYMENT_BUTTON_HEIGHT));
+        return array_merge($this->style_mapper->styles_for_context($context), array('height' => $this->button_height($context)));
+    }
+    /**
+     * The button height for a context.
+     */
+    private function button_height(string $context): string
+    {
+        return 'mini-cart' === $context ? self::MINI_CART_BUTTON_HEIGHT : self::PAYMENT_BUTTON_HEIGHT;
     }
     /**
      * Whether the Pay Later button belongs in a location.
@@ -925,10 +1027,9 @@ class SdkV6Manager
                 'enabled' => $card_fields_enabled,
                 'payment_method' => CreditCardGateway::ID,
                 'funding_source' => 'card',
-                // Label, name-field flag and logos for the block's own card
-                // method; card_icons is empty when "Show logos" is off.
+                // Label and logos for the block's own card method; card_icons is
+                // empty when "Show logos" is off.
                 'title' => $this->card_payments_configuration->gateway_title(),
-                'name_field' => 'yes' === $this->card_payments_configuration->show_name_on_card(),
                 // Card "save during purchase". The block checkout gates WC Blocks'
                 // native save option on this; classic reads WC's own tokenization
                 // checkbox. A subscription force-saves, since its card must be
@@ -937,14 +1038,20 @@ class SdkV6Manager
                 'card_icons' => array_map(static function (array $icon): array {
                     return array('id' => $icon['type'], 'alt' => $icon['title'], 'src' => $icon['url']);
                 }, $this->credit_card_icons),
-                'fields' => array('name' => '#' . self::CARD_FIELD_NAME_ID, 'number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID),
+                'fields' => array('number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID),
                 'styles' => $this->card_field_styles->overrides(),
             ),
             'card_button' => array(
-                'enabled' => $this->is_card_button_row(),
+                'row' => $this->is_card_button_row(),
+                'block_method' => $this->is_card_button_block_method(),
                 'payment_method' => CardButtonGateway::ID,
                 'funding_source' => 'card',
                 'wrapper' => '#' . self::CARD_BUTTON_WRAPPER_ID,
+                'title' => $this->gateway_title(CardButtonGateway::ID),
+                'description' => $this->gateway_description(CardButtonGateway::ID),
+                // Its own gateway's list, never PayPal's: a borrowed vaulting
+                // list would offer the method on a subscription cart it cannot pay.
+                'supported_features' => $this->gateway_supports(CardButtonGateway::ID),
                 // No colour: the element is black-only. Width is ours to set
                 // because it ships a fixed 225px, where v5 spanned the column.
                 'styles' => array('borderRadius' => $this->style_mapper->styles_for_context($page_context ?: 'checkout')['borderRadius'], 'height' => self::PAYMENT_BUTTON_HEIGHT, 'width' => '100%'),
