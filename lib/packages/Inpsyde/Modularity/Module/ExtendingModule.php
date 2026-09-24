@@ -1,15 +1,13 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-
 /**
  * @phpstan-type ExtendingService callable(mixed $service, ContainerInterface $container): mixed
  */
-interface ExtendingModule extends Module
+interface ExtendingModule extends \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\Module
 {
     /**
      * Return application services' extensions.
