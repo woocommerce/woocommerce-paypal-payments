@@ -46,10 +46,6 @@ class SessionOrderReloader {
 
 	private bool $reloaded = false;
 
-	/**
-	 * @param OrderEndpoint   $order_endpoint The order endpoint.
-	 * @param LoggerInterface $logger         The logger.
-	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		LoggerInterface $logger
@@ -105,6 +101,11 @@ class SessionOrderReloader {
 		return $now - (int) ( $last_reload['time'] ?? 0 ) < self::RELOAD_INTERVAL;
 	}
 
+	/**
+	 * The order endpoint also raises code 404 for an empty response body, which
+	 * counts as gone here: the order cannot be recovered either way, and the
+	 * buyer creates a new one with the next button click.
+	 */
 	private function is_not_found( Throwable $exception ): bool {
 		if ( $exception instanceof PayPalApiException ) {
 			return $exception->status_code() === 404 || $exception->name() === 'RESOURCE_NOT_FOUND';
