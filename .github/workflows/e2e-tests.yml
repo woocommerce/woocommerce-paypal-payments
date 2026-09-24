@@ -10,11 +10,9 @@ on:
       TEST_SUITE:
         description: 'Test suite'
         required: true
-        # TEMPORARY: default to the webhook-dependent shards
-        default: 'shard:webhook'
+        default: 'smoke:parallel'
         type: choice
         options:
-          - shard:webhook
           - all:parallel
           - smoke:parallel
           - critical:parallel
@@ -42,6 +40,7 @@ on:
         options:
           - v6
           - v5
+          - both
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
@@ -91,13 +90,6 @@ jobs:
             transaction-international
           )
 
-          # TEMPORARY: the only shards whose tests genuinely wait on a webhook
-          WEBHOOK_SHARDS=(
-            transaction-germany
-            transaction-mexico
-            refund
-          )
-
           TEST_SUITE='${{ inputs.TEST_SUITE || 'smoke:parallel' }}'
           SDK_VERSION='${{ inputs.SDK_VERSION || 'both' }}'
 
@@ -109,20 +101,7 @@ jobs:
             fi
           }
 
-          if [[ "$TEST_SUITE" == 'shard:webhook' ]]; then
-            # TEMPORARY, see WEBHOOK_SHARDS above
-            entry() { echo "{\"script\":\"e2e:test:shard:${1}\",\"name_suffix\":\" / ${1} / ${2}\",\"artifact_name\":\"playwright-artifact-${1}-${2}\",\"sdk_version\":\"${2}\",\"slug\":\"${1}\"}"; }
-
-            ITEMS=()
-            for shard in "${WEBHOOK_SHARDS[@]}"; do
-              for v in $(sdk_versions); do
-                ITEMS+=("$(entry "$shard" "$v")")
-              done
-            done
-            JOINED=$(IFS=,; echo "${ITEMS[*]}")
-
-            echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
-          elif [[ "$TEST_SUITE" == *':parallel' ]]; then
+          if [[ "$TEST_SUITE" == *':parallel' ]]; then
             SUFFIX=""
             [[ "$TEST_SUITE" != "all:parallel" ]] && SUFFIX=":${TEST_SUITE%:parallel}"
 
@@ -157,7 +136,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@59077b3aa240937b8666cd68a736bb228f6ee9ea # feature/playwright-ngrok-tunnel
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@da7b9b11649213b924309a4b1d071db6e2801361 # feature/playwright-ngrok-tunnel
     with:
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
@@ -176,10 +155,12 @@ jobs:
       NGROK_SUBDOMAIN: ${{ matrix.slug }}-${{ matrix.sdk_version }}
       NGROK_HOST_FILE: tests/qa/resources/e2e-snippets/ngrok-host.txt
       PRE_SCRIPT: |
-        # 0. Record which SDK version this matrix job tests. playwright.config.ts
+        # 0. v6 is PCP's default and needs nothing. For v5 jobs, playwright.config.ts
         # loads .env.ci via dotenv, so this reaches process.env.PCP_JS_SDK_VERSION
-        # for both the WP-side flag toggle and the page objects' locators.
-        echo "PCP_JS_SDK_VERSION=${{ matrix.sdk_version }}" >> .env.ci
+        # for both the v5 feature flag and the page objects' locators.
+        if [ "${{ matrix.sdk_version }}" = "v5" ]; then
+          echo "PCP_JS_SDK_VERSION=v5" >> .env.ci
+        fi
 
         # 1. Download and unzip the built plugin
         gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files
