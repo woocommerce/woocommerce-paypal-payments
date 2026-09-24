@@ -2,6 +2,8 @@
  * External dependencies
  */
 import { APIRequestContext } from '@playwright/test';
+import { existsSync } from 'fs';
+import { join } from 'path';
 /**
  * Internal dependencies
  */
@@ -19,20 +21,22 @@ import {
 const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo, pui } = gateways;
 
 /**
- * In CI, confirms the webhook URL PayPal has on file was rewritten to the
- * public ngrok host (via NGROK_HOST, see IncomingWebhookEndpoint::url())
- * instead of the local site host, and that it's actually reachable. This
- * catches a broken tunnel right after connect, instead of as a confusing
- * multi-minute timeout deep in a transaction test.
+ * Asserts the registered webhook URL uses the public ngrok host and is
+ * reachable. Skipped without a tunnel: the host file is only written
+ * for shards with NGROK_ENABLED.
  *
- * @param pcpApi  The PCP API client, used to read back the registered webhook URL.
- * @param request The Playwright request context, used to probe the URL.
+ * @param pcpApi  The PCP API client.
+ * @param request The Playwright request context.
  */
 const assertWebhookPubliclyReachable = async (
 	pcpApi: PcpApi,
 	request: APIRequestContext
 ) => {
-	if ( ! process.env.CI ) {
+	const ngrokHostFile = join(
+		process.cwd(),
+		'tests/qa/resources/e2e-snippets/ngrok-host.txt'
+	);
+	if ( ! existsSync( ngrokHostFile ) ) {
 		return;
 	}
 
