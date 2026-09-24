@@ -48,6 +48,8 @@ class AgenticWcSession extends WC_Session_Handler {
 		$this->_data        = maybe_unserialize( $value );
 		$this->_has_cookie  = true;
 
+		$this->set_session_expiration();
+
 		return true;
 	}
 
@@ -60,6 +62,8 @@ class AgenticWcSession extends WC_Session_Handler {
 		$this->_customer_id = $session_id;
 		$this->_data        = array();
 		$this->_has_cookie  = true;
+
+		$this->set_session_expiration();
 	}
 
 	/**
