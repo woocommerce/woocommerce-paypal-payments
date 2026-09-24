@@ -140,7 +140,7 @@ class SessionOrderReloaderTest extends TestCase
 	}
 
 	/**
-	 * GIVEN no session order, or a session order with no active WooCommerce session
+	 * GIVEN no session order
 	 * WHEN maybe_reload is called
 	 * THEN nothing is fetched and nothing is stored
 	 */
@@ -253,7 +253,6 @@ class SessionOrderReloaderTest extends TestCase
 	 * WHEN maybe_reload attempts to fetch it
 	 * THEN only the session order is forgotten, no replacement is stored,
 	 *      and the rest of the session data is left untouched
-	 * AND no warning is logged for this expected condition
 	 */
 	public function test_forgets_session_order_on_runtime_exception_with_404_code(): void
 	{
@@ -268,7 +267,6 @@ class SessionOrderReloaderTest extends TestCase
 		$this->session_handler->shouldReceive('forget_order')->once();
 		$this->session_handler->shouldNotReceive('destroy_session_data');
 		$this->session_handler->shouldNotReceive('replace_order');
-		$this->logger->shouldNotReceive('warning');
 
 		$this->create_reloader()->maybe_reload($order, $this->session_handler);
 
@@ -316,12 +314,15 @@ class SessionOrderReloaderTest extends TestCase
 	/**
 	 * GIVEN PayPal fails for a reason unrelated to the order being gone
 	 * WHEN maybe_reload attempts to fetch it
-	 * THEN the failure is logged as a warning and the session order is left in place
+	 * THEN the session order is left in place
+	 * AND the reload is recorded so the failing fetch is not retried for the
+	 *     rest of the interval
 	 */
-	public function test_logs_warning_and_keeps_session_on_other_exception(): void
+	public function test_keeps_session_order_and_suppresses_retries_on_other_exception(): void
 	{
 		$store = [];
 		when('WC')->justReturn((object) array('session' => $this->session_with($store)));
+		when('time')->justReturn(self::NOW);
 
 		$order = $this->order_with('WC-ORDER-1', OrderStatus::CREATED);
 
@@ -331,10 +332,15 @@ class SessionOrderReloaderTest extends TestCase
 		$this->session_handler->shouldNotReceive('forget_order');
 		$this->session_handler->shouldNotReceive('destroy_session_data');
 		$this->session_handler->shouldNotReceive('replace_order');
-		$this->logger->shouldReceive('warning')->once();
 
 		$this->create_reloader()->maybe_reload($order, $this->session_handler);
 
-		$this->addToAssertionCount(1);
+		$this->assertSame(
+			array(
+				'order_id' => 'WC-ORDER-1',
+				'time'     => self::NOW,
+			),
+			$store[SessionOrderReloader::LAST_RELOAD_SESSION_KEY]
+		);
 	}
 }
