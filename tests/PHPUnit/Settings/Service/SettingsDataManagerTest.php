@@ -10,7 +10,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
@@ -24,7 +23,6 @@ use function Brain\Monkey\Functions\when;
 class SettingsDataManagerTest extends TestCase {
 
 	private PaymentSettings $payment_methods;
-	private SettingsProvider $settings_provider;
 	private OnboardingProfile $onboarding_profile;
 	private SettingsDataManager $sut;
 
@@ -59,8 +57,6 @@ class SettingsDataManagerTest extends TestCase {
 			}
 		);
 
-		$this->settings_provider = Mockery::mock( SettingsProvider::class );
-
 		$this->onboarding_profile = Mockery::mock( OnboardingProfile::class );
 
 		$this->sut = new SettingsDataManager(
@@ -70,8 +66,7 @@ class SettingsDataManagerTest extends TestCase {
 			Mockery::mock( SettingsModel::class ),
 			Mockery::mock( StylingSettings::class ),
 			$this->payment_methods,
-			array(),
-			$this->settings_provider
+			array()
 		);
 	}
 
@@ -105,21 +100,17 @@ class SettingsDataManagerTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN Pay Later is not disabled by vaulting
+	 * GIVEN any combination of seller type, card payments, and subscriptions
 	 * WHEN toggle_payment_gateways() runs on connect or reconnect
 	 * THEN Pay Later is never toggled, preserving the merchant's own choice from apply_payment_methods()
 	 *
 	 * @dataProvider gateway_sync_flag_provider
 	 */
-	public function test_pay_later_untouched_when_not_disabled_by_vaulting(
+	public function test_pay_later_untouched_by_gateway_sync(
 		bool $is_business_seller,
 		bool $use_card_payments,
 		bool $use_subscriptions
 	): void {
-		$this->settings_provider
-			->shouldReceive( 'pay_later_disabled_by_vaulting' )
-			->andReturn( false );
-
 		$toggled_states = array();
 		$this->payment_methods
 			->shouldReceive( 'toggle_method_state' )
@@ -149,42 +140,6 @@ class SettingsDataManagerTest extends TestCase {
 			'casual seller, cards, no subscriptions'      => [ false, true, false ],
 			'casual seller, no cards, subscriptions'      => [ false, false, true ],
 			'casual seller, no cards, no subscriptions'   => [ false, false, false ],
-		];
-	}
-
-	/**
-	 * GIVEN Pay Later is disabled by vaulting
-	 * WHEN toggle_payment_gateways() runs on connect or reconnect
-	 * THEN Pay Later is turned off
-	 *
-	 * @dataProvider seller_type_provider
-	 */
-	public function test_pay_later_disabled_when_disabled_by_vaulting( bool $is_business_seller ): void {
-		$this->settings_provider
-			->shouldReceive( 'pay_later_disabled_by_vaulting' )
-			->andReturn( true );
-
-		$toggled_states = array();
-		$this->payment_methods
-			->shouldReceive( 'toggle_method_state' )
-			->andReturnUsing(
-				static function ( string $method_id, bool $enabled ) use ( &$toggled_states ): void {
-					$toggled_states[ $method_id ] = $enabled;
-				}
-			);
-
-		$flags                     = new ConfigurationFlagsDTO();
-		$flags->is_business_seller = $is_business_seller;
-
-		$this->toggle_payment_gateways( $flags );
-
-		$this->assertFalse( $toggled_states['pay-later'] ?? true );
-	}
-
-	public function seller_type_provider(): array {
-		return [
-			'business seller' => [ true ],
-			'casual seller'   => [ false ],
 		];
 	}
 

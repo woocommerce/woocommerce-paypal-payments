@@ -60,7 +60,7 @@ the following table are met.
 
 Pay Later is enabled together with the other new-merchant defaults, in `SettingsDataManager::apply_payment_methods()`. 
 The gateway sync in `SettingsDataManager::toggle_payment_gateways()` runs after every connection
-and only turns Pay Later off while "Save PayPal and Venmo" suppresses it. 
+but leaves Pay Later untouched. 
 A reconnect therefore keeps the merchant's choice, while "Start Over" enables Pay Later again.
 
 ### Settings
