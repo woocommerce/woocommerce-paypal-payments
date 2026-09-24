@@ -57,7 +57,6 @@ const {
 } = require( '@ppcp-paylater-block/hooks/use-preview-controller' );
 
 const defaultConfig = {
-	payLaterDisabledByVaulting: false,
 	placementEnabled: true,
 	isSdkV6Active: false,
 	settingsUrl: '/wp-admin/settings',
@@ -98,21 +97,20 @@ afterEach( () => {
 } );
 
 describe( 'Edit', () => {
-	test( 'shows the vaulting warning and settings link when Pay Later is disabled by vaulting', () => {
+	test( 'ignores a legacy payLaterDisabledByVaulting flag on the global and still renders the preview', () => {
 		global.PcpProductPayLaterBlock = {
 			...defaultConfig,
 			payLaterDisabledByVaulting: true,
 		};
-		useScriptParams.mockReturnValue( null );
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
 
 		render( <Edit { ...defaultProps } /> );
 
 		expect(
-			screen.getByText( /cannot be used while PayPal Vaulting is active/ )
-		).toBeInTheDocument();
-		expect(
-			screen.getByRole( 'link', { name: 'PayPal Payments Settings' } )
-		).toHaveAttribute( 'href', defaultConfig.settingsUrl );
+			screen.queryByText( /PayPal Vaulting is active/ )
+		).not.toBeInTheDocument();
 	} );
 
 	test( 'shows the placement-disabled warning when the "Product" placement is disabled', () => {

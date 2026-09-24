@@ -37,7 +37,6 @@ const { useScriptParams } = require( './hooks/script-params' );
 const { usePreviewController } = require( './hooks/use-preview-controller' );
 
 const defaultConfig = {
-	payLaterDisabledByVaulting: false,
 	placementEnabled: true,
 	payLaterSettingsUrl: '/wp-admin/paylater-settings',
 	ajax: {
@@ -140,15 +139,20 @@ test( 'does not show placeholder when PayPalMessages renders within 10 seconds',
 	).not.toBeInTheDocument();
 } );
 
-test( 'shows vaulting warning when vaulting is enabled', () => {
-	global.PcpPayLaterBlock = { ...defaultConfig, payLaterDisabledByVaulting: true };
-	useScriptParams.mockReturnValue( null );
+test( 'ignores a legacy payLaterDisabledByVaulting flag on the global and still renders the preview', () => {
+	global.PcpPayLaterBlock = {
+		...defaultConfig,
+		payLaterDisabledByVaulting: true,
+	};
+	useScriptParams.mockReturnValue( {
+		url_params: { 'client-id': 'test' },
+	} );
 
 	render( <Edit { ...defaultProps } /> );
 
 	expect(
-		screen.getByText( /cannot be used while PayPal Vaulting is active/ )
-	).toBeInTheDocument();
+		screen.queryByText( /PayPal Vaulting is active/ )
+	).not.toBeInTheDocument();
 } );
 
 test( 'shows placement warning when placement is disabled', () => {

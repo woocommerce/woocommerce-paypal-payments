@@ -167,7 +167,6 @@ class FeaturesDefinition {
 
 		$store_country                  = $this->settings->get_woo_settings()['country'];
 		$paylater_docs_country_location = in_array( $store_country, $paylater_documentation_supported_countries, true ) ? strtolower( $store_country ) : 'us';
-		$pay_later_disabled_by_vaulting = $this->settings_provider->pay_later_disabled_by_vaulting();
 
 		$feature_items = array(
 			self::FEATURE_PAY_WITH_CRYPTO                 => array(
@@ -391,7 +390,7 @@ class FeaturesDefinition {
 					'Help grow sales with Pay Later messaging. Let customers know they have flexible payment options as they browse, shop, and check out.',
 					'woocommerce-paypal-payments'
 				),
-				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_LATER_MESSAGING ] && ! $pay_later_disabled_by_vaulting,
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_LATER_MESSAGING ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',

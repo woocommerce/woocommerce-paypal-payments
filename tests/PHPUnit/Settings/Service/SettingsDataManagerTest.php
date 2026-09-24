@@ -10,7 +10,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
@@ -23,7 +22,6 @@ use function Brain\Monkey\Functions\when;
 class SettingsDataManagerTest extends TestCase {
 
 	private PaymentSettings $payment_methods;
-	private SettingsProvider $settings_provider;
 	private SettingsDataManager $sut;
 
 	public function setUp(): void {
@@ -40,8 +38,6 @@ class SettingsDataManagerTest extends TestCase {
 		$this->payment_methods->shouldReceive( 'set_fastlane_display_watermark' )->andReturnNull();
 		$this->payment_methods->shouldReceive( 'save' )->andReturnNull();
 
-		$this->settings_provider = Mockery::mock( SettingsProvider::class );
-
 		$this->sut = new SettingsDataManager(
 			$methods_definition,
 			Mockery::mock( OnboardingProfile::class ),
@@ -49,8 +45,7 @@ class SettingsDataManagerTest extends TestCase {
 			Mockery::mock( SettingsModel::class ),
 			Mockery::mock( StylingSettings::class ),
 			$this->payment_methods,
-			array(),
-			$this->settings_provider
+			array()
 		);
 	}
 
@@ -69,27 +64,14 @@ class SettingsDataManagerTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN a business seller accepting card payments
+	 * GIVEN a business seller accepting card payments, with or without subscriptions
 	 * WHEN toggle_payment_gateways() applies the onboarding defaults
-	 * THEN Pay Later is enabled, and every other toggled state matches the expected onboarding
-	 *      default for the given subscription/eligibility combination
+	 * THEN Pay Later is enabled, since it is no longer mutually exclusive with vaulting and thus
+	 *      no longer depends on the subscription/vaulting combination
 	 *
 	 * @dataProvider pay_later_onboarding_provider
 	 */
-	public function test_pay_later_onboarding_default(
-		bool $use_subscriptions,
-		?bool $pay_later_with_vaulting_enabled,
-		bool $expect_pay_later_enabled
-	): void {
-		if ( null !== $pay_later_with_vaulting_enabled ) {
-			$this->settings_provider
-				->shouldReceive( 'pay_later_with_vaulting_enabled' )
-				->once()
-				->andReturn( $pay_later_with_vaulting_enabled );
-		} else {
-			$this->settings_provider->shouldNotReceive( 'pay_later_with_vaulting_enabled' );
-		}
-
+	public function test_pay_later_onboarding_default( bool $use_subscriptions ): void {
 		$toggled_states = array();
 		$this->payment_methods
 			->shouldReceive( 'toggle_method_state' )
@@ -106,26 +88,13 @@ class SettingsDataManagerTest extends TestCase {
 
 		$this->toggle_payment_gateways( $flags );
 
-		$this->assertSame( $expect_pay_later_enabled, $toggled_states['pay-later'] ?? false );
+		$this->assertTrue( $toggled_states['pay-later'] ?? false );
 	}
 
 	public function pay_later_onboarding_provider(): array {
 		return [
-			'no subscriptions enables Pay Later by default'                         => [
-				'use_subscriptions'               => false,
-				'pay_later_with_vaulting_enabled' => null,
-				'expect_pay_later_enabled'        => true,
-			],
-			'subscriptions without vaulting override keep Pay Later disabled'       => [
-				'use_subscriptions'               => true,
-				'pay_later_with_vaulting_enabled' => false,
-				'expect_pay_later_enabled'        => false,
-			],
-			'subscriptions with vaulting override enable Pay Later'                 => [
-				'use_subscriptions'               => true,
-				'pay_later_with_vaulting_enabled' => true,
-				'expect_pay_later_enabled'        => true,
-			],
+			'no subscriptions enables Pay Later by default' => [ 'use_subscriptions' => false ],
+			'subscriptions also enable Pay Later by default' => [ 'use_subscriptions' => true ],
 		];
 	}
 }

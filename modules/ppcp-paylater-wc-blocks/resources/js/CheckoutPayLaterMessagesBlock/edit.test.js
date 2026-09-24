@@ -47,7 +47,6 @@ const {
 } = require( '@ppcp-paylater-block/components/v6-message-preview' );
 
 const defaultConfig = {
-	payLaterDisabledByVaulting: false,
 	placementEnabled: true,
 	settingsUrl: '/wp-admin/settings',
 	payLaterSettingsUrl: '/wp-admin/paylater-settings',
@@ -147,18 +146,20 @@ test( 'does not show placeholder when PayPalMessages renders within 10 seconds',
 	).not.toBeInTheDocument();
 } );
 
-test( 'shows vaulting warning when vaulting is enabled', () => {
+test( 'ignores a legacy payLaterDisabledByVaulting flag on the global and still renders the preview', () => {
 	global.PcpCheckoutPayLaterBlock = {
 		...defaultConfig,
 		payLaterDisabledByVaulting: true,
 	};
-	useScriptParams.mockReturnValue( null );
+	useScriptParams.mockReturnValue( {
+		url_params: { 'client-id': 'test' },
+	} );
 
 	render( <Edit { ...defaultProps } /> );
 
 	expect(
-		screen.getByText( /cannot be used while PayPal Vaulting is active/ )
-	).toBeInTheDocument();
+		screen.queryByText( /PayPal Vaulting is active/ )
+	).not.toBeInTheDocument();
 } );
 
 test( 'shows placement warning when placement is disabled', () => {
@@ -273,25 +274,6 @@ describe( 'PayPal SDK v6 preview', () => {
 		expect(
 			screen.getByText( /Pay Later messaging preview unavailable/ )
 		).toBeInTheDocument();
-	} );
-
-	test( 'shows the vaulting warning instead of the v6 preview when vaulting disables the block', () => {
-		global.PcpCheckoutPayLaterBlock = {
-			...defaultConfig,
-			payLaterDisabledByVaulting: true,
-			isSdkV6Active: true,
-			sdkV6,
-			messageStyle,
-		};
-
-		render( <Edit { ...defaultProps } /> );
-
-		expect(
-			screen.getByText( /cannot be used while PayPal Vaulting is active/ )
-		).toBeInTheDocument();
-		expect(
-			screen.queryByTestId( 'v6-message-preview' )
-		).not.toBeInTheDocument();
 	} );
 } );
 

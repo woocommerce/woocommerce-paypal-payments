@@ -15,7 +15,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -161,9 +160,6 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 				$paylater_settings = $c->get( 'settings.data.paylater-messaging-settings' );
 				assert( $paylater_settings instanceof PayLaterMessagingSettings );
 
-				$settings_provider = $c->get( 'settings.settings-provider' );
-				assert( $settings_provider instanceof SettingsProvider );
-
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
@@ -191,7 +187,6 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						),
 						'config'                      => $config_factory->from_settings( $paylater_settings ),
 						'settingsUrl'                 => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'payLaterDisabledByVaulting'  => $settings_provider->pay_later_disabled_by_vaulting(),
 						'placementEnabled'            => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'cart' ),
 						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
@@ -215,19 +210,18 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 					$script_handle,
 					'PcpCheckoutPayLaterBlock',
 					array(
-						'ajax'                       => array(
+						'ajax'                => array(
 							'cart_script_params' => array(
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'config'                     => $config_factory->from_settings( $paylater_settings ),
-						'settingsUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
-						'placementEnabled'           => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'checkout' ),
-						'payLaterSettingsUrl'        => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'config'              => $config_factory->from_settings( $paylater_settings ),
+						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'placementEnabled'    => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'checkout' ),
+						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						// Module loaded, not page ownership: the editor has no page
 						// to own.
-						'isSdkV6Active'              => $c->has( 'sdk-v6.owns-current-page' ),
+						'isSdkV6Active'       => $c->has( 'sdk-v6.owns-current-page' ),
 					) + self::sdk_v6_preview_data( $c, 'checkout' )
 				);
 			},
