@@ -43,7 +43,6 @@ class AgenticWcSession extends WC_Session_Handler {
 			return false;
 		}
 
-		// Protected properties - accessible in subclass without reflection.
 		$this->_customer_id = $session_id;
 		$this->_data        = maybe_unserialize( $value );
 		$this->_has_cookie  = true;
@@ -67,9 +66,7 @@ class AgenticWcSession extends WC_Session_Handler {
 	}
 
 	/**
-	 * Initialize session cookie.
-	 *
-	 * We override this to do nothing since we load sessions manually via load_session_by_id().
+	 * Never reads a session cookie: sessions are loaded by ID, on demand.
 	 */
 	public function init_session_cookie(): void {
 		// No-op - sessions are loaded on-demand.
