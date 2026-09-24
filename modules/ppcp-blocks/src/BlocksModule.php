@@ -42,6 +42,18 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): bool {
+		// The Single Product PayPal buttons & Pay Later messaging blocks do not depend on the
+		// WooCommerce Blocks payment-method framework, so they are wired before the guard below.
+		// Deferred to `init`: block types must register there, and it keeps run() free of any
+		// boot-time service resolution.
+		add_action(
+			'init',
+			static function () use ( $c ): void {
+				ProductBlocks::register( $c );
+			},
+			20
+		);
+
 		if (
 			! class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' )
 			|| ! function_exists( 'woocommerce_store_api_register_payment_requirements' )

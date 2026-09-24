@@ -5,58 +5,20 @@ import { PanelBody } from '@wordpress/components';
 import { PayPalScriptProvider, PayPalMessages } from '@paypal/react-paypal-js';
 import { useScriptParams } from '@ppcp-paylater-block/hooks/script-params';
 import { usePreviewTimeout } from '@ppcp-paylater-block/hooks/use-preview-timeout';
+import { usePreviewController } from '@ppcp-paylater-block/hooks/use-preview-controller';
 import { PreviewPlaceholder } from '@ppcp-paylater-block/components/preview-placeholder';
+import { V6MessagePreview } from '@ppcp-paylater-block/components/v6-message-preview';
+
+// A fixed sample amount for the editor preview only; the front end uses the real
+// cart total. Reading it from `core/editor` fails in the Site Editor (empty content),
+// which left the preview without an amount and stuck on the timeout placeholder.
+const PREVIEW_AMOUNT = '50.00';
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
 	const { ppcpId } = attributes;
 
-	const [ loaded, setLoaded ] = useState( false );
-	const timedOut = usePreviewTimeout( loaded );
-
-	let amount;
-	const postContent = String(
-		wp.data.select( 'core/editor' )?.getEditedPostContent()
-	);
-	if (
-		postContent.includes( 'woocommerce/checkout' ) ||
-		postContent.includes( 'woocommerce/cart' )
-	) {
-		amount = 50.0;
-	}
-
-	const cartConfig = PcpCartPayLaterBlock.config.cart;
-
-	// v6 renders this as text regardless of settings, so the preview follows.
-	const layout = PcpCartPayLaterBlock.isSdkV6Active
-		? 'text'
-		: cartConfig.layout;
-
-	let previewStyle = {};
-	if ( layout === 'flex' ) {
-		previewStyle = {
-			layout,
-			color: cartConfig.color,
-			ratio: cartConfig.ratio,
-		};
-	} else {
-		previewStyle = {
-			layout,
-			logo: {
-				position: cartConfig[ 'logo-position' ],
-				type: cartConfig[ 'logo-type' ],
-			},
-			text: {
-				color: cartConfig[ 'text-color' ],
-				size: cartConfig[ 'text-size' ],
-			},
-		};
-	}
-
 	let classes = [ 'ppcp-paylater-block-preview', 'ppcp-overlay-parent' ];
-	if (
-		PcpCartPayLaterBlock.payLaterDisabledByVaulting ||
-		! PcpCartPayLaterBlock.placementEnabled
-	) {
+	if ( ! PcpCartPayLaterBlock.placementEnabled ) {
 		classes = [
 			...classes,
 			'ppcp-paylater-unavailable',
@@ -70,36 +32,6 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 			setAttributes( { ppcpId: `ppcp-${ clientId }` } );
 		}
 	}, [ ppcpId, clientId ] );
-
-	if ( PcpCartPayLaterBlock.payLaterDisabledByVaulting ) {
-		return (
-			<div { ...props }>
-				<div className="block-editor-warning__contents">
-					<p className="block-editor-warning__message">
-						{ __(
-							'Cart - Pay Later Messaging cannot be used while PayPal Vaulting is active. Disable PayPal Vaulting in the PayPal Payment settings to reactivate this block',
-							'woocommerce-paypal-payments'
-						) }
-					</p>
-					<div className="block-editor-warning__actions">
-						<span className="block-editor-warning__action">
-							<a href={ PcpCartPayLaterBlock.settingsUrl }>
-								<button
-									type="button"
-									className="components-button is-primary"
-								>
-									{ __(
-										'PayPal Payments Settings',
-										'woocommerce-paypal-payments'
-									) }
-								</button>
-							</a>
-						</span>
-					</div>
-				</div>
-			</div>
-		);
-	}
 
 	if ( ! PcpCartPayLaterBlock.placementEnabled ) {
 		return (
@@ -135,22 +67,10 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		);
 	}
 
-	const scriptParams = useScriptParams(
-		PcpCartPayLaterBlock.ajax.cart_script_params
+	const { sdkV6, messageStyle } = PcpCartPayLaterBlock;
+	const useSdkV6 = Boolean(
+		PcpCartPayLaterBlock.isSdkV6Active && sdkV6 && messageStyle
 	);
-	if ( scriptParams === null ) {
-		return (
-			<div { ...props }>
-				<PreviewPlaceholder timedOut={ timedOut } />
-			</div>
-		);
-	}
-
-	const urlParams = {
-		...scriptParams.url_params,
-		components: 'messages',
-		dataNamespace: 'ppcp-block-editor-cart-paylater-message',
-	};
 
 	return (
 		<>
@@ -181,22 +101,107 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...props }>
-				<div className="ppcp-overlay-child">
-					<PayPalScriptProvider options={ urlParams }>
-						<PayPalMessages
-							style={ previewStyle }
-							onRender={ () => setLoaded( true ) }
-							amount={ amount }
-						/>
-					</PayPalScriptProvider>
-				</div>
-				<div className="ppcp-overlay-child ppcp-unclicable-overlay">
-					{ ' ' }
-					{ /* make the message not clickable */ }
-					{ ! loaded && (
-						<PreviewPlaceholder timedOut={ timedOut } />
-					) }
-				</div>
+				{ useSdkV6 ? (
+					<V6MessagePreview
+						sdkV6={ sdkV6 }
+						amount={ PREVIEW_AMOUNT }
+						pageType="cart"
+						style={ messageStyle }
+					/>
+				) : (
+					<V5MessagePreview />
+				) }
+			</div>
+		</>
+	);
+}
+
+/**
+ * The v5 SDK preview, used while the v6 module is not loaded.
+ *
+ * @return {Object} The preview.
+ */
+function V5MessagePreview() {
+	const [ loaded, setLoaded ] = useState( false );
+	const timedOut = usePreviewTimeout( loaded );
+	const { containerRef, renderKey } = usePreviewController(
+		loaded,
+		setLoaded
+	);
+	const scriptParams = useScriptParams(
+		PcpCartPayLaterBlock.ajax.cart_script_params
+	);
+
+	if ( ! scriptParams ) {
+		// `false` means the params request failed, so there is nothing to wait for.
+		return (
+			<PreviewPlaceholder
+				timedOut={ timedOut || scriptParams === false }
+			/>
+		);
+	}
+
+	const cartConfig = PcpCartPayLaterBlock.config.cart;
+
+	// v6 renders this as text regardless of settings, so the preview follows.
+	const layout = PcpCartPayLaterBlock.isSdkV6Active
+		? 'text'
+		: cartConfig.layout;
+
+	let previewStyle = {};
+	if ( layout === 'flex' ) {
+		previewStyle = {
+			layout,
+			color: cartConfig.color,
+			ratio: cartConfig.ratio,
+		};
+	} else {
+		previewStyle = {
+			layout,
+			logo: {
+				position: cartConfig[ 'logo-position' ],
+				type: cartConfig[ 'logo-type' ],
+			},
+			text: {
+				color: cartConfig[ 'text-color' ],
+				size: cartConfig[ 'text-size' ],
+			},
+		};
+	}
+
+	const urlParams = {
+		...scriptParams.url_params,
+		components: 'messages',
+		dataNamespace: 'ppcp-block-editor-cart-paylater-message',
+	};
+
+	// The preview reuses the button SDK params, which disable the `paylater` funding
+	// source when the Pay Later *button* is off for this location. Messaging is
+	// independent of the button, so keep paylater enabled here or nothing renders.
+	if ( urlParams[ 'disable-funding' ] ) {
+		urlParams[ 'disable-funding' ] = urlParams[ 'disable-funding' ]
+			.split( ',' )
+			.filter(
+				( source ) => source !== 'paylater' && source !== 'credit'
+			)
+			.join( ',' );
+	}
+
+	return (
+		<>
+			<div className="ppcp-overlay-child" ref={ containerRef }>
+				<PayPalScriptProvider key={ renderKey } options={ urlParams }>
+					<PayPalMessages
+						style={ previewStyle }
+						onRender={ () => setLoaded( true ) }
+						amount={ Number( PREVIEW_AMOUNT ) }
+					/>
+				</PayPalScriptProvider>
+			</div>
+			<div className="ppcp-overlay-child ppcp-unclicable-overlay">
+				{ ' ' }
+				{ /* make the message not clickable */ }
+				{ ! loaded && <PreviewPlaceholder timedOut={ timedOut } /> }
 			</div>
 		</>
 	);

@@ -20,15 +20,23 @@ jest.mock( './hooks/script-params', () => ( {
 	useScriptParams: jest.fn(),
 } ) );
 
+jest.mock(
+	'./hooks/use-preview-controller',
+	() => ( {
+		usePreviewController: jest.fn(),
+	} ),
+	{ virtual: true }
+);
+
 jest.mock( '@paypal/react-paypal-js', () => ( {
-	PayPalScriptProvider: ( { children } ) => children,
+	PayPalScriptProvider: jest.fn( ( { children } ) => children ),
 	PayPalMessages: jest.fn( () => null ),
 } ) );
 
 const { useScriptParams } = require( './hooks/script-params' );
+const { usePreviewController } = require( './hooks/use-preview-controller' );
 
 const defaultConfig = {
-	payLaterDisabledByVaulting: false,
 	placementEnabled: true,
 	payLaterSettingsUrl: '/wp-admin/paylater-settings',
 	ajax: {
@@ -62,6 +70,10 @@ beforeEach( () => {
 	};
 	jest.clearAllMocks();
 	jest.clearAllTimers();
+	usePreviewController.mockReturnValue( {
+		containerRef: { current: null },
+		renderKey: 0,
+	} );
 } );
 
 test( 'shows spinner while script params are loading', () => {
@@ -127,15 +139,20 @@ test( 'does not show placeholder when PayPalMessages renders within 10 seconds',
 	).not.toBeInTheDocument();
 } );
 
-test( 'shows vaulting warning when vaulting is enabled', () => {
-	global.PcpPayLaterBlock = { ...defaultConfig, payLaterDisabledByVaulting: true };
-	useScriptParams.mockReturnValue( null );
+test( 'ignores a legacy payLaterDisabledByVaulting flag on the global and still renders the preview', () => {
+	global.PcpPayLaterBlock = {
+		...defaultConfig,
+		payLaterDisabledByVaulting: true,
+	};
+	useScriptParams.mockReturnValue( {
+		url_params: { 'client-id': 'test' },
+	} );
 
 	render( <Edit { ...defaultProps } /> );
 
 	expect(
-		screen.getByText( /cannot be used while PayPal Vaulting is active/ )
-	).toBeInTheDocument();
+		screen.queryByText( /PayPal Vaulting is active/ )
+	).not.toBeInTheDocument();
 } );
 
 test( 'shows placement warning when placement is disabled', () => {
@@ -217,5 +234,48 @@ describe( 'when the v6 SDK flag is active', () => {
 		expect( PayPalMessages.mock.calls[ 0 ][ 0 ].style.layout ).toBe(
 			'text'
 		);
+	} );
+} );
+
+describe( 'preview controller integration', () => {
+	test( 'attaches the container ref returned by usePreviewController to the overlay child', () => {
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
+		const containerRef = { current: null };
+		usePreviewController.mockReturnValue( { containerRef, renderKey: 0 } );
+
+		render( <Edit { ...defaultProps } /> );
+
+		expect( containerRef.current ).toHaveClass( 'ppcp-overlay-child' );
+	} );
+
+	test( 'remounts the PayPalScriptProvider subtree when the render key changes', () => {
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
+		const { PayPalScriptProvider } = require( '@paypal/react-paypal-js' );
+		let mountCount = 0;
+		PayPalScriptProvider.mockImplementation( ( { children } ) => {
+			useEffect( () => {
+				mountCount++;
+			}, [] );
+			return children;
+		} );
+		usePreviewController.mockReturnValue( {
+			containerRef: { current: null },
+			renderKey: 1,
+		} );
+
+		const { rerender } = render( <Edit { ...defaultProps } /> );
+		expect( mountCount ).toBe( 1 );
+
+		usePreviewController.mockReturnValue( {
+			containerRef: { current: null },
+			renderKey: 2,
+		} );
+		rerender( <Edit { ...defaultProps } /> );
+
+		expect( mountCount ).toBe( 2 );
 	} );
 } );

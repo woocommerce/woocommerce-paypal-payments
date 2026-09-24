@@ -408,7 +408,6 @@ return array(
 			$container->get( 'settings.data.styling' ),
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.paylater-messaging' ),
-			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.data.todos' ),
 		);
 	},

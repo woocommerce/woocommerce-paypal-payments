@@ -13,16 +13,50 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 return array(
-	'paylater-wc-blocks.asset_getter'      => static function ( ContainerInterface $container ): AssetGetter {
+	'paylater-wc-blocks.asset_getter'            => static function ( ContainerInterface $container ): AssetGetter {
 		$factory = $container->get( 'assets.asset_getter_factory' );
 		assert( $factory instanceof AssetGetterFactory );
 
 		return $factory->for_module( 'ppcp-paylater-wc-blocks' );
 	},
 
-	'paylater-wc-blocks.cart-renderer'     => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
+	/**
+	 * Auto-inserts the cart and checkout Pay Later messaging blocks into block-theme
+	 * templates via the Block Hooks API, so the messaging appears inside FSE cart and
+	 * checkout templates and the Site Editor canvas without relying on classic hooks.
+	 *
+	 * Each insertion's `enabled` predicate is evaluated lazily, at render time, so it
+	 * reflects the current Pay Later messaging placement settings. On a classic
+	 * (non-block) theme the registrar is a no-op.
+	 */
+	'paylater-wc-blocks.hooked-blocks-registrar' => static function ( ContainerInterface $container ): HookedBlocksRegistrar {
+		$settings_status = $container->get( 'wcgateway.settings.status' );
+		assert( $settings_status instanceof SettingsStatus );
+
+		return new HookedBlocksRegistrar(
+			array(
+				'woocommerce-paypal-payments/cart-paylater-messages'     => array(
+					'anchor'   => 'woocommerce/cart-totals-block',
+					'position' => 'last_child',
+					'enabled'  => static function () use ( $settings_status ): bool {
+						return PayLaterWCBlocksModule::is_placement_enabled( $settings_status, 'cart' );
+					},
+				),
+				'woocommerce-paypal-payments/checkout-paylater-messages' => array(
+					'anchor'   => 'woocommerce/checkout-totals-block',
+					'position' => 'last_child',
+					'enabled'  => static function () use ( $settings_status ): bool {
+						return PayLaterWCBlocksModule::is_placement_enabled( $settings_status, 'checkout' );
+					},
+				),
+			)
+		);
+	},
+
+	'paylater-wc-blocks.cart-renderer'           => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
 		$paylater_settings = $container->get( 'settings.data.paylater-messaging-settings' );
 		assert( $paylater_settings instanceof PayLaterMessagingSettings );
 		$cart = $paylater_settings->get_cart();
@@ -39,7 +73,7 @@ return array(
 			)
 		);
 	},
-	'paylater-wc-blocks.checkout-renderer' => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
+	'paylater-wc-blocks.checkout-renderer'       => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
 		$paylater_settings = $container->get( 'settings.data.paylater-messaging-settings' );
 		assert( $paylater_settings instanceof PayLaterMessagingSettings );
 		$checkout = $paylater_settings->get_checkout();

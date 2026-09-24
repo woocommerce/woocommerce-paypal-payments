@@ -55,6 +55,58 @@ describe( 'loadScript', () => {
 	} );
 } );
 
+describe( 'loadScript with a targetWindow', () => {
+	function fakeWindow() {
+		return {
+			document: {
+				head: { appendChild: jest.fn() },
+				createElement: jest.fn( () => ( {
+					remove: jest.fn(),
+					setAttribute: jest.fn(),
+				} ) ),
+			},
+		};
+	}
+
+	test( 'appends the script tag into the given window instead of the global one', () => {
+		const otherWindow = fakeWindow();
+		const url = 'https://example.test/other-window.js';
+
+		loadScript( url, otherWindow );
+
+		expect( otherWindow.document.createElement ).toHaveBeenCalledWith(
+			'script'
+		);
+		expect( otherWindow.document.head.appendChild ).toHaveBeenCalled();
+		expect(
+			document.head.querySelectorAll( `script[src="${ url }"]` )
+		).toHaveLength( 0 );
+	} );
+
+	test( 'caches the load promise per window, so the same URL loads once per window', () => {
+		const windowA = fakeWindow();
+		const windowB = fakeWindow();
+		const url = 'https://example.test/per-window-cache.js';
+
+		loadScript( url, windowA );
+		loadScript( url, windowA );
+		loadScript( url, windowB );
+
+		expect( windowA.document.createElement ).toHaveBeenCalledTimes( 1 );
+		expect( windowB.document.createElement ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'loads into the global window by default', () => {
+		const url = 'https://example.test/default-window.js';
+
+		loadScript( url );
+
+		expect(
+			document.head.querySelectorAll( `script[src="${ url }"]` )
+		).toHaveLength( 1 );
+	} );
+} );
+
 describe( 'loadGoogleSdk', () => {
 	test( 'resolves once the script loads and the Google Pay global is present', async () => {
 		const url = 'https://example.test/pay.js';
@@ -79,4 +131,3 @@ describe( 'loadGoogleSdk', () => {
 		);
 	} );
 } );
-

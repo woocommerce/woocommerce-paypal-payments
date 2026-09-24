@@ -59,7 +59,7 @@ class PaymentMethodsDependenciesDefinition {
 			P24Gateway::ID            => array( PayPalGateway::ID ),
 			TrustlyGateway::ID        => array( PayPalGateway::ID ),
 			PayUponInvoiceGateway::ID => array( PayPalGateway::ID ),
-			OXXOGateway::ID                  => array( PayPalGateway::ID ),
+			OXXOGateway::ID           => array( PayPalGateway::ID ),
 			PWCGateway::ID            => array( PayPalGateway::ID ),
 			'venmo'                   => array( PayPalGateway::ID ),
 			'pay-later'               => array( PayPalGateway::ID ),
@@ -80,17 +80,9 @@ class PaymentMethodsDependenciesDefinition {
 	 * @return array The dependency relationships between settings and payment methods
 	 */
 	public function get_setting_dependencies(): array {
-		$dependencies = array();
-
-		if ( ! $this->settings_provider->pay_later_with_vaulting_enabled() ) {
-			$dependencies['pay-later'] = array(
-				'savePaypalAndVenmo' => false,
-			);
-		}
-
 		return apply_filters(
 			'woocommerce_paypal_payments_setting_dependencies',
-			$dependencies
+			array()
 		);
 	}
 

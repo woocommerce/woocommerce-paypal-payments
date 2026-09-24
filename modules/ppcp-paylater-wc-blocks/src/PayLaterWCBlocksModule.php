@@ -11,14 +11,16 @@ namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
@@ -88,6 +90,47 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 	}
 
 	/**
+	 * The data the block editor needs to preview a message with the SDK v6.
+	 *
+	 * The v6 frontend config (wc_ppcp_sdk_v6) is never printed in admin, so the
+	 * editor gets its own: the public client id instead of a client token, and
+	 * the location's v6 style from the same mapper the frontend uses.
+	 *
+	 * @param ContainerInterface $c        The container.
+	 * @param string             $location The messaging location, 'cart' or 'checkout'.
+	 * @return array{sdkV6: ?array, messageStyle: ?array} Null values when the v6 module is not loaded.
+	 */
+	private static function sdk_v6_preview_data( ContainerInterface $c, string $location ): array {
+		if ( ! $c->has( 'sdk-v6.message-style-mapper' ) ) {
+			return array(
+				'sdkV6'        => null,
+				'messageStyle' => null,
+			);
+		}
+
+		$environment = $c->get( 'settings.environment' );
+		assert( $environment instanceof Environment );
+
+		$style_mapper = $c->get( 'sdk-v6.message-style-mapper' );
+		assert( $style_mapper instanceof MessageStyleMapper );
+
+		// Same script URL as SdkV6Manager::script_data().
+		$base_url = $environment->is_sandbox()
+			? 'https://www.sandbox.paypal.com'
+			: 'https://www.paypal.com';
+
+		return array(
+			'sdkV6'        => array(
+				'sdkUrl'   => $base_url . '/web-sdk/v6/core',
+				'clientId' => (string) $c->get( 'button.client_id' ),
+				'currency' => get_woocommerce_currency(),
+				'locale'   => str_replace( '_', '-', get_locale() ),
+			),
+			'messageStyle' => $style_mapper->styles_for_location( $location ),
+		);
+	}
+
+	/**
 	 * Returns whether the under cart totals placement is enabled.
 	 *
 	 * @return bool true if the under cart totals placement is enabled, otherwise false.
@@ -117,9 +160,6 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 				$paylater_settings = $c->get( 'settings.data.paylater-messaging-settings' );
 				assert( $paylater_settings instanceof PayLaterMessagingSettings );
 
-				$settings_provider = $c->get( 'settings.settings-provider' );
-				assert( $settings_provider instanceof SettingsProvider );
-
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
@@ -147,14 +187,13 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						),
 						'config'                      => $config_factory->from_settings( $paylater_settings ),
 						'settingsUrl'                 => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'payLaterDisabledByVaulting'  => $settings_provider->pay_later_disabled_by_vaulting(),
 						'placementEnabled'            => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'cart' ),
 						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
 						// Module loaded, not page ownership: the editor has no page
 						// to own.
 						'isSdkV6Active'               => $c->has( 'sdk-v6.owns-current-page' ),
-					)
+					) + self::sdk_v6_preview_data( $c, 'cart' )
 				);
 
 				$script_handle = 'ppcp-checkout-paylater-block';
@@ -171,24 +210,31 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 					$script_handle,
 					'PcpCheckoutPayLaterBlock',
 					array(
-						'ajax'                       => array(
+						'ajax'                => array(
 							'cart_script_params' => array(
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'config'                     => $config_factory->from_settings( $paylater_settings ),
-						'settingsUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'payLaterDisabledByVaulting' => $settings_provider->pay_later_disabled_by_vaulting(),
-						'placementEnabled'           => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'checkout' ),
-						'payLaterSettingsUrl'        => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'config'              => $config_factory->from_settings( $paylater_settings ),
+						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'placementEnabled'    => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'checkout' ),
+						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						// Module loaded, not page ownership: the editor has no page
 						// to own.
-						'isSdkV6Active'              => $c->has( 'sdk-v6.owns-current-page' ),
-					)
+						'isSdkV6Active'       => $c->has( 'sdk-v6.owns-current-page' ),
+					) + self::sdk_v6_preview_data( $c, 'checkout' )
 				);
 			},
 			20
 		);
+
+		// Auto-insert the messaging blocks into block-theme (FSE) cart and checkout
+		// templates via the Block Hooks API. No-op on classic themes; on block themes
+		// it covers what the classic `woocommerce_*` hooks and the imperative editor
+		// inserter cannot reach (template parts and the Site Editor canvas).
+		$hooked_blocks_registrar = $c->get( 'paylater-wc-blocks.hooked-blocks-registrar' );
+		assert( $hooked_blocks_registrar instanceof HookedBlocksRegistrar );
+		$hooked_blocks_registrar->register();
 
 		/**
 		 * Registers slugs as block categories with WordPress.
@@ -249,7 +295,10 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		// This is a fallback for the default Cart block that haven't been saved with the inserted Pay Later messaging block.
+		// Fallback for cart placements the Block Hooks API does not reach - a classic
+		// theme, or a Cart block on an ordinary page rather than an FSE template. The
+		// strpos guard below also prevents a double insertion: on an FSE template Block
+		// Hooks has already added the block, so its markup is present here and we skip.
 		add_filter(
 			'render_block_woocommerce/cart-totals-block',
 			function ( string $block_content ) use ( $c ) {
@@ -269,7 +318,8 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 			1
 		);
 
-		// This is a fallback for the default Checkout block that haven't been saved with the inserted Checkout - Pay Later messaging block.
+		// Fallback for checkout placements the Block Hooks API does not reach, and the
+		// same strpos guard prevents a double insertion on FSE checkout templates.
 		add_filter(
 			'render_block_woocommerce/checkout-totals-block',
 			function ( string $block_content ) use ( $c ) {
@@ -293,6 +343,14 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 			add_action(
 				'enqueue_block_editor_assets',
 				function () use ( $c ): void {
+					// In the Site Editor the Block Hooks API inserts the messaging
+					// block into the cart/checkout templates, so the imperative
+					// inserter would place a second copy. Let Block Hooks own that
+					// context; keep the inserter for the post/page editor.
+					if ( Context::is_site_editor() ) {
+						return;
+					}
+
 					$handle = 'ppcp-checkout-paylater-block-editor-inserter';
 
 					$asset_getter = $c->get( 'paylater-wc-blocks.asset_getter' );
