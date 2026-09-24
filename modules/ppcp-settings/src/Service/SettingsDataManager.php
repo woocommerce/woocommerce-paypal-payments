@@ -197,12 +197,23 @@ class SettingsDataManager {
 		$this->payment_methods->set_fastlane_display_watermark( true );
 
 		foreach ( $all_methods as $method ) {
+			// Pay Later is set once by apply_payment_methods(), so a reconnect keeps the merchant's choice.
+			if ( 'pay-later' === $method['id'] ) {
+				continue;
+			}
+
 			$this->payment_methods->toggle_method_state( $method['id'], false );
 		}
 
-		// Always enable PayPal, Venmo and Pay Later.
+		// Always enable PayPal and Venmo.
 		$this->payment_methods->toggle_method_state( PayPalGateway::ID, true );
 		$this->payment_methods->toggle_method_state( 'venmo', true );
+
+		// "Save PayPal and Venmo" suppresses Pay Later unless the merchant may combine the two.
+		// Not checked on connect, where the eligibility still uses the store country.
+		if ( $this->settings_provider->pay_later_disabled_by_vaulting() ) {
+			$this->payment_methods->toggle_method_state( 'pay-later', false );
+		}
 
 		if ( ! $flags->is_business_seller && $flags->use_card_payments ) {
 			// Use BCDC for casual sellers.
@@ -213,13 +224,6 @@ class SettingsDataManager {
 			if ( $flags->use_card_payments ) {
 				// Enable ACDC for business sellers.
 				$this->payment_methods->toggle_method_state( CreditCardGateway::ID, true );
-
-				// Enable Pay Later for business sellers. Selecting subscriptions automatically enables
-				// the "Save PayPal and Venmo" option, which suppresses Pay Later unless the merchant
-				// may combine the two.
-				if ( ! $flags->use_subscriptions || $this->settings_provider->pay_later_with_vaulting_enabled() ) {
-					$this->payment_methods->toggle_method_state( 'pay-later', true );
-				}
 
 				// Enable BCDC for business sellers without ACDC.
 				$this->payment_methods->toggle_method_state( CardButtonGateway::ID, true );
