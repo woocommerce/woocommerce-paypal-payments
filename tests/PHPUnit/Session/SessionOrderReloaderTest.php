@@ -22,6 +22,8 @@ class SessionOrderReloaderTest extends TestCase
 {
 	private const INTERVAL = 30;
 
+	private const NOW = 1700000000;
+
 	private OrderEndpoint $order_endpoint;
 
 	private LoggerInterface $logger;
@@ -37,13 +39,12 @@ class SessionOrderReloaderTest extends TestCase
 		$this->session_handler  = Mockery::mock(SessionHandler::class);
 	}
 
-	private function create_reloader(int $now): SessionOrderReloader
+	private function create_reloader(): SessionOrderReloader
 	{
 		return new SessionOrderReloader(
 			$this->order_endpoint,
 			$this->logger,
-			self::INTERVAL,
-			static fn(): int => $now
+			self::INTERVAL
 		);
 	}
 
@@ -88,6 +89,7 @@ class SessionOrderReloaderTest extends TestCase
 	{
 		$store = [];
 		when('WC')->justReturn((object) array('session' => $this->session_with($store)));
+		when('time')->justReturn(self::NOW);
 
 		$order       = $this->order_with('WC-ORDER-1', OrderStatus::CREATED);
 		$fresh_order = Mockery::mock(Order::class);
@@ -95,10 +97,13 @@ class SessionOrderReloaderTest extends TestCase
 		$this->order_endpoint->shouldReceive('order')->once()->with('WC-ORDER-1')->andReturn($fresh_order);
 		$this->session_handler->shouldReceive('replace_order')->once()->with($fresh_order);
 
-		$this->create_reloader(1000)->maybe_reload($order, $this->session_handler);
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
 
 		$this->assertSame(
-			array('order_id' => 'WC-ORDER-1', 'time' => 1000),
+			array(
+				'order_id' => 'WC-ORDER-1',
+				'time'     => self::NOW,
+			),
 			$store[SessionOrderReloader::LAST_RELOAD_SESSION_KEY]
 		);
 	}
@@ -120,7 +125,7 @@ class SessionOrderReloaderTest extends TestCase
 		$this->order_endpoint->shouldNotReceive('order');
 		$this->session_handler->shouldNotReceive('replace_order');
 
-		$this->create_reloader(1000)->maybe_reload($order, $this->session_handler);
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
 
 		$this->assertArrayNotHasKey(SessionOrderReloader::LAST_RELOAD_SESSION_KEY, $store);
 	}
@@ -147,7 +152,7 @@ class SessionOrderReloaderTest extends TestCase
 		$this->order_endpoint->shouldNotReceive('order');
 		$this->session_handler->shouldNotReceive('replace_order');
 
-		$this->create_reloader(1000)->maybe_reload(null, $this->session_handler);
+		$this->create_reloader()->maybe_reload(null, $this->session_handler);
 
 		$this->assertSame(array(), $store);
 	}
@@ -166,7 +171,7 @@ class SessionOrderReloaderTest extends TestCase
 		$this->order_endpoint->shouldNotReceive('order');
 		$this->session_handler->shouldNotReceive('replace_order');
 
-		$this->create_reloader(1000)->maybe_reload($order, $this->session_handler);
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
 
 		$this->addToAssertionCount(1);
 	}
@@ -188,7 +193,7 @@ class SessionOrderReloaderTest extends TestCase
 		$this->order_endpoint->shouldReceive('order')->once()->with('WC-ORDER-1')->andReturn($fresh_order);
 		$this->session_handler->shouldReceive('replace_order')->once()->with($fresh_order);
 
-		$reloader = $this->create_reloader(1000);
+		$reloader = $this->create_reloader();
 		$reloader->maybe_reload($order, $this->session_handler);
 		$reloader->maybe_reload($other_order, $this->session_handler);
 
@@ -196,7 +201,7 @@ class SessionOrderReloaderTest extends TestCase
 	}
 
 	/**
-	 * GIVEN the same order was already reloaded within the configured interval
+	 * GIVEN the same order was already reloaded a number of seconds ago
 	 * WHEN a new reloader instance evaluates it again
 	 * THEN it is skipped while inside the interval, fetched again once the interval elapses,
 	 * AND a different order id within the interval is fetched regardless
@@ -205,18 +210,18 @@ class SessionOrderReloaderTest extends TestCase
 	 */
 	public function test_reload_across_instances_respects_interval(
 		string $stored_order_id,
-		int $stored_time,
+		int $seconds_since_stored,
 		string $requested_order_id,
-		int $now,
 		bool $expects_fetch
 	): void {
 		$store = array(
 			SessionOrderReloader::LAST_RELOAD_SESSION_KEY => array(
 				'order_id' => $stored_order_id,
-				'time'     => $stored_time,
+				'time'     => self::NOW - $seconds_since_stored,
 			),
 		);
 		when('WC')->justReturn((object) array('session' => $this->session_with($store)));
+		when('time')->justReturn(self::NOW);
 
 		$order       = $this->order_with($requested_order_id, OrderStatus::CREATED);
 		$fresh_order = Mockery::mock(Order::class);
@@ -229,7 +234,7 @@ class SessionOrderReloaderTest extends TestCase
 			$this->session_handler->shouldNotReceive('replace_order');
 		}
 
-		$this->create_reloader($now)->maybe_reload($order, $this->session_handler);
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
 
 		$this->addToAssertionCount(1);
 	}
@@ -237,9 +242,9 @@ class SessionOrderReloaderTest extends TestCase
 	public function repeat_reload_provider(): array
 	{
 		return array(
-			'same order within interval is skipped'      => array('WC-ORDER-1', 1000, 'WC-ORDER-1', 1000 + self::INTERVAL - 1, false),
-			'same order after interval elapsed is fetched' => array('WC-ORDER-1', 1000, 'WC-ORDER-1', 1000 + self::INTERVAL, true),
-			'different order within interval is fetched'  => array('WC-ORDER-1', 1000, 'WC-ORDER-2', 1000 + 1, true),
+			'same order one second before interval elapses is skipped' => array('WC-ORDER-1', self::INTERVAL - 1, 'WC-ORDER-1', false),
+			'same order exactly at interval boundary is fetched'       => array('WC-ORDER-1', self::INTERVAL, 'WC-ORDER-1', true),
+			'different order within interval is fetched'    => array('WC-ORDER-1', 5, 'WC-ORDER-2', true),
 		);
 	}
 
@@ -265,7 +270,7 @@ class SessionOrderReloaderTest extends TestCase
 		$this->session_handler->shouldNotReceive('replace_order');
 		$this->logger->shouldNotReceive('warning');
 
-		$this->create_reloader(1000)->maybe_reload($order, $this->session_handler);
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
 
 		$this->addToAssertionCount(1);
 	}
@@ -295,7 +300,7 @@ class SessionOrderReloaderTest extends TestCase
 		$this->session_handler->shouldNotReceive('destroy_session_data');
 		$this->session_handler->shouldNotReceive('replace_order');
 
-		$this->create_reloader(1000)->maybe_reload($order, $this->session_handler);
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
 
 		$this->addToAssertionCount(1);
 	}
@@ -328,7 +333,7 @@ class SessionOrderReloaderTest extends TestCase
 		$this->session_handler->shouldNotReceive('replace_order');
 		$this->logger->shouldReceive('warning')->once();
 
-		$this->create_reloader(1000)->maybe_reload($order, $this->session_handler);
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
 
 		$this->addToAssertionCount(1);
 	}
