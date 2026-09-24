@@ -42,6 +42,11 @@ add_filter( 'woocommerce_store_api_disable_nonce_check', '__return_true' );
 add_filter('woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled', '__return_true');
 
 /**
+ * Disable the WooCommerce order milestone celebration
+ */
+add_filter( 'wc_order_milestone_egg_enabled', '__return_false' );
+
+/**
  * Per README.md's "Webhooks" section: for testing webhooks with ngrok, the
  * site itself stays local — only the webhook listening URL is exposed via
  * the public tunnel, through the NGROK_HOST environment variable that
