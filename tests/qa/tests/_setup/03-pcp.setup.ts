@@ -1,7 +1,12 @@
 /**
+ * External dependencies
+ */
+import { APIRequestContext } from '@playwright/test';
+import { existsSync } from 'fs';
+/**
  * Internal dependencies
  */
-import { test as setup } from '../../utils';
+import { test as setup, expect, PcpApi } from '../../utils';
 import {
 	merchants,
 	storeConfigGermany,
@@ -14,13 +19,65 @@ import {
 
 const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo, pui } = gateways;
 
+/**
+ * Path the CI workflow writes the public tunnel host to. Its presence is what
+ * tells us a tunnel was set up for this shard: only the shards whose tests wait
+ * on a PayPal webhook get one, so on every other shard there is nothing to check.
+ */
+const ngrokHostFile = 'tests/qa/resources/e2e-snippets/ngrok-host.txt';
+
+/**
+ * On a tunnelled shard in CI, confirms the webhook URL PayPal has on file was
+ * rewritten to the public host instead of the local site host, and that it is
+ * actually reachable. Catches a broken tunnel right after connect, instead of
+ * as a confusing multi-minute timeout deep inside a transaction test.
+ *
+ * @param pcpApi  The PCP API client, used to read back the registered webhook URL.
+ * @param request The Playwright request context, used to probe the URL.
+ */
+const assertWebhookPubliclyReachable = async (
+	pcpApi: PcpApi,
+	request: APIRequestContext
+) => {
+	if ( ! process.env.CI || ! existsSync( ngrokHostFile ) ) {
+		return;
+	}
+
+	const { data } = await pcpApi.wcRequest( 'get', 'wc_paypal/webhooks' );
+	const webhookUrl = data?.url;
+
+	expect(
+		webhookUrl,
+		'Assert a webhook URL is registered with PayPal'
+	).toBeTruthy();
+
+	const registeredHost = new URL( webhookUrl ).hostname;
+	const localHost = new URL( process.env.WP_BASE_URL ).hostname;
+
+	expect(
+		registeredHost,
+		`Assert the registered webhook host (${ registeredHost }) was rewritten to the public tunnel host, not the local site host (${ localHost })`
+	).not.toEqual( localHost );
+
+	let isReachable = true;
+	try {
+		await request.get( webhookUrl, { timeout: 15_000 } );
+	} catch {
+		isReachable = false;
+	}
+	expect(
+		isReachable,
+		`Assert the registered webhook URL (${ webhookUrl }) is publicly reachable`
+	).toBeTruthy();
+};
+
 setup.use( { screencastOptions: null } );
 
 // =====================================================================
 // Layer 2 — PCP country: configureStore + installPcp + resetDb + connect
 // =====================================================================
 
-setup( 'setup:pcp:usa;', async ( { utils, pcpApi } ) => {
+setup( 'setup:pcp:usa;', async ( { utils, pcpApi, request } ) => {
 	await utils.configureStore( storeConfigUsa );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -28,9 +85,10 @@ setup( 'setup:pcp:usa;', async ( { utils, pcpApi } ) => {
 		merchants.usa.client_id,
 		merchants.usa.client_secret
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 } );
 
-setup( 'setup:pcp:germany;', async ( { utils, pcpApi } ) => {
+setup( 'setup:pcp:germany;', async ( { utils, pcpApi, request } ) => {
 	await utils.configureStore( storeConfigGermany );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -38,9 +96,10 @@ setup( 'setup:pcp:germany;', async ( { utils, pcpApi } ) => {
 		merchants.germany.client_id,
 		merchants.germany.client_secret
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 } );
 
-setup( 'setup:pcp:mexico;', async ( { utils, pcpApi } ) => {
+setup( 'setup:pcp:mexico;', async ( { utils, pcpApi, request } ) => {
 	await utils.configureStore( storeConfigMexico );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -48,6 +107,7 @@ setup( 'setup:pcp:mexico;', async ( { utils, pcpApi } ) => {
 		merchants.mexico.client_id,
 		merchants.mexico.client_secret
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 } );
 
 // =====================================================================
