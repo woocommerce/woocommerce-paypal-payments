@@ -29,16 +29,22 @@ jest.mock( '../sessions/freeTrialSave', () => ( {
 	exchangeSetupToken: ( ...args ) => mockExchangeSetupToken( ...args ),
 } ) );
 
-import {
-	render,
-	waitFor,
-	act,
-	screen,
-	fireEvent,
-} from '@testing-library/react';
+import { render, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { createElement } from '@wordpress/element';
 import { V6CardFieldsComponent } from './V6CardFieldsComponent';
+const { V6CardFieldContainer: ActualV6CardFieldContainer } = jest.requireActual(
+	'./V6CardFieldContainer'
+);
+
+// The component detects floating-label support by querying for this markup.
+function appendFloatingLabelMarker() {
+	const wrapper = document.createElement( 'div' );
+	wrapper.className = 'wc-block-components-text-input';
+	wrapper.appendChild( document.createElement( 'input' ) );
+	document.body.appendChild( wrapper );
+	return wrapper;
+}
 
 function cardConfig( overrides = {} ) {
 	return {
@@ -48,7 +54,6 @@ function cardConfig( overrides = {} ) {
 			payment_method: 'ppcp-credit-card-gateway',
 			funding_source: 'card',
 			title: 'Debit & Credit Cards',
-			name_field: true,
 			fields: {},
 		},
 		ajax: {
@@ -63,6 +68,8 @@ let onPaymentSetup;
 let paymentSetupCb;
 let onCheckoutValidation;
 let checkoutValidationCb;
+let onCheckoutFail;
+let checkoutFailCb;
 let hasValidationErrors;
 let eventRegistration;
 let session;
@@ -101,6 +108,10 @@ async function waitForCheckoutValidationReady() {
 	await waitFor( () => expect( checkoutValidationCb ).not.toBeNull() );
 }
 
+async function waitForCheckoutFailReady() {
+	await waitFor( () => expect( checkoutFailCb ).not.toBeNull() );
+}
+
 beforeEach( () => {
 	paymentSetupCb = null;
 	onPaymentSetup = jest.fn( ( cb ) => {
@@ -112,7 +123,16 @@ beforeEach( () => {
 		checkoutValidationCb = cb;
 		return () => {};
 	} );
-	eventRegistration = { onPaymentSetup, onCheckoutValidation };
+	checkoutFailCb = null;
+	onCheckoutFail = jest.fn( ( cb ) => {
+		checkoutFailCb = cb;
+		return () => {};
+	} );
+	eventRegistration = {
+		onPaymentSetup,
+		onCheckoutValidation,
+		onCheckoutFail,
+	};
 
 	hasValidationErrors = false;
 	global.wp = {
@@ -134,6 +154,7 @@ beforeEach( () => {
 			document.createElement( 'div' )
 		),
 		submit: jest.fn(),
+		on: jest.fn(),
 	};
 
 	mockLoadSdkV6.mockReset().mockResolvedValue( {
@@ -184,6 +205,18 @@ describe( 'V6CardFieldsComponent', () => {
 		await waitForSessionReady();
 
 		expect( onPaymentSetup ).toHaveBeenCalled();
+	} );
+
+	test( 'the root container and the expiry/CVV row carry the class hooks the stylesheet spacing depends on', async () => {
+		renderComponent();
+		await waitForSessionReady();
+
+		expect(
+			document.querySelector( '.ppcp-sdk-v6-card-fields' )
+		).toBeInTheDocument();
+		expect(
+			document.querySelector( '.ppcp-sdk-v6-card-fields__row' )
+		).toBeInTheDocument();
 	} );
 
 	test( 'a pending checkout validation error blocks the card submission before an order is created', async () => {
@@ -254,7 +287,6 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'',
 			false
 		);
 		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
@@ -279,7 +311,6 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'',
 			true
 		);
 	} );
@@ -305,7 +336,6 @@ describe( 'V6CardFieldsComponent', () => {
 				has_subscriptions: true,
 			} ),
 			'checkout-block',
-			'',
 			true
 		);
 	} );
@@ -373,12 +403,11 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'',
 			false
 		);
 	} );
 
-	test( 'reports an error and skips approval when 3D Secure is canceled', async () => {
+	test( 'reports the "authentication not completed" message and skips approval when 3D Secure is canceled', async () => {
 		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
 		session.submit.mockResolvedValueOnce( { state: 'canceled' } );
 
@@ -390,12 +419,14 @@ describe( 'V6CardFieldsComponent', () => {
 			result = await paymentSetupCb();
 		} );
 
-		expect( result.type ).toBe( 'error' );
-		expect( result.message ).toBeTruthy();
+		expect( result ).toEqual( {
+			type: 'error',
+			message: 'Card authentication was not completed. Please try again.',
+		} );
 		expect( mockApproveCardOrder ).not.toHaveBeenCalled();
 	} );
 
-	test( 'reports an error and skips approval when the card payment fails', async () => {
+	test( 'reports the friendly decline message and skips approval when the card payment does not succeed', async () => {
 		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
 		session.submit.mockResolvedValueOnce( { state: 'failed' } );
 
@@ -407,13 +438,17 @@ describe( 'V6CardFieldsComponent', () => {
 			result = await paymentSetupCb();
 		} );
 
-		expect( result.type ).toBe( 'error' );
+		expect( result ).toEqual( {
+			type: 'error',
+			message:
+				'This card could not be authorized. Please try a different payment method.',
+		} );
 		expect( mockApproveCardOrder ).not.toHaveBeenCalled();
 	} );
 
-	test( 'reports the thrown error message when creating the order fails', async () => {
+	test( 'shows the friendly decline message instead of leaking a thrown error that is not marked user-facing', async () => {
 		mockCreateCardOrder.mockRejectedValueOnce(
-			new Error( 'nonce expired' )
+			new Error( 'PayPal SDK internal failure XYZ' )
 		);
 
 		renderComponent();
@@ -424,7 +459,30 @@ describe( 'V6CardFieldsComponent', () => {
 			result = await paymentSetupCb();
 		} );
 
-		expect( result ).toEqual( { type: 'error', message: 'nonce expired' } );
+		expect( result ).toEqual( {
+			type: 'error',
+			message:
+				'This card could not be authorized. Please try a different payment method.',
+		} );
+	} );
+
+	test( 'shows a thrown error verbatim when it is marked user-facing', async () => {
+		const userFacing = new Error( 'Your card was declined by the bank.' );
+		userFacing.isUserFacing = true;
+		mockCreateCardOrder.mockRejectedValueOnce( userFacing );
+
+		renderComponent();
+		await waitForSessionReady();
+
+		let result;
+		await act( async () => {
+			result = await paymentSetupCb();
+		} );
+
+		expect( result ).toEqual( {
+			type: 'error',
+			message: 'Your card was declined by the bank.',
+		} );
 	} );
 
 	test( "passes the reference input's height to each V6CardFieldContainer via its own height prop, not inside style", async () => {
@@ -440,16 +498,12 @@ describe( 'V6CardFieldsComponent', () => {
 		}
 	} );
 
-	test( 'renders the cardholder name as a plain input, not a V6CardFieldContainer, when card_fields.name_field is enabled', async () => {
+	test( 'renders only number/expiry/cvv field containers, with no cardholder-name field', async () => {
 		renderComponent();
 
 		await waitFor( () =>
 			expect( mockCardFieldContainer ).toHaveBeenCalled()
 		);
-
-		expect(
-			screen.getByPlaceholderText( 'Cardholder name (optional)' )
-		).toBeInTheDocument();
 
 		const types = mockCardFieldContainer.mock.calls.map(
 			( call ) => call[ 0 ].type
@@ -461,12 +515,12 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCardFieldContainer ).toHaveBeenCalledTimes( 3 );
 	} );
 
-	test( 'does not render the name input when card_fields.name_field is disabled', async () => {
+	test( 'renders no name input even with a stale name_field: true left over in config', async () => {
 		renderComponent( {
 			config: cardConfig( {
 				card_fields: {
 					...cardConfig().card_fields,
-					name_field: false,
+					name_field: true,
 				},
 			} ),
 		} );
@@ -476,38 +530,20 @@ describe( 'V6CardFieldsComponent', () => {
 		);
 
 		expect(
-			screen.queryByPlaceholderText( 'Cardholder name (optional)' )
+			document.getElementById( 'ppcp-sdk-v6-card-name' )
 		).not.toBeInTheDocument();
-
-		const types = mockCardFieldContainer.mock.calls.map(
-			( call ) => call[ 0 ].type
-		);
-		expect( types ).not.toContain( 'name' );
-		expect( types ).toContain( 'number' );
 	} );
 
-	test( 'forwards the typed cardholder name to createCardOrder on submit', async () => {
-		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
-		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
-
+	test( 'keeps floatingLabel false for each field when no Blocks text-input markup is on the page', async () => {
 		renderComponent();
 		await waitForSessionReady();
 
-		const nameInput = screen.getByPlaceholderText(
-			'Cardholder name (optional)'
-		);
-		fireEvent.change( nameInput, { target: { value: 'Jane Doe' } } );
-
-		await act( async () => {
-			await paymentSetupCb();
+		[ 'number', 'expiry', 'cvv' ].forEach( ( type ) => {
+			const call = mockCardFieldContainer.mock.calls.find(
+				( c ) => c[ 0 ].type === type
+			);
+			expect( call[ 0 ].floatingLabel ).toBe( false );
 		} );
-
-		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
-			cardConfig(),
-			'checkout-block',
-			'Jane Doe',
-			false
-		);
 	} );
 
 	test( 'submits the session with the billing address derived from the Blocks billing prop', async () => {
@@ -610,7 +646,7 @@ describe( 'V6CardFieldsComponent', () => {
 			expect( result ).toEqual( { type: 'success' } );
 		} );
 
-		test( 'reports an error and skips the exchange when 3D Secure is canceled', async () => {
+		test( 'reports the "authentication not completed" message and skips the exchange when 3D Secure is canceled', async () => {
 			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
 			session.submit.mockResolvedValueOnce( { state: 'canceled' } );
 
@@ -622,12 +658,15 @@ describe( 'V6CardFieldsComponent', () => {
 				result = await paymentSetupCb();
 			} );
 
-			expect( result.type ).toBe( 'error' );
-			expect( result.message ).toBeTruthy();
+			expect( result ).toEqual( {
+				type: 'error',
+				message:
+					'Card authentication was not completed. Please try again.',
+			} );
 			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
 		} );
 
-		test( 'reports an error and skips the exchange when the save session fails', async () => {
+		test( 'reports the friendly decline message and skips the exchange when the save session does not succeed', async () => {
 			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
 			session.submit.mockResolvedValueOnce( { state: 'failed' } );
 
@@ -639,15 +678,19 @@ describe( 'V6CardFieldsComponent', () => {
 				result = await paymentSetupCb();
 			} );
 
-			expect( result.type ).toBe( 'error' );
+			expect( result ).toEqual( {
+				type: 'error',
+				message:
+					'This card could not be authorized. Please try a different card.',
+			} );
 			expect( mockExchangeSetupToken ).not.toHaveBeenCalled();
 		} );
 
-		test( 'reports the thrown error message when the token exchange fails', async () => {
+		test( 'shows the friendly save-decline message instead of leaking a thrown error that is not marked user-facing', async () => {
 			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
 			session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 			mockExchangeSetupToken.mockRejectedValueOnce(
-				new Error( 'exchange failed' )
+				new Error( 'internal exchange error' )
 			);
 
 			renderComponent( { config: freeTrialConfig() } );
@@ -660,8 +703,259 @@ describe( 'V6CardFieldsComponent', () => {
 
 			expect( result ).toEqual( {
 				type: 'error',
-				message: 'exchange failed',
+				message:
+					'This card could not be authorized. Please try a different card.',
+			} );
+		} );
+
+		test( 'shows a thrown error verbatim when it is marked user-facing', async () => {
+			mockCreateCardSetupToken.mockResolvedValueOnce( 'SETUP1' );
+			session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+			const userFacing = new Error( 'This card is already saved.' );
+			userFacing.isUserFacing = true;
+			mockExchangeSetupToken.mockRejectedValueOnce( userFacing );
+
+			renderComponent( { config: freeTrialConfig() } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+
+			expect( result ).toEqual( {
+				type: 'error',
+				message: 'This card is already saved.',
 			} );
 		} );
 	} );
+
+	describe( 'onCheckoutFail observer', () => {
+		test( 'surfaces the gateway decline message from processingResponse when present', async () => {
+			renderComponent();
+			await waitForCheckoutFailReady();
+
+			const result = checkoutFailCb( {
+				processingResponse: {
+					paymentDetails: {
+						errorMessage: 'Card declined during capture.',
+					},
+				},
+			} );
+
+			expect( result ).toEqual( {
+				type: 'error',
+				message: 'Card declined during capture.',
+			} );
+		} );
+
+		test( 'returns true, leaving the default checkout error, when no gateway error message is present', async () => {
+			renderComponent();
+			await waitForCheckoutFailReady();
+
+			expect(
+				checkoutFailCb( { processingResponse: {} } )
+			).toBe( true );
+		} );
+	} );
+
+	describe( 'floating-label mode (Blocks text-input markup present)', () => {
+		let marker;
+
+		beforeEach( () => {
+			marker = appendFloatingLabelMarker();
+		} );
+
+		afterEach( () => {
+			marker.remove();
+		} );
+
+		function lastCallFor( type ) {
+			const calls = mockCardFieldContainer.mock.calls.filter(
+				( call ) => call[ 0 ].type === type
+			);
+			return calls[ calls.length - 1 ][ 0 ];
+		}
+
+		test( 'passes floatingLabel true to each V6CardFieldContainer', async () => {
+			renderComponent();
+			await waitForSessionReady();
+
+			expect( lastCallFor( 'number' ).floatingLabel ).toBe( true );
+			expect( lastCallFor( 'expiry' ).floatingLabel ).toBe( true );
+			expect( lastCallFor( 'cvv' ).floatingLabel ).toBe( true );
+		} );
+
+		test( 'subscribes to focus, blur, empty and notempty on the card session', async () => {
+			renderComponent();
+			await waitForSessionReady();
+
+			await waitFor( () =>
+				expect(
+					session.on.mock.calls.map( ( call ) => call[ 0 ] )
+				).toEqual(
+					expect.arrayContaining( [
+						'focus',
+						'blur',
+						'empty',
+						'notempty',
+					] )
+				)
+			);
+		} );
+
+		describe( 'is-active derivation from the session event payload', () => {
+			function fieldState( overrides ) {
+				return {
+					isEmpty: true,
+					isFocused: false,
+					isPotentiallyValid: true,
+					isValid: false,
+					...overrides,
+				};
+			}
+
+			test.each( [
+				[
+					'a focused but still empty field',
+					fieldState( { isFocused: true, isEmpty: true } ),
+					true,
+				],
+				[
+					'a blurred field that already holds a value',
+					fieldState( { isFocused: false, isEmpty: false } ),
+					true,
+				],
+				[
+					'a blurred, empty field',
+					fieldState( { isFocused: false, isEmpty: true } ),
+					false,
+				],
+			] )(
+				'marks the wrapper active=%p for %s',
+				async ( _label, numberState, expectedActive ) => {
+					renderComponent();
+					await waitForSessionReady();
+
+					await waitFor( () =>
+						expect( session.on ).toHaveBeenCalled()
+					);
+					const handler = session.on.mock.calls[ 0 ][ 1 ];
+
+					act( () => {
+						handler( {
+							data: {
+								cards: [],
+								emittedBy: 'number',
+								number: numberState,
+								expiry: fieldState(),
+								cvv: fieldState(),
+							},
+							instanceId: 'instance-1',
+							sender: 'number',
+						} );
+					} );
+
+					expect( lastCallFor( 'number' ).isActive ).toBe(
+						expectedActive
+					);
+				}
+			);
+		} );
+	} );
+} );
+
+describe( 'V6CardFieldContainer', () => {
+	function containerSession( fieldElement ) {
+		return {
+			createCardFieldsComponent: jest.fn(
+				() => fieldElement || document.createElement( 'div' )
+			),
+		};
+	}
+
+	test( 'in fallback mode, the SDK receives a placeholder, not an aria-label, and no label element is appended', () => {
+		const session = containerSession();
+
+		const { container } = render(
+			createElement( ActualV6CardFieldContainer, {
+				session,
+				type: 'number',
+				style: {},
+				label: 'Card number',
+			} )
+		);
+
+		expect( session.createCardFieldsComponent ).toHaveBeenCalledWith(
+			expect.objectContaining( { placeholder: 'Card number' } )
+		);
+		expect(
+			session.createCardFieldsComponent.mock.calls[ 0 ][ 0 ]
+		).not.toHaveProperty( 'ariaLabel' );
+		expect( container.firstChild ).not.toHaveClass(
+			'wc-block-components-text-input'
+		);
+		expect( container.querySelector( 'label' ) ).not.toBeInTheDocument();
+	} );
+
+	test( 'in floating-label mode, the SDK receives an aria-label, the wrapper gets the Blocks class, and an aria-hidden label is appended after the field', () => {
+		const field = document.createElement( 'div' );
+		const session = containerSession( field );
+
+		const { container } = render(
+			createElement( ActualV6CardFieldContainer, {
+				session,
+				type: 'number',
+				style: {},
+				label: 'Card number',
+				floatingLabel: true,
+			} )
+		);
+
+		expect( session.createCardFieldsComponent ).toHaveBeenCalledWith(
+			expect.objectContaining( { ariaLabel: 'Card number' } )
+		);
+		expect(
+			session.createCardFieldsComponent.mock.calls[ 0 ][ 0 ]
+		).not.toHaveProperty( 'placeholder' );
+
+		const wrapper = container.firstChild;
+		expect( wrapper ).toHaveClass( 'wc-block-components-text-input' );
+
+		expect( wrapper.children[ 0 ] ).toBe( field );
+
+		const label = wrapper.querySelector( 'label' );
+		expect( label ).toHaveTextContent( 'Card number' );
+		expect( label ).toHaveAttribute( 'aria-hidden', 'true' );
+		expect( label ).toHaveClass( 'ppcp-sdk-v6-card-field__label' );
+		expect( wrapper.lastChild ).toBe( label );
+	} );
+
+	test.each( [
+		[ true, true ],
+		[ false, false ],
+	] )(
+		'the wrapper is-active class follows the isActive prop (%p) in floating-label mode',
+		( isActive, expectActive ) => {
+			const session = containerSession();
+
+			const { container } = render(
+				createElement( ActualV6CardFieldContainer, {
+					session,
+					type: 'number',
+					style: {},
+					floatingLabel: true,
+					isActive,
+				} )
+			);
+
+			if ( expectActive ) {
+				expect( container.firstChild ).toHaveClass( 'is-active' );
+			} else {
+				expect( container.firstChild ).not.toHaveClass(
+					'is-active'
+				);
+			}
+		}
+	);
 } );

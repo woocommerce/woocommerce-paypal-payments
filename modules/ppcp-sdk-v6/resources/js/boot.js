@@ -31,6 +31,7 @@ import { initCardFields } from './cardFields/renderer';
 import { initCardButton } from './cardButton/renderCardButton';
 import { hasJQuery } from './utils/api';
 import { watchViewedTotal } from './utils/viewedTotal';
+import { initProductButtonGate } from './utils/productButtonGate';
 import { setErrorLabels } from './utils/errorHandler';
 import { isFreeTrialCart } from './utils/freeTrial';
 import { setVisible } from '@ppcp-button/Helper/Hiding';
@@ -207,10 +208,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 
 			// Same reason as the wallets: paypal-guest-payments is only
 			// requested where the card button renders.
-			if (
-				method === FundingSources.CARD &&
-				! config.card_button?.enabled
-			) {
+			if ( method === FundingSources.CARD && ! config.card_button?.row ) {
 				continue;
 			}
 
@@ -398,7 +396,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	);
 
 	/**
-	 * Hides the native WC "Proceed to PayPal" button while the PayPal gateway
+	 * Hides the native WC place order button while the PayPal gateway
 	 * is selected with a NEW payment method — the v6 PayPal buttons stand in for
 	 * it — and restores it for cards, saved PayPal tokens (charged via Place
 	 * Order), and every other method. The v6 express button is hidden for a saved
@@ -452,6 +450,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		initCardButtonSafely();
 		initMessagesSafely();
 		trackProductTotal();
+		initProductButtonGate( config );
 		syncPlaceOrderButton();
 	}
 

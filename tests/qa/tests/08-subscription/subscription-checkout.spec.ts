@@ -42,6 +42,13 @@ test.describe( 'PayPal Subscription', () => {
 		} );
 	} );
 
+	test.afterAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpSettings( {
+			savePaypalAndVenmo: true,
+			saveCardDetails: true,
+		} );
+	} );
+
 	for ( const testOrder of payPalGuest ) {
 		testSubscriptionOrderGuest( testOrder );
 	}

@@ -130,6 +130,45 @@ class ExperienceContextBuilderTest extends TestCase
 	}
 
 	/**
+	 * GIVEN a builder with no landing page set
+	 * WHEN with_landing_page() is called with an explicit value
+	 * THEN the resulting context carries that value, ignoring the merchant setting
+	 */
+	public function testLandingPageSetsExplicitValue()
+	{
+		$this->settings->shouldNotReceive('landing_page_enum');
+
+		$result = $this->sut
+			->with_landing_page(ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT)
+			->build();
+
+		self::assertEquals([
+			'landing_page' => ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT,
+		], $result->to_array());
+	}
+
+	/**
+	 * GIVEN a builder that already applied the merchant's current landing page setting
+	 * WHEN with_landing_page() is called afterwards with an explicit value
+	 * THEN the explicit value overrides the merchant setting
+	 */
+	public function testLandingPageOverridesCurrentLandingPage()
+	{
+		$this->settings
+			->expects('landing_page_enum')
+			->andReturn(ExperienceContext::LANDING_PAGE_LOGIN);
+
+		$result = $this->sut
+			->with_current_landing_page()
+			->with_landing_page(ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT)
+			->build();
+
+		self::assertEquals([
+			'landing_page' => ExperienceContext::LANDING_PAGE_GUEST_CHECKOUT,
+		], $result->to_array());
+	}
+
+	/**
 	 * @dataProvider paymentMethodPreferenceDataProvider
 	 */
 	public function testCurrentPaymentMethodPreference( $value, $expected)

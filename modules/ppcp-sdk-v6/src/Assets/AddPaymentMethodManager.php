@@ -32,7 +32,6 @@ class AddPaymentMethodManager {
 
 	// Same WC credit-card-form field IDs the classic/block card fields mount
 	// into (see SdkV6Manager); rendered by the card gateway on this page too.
-	private const CARD_FIELD_NAME_ID   = 'ppcp-credit-card-gateway-card-name';
 	private const CARD_FIELD_NUMBER_ID = 'ppcp-credit-card-gateway-card-number';
 	private const CARD_FIELD_EXPIRY_ID = 'ppcp-credit-card-gateway-card-expiry';
 	private const CARD_FIELD_CVV_ID    = 'ppcp-credit-card-gateway-card-cvc';
@@ -155,7 +154,6 @@ class AddPaymentMethodManager {
 				'payment_method' => CreditCardGateway::ID,
 				'funding_source' => 'card',
 				'fields'         => array(
-					'name'   => '#' . self::CARD_FIELD_NAME_ID,
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,

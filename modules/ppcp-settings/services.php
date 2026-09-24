@@ -277,7 +277,8 @@ return array(
 		return new WebhookSettingsEndpoint(
 			$container->get( 'api.endpoint.webhook' ),
 			$container->get( 'webhook.registrar' ),
-			$container->get( 'webhook.status.simulation' )
+			$container->get( 'webhook.status.simulation' ),
+			$container->get( 'webhook.own-resolver' )
 		);
 	},
 	'settings.rest.pay_later_messaging'                   => static function ( ContainerInterface $container ): PayLaterMessagingEndpoint {
@@ -503,7 +504,11 @@ return array(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.general' ),
 			$container->get( 'axo.checkout-config-notice.raw' ),
-			$container->get( 'axo.incompatible-plugins-notice.raw' )
+			$container->get( 'axo.incompatible-plugins-notice.raw' ),
+			// The module registers its services only behind its feature flag, so
+			// presence means v6 is active; has() does not instantiate it. Per-page
+			// ownership is moot: one admin screen configures every page.
+			$container->has( 'sdk-v6.owns-current-page' )
 		);
 	},
 	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {

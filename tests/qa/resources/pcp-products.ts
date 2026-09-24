@@ -123,6 +123,53 @@ const subscriptionPayPalFreeTrial: WooCommerce.CreateProduct = {
 	],
 };
 
+const subscriptionPayPalSignUpFee: WooCommerce.CreateProduct = {
+	name: 'PayPal Subscription Sign-up Fee Test Product',
+	slug: 'paypal-subscription-sign-up-fee-test-product',
+	type: 'subscription',
+	regular_price: '100.00',
+	description:
+		'Subscribe to our PayPal plugin magazine for expert advice, tips, and insights on growing the best clothes year-round. Includes a one-time sign-up fee.',
+	short_description:
+		'Monthly PayPal plugin magazine on apple growing and orchard tips, with a sign-up fee.',
+	meta_data: [
+		{ key: '_subscription_price', value: '100.00' },
+		{ key: '_subscription_period', value: 'month' },
+		{ key: '_subscription_period_interval', value: '1' },
+		{ key: '_subscription_sign_up_fee', value: '20.00' },
+		{ key: '_ppcp_enable_subscription_product', value: 'yes' },
+		{ key: '_ppcp_subscription_plan_name', value: 'test' },
+	],
+	images: [
+		{
+			src: 'https://woocommercecore.mystagingwebsite.com/wp-content/uploads/2017/12/album-1.jpg',
+		},
+	],
+};
+
+const subscriptionSignUpFee: WooCommerce.CreateProduct = {
+	name: 'Subscription Sign-up Fee Test Product',
+	slug: 'subscription-sign-up-fee-test-product',
+	type: 'subscription',
+	regular_price: '100.00',
+	description:
+		'Subscribe to our magazine for expert advice, tips, and insights on growing the best clothes year-round. Includes a one-time sign-up fee.',
+	short_description:
+		'Monthly magazine on apple growing and orchard tips, with a sign-up fee.',
+	meta_data: [
+		{ key: '_subscription_price', value: '100.00' },
+		{ key: '_subscription_period', value: 'month' },
+		{ key: '_subscription_period_interval', value: '1' },
+		{ key: '_subscription_length', value: '0' },
+		{ key: '_subscription_sign_up_fee', value: '20.00' },
+	],
+	images: [
+		{
+			src: 'https://woocommercecore.mystagingwebsite.com/wp-content/uploads/2017/12/album-1.jpg',
+		},
+	],
+};
+
 const simpleWithStock: WooCommerce.CreateProduct = {
 	name: 'Simple Product With Stock',
 	slug: 'simple-product-with-stock',
@@ -148,5 +195,7 @@ export const products: {
 	variationNotSelected100,
 	subscriptionPayPal,
 	subscriptionPayPalFreeTrial,
+	subscriptionPayPalSignUpFee,
+	subscriptionSignUpFee,
 	simpleWithStock,
 };

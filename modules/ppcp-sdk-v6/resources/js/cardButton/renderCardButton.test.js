@@ -19,7 +19,7 @@ const baseConfig = ( overrides = {} ) => ( {
 	page_context: 'checkout',
 	buyer_country: 'US',
 	card_button: {
-		enabled: true,
+		row: true,
 		wrapper: '#card-button-wrapper',
 		payment_method: 'ppcp-card-button-gateway',
 		styles: {},
@@ -37,11 +37,11 @@ beforeEach( () => {
 } );
 
 describe( 'initCardButton', () => {
-	test( 'does nothing when card_button.enabled is false', async () => {
+	test( 'does nothing when card_button.row is false', async () => {
 		const ensureSessions = jest.fn();
 
 		await initCardButton(
-			baseConfig( { card_button: { enabled: false } } ),
+			baseConfig( { card_button: { row: false } } ),
 			ensureSessions
 		);
 

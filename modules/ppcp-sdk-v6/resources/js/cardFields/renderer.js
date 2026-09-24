@@ -3,9 +3,7 @@
  *
  * Mounts number/expiry/CVV into the existing WC card-form inputs and runs a new
  * card through the v6 card session (3D Secure included) before letting the
- * native submit through to CreditCardGateway::process_payment(). The SDK has no
- * cardholder-name component, so that input stays a plain field forwarded to
- * create-order.
+ * native submit through to CreditCardGateway::process_payment().
  *
  * Scope: a fresh card, one-time or the $0 free-trial variant that saves via a
  * setup token. A selected saved token is left to the native submit.
@@ -24,6 +22,11 @@ import {
 import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 import { isFreeTrialCart } from '../utils/freeTrial';
+import {
+	CARD_DECLINE_MESSAGE,
+	CARD_SAVE_DECLINE_MESSAGE,
+	userFacingError,
+} from '../utils/cardDeclineMessages';
 
 const FIELD_TYPES = [ 'number', 'expiry', 'cvv' ];
 
@@ -154,14 +157,13 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 	 * Re-queries the current card-form inputs, since a DOM swap invalidates
 	 * any previously queried references.
 	 *
-	 * @return {Object} The number/expiry/cvv/name input elements.
+	 * @return {Object} The number/expiry/cvv input elements.
 	 */
 	function getInputs() {
 		return {
 			number: document.querySelector( fields.number ),
 			expiry: document.querySelector( fields.expiry ),
 			cvv: document.querySelector( fields.cvv ),
-			name: fields.name ? document.querySelector( fields.name ) : null,
 		};
 	}
 
@@ -230,7 +232,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 					return;
 				}
 				if ( saveResult.state !== 'succeeded' ) {
-					throw new Error( 'Card could not be saved.' );
+					throw userFacingError( CARD_SAVE_DECLINE_MESSAGE );
 				}
 
 				await exchangeSetupToken( config, setupTokenId );
@@ -240,12 +242,9 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 				return;
 			}
 
-			// The name has no v6 field component; read the plain WC input.
-			const cardName = getInputs().name?.value?.trim() || '';
 			const { orderId } = await createCardOrder(
 				config,
 				config.page_context || 'checkout',
-				cardName,
                 shouldSavePaymentMethod(),
 			);
 			const result = submitOptions
@@ -258,7 +257,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 			}
 
 			if ( result.state !== 'succeeded' ) {
-				throw new Error( 'Card payment failed.' );
+				throw userFacingError( CARD_DECLINE_MESSAGE );
 			}
 
 			await approveCardOrder( config, orderId );

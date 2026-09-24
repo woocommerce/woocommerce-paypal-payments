@@ -329,6 +329,46 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a subscription cart on a free trial ($0 today), which therefore needs no
+     *       one-time payment
+     * WHEN determining which locations should render on the current page
+     * THEN the checkout still renders, because it must offer the PayPal
+     *      save-without-purchase button for the vaulted token backing the future
+     *      recurring payment
+     * AND the cart and mini-cart stay suppressed regardless of the free-trial flag,
+     *     since neither has a form to submit that vaulted token from
+     * AND a $0 cart that is NOT a free trial (e.g. a full-value coupon) keeps the
+     *     checkout suppressed too, same as before the fix
+     *
+     * @dataProvider free_trial_checkout_provider
+     */
+    public function testDetermineRenderPlacesCheckoutOnFreeTrialCart(bool $needs_payment, bool $is_free_trial_cart, bool $expected_checkout): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn($is_free_trial_cart);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn($needs_payment);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $testee = $this->createTestee();
+        $result = $testee->determine_render_places();
+
+        $this->assertSame($expected_checkout, $result['checkout']);
+        $this->assertSame($needs_payment, $result['cart']);
+        $this->assertSame($needs_payment, $result['mini-cart']);
+    }
+
+    public function free_trial_checkout_provider(): array
+    {
+        return [
+            'free-trial cart needing no payment still enables checkout' => [false, true, true],
+            'zero-total non-free-trial cart keeps checkout suppressed'  => [false, false, false],
+            'ordinary cart needing payment enables checkout regardless of free trial' => [true, false, true],
+        ];
+    }
+
+    /**
      * GIVEN the mini-cart smart button location is enabled sitewide
      * WHEN checking whether the v6 SDK should load on a page with no matching page context
      *      (e.g. the shop or home page, where a block Mini-Cart may still appear)
@@ -568,10 +608,11 @@ class SdkV6ManagerTest extends TestCase
      * GIVEN a checkout block page with Advanced Card Fields enabled for the merchant
      * WHEN the SDK bootstrap data is generated
      * THEN card_fields.enabled is true, unless Fastlane renders on the same page
-     * AND the gateway title and name-field flag are carried into the payload
+     * AND the gateway title is carried into the payload
      * AND is_vaulting_enabled reflects the card vaulting setting
      * AND has_subscriptions reflects whether the cart contains a subscription
      * AND the merchant's card field style overrides are carried into the payload
+     * AND card_fields.fields only ever exposes number, expiry and cvv
      *
      * @dataProvider script_data_card_fields_provider
      */
@@ -579,17 +620,14 @@ class SdkV6ManagerTest extends TestCase
         string $page_context,
         bool $acdc_enabled,
         string $gateway_title,
-        string $show_name_on_card,
         bool $card_vaulting_enabled,
         bool $cart_contains_subscription,
         bool $fastlane_renders,
-        bool $expected_enabled,
-        bool $expected_name_field
+        bool $expected_enabled
     ): void {
         $this->context->shouldReceive('context')->andReturn($page_context);
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn($acdc_enabled);
         $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn($gateway_title);
-        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn($show_name_on_card);
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn($cart_contains_subscription);
         $this->fastlane_config->shouldReceive('should_render')->andReturn($fastlane_renders);
 
@@ -618,42 +656,40 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame($expected_enabled, $data['card_fields']['enabled']);
         $this->assertSame($gateway_title, $data['card_fields']['title']);
-        $this->assertSame($expected_name_field, $data['card_fields']['name_field']);
         $this->assertSame(CreditCardGateway::ID, $data['card_fields']['payment_method']);
         $this->assertSame($card_vaulting_enabled, $data['card_fields']['is_vaulting_enabled']);
         $this->assertSame($cart_contains_subscription, $data['has_subscriptions']);
         $this->assertSame($card_field_styles, $data['card_fields']['styles']);
+        $this->assertSame(['number', 'expiry', 'cvv'], array_keys($data['card_fields']['fields']));
+        $this->assertArrayNotHasKey('name_field', $data['card_fields']);
     }
 
     public function script_data_card_fields_provider(): array
     {
         return [
-            'checkout-block with ACDC enabled and name field shown' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, false, false, true, true,
-            ],
-            'checkout-block with ACDC enabled and name field hidden' => [
-                'checkout-block', true, 'Credit Card', 'no', false, false, false, true, false,
+            'checkout-block with ACDC enabled' => [
+                'checkout-block', true, 'Credit Card', false, false, false, true,
             ],
             'checkout-block with ACDC disabled' => [
-                'checkout-block', false, 'Credit Card', 'yes', false, false, false, false, true,
+                'checkout-block', false, 'Credit Card', false, false, false, false,
             ],
             'classic checkout with ACDC enabled' => [
-                'checkout', true, 'Credit Card', 'yes', false, false, false, true, true,
+                'checkout', true, 'Credit Card', false, false, false, true,
             ],
             'checkout-block with card vaulting enabled' => [
-                'checkout-block', true, 'Credit Card', 'yes', true, false, false, true, true,
+                'checkout-block', true, 'Credit Card', true, false, false, true,
             ],
             'checkout-block with a subscription in the cart' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, true, false, true, true,
+                'checkout-block', true, 'Credit Card', false, true, false, true,
             ],
             'checkout-block with ACDC enabled but Fastlane renders' => [
-                'checkout-block', true, 'Credit Card', 'yes', false, false, true, false, true,
+                'checkout-block', true, 'Credit Card', false, false, true, false,
             ],
             'classic checkout with ACDC enabled but Fastlane renders' => [
-                'checkout', true, 'Credit Card', 'yes', false, false, true, false, true,
+                'checkout', true, 'Credit Card', false, false, true, false,
             ],
             'checkout-block with ACDC disabled and Fastlane renders' => [
-                'checkout-block', false, 'Credit Card', 'yes', false, false, true, false, true,
+                'checkout-block', false, 'Credit Card', false, false, true, false,
             ],
         ];
     }
@@ -888,6 +924,8 @@ class SdkV6ManagerTest extends TestCase
         $this->context->shouldReceive('location')->andReturn($location);
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        // Off, so the hand-over to v5 is not what vetoes the claim here.
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')->andReturn(false);
         $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(true);
 
         $testee = $this->createTestee();
@@ -954,6 +992,10 @@ class SdkV6ManagerTest extends TestCase
         $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
             ->with('custom_placement')
             ->andReturn(true);
+        // Off for the page's own location, so the hand-over to v5 does not apply.
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with($location)
+            ->andReturn(false);
         // No block present, so has_paylater_block() resolves false and
         // messages_settings_location() falls back to the empty location, not
         // 'custom_placement' - the eligibility lookup below reflects that.
@@ -968,6 +1010,56 @@ class SdkV6ManagerTest extends TestCase
         $testee = $this->createTestee();
 
         $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN no v6 page context (home or shop), the mini-cart smart-button location
+     *       disabled so nothing else would claim the page, and v5 Pay Later messaging
+     *       enabled for the resolved page location
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN it loads, claiming the page so the v5 stack stands down there — v6 owns
+     *      messaging wherever it is active, and withholds the message on home and shop
+     *      until it has a hook of its own rather than letting v5 draw it
+     * AND with messaging disabled for that same location nothing claims the page, so it
+     *     does not load — the claim is made only where v5 would otherwise have drawn a
+     *     banner
+     *
+     * @dataProvider homeShopMessagingClaimProvider
+     */
+    public function testShouldLoadOnCurrentPageClaimsHomeAndShopWhereV5WouldOtherwiseRenderAMessage(
+        string $location,
+        bool $messaging_enabled,
+        bool $expected
+    ): void {
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn($location);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        // Off, so the sitewide fallback cannot claim the page and the messaging
+        // decision below is the only thing that can.
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->andReturn(false);
+        // Catch-all so an incidental call for 'custom_placement' (reachable through
+        // messages_settings_location()'s has_paylater_block() check) does not throw.
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->andReturn(false)
+            ->byDefault();
+        $this->settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')
+            ->with($location)
+            ->andReturn($messaging_enabled);
+
+        $testee = $this->createTestee();
+
+        $this->assertSame($expected, $testee->should_load_on_current_page());
+    }
+
+    public function homeShopMessagingClaimProvider(): array
+    {
+        return [
+            'home page is claimed when v5 has a message there' => ['home', true, true],
+            'shop page is claimed when v5 has a message there' => ['shop', true, true],
+            'home page is left alone when v5 has no message'   => ['home', false, false],
+            'shop page is left alone when v5 has no message'   => ['shop', false, false],
+        ];
     }
 
     /**
@@ -1668,7 +1760,8 @@ class SdkV6ManagerTest extends TestCase
      * GIVEN a page context and a BCDC (Basic Credit and Debit Cards) setting
      * WHEN checking whether the v6 Basic Card button is enabled for that location
      * THEN the result depends on both the page context and the BCDC setting
-     * AND checkout-block is never eligible, since BCDC has no block checkout support
+     * AND checkout-block is eligible too, since BCDC now offers a block-checkout
+     *     payment method alongside its classic payment-method row
      *
      * @dataProvider card_button_enablement_provider
      */
@@ -1689,7 +1782,8 @@ class SdkV6ManagerTest extends TestCase
             'classic checkout with BCDC disabled does not render the card button' => ['checkout', false, false],
             'pay-now with BCDC enabled renders the card button' => ['pay-now', true, true],
             'pay-now with BCDC disabled does not render the card button' => ['pay-now', false, false],
-            'checkout-block is never eligible, even with BCDC enabled' => ['checkout-block', true, false],
+            'checkout-block with BCDC enabled is eligible for the block payment method' => ['checkout-block', true, true],
+            'checkout-block with BCDC disabled is not eligible' => ['checkout-block', false, false],
             'product page is never eligible for the card button' => ['product', true, false],
             'cart page is never eligible for the card button' => ['cart', true, false],
         ];
@@ -1699,9 +1793,11 @@ class SdkV6ManagerTest extends TestCase
      * GIVEN BCDC configured for checkout/pay-now, with every smart-button
      *       location and ACDC turned off
      * WHEN checking whether the v6 SDK should load on the current page
-     * THEN the SDK loads on checkout and pay-now purely because BCDC is enabled there
-     * AND it does not load on product, cart or checkout-block, since BCDC has no
-     *     block checkout support and settings alone never enable it elsewhere
+     * THEN the SDK loads on checkout, pay-now and checkout-block purely because
+     *      BCDC is enabled there, now that the button offers a block-checkout
+     *      payment method alongside its classic row
+     * AND it does not load on product or cart, since settings alone never
+     *     enable it there
      *
      * @dataProvider should_load_for_card_button_provider
      */
@@ -1725,24 +1821,26 @@ class SdkV6ManagerTest extends TestCase
             'checkout with BCDC disabled does not load for the card button' => ['checkout', false, false],
             'product page never loads for the card button' => ['product', true, false],
             'cart page never loads for the card button' => ['cart', true, false],
-            'checkout-block never loads for the card button (no block support)' => ['checkout-block', true, false],
+            'checkout-block with BCDC enabled loads the SDK for the block payment method' => ['checkout-block', true, true],
         ];
     }
 
     /**
-     * GIVEN a checkout page where BCDC is enabled for the settings-only gate
+     * GIVEN a classic checkout page where BCDC is enabled for the settings-only gate
      * WHEN the SDK bootstrap data is generated
-     * THEN card_button.enabled is true only when the CardButtonGateway is also
-     *      among WooCommerce's available payment gateways
+     * THEN card_button.row is true only when the CardButtonGateway is also among
+     *      WooCommerce's available payment gateways
      * AND it is false whenever the gateway is unavailable — the same signal
      *     WooCommerce gives for ACDC-active-outside-Mexico, a free-trial cart,
      *     or a zero-total cart, since each of those removes the gateway itself
      * AND it is false for a cart containing a subscription, since BCDC is
      *     withheld there regardless of gateway availability
+     * AND card_button.block_method is always false here, since the classic page
+     *     has no block-checkout payment method to render
      *
      * @dataProvider card_button_row_provider
      */
-    public function testScriptDataCardButtonEnabled(bool $cart_contains_subscription, bool $gateway_available, bool $expected): void
+    public function testScriptDataCardButtonRowReflectsAvailabilityOnClassicCheckout(bool $cart_contains_subscription, bool $gateway_available, bool $expected): void
     {
         $this->context->shouldReceive('context')->andReturn('checkout');
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
@@ -1768,7 +1866,8 @@ class SdkV6ManagerTest extends TestCase
         $testee = $this->createTestee();
         $data   = $testee->script_data();
 
-        $this->assertSame($expected, $data['card_button']['enabled']);
+        $this->assertSame($expected, $data['card_button']['row']);
+        $this->assertFalse($data['card_button']['block_method']);
     }
 
     public function card_button_row_provider(): array
@@ -1777,6 +1876,163 @@ class SdkV6ManagerTest extends TestCase
             'gateway available and no subscription renders the row' => [false, true, true],
             'gateway unavailable never renders the row (ACDC-active, free trial, or zero-total cart)' => [false, false, false],
             'subscription cart withholds the row even though the gateway is available' => [true, true, false],
+        ];
+    }
+
+    /**
+     * GIVEN a WooCommerce Blocks checkout page where BCDC is enabled for the
+     *       settings-only gate
+     * WHEN the SDK bootstrap data is generated
+     * THEN card_button.block_method is true only when the CardButtonGateway is
+     *      also among WooCommerce's available payment gateways
+     * AND it is false for a cart containing a subscription, since the shared
+     *     availability policy withholds BCDC there regardless of the surface
+     * AND card_button.row is always false here, since Blocks has no gateway
+     *     row for the button to occupy
+     *
+     * @dataProvider card_button_row_provider
+     */
+    public function testScriptDataCardButtonBlockMethodReflectsAvailabilityOnBlockCheckout(bool $cart_contains_subscription, bool $gateway_available, bool $expected): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout-block');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn($cart_contains_subscription);
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
+
+        when('WC')->justReturn($this->create_wc_stub($gateway_available ? [CardButtonGateway::ID => true] : []));
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected, $data['card_button']['block_method']);
+        $this->assertFalse($data['card_button']['row']);
+    }
+
+    /**
+     * GIVEN the CardButtonGateway is available, exposing its own title and
+     *       supports list
+     * WHEN the SDK bootstrap data is generated
+     * THEN card_button.title carries that gateway's own user-facing title
+     * AND card_button.supported_features carries that gateway's own supports
+     *     list, never a borrowed one
+     * AND both degrade to '' and ['products'] respectively when the gateway is
+     *     unavailable, offering the button on no more carts than a registered
+     *     gateway would
+     * AND card_button.description carries that gateway's own description,
+     *     unchanged (not entity-decoded, unlike the title), degrading to ''
+     *     when the gateway is unavailable
+     *
+     * @dataProvider card_button_title_and_features_provider
+     */
+    public function testScriptDataCardButtonTitleAndSupportedFeaturesReflectOwnGateway(
+        bool $gateway_available,
+        string $expected_title,
+        array $expected_supported_features,
+        string $expected_description
+    ): void {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+
+        $gateways = [];
+        if ($gateway_available) {
+            $gateway = Mockery::mock('WC_Payment_Gateway');
+            $gateway->shouldReceive('get_title')->andReturn('Debit or Credit Card');
+            $gateway->shouldReceive('get_description')->andReturn('Pay with your <strong>debit</strong> or credit card.');
+            $gateway->supports = ['products', 'refunds'];
+            $gateways[CardButtonGateway::ID] = $gateway;
+        }
+
+        when('WC')->justReturn($this->create_wc_stub($gateways));
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected_title, $data['card_button']['title']);
+        $this->assertSame($expected_supported_features, $data['card_button']['supported_features']);
+        $this->assertSame($expected_description, $data['card_button']['description']);
+    }
+
+    public function card_button_title_and_features_provider(): array
+    {
+        return [
+            'gateway available carries its own title and supports list' => [
+                true, 'Debit or Credit Card', ['products', 'refunds'], 'Pay with your <strong>debit</strong> or credit card.',
+            ],
+            'gateway unavailable degrades to an empty title and products-only supports' => [
+                false, '', ['products'], '',
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN block checkout with BCDC enabled and the CardButtonGateway available
+     * AND the gateway's title is HTML-entity-encoded, the way
+     *     WC_Payment_Gateway::get_title() returns it on a real store (e.g.
+     *     "Debit &amp; Credit Cards")
+     * WHEN the SDK bootstrap data is generated
+     * THEN card_button.title is HTML-entity-decoded, since Blocks renders this
+     *      value as plain text in the block payment method's label, aria-label
+     *      and editor description — an undecoded title would display a literal
+     *      "&amp;" and be read aloud as "ampersand" by a screen reader
+     *
+     * @dataProvider card_button_title_entity_decoding_provider
+     */
+    public function testScriptDataCardButtonTitleIsEntityDecodedOnBlockCheckout(string $encoded_title, string $expected_title): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout-block');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
+
+        $gateway = Mockery::mock('WC_Payment_Gateway');
+        $gateway->shouldReceive('get_title')->andReturn($encoded_title);
+        $gateway->shouldReceive('get_description')->andReturn('');
+        $gateway->supports = ['products'];
+
+        when('WC')->justReturn($this->create_wc_stub([CardButtonGateway::ID => $gateway]));
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected_title, $data['card_button']['title']);
+    }
+
+    public function card_button_title_entity_decoding_provider(): array
+    {
+        return [
+            'ampersand entity decodes to a literal ampersand' => [
+                'Debit &amp; Credit Cards', 'Debit & Credit Cards',
+            ],
+            'apostrophe entity decodes under ENT_QUOTES' => [
+                "Merchant&#039;s Card", "Merchant's Card",
+            ],
         ];
     }
 
@@ -1828,6 +2084,29 @@ class SdkV6ManagerTest extends TestCase
         );
         $this->assertArrayHasKey('card_declined', $data['labels']);
         $this->assertNotSame('', $data['labels']['card_declined']);
+    }
+
+    /**
+     * GIVEN a checkout page where the mini-cart smart button location is also enabled
+     * WHEN the SDK bootstrap data is generated
+     * THEN button_styles carries a shorter height for the mini-cart entry, since the
+     *      mini-cart column is narrower than a page column and a full-height button
+     *      there renders oversized
+     * AND the checkout page's own entry keeps the full page-width button height, so the
+     *     two heights differ within the same payload rather than both falling back to
+     *     one hardcoded value
+     */
+    public function testScriptDataButtonStylesMiniCartHeightDiffersFromPageContext(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('mini-cart')->andReturn(true);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertSame(SdkV6Manager::PAYMENT_BUTTON_HEIGHT, $data['button_styles']['checkout']['height']);
+        $this->assertSame(SdkV6Manager::MINI_CART_BUTTON_HEIGHT, $data['button_styles']['mini-cart']['height']);
     }
 
     /**

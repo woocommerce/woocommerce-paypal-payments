@@ -8,6 +8,8 @@ import {
 } from '../../utils';
 import { taxSettings } from '../../resources';
 
+setup.use( { screencastOptions: null } );
+
 setup.describe( 'e2e:env:reset;', async () => {
 	setup( 'Setup: Reset Environment', async () => {
 		await resetEnvironment();

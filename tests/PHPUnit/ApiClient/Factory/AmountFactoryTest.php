@@ -52,6 +52,10 @@ class AmountFactoryTest extends TestCase
         $cart
             ->shouldReceive('get_total_tax')
             ->andReturn(4);
+        // Components sum to 13 (5 + 3 + 2 + 4 - 1), matching WC's own total.
+        $cart
+            ->shouldReceive('get_total')
+            ->andReturn(13);
 
         $woocommerce = Mockery::mock(\WooCommerce::class);
         $session = Mockery::mock(\WC_Session::class);
@@ -90,6 +94,10 @@ class AmountFactoryTest extends TestCase
 		$cart
 			->shouldReceive('get_total_tax')
 			->andReturn(4);
+		// Components sum to 11 (5 + 0 + 2 + 4), matching WC's own total.
+		$cart
+			->shouldReceive('get_total')
+			->andReturn(11);
 
         $woocommerce = Mockery::mock(\WooCommerce::class);
         $session = Mockery::mock(\WC_Session::class);
@@ -116,7 +124,8 @@ class AmountFactoryTest extends TestCase
 		float $fees,
 		float $shipping,
 		float $tax,
-		float $discount
+		float $discount,
+		float $wc_total
 	): void {
 		$cart = Mockery::mock( \WC_Cart::class );
 		$cart->shouldReceive( 'get_subtotal' )->andReturn( $subtotal );
@@ -124,6 +133,7 @@ class AmountFactoryTest extends TestCase
 		$cart->shouldReceive( 'get_shipping_total' )->andReturn( $shipping );
 		$cart->shouldReceive( 'get_total_tax' )->andReturn( $tax );
 		$cart->shouldReceive( 'get_discount_total' )->andReturn( $discount );
+		$cart->shouldReceive( 'get_total' )->andReturn( $wc_total );
 
 		$woocommerce          = Mockery::mock( \WooCommerce::class );
 		$session              = Mockery::mock( \WC_Session::class );
@@ -154,26 +164,34 @@ class AmountFactoryTest extends TestCase
 		return [
 			// Classic WC tax-rounding edge case: 8% tax on $13.33 = $1.0664.
 			// WC rounds to $1.07 for tax but get_total() may accumulate differently.
-			'tax_rounding_edge_case'   => [ 13.33, 0.0, 5.00, 1.07, 0.0 ],
+			// The WC total below matches the component sum (19.40).
+			'tax_rounding_edge_case'   => [ 13.33, 0.0, 5.00, 1.07, 0.0, 19.40 ],
 			// Three items at $3.336 each: item total rounds differently at cart vs item level.
-			'multi_item_tax_rounding'  => [ 10.01, 0.0, 4.99, 1.50, 0.0 ],
+			'multi_item_tax_rounding'  => [ 10.01, 0.0, 4.99, 1.50, 0.0, 16.50 ],
 			// Discount present; all components interact.
-			'with_discount'            => [ 20.00, 2.00, 3.50, 2.25, 1.75 ],
+			'with_discount'            => [ 20.00, 2.00, 3.50, 2.25, 1.75, 26.00 ],
 			// Fees and no discount.
-			'with_fees_no_discount'    => [ 15.50, 4.50, 6.00, 2.60, 0.0 ],
+			'with_fees_no_discount'    => [ 15.50, 4.50, 6.00, 2.60, 0.0, 28.60 ],
 			// Large order with all components.
-			'large_order'              => [ 199.99, 10.00, 12.95, 22.30, 15.00 ],
+			'large_order'              => [ 199.99, 10.00, 12.95, 22.30, 15.00, 230.24 ],
 			// Zero-value shipping (digital goods).
-			'digital_no_shipping'      => [ 49.99, 0.0, 0.0, 4.50, 0.0 ],
+			'digital_no_shipping'      => [ 49.99, 0.0, 0.0, 4.50, 0.0, 54.49 ],
+			// WC's total is 1 cent above the component sum (19.40) — the gap lands in tax.
+			'wc_total_one_cent_above_component_sum' => [ 13.33, 0.0, 5.00, 1.07, 0.0, 19.41 ],
+			// WC's total is 1 cent below the component sum (19.40) — tax absorbs the gap.
+			'wc_total_one_cent_below_component_sum' => [ 13.33, 0.0, 5.00, 1.07, 0.0, 19.39 ],
 		];
 	}
 
 	/**
-	 * Proves that the total is derived from breakdown components, not get_total().
-	 * When WC's get_total() is off by 1 cent, the PATCH total must still match
-	 * the breakdown so PayPal accepts it.
+	 * GIVEN a cart whose breakdown components sum to $19.40 but WooCommerce's own
+	 *       get_total() reports $19.39 (e.g. a third-party plugin reduced the total
+	 *       directly, invisible to the component getters)
+	 * WHEN  the amount is built from the cart
+	 * THEN  amount.value equals WooCommerce's get_total(), not the raw component sum
+	 * AND   the tax breakdown absorbs the 1-cent gap so breakdown still sums to the total
 	 */
-	public function testFromWcCartTotalDerivesFromComponentsNotWcGetTotal(): void
+	public function testFromWcCartTotalReconcilesAgainstWcGetTotal(): void
 	{
 		$cart = Mockery::mock( \WC_Cart::class );
 		// Components sum to $19.40 (1333 + 500 + 107 = 1940 cents).
@@ -182,9 +200,8 @@ class AmountFactoryTest extends TestCase
 		$cart->shouldReceive( 'get_shipping_total' )->andReturn( 5.00 );
 		$cart->shouldReceive( 'get_total_tax' )->andReturn( 1.07 );
 		$cart->shouldReceive( 'get_discount_total' )->andReturn( 0.0 );
-		// Enforce that get_total() is never consulted — the total is derived solely
-		// from breakdown components. If it were called, the test would fail.
-		$cart->shouldNotReceive( 'get_total' );
+		// WooCommerce's own total is authoritative and is consulted directly.
+		$cart->shouldReceive( 'get_total' )->once()->with( 'edit' )->andReturn( 19.39 );
 
 		$woocommerce          = Mockery::mock( \WooCommerce::class );
 		$session              = Mockery::mock( \WC_Session::class );
@@ -194,11 +211,12 @@ class AmountFactoryTest extends TestCase
 
 		$result = $this->testee->from_wc_cart( $cart );
 
-		// Total must be $19.40 (from breakdown), not $19.39 (from get_total()).
-		$this->assertSame( '19.40', $result->value_str() );
+		// Total must be $19.39 (from get_total()), not $19.40 (the raw component sum).
+		$this->assertSame( '19.39', $result->value_str() );
 		$this->assertSame( '13.33', $result->breakdown()->item_total()->value_str() );
 		$this->assertSame( '5.00', $result->breakdown()->shipping()->value_str() );
-		$this->assertSame( '1.07', $result->breakdown()->tax_total()->value_str() );
+		// Tax absorbs the 1-cent gap (1.07 -> 1.06).
+		$this->assertSame( '1.06', $result->breakdown()->tax_total()->value_str() );
 	}
 
 	/**
@@ -210,6 +228,7 @@ class AmountFactoryTest extends TestCase
 		int $shipping,
 		int $tax,
 		int $discount,
+		int $total_price_minor,
 		string $expected_total,
 		string $expected_items,
 		string $expected_shipping,
@@ -226,7 +245,8 @@ class AmountFactoryTest extends TestCase
 		$totals->shouldReceive( 'total_shipping' )->andReturn( $make( $shipping ) );
 		$totals->shouldReceive( 'total_tax' )->andReturn( $make( $tax ) );
 		$totals->shouldReceive( 'total_discount' )->andReturn( $make( $discount ) );
-		$totals->shouldReceive( 'total_price' )->andReturn( $make( 0 ) ); // used for currency metadata only
+		// total_price() is now authoritative for amount.value, not just currency metadata.
+		$totals->shouldReceive( 'total_price' )->andReturn( $make( $total_price_minor ) );
 
 		$result    = $this->testee->from_store_api_cart( $totals );
 		$breakdown = $result->breakdown();
@@ -253,14 +273,14 @@ class AmountFactoryTest extends TestCase
 	public function dataFromStoreApiCart(): array
 	{
 		return [
-			// items=1000¢, fees=0, shipping=500¢, tax=180¢, discount=0 → total=1680¢=$16.80
-			'no_fees_no_discount'  => [ 1000, 0, 500, 180, 0, '16.80', '10.00', '5.00', '1.80', null ],
+			// items=1000¢, fees=0, shipping=500¢, tax=180¢, discount=0, total_price=1680¢ → total=$16.80
+			'no_fees_no_discount'  => [ 1000, 0, 500, 180, 0, 1680, '16.80', '10.00', '5.00', '1.80', null ],
 			// Fees included in item_total: items=1000¢ + fees=200¢ = 1200¢
-			'with_fees'            => [ 1000, 200, 500, 180, 0, '18.80', '12.00', '5.00', '1.80', null ],
+			'with_fees'            => [ 1000, 200, 500, 180, 0, 1880, '18.80', '12.00', '5.00', '1.80', null ],
 			// Discount reduces total: items=2000¢ + fees=0, shipping=500¢, tax=225¢, discount=150¢
-			'with_discount'        => [ 2000, 0, 500, 225, 150, '25.75', '20.00', '5.00', '2.25', '1.50' ],
+			'with_discount'        => [ 2000, 0, 500, 225, 150, 2575, '25.75', '20.00', '5.00', '2.25', '1.50' ],
 			// Fees + discount together.
-			'fees_and_discount'    => [ 1500, 300, 700, 250, 100, '26.50', '18.00', '7.00', '2.50', '1.00' ],
+			'fees_and_discount'    => [ 1500, 300, 700, 250, 100, 2650, '26.50', '18.00', '7.00', '2.50', '1.00' ],
 		];
 	}
 
@@ -462,17 +482,7 @@ class AmountFactoryTest extends TestCase
 		float $discount,
 		float $wc_total
 	): void {
-		$order = Mockery::mock( \WC_Order::class );
-		$order->shouldReceive( 'get_subtotal' )->andReturn( $subtotal );
-		$order->shouldReceive( 'get_total_fees' )->andReturn( $fees );
-		$order->shouldReceive( 'get_shipping_total' )->andReturn( $shipping );
-		$order->shouldReceive( 'get_total_tax' )->andReturn( $tax );
-		$order->shouldReceive( 'get_total_discount' )->andReturn( $discount );
-		$order->shouldReceive( 'get_total' )->andReturn( $wc_total );
-		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
-		$order->shouldReceive( 'get_meta' )->andReturn( null );
-		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
-		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
+		$order = $this->orderWithTotals( $subtotal, $tax, $shipping, $discount, $wc_total, $fees );
 
 		$result    = $this->testee->from_wc_order( $order );
 		$breakdown = $result->breakdown();
@@ -512,6 +522,93 @@ class AmountFactoryTest extends TestCase
 			// Fees present, delta = -1 cent.
 			'with_fees_delta'     => [ 15.50, 4.50, 6.00, 2.60, 0.0, 28.59 ],
 		];
+	}
+
+	/**
+	 * An order on the non-free-trial path, carrying only the totals the tax
+	 * reconciliation reads.
+	 */
+	private function orderWithTotals(
+		float $subtotal,
+		float $tax,
+		float $shipping,
+		float $discount,
+		float $total,
+		float $fees = 0.0
+	): \WC_Order {
+		$order = Mockery::mock( \WC_Order::class );
+		$order->shouldReceive( 'get_subtotal' )->andReturn( $subtotal );
+		$order->shouldReceive( 'get_total_fees' )->andReturn( $fees );
+		$order->shouldReceive( 'get_shipping_total' )->andReturn( $shipping );
+		$order->shouldReceive( 'get_total_tax' )->andReturn( $tax );
+		$order->shouldReceive( 'get_total_discount' )->andReturn( $discount );
+		$order->shouldReceive( 'get_total' )->andReturn( $total );
+		$order->shouldReceive( 'get_payment_method' )->andReturn( PayPalGateway::ID );
+		$order->shouldReceive( 'get_meta' )->andReturn( null );
+		$order->shouldReceive( 'get_currency' )->andReturn( $this->currency );
+		$this->itemFactory->shouldReceive( 'from_wc_order' )->andReturn( [] );
+
+		return $order;
+	}
+
+	/**
+	 * An unreported discount (set_total() called directly, or an order read before
+	 * get_total_discount() populates) used to push the whole gap into tax.
+	 *
+	 * @dataProvider dataUnreportedDiscountCases
+	 */
+	public function testFromWcOrderRestoresTaxAndBooksUnreportedDiscount(
+		float $subtotal,
+		float $tax,
+		float $shipping,
+		float $reported_discount,
+		float $wc_total,
+		string $expected_tax,
+		string $expected_discount
+	): void {
+		$order = $this->orderWithTotals( $subtotal, $tax, $shipping, $reported_discount, $wc_total );
+
+		$result    = $this->testee->from_wc_order( $order );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( $expected_tax, $breakdown->tax_total()->value_str() );
+		$this->assertSame( $expected_discount, $breakdown->discount()->value_str() );
+
+		$sum = (float) $breakdown->item_total()->value_str()
+			+ (float) $breakdown->shipping()->value_str()
+			+ (float) $breakdown->tax_total()->value_str()
+			- (float) $breakdown->discount()->value_str();
+		$this->assertSame(
+			number_format( $wc_total, 2, '.', '' ),
+			number_format( $sum, 2, '.', '' )
+		);
+	}
+
+	public function dataUnreportedDiscountCases(): array
+	{
+		return [
+			// Rows 1 and 2 must produce the same split, reported or not.
+			'unreported_discount_smaller_than_tax'      => [ 100.0, 19.0, 0.0, 0.0, 69.0, '19.00', '50.00' ],
+			'reported_discount_matches_unreported_case' => [ 100.0, 19.0, 0.0, 50.0, 69.0, '19.00', '50.00' ],
+			'zero_tax_whole_item_total_discounted'      => [ 45.01, 0.0, 0.0, 0.0, 0.01, '0.00', '45.00' ],
+			// A negative fee can make WC report negative tax.
+			'negative_wc_tax_is_floored_at_zero'       => [ 100.0, -5.0, 0.0, 0.0, 60.0, '0.00', '40.00' ],
+		];
+	}
+
+	/**
+	 * Guards the behaviour that predates the fallback.
+	 */
+	public function testFromWcOrderSmallRoundingDeltaStaysInTaxNotDiscount(): void
+	{
+		// The delta_minus_one case above, asserted on the split rather than the invariant.
+		$order = $this->orderWithTotals( 13.90, 2.65, 0.0, 0.0, 16.54 );
+
+		$result    = $this->testee->from_wc_order( $order );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '2.64', $breakdown->tax_total()->value_str() );
+		$this->assertNull( $breakdown->discount() );
 	}
 
 	/**
@@ -575,6 +672,8 @@ class AmountFactoryTest extends TestCase
 		$cart->shouldReceive( 'get_discount_total' )->andReturn( 0.0 );
 		$cart->shouldReceive( 'get_shipping_total' )->andReturn( 10.0 );
 		$cart->shouldReceive( 'get_total_tax' )->andReturn( 0.0 );
+		// Components (100 + 10 - 25 extra discount) sum to WC's own total of 85.
+		$cart->shouldReceive( 'get_total' )->andReturn( 85.0 );
 
 		$woocommerce          = Mockery::mock( \WooCommerce::class );
 		$session              = Mockery::mock( \WC_Session::class );
@@ -602,6 +701,166 @@ class AmountFactoryTest extends TestCase
 				2, '.', ''
 			)
 		);
+	}
+
+	/**
+	 * GIVEN a cart whose total was reduced directly (e.g. a discount-rules plugin
+	 *       calling WC_Cart::set_total() without registering a coupon or a fee), so
+	 *       get_discount_total() still reports zero
+	 * WHEN  the amount is built from the cart
+	 * THEN  amount.value equals the cart's real total, not the undiscounted component sum
+	 * AND   tax is not driven negative
+	 * AND   the unreported gap surfaces as breakdown.discount
+	 */
+	public function testFromWcCartUnreportedDiscountBelowTotalSurfacesAsDiscount(): void
+	{
+		$cart = Mockery::mock( \WC_Cart::class );
+		// Components sum to 119 (100 item total + 0 shipping + 19 tax - 0 discount).
+		$cart->shouldReceive( 'get_subtotal' )->andReturn( 100.0 );
+		$cart->shouldReceive( 'get_fee_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_shipping_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_total_tax' )->andReturn( 19.0 );
+		// The third-party plugin's reduction is invisible to get_discount_total().
+		$cart->shouldReceive( 'get_discount_total' )->andReturn( 0.0 );
+		// But the cart's own total reflects the real, discounted price.
+		$cart->shouldReceive( 'get_total' )->andReturn( 69.0 );
+
+		$woocommerce          = Mockery::mock( \WooCommerce::class );
+		$session              = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->shouldReceive( 'get' )->andReturn( [] );
+
+		$result    = $this->testee->from_wc_cart( $cart );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '69.00', $result->value_str() );
+		$this->assertSame( '19.00', $breakdown->tax_total()->value_str() );
+		$this->assertSame( '50.00', $breakdown->discount()->value_str() );
+	}
+
+	/**
+	 * GIVEN the same undiscounted-total shape as above, but read through the Store API
+	 *       cart totals used by the block-based checkout
+	 * WHEN  the amount is built from the Store API cart
+	 * THEN  amount.value equals total_price(), tax is not driven negative, and the gap
+	 *       surfaces as breakdown.discount
+	 */
+	public function testFromStoreApiCartUnreportedDiscountBelowTotalSurfacesAsDiscount(): void
+	{
+		$currency   = 'USD';
+		$minor_unit = 2;
+		$make       = fn( int $v ) => new StoreApiMoney( (string) $v, $currency, $minor_unit );
+
+		$totals = Mockery::mock( CartTotals::class );
+		$totals->shouldReceive( 'total_items' )->andReturn( $make( 10000 ) );
+		$totals->shouldReceive( 'total_fees' )->andReturn( $make( 0 ) );
+		$totals->shouldReceive( 'total_shipping' )->andReturn( $make( 0 ) );
+		$totals->shouldReceive( 'total_tax' )->andReturn( $make( 1900 ) );
+		$totals->shouldReceive( 'total_discount' )->andReturn( $make( 0 ) );
+		// total_price() reflects the real, discounted total (6900¢=$69.00).
+		$totals->shouldReceive( 'total_price' )->andReturn( $make( 6900 ) );
+
+		$result    = $this->testee->from_store_api_cart( $totals );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '69.00', $result->value_str() );
+		$this->assertSame( '19.00', $breakdown->tax_total()->value_str() );
+		$this->assertSame( '50.00', $breakdown->discount()->value_str() );
+	}
+
+	/**
+	 * GIVEN a cart whose WC total is only slightly below the component sum, within
+	 *       the range of ordinary rounding rather than an unreported discount
+	 * WHEN  the amount is built from the cart
+	 * THEN  the whole gap stays in tax and no discount is invented
+	 */
+	public function testFromWcCartGapSmallerThanTaxStaysInTaxNotDiscount(): void
+	{
+		$cart = Mockery::mock( \WC_Cart::class );
+		// Components sum to 119 (100 + 0 + 19 - 0); WC total is 115, a 4-unit gap.
+		$cart->shouldReceive( 'get_subtotal' )->andReturn( 100.0 );
+		$cart->shouldReceive( 'get_fee_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_shipping_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_total_tax' )->andReturn( 19.0 );
+		$cart->shouldReceive( 'get_discount_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_total' )->andReturn( 115.0 );
+
+		$woocommerce          = Mockery::mock( \WooCommerce::class );
+		$session              = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->shouldReceive( 'get' )->andReturn( [] );
+
+		$result    = $this->testee->from_wc_cart( $cart );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '115.00', $result->value_str() );
+		$this->assertSame( '15.00', $breakdown->tax_total()->value_str() );
+		$this->assertNull( $breakdown->discount() );
+	}
+
+	/**
+	 * GIVEN a cart whose WC total exactly matches the sum of its breakdown components
+	 * WHEN  the amount is built from the cart
+	 * THEN  nothing is adjusted: tax and total are exactly the reported component values
+	 */
+	public function testFromWcCartMatchingTotalLeavesBreakdownUnadjusted(): void
+	{
+		$cart = Mockery::mock( \WC_Cart::class );
+		$cart->shouldReceive( 'get_subtotal' )->andReturn( 50.0 );
+		$cart->shouldReceive( 'get_fee_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_shipping_total' )->andReturn( 5.0 );
+		$cart->shouldReceive( 'get_total_tax' )->andReturn( 4.0 );
+		$cart->shouldReceive( 'get_discount_total' )->andReturn( 0.0 );
+		// Components sum to exactly 59 — nothing to reconcile.
+		$cart->shouldReceive( 'get_total' )->andReturn( 59.0 );
+
+		$woocommerce          = Mockery::mock( \WooCommerce::class );
+		$session              = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->shouldReceive( 'get' )->andReturn( [] );
+
+		$result    = $this->testee->from_wc_cart( $cart );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '59.00', $result->value_str() );
+		$this->assertSame( '50.00', $breakdown->item_total()->value_str() );
+		$this->assertSame( '5.00', $breakdown->shipping()->value_str() );
+		$this->assertSame( '4.00', $breakdown->tax_total()->value_str() );
+		$this->assertNull( $breakdown->discount() );
+	}
+
+	/**
+	 * GIVEN a cart whose WC total is ABOVE the component sum (e.g. a plugin adding a
+	 *       surcharge directly to the cart total)
+	 * WHEN  the amount is built from the cart
+	 * THEN  amount.value equals the higher WC total, and the extra amount lands in tax
+	 */
+	public function testFromWcCartSurchargeAboveComponentSumLandsInTax(): void
+	{
+		$cart = Mockery::mock( \WC_Cart::class );
+		// Components sum to 110 (100 + 0 + 10 - 0); WC total is 2 units higher.
+		$cart->shouldReceive( 'get_subtotal' )->andReturn( 100.0 );
+		$cart->shouldReceive( 'get_fee_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_shipping_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_total_tax' )->andReturn( 10.0 );
+		$cart->shouldReceive( 'get_discount_total' )->andReturn( 0.0 );
+		$cart->shouldReceive( 'get_total' )->andReturn( 112.0 );
+
+		$woocommerce          = Mockery::mock( \WooCommerce::class );
+		$session              = Mockery::mock( \WC_Session::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->shouldReceive( 'get' )->andReturn( [] );
+
+		$result    = $this->testee->from_wc_cart( $cart );
+		$breakdown = $result->breakdown();
+
+		$this->assertSame( '112.00', $result->value_str() );
+		$this->assertSame( '12.00', $breakdown->tax_total()->value_str() );
+		$this->assertNull( $breakdown->discount() );
 	}
 
 	public function testFromWcOrderAppliesExtraDiscountFilter(): void

@@ -73,6 +73,11 @@ jest.mock( '../utils/viewedTotal', () => ( {
 	watchViewedTotal: ( ...args ) => mockWatchViewedTotal( ...args ),
 } ) );
 
+const mockInitProductButtonGate = jest.fn();
+jest.mock( '../utils/productButtonGate', () => ( {
+	initProductButtonGate: ( ...args ) => mockInitProductButtonGate( ...args ),
+} ) );
+
 const WRAPPER_SELECTOR = '#ppcp-button-checkout';
 const MINI_CART_WRAPPER_SELECTOR = '#ppcp-mini-cart-button';
 
@@ -334,6 +339,9 @@ describe( 'boot', () => {
 			expect( mockWatchViewedTotal ).toHaveBeenCalledWith(
 				expect.objectContaining( { page_context: 'product' } ),
 				'product'
+			);
+			expect( mockInitProductButtonGate ).toHaveBeenCalledWith(
+				expect.objectContaining( { page_context: 'product' } )
 			);
 
 			notify( '42.00' );

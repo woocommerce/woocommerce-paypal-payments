@@ -13,7 +13,9 @@ use Exception;
 use WC_Order;
 use WC_Order_Item_Product;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MerchantCountrySupport;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -69,8 +71,13 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			( new WcGiftCardsCompat( $context ) )->register();
 		}
 
+		if ( class_exists( '\Kestrel\Account_Funds\Cart' ) ) {
+			( new WcAccountFundsCompat() )->register();
+		}
+
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
+		$this->migrate_sdk_v6_default( $c );
 		$this->migrate_three_d_secure_setting();
 		$this->migrate_capture_on_status_change();
 
@@ -344,6 +351,54 @@ class CompatModule implements ServiceModule, ExecutableModule {
 				// Save both.
 				update_option( 'woocommerce-ppcp-data-settings', $data_settings );
 				update_option( 'woocommerce-ppcp-data-payment', $payment_settings );
+			}
+		);
+	}
+
+	/**
+	 * Hands a store that predates the SDK v6 rollout over to it.
+	 *
+	 * The rollout shipped v6 to fresh installs only, storing 'no' against every store
+	 * that already existed. This clears that hold, so v6 is the default everywhere.
+	 *
+	 * The merchant country is weighed here rather than left to the runtime check in
+	 * SdkV6Module, which only runs on `woocommerce_paypal_payments_authenticated_merchant`
+	 * — a store connected long ago would load v6 and never re-evaluate it.
+	 *
+	 * 'yes' is written rather than the option being deleted: a store that downgrades
+	 * would have the option rewritten by the older install path, and with the marker
+	 * already set this migration could not put it right again.
+	 *
+	 * An unsupported country is written back as 'no' rather than left empty, since an
+	 * empty option now means "nobody objected" and would load v6 there.
+	 *
+	 * @param ContainerInterface $c The Container.
+	 */
+	protected function migrate_sdk_v6_default( ContainerInterface $c ): void {
+		$is_sdk_v6_default_migrated_option_name = 'woocommerce_ppcp-is_sdk_v6_default_migrated';
+
+		if ( get_option( $is_sdk_v6_default_migrated_option_name ) ) {
+			return;
+		}
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			static function () use ( $c, $is_sdk_v6_default_migrated_option_name ) {
+				// Not 'yes': held back by the rollout, or too old to carry an answer.
+				if ( 'yes' !== get_option( 'woocommerce-ppcp-sdk-v6-eligible' ) ) {
+					$settings_provider = $c->get( 'settings.settings-provider' );
+					assert( $settings_provider instanceof SettingsProvider );
+
+					$support = new MerchantCountrySupport( $settings_provider->merchant_country() );
+
+					update_option(
+						'woocommerce-ppcp-sdk-v6-eligible',
+						$support->is_supported() ? 'yes' : 'no'
+					);
+				}
+
+				// Set last, so a failure above leaves the handover to the next update.
+				update_option( $is_sdk_v6_default_migrated_option_name, true );
 			}
 		);
 	}
