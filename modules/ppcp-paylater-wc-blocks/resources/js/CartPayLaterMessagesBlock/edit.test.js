@@ -32,12 +32,19 @@ jest.mock( '@paypal/react-paypal-js', () => ( {
 	PayPalMessages: jest.fn( () => null ),
 } ) );
 
+jest.mock( '@ppcp-paylater-block/components/v6-message-preview', () => ( {
+	V6MessagePreview: jest.fn( () => <div data-testid="v6-message-preview" /> ),
+} ) );
+
 const {
 	useScriptParams,
 } = require( '@ppcp-paylater-block/hooks/script-params' );
 const {
 	usePreviewController,
 } = require( '@ppcp-paylater-block/hooks/use-preview-controller' );
+const {
+	V6MessagePreview,
+} = require( '@ppcp-paylater-block/components/v6-message-preview' );
 
 const defaultConfig = {
 	payLaterDisabledByVaulting: false,
@@ -141,7 +148,10 @@ test( 'does not show placeholder when PayPalMessages renders within 10 seconds',
 } );
 
 test( 'shows vaulting warning when vaulting is enabled', () => {
-	global.PcpCartPayLaterBlock = { ...defaultConfig, payLaterDisabledByVaulting: true };
+	global.PcpCartPayLaterBlock = {
+		...defaultConfig,
+		payLaterDisabledByVaulting: true,
+	};
 	useScriptParams.mockReturnValue( null );
 
 	render( <Edit { ...defaultProps } /> );
@@ -191,6 +201,95 @@ test( 'passes through a flex preview style when the v6 SDK is inactive', () => {
 	render( <Edit { ...defaultProps } /> );
 
 	expect( PayPalMessages.mock.calls[ 0 ][ 0 ].style.layout ).toBe( 'flex' );
+} );
+
+describe( 'PayPal SDK v6 preview', () => {
+	const sdkV6 = {
+		sdkUrl: 'https://example.test/v6-sdk.js',
+		clientId: 'client-id',
+		currency: 'USD',
+		locale: 'en_US',
+	};
+	const messageStyle = {
+		logoType: 'WORDMARK',
+		logoPosition: 'LEFT',
+		textColor: 'BLACK',
+		fontSize: '',
+	};
+
+	test( 'renders V6MessagePreview with the cart page type and sample amount when v6 is active', () => {
+		global.PcpCartPayLaterBlock = {
+			...defaultConfig,
+			isSdkV6Active: true,
+			sdkV6,
+			messageStyle,
+		};
+
+		render( <Edit { ...defaultProps } /> );
+
+		expect(
+			screen.getByTestId( 'v6-message-preview' )
+		).toBeInTheDocument();
+		expect( V6MessagePreview.mock.calls[ 0 ][ 0 ] ).toEqual(
+			expect.objectContaining( {
+				sdkV6,
+				amount: '50.00',
+				pageType: 'cart',
+				style: messageStyle,
+			} )
+		);
+		expect( useScriptParams ).not.toHaveBeenCalled();
+		const { PayPalMessages } = require( '@paypal/react-paypal-js' );
+		expect( PayPalMessages ).not.toHaveBeenCalled();
+	} );
+
+	test( 'falls back to the v5 preview when v6 is active but sdkV6 data is missing', () => {
+		global.PcpCartPayLaterBlock = {
+			...defaultConfig,
+			isSdkV6Active: true,
+			sdkV6: null,
+			messageStyle,
+		};
+		useScriptParams.mockReturnValue( {
+			url_params: { 'client-id': 'test' },
+		} );
+
+		render( <Edit { ...defaultProps } /> );
+
+		expect(
+			screen.queryByTestId( 'v6-message-preview' )
+		).not.toBeInTheDocument();
+		expect( useScriptParams ).toHaveBeenCalled();
+	} );
+
+	test( 'shows the unavailable text immediately when the v5 script params request fails', () => {
+		useScriptParams.mockReturnValue( false );
+
+		render( <Edit { ...defaultProps } /> );
+
+		expect(
+			screen.getByText( /Pay Later messaging preview unavailable/ )
+		).toBeInTheDocument();
+	} );
+
+	test( 'shows the vaulting warning instead of the v6 preview when vaulting disables the block', () => {
+		global.PcpCartPayLaterBlock = {
+			...defaultConfig,
+			payLaterDisabledByVaulting: true,
+			isSdkV6Active: true,
+			sdkV6,
+			messageStyle,
+		};
+
+		render( <Edit { ...defaultProps } /> );
+
+		expect(
+			screen.getByText( /cannot be used while PayPal Vaulting is active/ )
+		).toBeInTheDocument();
+		expect(
+			screen.queryByTestId( 'v6-message-preview' )
+		).not.toBeInTheDocument();
+	} );
 } );
 
 describe( 'preview controller integration', () => {

@@ -14,12 +14,14 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
@@ -89,6 +91,47 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 	}
 
 	/**
+	 * The data the block editor needs to preview a message with the SDK v6.
+	 *
+	 * The v6 frontend config (wc_ppcp_sdk_v6) is never printed in admin, so the
+	 * editor gets its own: the public client id instead of a client token, and
+	 * the location's v6 style from the same mapper the frontend uses.
+	 *
+	 * @param ContainerInterface $c        The container.
+	 * @param string             $location The messaging location, 'cart' or 'checkout'.
+	 * @return array{sdkV6: ?array, messageStyle: ?array} Null values when the v6 module is not loaded.
+	 */
+	private static function sdk_v6_preview_data( ContainerInterface $c, string $location ): array {
+		if ( ! $c->has( 'sdk-v6.message-style-mapper' ) ) {
+			return array(
+				'sdkV6'        => null,
+				'messageStyle' => null,
+			);
+		}
+
+		$environment = $c->get( 'settings.environment' );
+		assert( $environment instanceof Environment );
+
+		$style_mapper = $c->get( 'sdk-v6.message-style-mapper' );
+		assert( $style_mapper instanceof MessageStyleMapper );
+
+		// Same script URL as SdkV6Manager::script_data().
+		$base_url = $environment->is_sandbox()
+			? 'https://www.sandbox.paypal.com'
+			: 'https://www.paypal.com';
+
+		return array(
+			'sdkV6'        => array(
+				'sdkUrl'   => $base_url . '/web-sdk/v6/core',
+				'clientId' => (string) $c->get( 'button.client_id' ),
+				'currency' => get_woocommerce_currency(),
+				'locale'   => str_replace( '_', '-', get_locale() ),
+			),
+			'messageStyle' => $style_mapper->styles_for_location( $location ),
+		);
+	}
+
+	/**
 	 * Returns whether the under cart totals placement is enabled.
 	 *
 	 * @return bool true if the under cart totals placement is enabled, otherwise false.
@@ -155,7 +198,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						// Module loaded, not page ownership: the editor has no page
 						// to own.
 						'isSdkV6Active'               => $c->has( 'sdk-v6.owns-current-page' ),
-					)
+					) + self::sdk_v6_preview_data( $c, 'cart' )
 				);
 
 				$script_handle = 'ppcp-checkout-paylater-block';
@@ -185,7 +228,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule {
 						// Module loaded, not page ownership: the editor has no page
 						// to own.
 						'isSdkV6Active'              => $c->has( 'sdk-v6.owns-current-page' ),
-					)
+					) + self::sdk_v6_preview_data( $c, 'checkout' )
 				);
 			},
 			20
