@@ -107,7 +107,7 @@ export class PayPalUi {
 		);
 	payPalVaultedGateway = () =>
 		this.paymentOptionsContainers().filter( {
-			hasText: 'Saved token for ppcp-gateway',
+			hasText: /PayPal ending in/i,
 		} );
 	payPalVaultComponent = () =>
 		this.page.locator( '#ppcp-vault-component' );
