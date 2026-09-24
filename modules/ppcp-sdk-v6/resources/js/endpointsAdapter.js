@@ -11,6 +11,7 @@
 
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
+import { cartPayerData } from '@ppcp-button/Helper/CartPayerData';
 import { postJson, postStoreApi } from './utils/api';
 import { FundingSources } from './utils/fundingSources';
 import { amountFromCartTotals } from './utils/amount';
@@ -18,6 +19,31 @@ import { continuationRedirectUrl } from './utils/continuation';
 
 // The gateway that processes an order unless a caller names another one.
 const DEFAULT_PAYMENT_METHOD = 'ppcp-gateway';
+
+/**
+ * The shopper's details for a create-order request, read from wherever the
+ * current checkout keeps them.
+ *
+ * PayPal's risk engine identifies a buyer partly by their email address, and a
+ * card it has never seen has nothing else to be matched against. The classic
+ * checkout holds the details in billing inputs; the block checkout has no such
+ * inputs and keeps them in the cart store. Anywhere else there is no billing
+ * form to read, so nothing is sent.
+ *
+ * @param {string} context - The page context.
+ * @return {?Object} The payer, or null when no details are available.
+ */
+function payerFor( context ) {
+	if ( context === 'checkout' ) {
+		return payerData();
+	}
+
+	if ( context === 'checkout-block' ) {
+		return cartPayerData();
+	}
+
+	return null;
+}
 
 /**
  * Navigation seam: window.location is not mockable under jsdom, so
@@ -191,11 +217,11 @@ export async function createOrder(
 			body.createaccount =
 				!! form.querySelector( '#createaccount' )?.checked;
 		}
+	}
 
-		const payer = payerData();
-		if ( payer ) {
-			body.payer = payer;
-		}
+	const payer = payerFor( context );
+	if ( payer ) {
+		body.payer = payer;
 	}
 
 	const data = await postJson( config.ajax.create_order, body );
@@ -399,11 +425,11 @@ export async function createCardOrder(
 			body.createaccount =
 				!! form.querySelector( '#createaccount' )?.checked;
 		}
+	}
 
-		const payer = payerData();
-		if ( payer ) {
-			body.payer = payer;
-		}
+	const payer = payerFor( context );
+	if ( payer ) {
+		body.payer = payer;
 	}
 
 	const data = await postJson( config.ajax.create_order, body );
