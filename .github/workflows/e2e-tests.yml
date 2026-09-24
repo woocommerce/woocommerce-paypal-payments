@@ -169,12 +169,10 @@ jobs:
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
-      NGROK_ENABLED: ${{ contains(fromJson('["transaction-usa","transaction-mexico","transaction-germany","refund","vaulting","subscription"]'), matrix.slug) }}
+      # Only shards whose tests wait on a PayPal webhook
+      NGROK_ENABLED: ${{ contains(fromJson('["transaction-germany","transaction-mexico","refund"]'), matrix.slug) }}
       NGROK_WILDCARD_DOMAIN: e2e.paypal.syde.wpinfra.cloud
-      # Deliberately stable (no run id): a constant hostname per shard+SDK means
-      # the next run's webhook URL matches the one already registered on the app,
-      # so the plugin's own-webhook check recognizes and replaces it instead of
-      # leaving an orphan behind on every run.
+      # Next run's webhook URL matches the one already registered on the app
       NGROK_SUBDOMAIN: ${{ matrix.slug }}-${{ matrix.sdk_version }}
       NGROK_HOST_FILE: tests/qa/resources/e2e-snippets/ngrok-host.txt
       PRE_SCRIPT: |
