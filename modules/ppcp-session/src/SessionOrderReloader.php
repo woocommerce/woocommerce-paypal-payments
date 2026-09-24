@@ -40,29 +40,21 @@ class SessionOrderReloader {
 
 	private int $reload_interval;
 
-	/**
-	 * @var callable(): int
-	 */
-	private $clock;
-
 	private bool $reloaded = false;
 
 	/**
 	 * @param OrderEndpoint   $order_endpoint  The order endpoint.
 	 * @param LoggerInterface $logger          The logger.
 	 * @param int             $reload_interval Minimum seconds between two fetches of the same order.
-	 * @param callable|null   $clock           Returns the current Unix timestamp.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		LoggerInterface $logger,
-		int $reload_interval,
-		?callable $clock = null
+		int $reload_interval
 	) {
 		$this->order_endpoint  = $order_endpoint;
 		$this->logger          = $logger;
 		$this->reload_interval = $reload_interval;
-		$this->clock           = $clock ?? 'time';
 	}
 
 	public function maybe_reload( ?Order $order, SessionHandler $session_handler ): void {
@@ -76,7 +68,7 @@ class SessionOrderReloader {
 			}
 		}
 
-		$now = ( $this->clock )();
+		$now = time();
 		if ( $this->reloaded_recently( $order->id(), $now ) ) {
 			return;
 		}
