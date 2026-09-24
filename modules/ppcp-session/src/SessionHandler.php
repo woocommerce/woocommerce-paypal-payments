@@ -175,6 +175,19 @@ class SessionHandler {
 	}
 
 	/**
+	 * Drops the order and the funding source that approved it, keeping the
+	 * rest of the session data (checkout form, BN code) intact.
+	 */
+	public function forget_order(): void {
+		$this->load_session();
+
+		$this->order          = null;
+		$this->funding_source = null;
+
+		$this->store_session();
+	}
+
+	/**
 	 * Destroys the session data.
 	 *
 	 * @return SessionHandler
