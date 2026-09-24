@@ -149,6 +149,14 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						'Assert one renewal order is created'
 					).toHaveLength( 1 );
 
+					// The renewal order notes carry the payment result which the order edit assertions don't show.
+					for ( const id of renewalOrderIds ) {
+						const notes = await wooCommerceApi.getOrderNotes( id );
+						await test.info().attach( `renewal-notes-${ id }`, {
+							body: JSON.stringify( notes, null, 2 ),
+							contentType: 'application/json',
+						} );
+					}
 
 					for ( const renewalOrderId of renewalOrderIds ) {
 						relatedRenewalOrders.push( {
