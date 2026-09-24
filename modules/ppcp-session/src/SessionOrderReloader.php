@@ -41,7 +41,7 @@ class SessionOrderReloader
     }
     public function maybe_reload(?Order $order, \WooCommerce\PayPalCommerce\Session\SessionHandler $session_handler): void
     {
-        if (!isset(WC()->session) || $this->reloaded || !$order) {
+        if ($this->reloaded || !$order || !isset(WC()->session)) {
             return;
         }
         foreach (self::TERMINAL_STATUSES as $status) {
