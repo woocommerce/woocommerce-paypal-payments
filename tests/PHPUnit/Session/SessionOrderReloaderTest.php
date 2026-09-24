@@ -20,7 +20,8 @@ use function Brain\Monkey\Functions\when;
  */
 class SessionOrderReloaderTest extends TestCase
 {
-	private const INTERVAL = 30;
+	// Mirrors the private SessionOrderReloader::RELOAD_INTERVAL constant.
+	private const INTERVAL = 15;
 
 	private const NOW = 1700000000;
 
@@ -43,8 +44,7 @@ class SessionOrderReloaderTest extends TestCase
 	{
 		return new SessionOrderReloader(
 			$this->order_endpoint,
-			$this->logger,
-			self::INTERVAL
+			$this->logger
 		);
 	}
 

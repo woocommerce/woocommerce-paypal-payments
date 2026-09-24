@@ -28,6 +28,12 @@ class SessionOrderReloader {
 
 	public const LAST_RELOAD_SESSION_KEY = 'ppcp_session_order_last_reload';
 
+	/**
+	 * Seconds between two fetches of the same order: the window in which an
+	 * approval made outside the buttons can go unnoticed.
+	 */
+	private const RELOAD_INTERVAL = 15;
+
 	private const TERMINAL_STATUSES = array(
 		OrderStatus::APPROVED,
 		OrderStatus::COMPLETED,
@@ -38,23 +44,18 @@ class SessionOrderReloader {
 
 	private LoggerInterface $logger;
 
-	private int $reload_interval;
-
 	private bool $reloaded = false;
 
 	/**
-	 * @param OrderEndpoint   $order_endpoint  The order endpoint.
-	 * @param LoggerInterface $logger          The logger.
-	 * @param int             $reload_interval Minimum seconds between two fetches of the same order.
+	 * @param OrderEndpoint   $order_endpoint The order endpoint.
+	 * @param LoggerInterface $logger         The logger.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
-		LoggerInterface $logger,
-		int $reload_interval
+		LoggerInterface $logger
 	) {
-		$this->order_endpoint  = $order_endpoint;
-		$this->logger          = $logger;
-		$this->reload_interval = $reload_interval;
+		$this->order_endpoint = $order_endpoint;
+		$this->logger         = $logger;
 	}
 
 	public function maybe_reload( ?Order $order, SessionHandler $session_handler ): void {
@@ -101,7 +102,7 @@ class SessionOrderReloader {
 			return false;
 		}
 
-		return $now - (int) ( $last_reload['time'] ?? 0 ) < $this->reload_interval;
+		return $now - (int) ( $last_reload['time'] ?? 0 ) < self::RELOAD_INTERVAL;
 	}
 
 	private function is_not_found( Throwable $exception ): bool {

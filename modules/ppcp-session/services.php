@@ -20,8 +20,7 @@ return array(
 	'session.order-reloader'          => static function ( ContainerInterface $container ): SessionOrderReloader {
 		return new SessionOrderReloader(
 			$container->get( 'api.endpoint.order' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			15
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'session.cancellation.view'       => function ( ContainerInterface $container ): CancelView {
