@@ -246,10 +246,11 @@ class SessionOrderReloaderTest extends TestCase
 	/**
 	 * GIVEN PayPal responds that the order no longer exists via a generic runtime exception
 	 * WHEN maybe_reload attempts to fetch it
-	 * THEN the session order is destroyed and no replacement is stored
+	 * THEN only the session order is forgotten, no replacement is stored,
+	 *      and the rest of the session data is left untouched
 	 * AND no warning is logged for this expected condition
 	 */
-	public function test_destroys_session_data_on_runtime_exception_with_404_code(): void
+	public function test_forgets_session_order_on_runtime_exception_with_404_code(): void
 	{
 		$store = [];
 		when('WC')->justReturn((object) array('session' => $this->session_with($store)));
@@ -259,7 +260,8 @@ class SessionOrderReloaderTest extends TestCase
 		$this->order_endpoint->shouldReceive('order')->once()->with('WC-ORDER-1')
 			->andThrow(new RuntimeException('Not found', 404));
 
-		$this->session_handler->shouldReceive('destroy_session_data')->once();
+		$this->session_handler->shouldReceive('forget_order')->once();
+		$this->session_handler->shouldNotReceive('destroy_session_data');
 		$this->session_handler->shouldNotReceive('replace_order');
 		$this->logger->shouldNotReceive('warning');
 
@@ -271,12 +273,12 @@ class SessionOrderReloaderTest extends TestCase
 	/**
 	 * GIVEN PayPal responds with a PayPalApiException identifying the order as gone
 	 * WHEN maybe_reload attempts to fetch it
-	 * THEN the session order is destroyed regardless of whether the exception
+	 * THEN only the session order is forgotten regardless of whether the exception
 	 *      identifies the condition via HTTP status or via the RESOURCE_NOT_FOUND name
 	 *
 	 * @dataProvider not_found_api_exception_provider
 	 */
-	public function test_destroys_session_data_on_not_found_api_exception(int $status_code, string $name): void
+	public function test_forgets_session_order_on_not_found_api_exception(int $status_code, string $name): void
 	{
 		$store = [];
 		when('WC')->justReturn((object) array('session' => $this->session_with($store)));
@@ -289,7 +291,8 @@ class SessionOrderReloaderTest extends TestCase
 		$this->order_endpoint->shouldReceive('order')->once()->with('WC-ORDER-1')
 			->andThrow(new PayPalApiException($response, $status_code));
 
-		$this->session_handler->shouldReceive('destroy_session_data')->once();
+		$this->session_handler->shouldReceive('forget_order')->once();
+		$this->session_handler->shouldNotReceive('destroy_session_data');
 		$this->session_handler->shouldNotReceive('replace_order');
 
 		$this->create_reloader(1000)->maybe_reload($order, $this->session_handler);
@@ -320,6 +323,7 @@ class SessionOrderReloaderTest extends TestCase
 		$this->order_endpoint->shouldReceive('order')->once()->with('WC-ORDER-1')
 			->andThrow(new RuntimeException('Server error', 500));
 
+		$this->session_handler->shouldNotReceive('forget_order');
 		$this->session_handler->shouldNotReceive('destroy_session_data');
 		$this->session_handler->shouldNotReceive('replace_order');
 		$this->logger->shouldReceive('warning')->once();

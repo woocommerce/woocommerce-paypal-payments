@@ -95,7 +95,7 @@ class SessionOrderReloader {
 		} catch ( Throwable $exception ) {
 			if ( $this->is_not_found( $exception ) ) {
 				$this->logger->info( sprintf( 'PayPal order %s no longer exists, removing it from the session.', $order->id() ) );
-				$session_handler->destroy_session_data();
+				$session_handler->forget_order();
 				return;
 			}
 
