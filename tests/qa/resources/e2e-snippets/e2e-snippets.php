@@ -40,3 +40,8 @@ add_filter( 'woocommerce_store_api_disable_nonce_check', '__return_true' );
  * Enable New PCP UI
  */
 add_filter('woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled', '__return_true');
+
+/**
+ * Disable the WooCommerce order milestone celebration
+ */
+add_filter( 'wc_order_milestone_egg_enabled', '__return_false' );
