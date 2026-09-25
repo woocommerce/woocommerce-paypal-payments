@@ -32,26 +32,25 @@ const FIELD_TYPES = [ 'number', 'expiry', 'cvv' ];
 
 /**
  * Reads the billing address from the classic checkout form for the card
- * session submit. The v6 SDK uses it for AVS/3D Secure verification, so
- * omitting it can make an otherwise-valid card fail authentication.
+ * session submit: countryCode is required, postalCode is included when present.
  *
  * @return {Object|undefined} A { billingAddress } options object, or undefined
- *                            when no postal code is present (e.g. pay-for-order).
+ *                            when no country is present.
  */
 function billingAddressForSubmit() {
-	const postalCode = document
-		.querySelector( '#billing_postcode' )
-		?.value?.trim();
-	if ( ! postalCode ) {
-		return undefined;
-	}
-
-	const billingAddress = { postalCode };
 	const countryCode = document
 		.querySelector( '#billing_country' )
 		?.value?.trim();
-	if ( countryCode ) {
-		billingAddress.countryCode = countryCode;
+	if ( ! countryCode ) {
+		return undefined;
+	}
+
+	const billingAddress = { countryCode };
+	const postalCode = document
+		.querySelector( '#billing_postcode' )
+		?.value?.trim();
+	if ( postalCode ) {
+		billingAddress.postalCode = postalCode;
 	}
 
 	return { billingAddress };

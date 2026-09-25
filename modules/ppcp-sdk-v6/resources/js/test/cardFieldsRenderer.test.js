@@ -596,6 +596,52 @@ describe( 'initCardFields', () => {
 		} );
 	} );
 
+	test( 'submits the card session with only the country when the checkout form has no postcode', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			'<input id="billing_country" value="US" />'
+		);
+		const cardSession = makeCardSession( { state: 'succeeded' } );
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+		mockApproveCardOrder.mockResolvedValue( undefined );
+
+		await initCardFields( baseConfig() );
+		await flushPromises();
+
+		document.querySelector( '#place_order' ).click();
+		await flushPromises();
+
+		expect( cardSession.submit ).toHaveBeenCalledWith( 'CARDORDER1', {
+			billingAddress: { countryCode: 'US' },
+		} );
+	} );
+
+	test( 'submits the card session with no options when the checkout form has no country', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			'<input id="billing_postcode" value="90001" />'
+		);
+		const cardSession = makeCardSession( { state: 'succeeded' } );
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => cardSession,
+		} );
+		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+		mockApproveCardOrder.mockResolvedValue( undefined );
+
+		await initCardFields( baseConfig() );
+		await flushPromises();
+
+		document.querySelector( '#place_order' ).click();
+		await flushPromises();
+
+		expect( cardSession.submit ).toHaveBeenCalledWith( 'CARDORDER1' );
+	} );
+
 	test( 'passes save_payment_method true to createCardOrder when the buyer checks the save-card box', async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		document.body.insertAdjacentHTML(
