@@ -28,7 +28,6 @@ jest.mock( '@paypal/react-paypal-js', () => ( {
 const { useScriptParams } = require( './hooks/script-params' );
 
 const defaultConfig = {
-	payLaterDisabledByVaulting: false,
 	placementEnabled: true,
 	payLaterSettingsUrl: '/wp-admin/paylater-settings',
 	ajax: {
@@ -125,17 +124,6 @@ test( 'does not show placeholder when PayPalMessages renders within 10 seconds',
 	expect(
 		screen.queryByText( /Pay Later messaging preview unavailable/ )
 	).not.toBeInTheDocument();
-} );
-
-test( 'shows vaulting warning when vaulting is enabled', () => {
-	global.PcpPayLaterBlock = { ...defaultConfig, payLaterDisabledByVaulting: true };
-	useScriptParams.mockReturnValue( null );
-
-	render( <Edit { ...defaultProps } /> );
-
-	expect(
-		screen.getByText( /cannot be used while PayPal Vaulting is active/ )
-	).toBeInTheDocument();
 } );
 
 test( 'shows placement warning when placement is disabled', () => {
