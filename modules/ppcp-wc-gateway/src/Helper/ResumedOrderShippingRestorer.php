@@ -2,7 +2,6 @@
 /**
  * Restores the shipping line items WooCommerce drops when it resumes a failed order.
  *
- *
  * This helper snapshots the shipping items while they still exist and re-adds them after
  * the rebuild, only when the divergence actually happened.
  *
@@ -83,7 +82,6 @@ class ResumedOrderShippingRestorer {
 					'total'        => $item->get_total(),
 					'total_tax'    => $item->get_total_tax(),
 					'taxes'        => $item->get_taxes(),
-					'tax_status'   => $item->get_tax_status(),
 					'meta'         => $this->meta_of( $item ),
 				);
 			}
@@ -132,10 +130,14 @@ class ResumedOrderShippingRestorer {
 
 			$shipping_total = (string) $wc_order->get_shipping_total();
 			if ( (float) $shipping_total <= 0.0 ) {
+				unset( $this->snapshots[ $order_id ] );
+
 				return;
 			}
 
 			if ( $wc_order->get_shipping_methods() ) {
+				unset( $this->snapshots[ $order_id ] );
+
 				return;
 			}
 
@@ -183,8 +185,8 @@ class ResumedOrderShippingRestorer {
 
 		/**
 		 * WC_Order_Item_Shipping::set_total_tax() is protected; set_taxes() derives the
-		 * total tax from the same rate breakdown the original item carried. The snapshotted
-		 * tax status needs no counterpart, since WC_Order_Item::get_tax_status() is fixed.
+		 * total tax from the same rate breakdown the original item carried. The tax status
+		 * is not carried at all, since WC_Order_Item_Shipping::get_tax_status() is fixed.
 		 */
 		$taxes = $item_data['taxes'] ?? array();
 		$item->set_taxes( is_array( $taxes ) ? $taxes : array() );
