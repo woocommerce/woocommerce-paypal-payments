@@ -86,6 +86,9 @@ export type BaseExtend = BaseExtendBase & {
 
 	// Utils & preconditions
 	utils: Utils;
+
+	// Diagnostics
+	failureDiagnostics: void;
 };
 
 const test = base.extend< BaseExtend >( {
@@ -249,6 +252,46 @@ const test = base.extend< BaseExtend >( {
 	apmHostedCheckout: async ( { visitorPage }, use ) => {
 		await use( new ApmHostedCheckout( visitorPage ) );
 	},
+
+	// On failure, attaches the latest WooCommerce order and its notes, where PCP records payment errors.
+	failureDiagnostics: [
+		async ( { request }, use, testInfo ) => {
+			await use();
+			if ( testInfo.status === testInfo.expectedStatus ) {
+				return;
+			}
+			try {
+				const wooCommerceApi = new WooCommerceApi( { request } );
+				const [ order ] = await wooCommerceApi.getOrders( 1 );
+				if ( ! order ) {
+					return;
+				}
+				const notes = await wooCommerceApi.getOrderNotes( order.id );
+				await testInfo.attach( `latest-order-${ order.id }`, {
+					body: JSON.stringify(
+						{
+							id: order.id,
+							status: order.status,
+							payment_method: order.payment_method,
+							date_created: order.date_created,
+							notes: notes.map(
+								( note ) => `${ note.date_created } ${ note.note }`
+							),
+						},
+						null,
+						2
+					),
+					contentType: 'application/json',
+				} );
+			} catch ( error ) {
+				await testInfo.attach( 'latest-order-error', {
+					body: String( error ),
+					contentType: 'text/plain',
+				} );
+			}
+		},
+		{ auto: true },
+	],
 
 	// Utils & preconditions
 	utils: async (
