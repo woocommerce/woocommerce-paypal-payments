@@ -96,7 +96,7 @@ return array(
         return $factory->for_module('ppcp-settings');
     },
     'settings.settings-provider' => static function (ContainerInterface $container): SettingsProvider {
-        return new SettingsProvider($container->get('settings.data.general'), $container->get('settings.data.onboarding'), $container->get('settings.data.payment'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.fastlane'), $container->get('settings.data.paylater-messaging-settings'), $container->get('button.helper.messages-apply'));
+        return new SettingsProvider($container->get('settings.data.general'), $container->get('settings.data.onboarding'), $container->get('settings.data.payment'), $container->get('settings.data.settings'), $container->get('settings.data.styling'), $container->get('settings.data.fastlane'), $container->get('settings.data.paylater-messaging-settings'));
     },
     'settings.data.onboarding' => static function (ContainerInterface $container): OnboardingProfile {
         $can_use_casual_selling = $container->get('settings.casual-selling.eligible');
@@ -299,7 +299,7 @@ return array(
         );
     },
     'settings.data.definition.method_dependencies' => static function (ContainerInterface $container): PaymentMethodsDependenciesDefinition {
-        return new PaymentMethodsDependenciesDefinition($container->get('settings.settings-provider'));
+        return new PaymentMethodsDependenciesDefinition();
     },
     'settings.service.pay_later_status' => static function (ContainerInterface $container): array {
         $pay_later_endpoint = $container->get('settings.rest.pay_later_messaging');
@@ -452,7 +452,7 @@ return array(
             // Pay with Crypto eligibility.
             FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[FeaturesDefinition::FEATURE_PAY_UPON_INVOICE],
         );
-        return new FeaturesDefinition($container->get('settings.service.features_eligibilities'), $container->get('settings.data.general'), $merchant_capabilities, $container->get('woocommerce.logger.woocommerce'), $container->get('settings.settings-provider'));
+        return new FeaturesDefinition($container->get('settings.service.features_eligibilities'), $container->get('settings.data.general'), $merchant_capabilities, $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.service.features_eligibilities' => static function (ContainerInterface $container): FeaturesEligibilityService {
         $messages_apply = $container->get('button.helper.messages-apply');
