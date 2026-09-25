@@ -57,10 +57,11 @@ Settings and data migrations run from `CompatModule` (`modules/ppcp-compat`) on 
 
 ## Commands
 
+Run every command through DDEV, not with host PHP, Node, or Composer. The web container provides the project's PHP and Node versions, extensions, and database. Use `ddev npm`, `ddev npx`, `ddev composer`, and `ddev php` in place of their host counterparts, and `ddev exec` for anything else, e.g. `ddev exec vendor/bin/phpunit --filter <TestName>`.
+
 ### Setup
 
-- Preferred local env: DDEV.
-- `npm run ddev:setup` (start + orchestrate).
+- `ddev start && ddev orchestrate`
 - If WP is missing after startup, run `ddev orchestrate`.
 - Use `ddev describe` for active URLs/ports.
 - If `.ddev.site` routing fails, use the direct host mapping shown in `ddev describe` for `web:80` (for example `http://127.0.0.1:60792`).
@@ -69,18 +70,18 @@ Settings and data migrations run from `CompatModule` (`modules/ppcp-compat`) on 
 
 ### Build
 
-- Non-DDEV setup: `composer install && npm ci && npm run build`.
+- `ddev npm run build` (rebuild after JS/SCSS source changes).
+- `ddev composer install && ddev npm ci && ddev npm run build` (reinstall dependencies and rebuild).
 
 ### Quality
 
-- `npm run lint` (PHPCS + PHPStan)
-- `npm run lint-js` (currently unreliable for full-repo linting in this project)
-- `npx wp-scripts lint-js <file-or-dir>` (recommended; works for targeted JS/TS paths)
-- `npm run unit-tests`
-- `npm run test:unit-js`
-- `npm run integration-tests`
-- `npm run test` (full suite)
-- `npm run ddev:unit-tests:coverage` (coverage in DDEV)
+- `ddev npm run lint` (PHPCS + PHPStan)
+- `ddev npm run lint-js` (currently unreliable for full-repo linting in this project)
+- `ddev npx wp-scripts lint-js <file-or-dir>` (recommended; works for targeted JS/TS paths)
+- `ddev npm run unit-tests`
+- `ddev npm run test:unit-js`
+- `ddev npm run integration-tests`
+- `ddev npm run test` (full suite)
 
 ## Conventions
 
@@ -119,6 +120,6 @@ abilities surface go stale.
 
 ## Verification Matrix
 
-- PHP-only change: `npm run unit-tests && npm run lint`
-- JS-only change: `npm run test:unit-js && npx wp-scripts lint-js <changed-js-files-or-dir>`
-- Checkout/payment/onboarding/webhook change: `npm run test`
+- PHP-only change: `ddev npm run unit-tests && ddev npm run lint`
+- JS-only change: `ddev npm run test:unit-js && ddev npx wp-scripts lint-js <changed-js-files-or-dir>`
+- Checkout/payment/onboarding/webhook change: `ddev npm run test`
