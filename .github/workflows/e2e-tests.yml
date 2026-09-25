@@ -136,7 +136,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@da7b9b11649213b924309a4b1d071db6e2801361 # feature/playwright-ngrok-tunnel
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@9a9395ac91179e80c4f64bdac6120045cb1512d4 # feature/playwright-ngrok-tunnel
     with:
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
@@ -150,11 +150,17 @@ jobs:
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
       # Only shards whose tests wait on a PayPal webhook
       NGROK_ENABLED: ${{ contains(fromJson('["transaction-germany","transaction-mexico","refund"]'), matrix.slug) }}
-      NGROK_WILDCARD_DOMAIN: e2e.paypal.syde.wpinfra.cloud
       # Next run's webhook URL matches the one already registered on the app
-      NGROK_SUBDOMAIN: ${{ matrix.slug }}-${{ matrix.sdk_version }}
-      NGROK_HOST_FILE: tests/qa/resources/e2e-snippets/ngrok-host.txt
+      NGROK_DOMAIN: ${{ matrix.slug }}-${{ matrix.sdk_version }}.e2e.paypal.syde.wpinfra.cloud
+      # Site stays local; only the webhook URL goes through the tunnel (see e2e-snippets.php)
+      NGROK_REWRITE_URLS: false
       PRE_SCRIPT: |
+        # Write the bare tunnel host for e2e-snippets.php, which cannot read runner env vars.
+        # Only tunnel shards get the file: 03-pcp.setup.ts treats its presence as "tunnel on".
+        if [ -n "$NGROK_URL" ]; then
+          echo -n "${NGROK_URL#https://}" > tests/qa/resources/e2e-snippets/ngrok-host.txt
+        fi
+
         # 0. v6 is PCP's default and needs nothing. For v5 jobs, playwright.config.ts
         # loads .env.ci via dotenv, so this reaches process.env.PCP_JS_SDK_VERSION
         # for both the v5 feature flag and the page objects' locators.
