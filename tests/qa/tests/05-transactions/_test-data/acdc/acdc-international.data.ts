@@ -14,13 +14,29 @@ export const acdcInternationalCountries: {
 	key: string;
 	label: string;
 	merchant: Pcp.Merchant;
+	tags?: string;
 }[] = [
-	{ key: 'germany', label: 'Germany', merchant: merchants.germany },
+	{
+		key: 'germany',
+		label: 'Germany',
+		merchant: merchants.germany,
+		tags: '@Critical @Smoke',
+	},
 	{ key: 'usa', label: 'USA', merchant: merchants.usa },
 	{ key: 'italy', label: 'Italy', merchant: merchants.italy },
-	{ key: 'uk', label: 'UK', merchant: merchants.uk },
+	{
+		key: 'uk',
+		label: 'UK',
+		merchant: merchants.uk,
+		tags: '@Critical @Smoke',
+	},
 	{ key: 'france', label: 'France', merchant: merchants.france },
 	{ key: 'australia', label: 'Australia', merchant: merchants.australia },
 	{ key: 'spain', label: 'Spain', merchant: merchants.spain },
-	{ key: 'canada', label: 'Canada', merchant: merchants.canada },
+	{
+		key: 'canada',
+		label: 'Canada',
+		merchant: merchants.canada,
+		tags: '@Critical @Smoke',
+	},
 ];
