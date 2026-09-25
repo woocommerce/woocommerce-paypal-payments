@@ -69,13 +69,11 @@ class ShipmentTrackingIntegration implements Integration {
 	 * {@inheritDoc}
 	 */
 	public function integrate(): void {
-
-		// Priority 5, ahead of WooCommerce Shipment Tracking's own callback on this
-		// action, which ends in die(). Registered first at the shared default
-		// priority, it ended the request before this one was ever reached, and the
-		// tracking a merchant added never left for PayPal. Nothing here depends on
-		// that callback having run: the tracking is read from the request, not from
-		// what it stores.
+		/*
+		 * Priority 5: WooCommerce Shipment Tracking answers this action too and ends
+		 * in die(), so at the shared default this never ran. The tracking is read
+		 * from the request, so running first costs nothing.
+		 */
 		add_action(
 			'wp_ajax_wc_shipment_tracking_save_form',
 			function () {
