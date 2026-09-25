@@ -234,6 +234,35 @@ export class PayPalApi {
 	};
 
 	/**
+	 * Lists the vaulted payment tokens of a PayPal customer (v3 vault API).
+	 *
+	 * @param customerId PayPal customer id, e.g. from an order's vault attributes.
+	 * @param merchant   - { client_id: '...', client_secret: '...' }
+	 */
+	getVaultTokensForCustomer = async (
+		customerId: string,
+		merchant: Pcp.Merchant
+	) => {
+		const token = await this.getAuthToken( merchant );
+		const response = await this.request.get(
+			`${ this.sandboxBaseUrl }/v3/vault/payment-tokens?customer_id=${ customerId }`,
+			{
+				headers: {
+					Authorization: `Bearer ${ token }`,
+				},
+			}
+		);
+
+		if ( ! ( await response.ok() ) ) {
+			throw new Error(
+				`getVaultTokensForCustomer failed with status ${ await response.status() }: ${ await response.text() }`
+			);
+		}
+
+		return ( await response.json() ).payment_tokens ?? [];
+	};
+
+	/**
 	 * Gets PayPal order ID stored in WooCommerce meta_data
 	 *
 	 * @param wooCommerceOrderJson

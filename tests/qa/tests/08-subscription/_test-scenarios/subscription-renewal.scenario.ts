@@ -8,6 +8,64 @@ import { countTotals } from '@inpsyde/playwright-utils/build';
 import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
+/**
+ * Diagnostic for PCP-2514: attaches whether PayPal vaulted the payment method
+ * of the parent order, and how long until it shows in the customer's token list.
+ * Never fails the test.
+ *
+ * @param root0                The diagnostic inputs.
+ * @param root0.wooCommerceApi The WooCommerce API client.
+ * @param root0.payPalApi      The PayPal API client.
+ * @param root0.merchant       The merchant that owns the order.
+ * @param root0.orderId        The parent WooCommerce order id.
+ * @param root0.purchasedAt    Timestamp (ms) when the purchase completed.
+ */
+const attachSavedPaymentMethodDiagnostics = async ( {
+	wooCommerceApi,
+	payPalApi,
+	merchant,
+	orderId,
+	purchasedAt,
+} ) => {
+	test.setTimeout( test.info().timeout + 60_000 );
+	const log = [];
+	const note = ( entry ) =>
+		log.push( { elapsedMs: Date.now() - purchasedAt, ...entry } );
+
+	try {
+		const payPalOrderId = await payPalApi.getOrderIdFromWooCommerce(
+			await wooCommerceApi.getOrder( orderId )
+		);
+		const payPalOrder = await payPalApi.getOrder( payPalOrderId, merchant );
+		const [ sourceName ] = Object.keys( payPalOrder.payment_source ?? {} );
+		const vault =
+			payPalOrder.payment_source?.[ sourceName ]?.attributes?.vault;
+		note( { payPalOrderId, sourceName, vault } );
+
+		const customerId = vault?.customer?.id;
+		for ( let attempt = 1; customerId && attempt <= 9; attempt++ ) {
+			const tokens = await payPalApi.getVaultTokensForCustomer(
+				customerId,
+				merchant
+			);
+			const tokenIds = tokens.map( ( token ) => token.id );
+			note( { attempt, tokenIds } );
+			if ( vault.id && tokenIds.includes( vault.id ) ) {
+				break;
+			}
+			await new Promise( ( resolve ) => setTimeout( resolve, 5_000 ) );
+		}
+	} catch ( error ) {
+		note( { error: String( error ) } );
+	}
+
+	console.log( `[saved-payment-method] ${ JSON.stringify( log ) }` );
+	await test.info().attach( 'saved-payment-method-diagnostics', {
+		body: JSON.stringify( log, null, 2 ),
+		contentType: 'application/json',
+	} );
+};
+
 export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant, currency } =
 		testOrder;
@@ -53,7 +111,8 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						isPayPalSubscription: payment.isPayPalSubscription,
 					} );
 				} );
-					
+				const purchasedAt = Date.now();
+
 				let orderId: number;
 				let subscriptionId: number;
 				let subscriptionJson: WooCommerce.Subscription;
@@ -129,6 +188,18 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						currency
 					);
 				} );
+
+				if ( ! ( await pcpApi.isPayPalSubscription( subscriptionJson ) ) ) {
+					await test.step( 'Diagnose: saved payment method', async () => {
+						await attachSavedPaymentMethodDiagnostics( {
+							wooCommerceApi,
+							payPalApi,
+							merchant,
+							orderId,
+							purchasedAt,
+						} );
+					} );
+				}
 
 				await test.step( `Subscription renewal`, async () => {
 					if ( await pcpApi.isPayPalSubscription( subscriptionJson ) ) {
