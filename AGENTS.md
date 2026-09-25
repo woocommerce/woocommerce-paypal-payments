@@ -8,12 +8,12 @@ Minimal instructions for coding agents working in this repository.
 - CRITICAL: Do not edit WordPress core, `vendor/`, or `node_modules/`.
 - CRITICAL: For frontend work, edit `modules/*/resources/*`.
 - CRITICAL: Never revert unrelated local changes.
-- CRITICAL: Any change to an externally exposed surface - a hook, an `api/` function, a script or style handle, stored data, or an assumption about global state, multisite, or install layout - is high-risk; state its backward-compatibility impact in the PR (see [Backward compatibility](#backward-compatibility)). PHP classes, interfaces, and methods are not such a surface.
+- CRITICAL: Any change to an externally exposed surface - a hook, an `api/` function, stored data, or an assumption about global state, multisite, or install layout - is high-risk; state its backward-compatibility impact in the PR (see [Backward compatibility](#backward-compatibility)). PHP classes, interfaces, and methods are not such a surface.
 - MUST: Run relevant lint/tests before claiming completion.
 
 ## Backward compatibility
 
-The plugin's compatibility contracts with third-party code are its WordPress-level surfaces: hooks, the public functions in `api/`, registered script and style handles, stored data, and its assumptions about the runtime environment. A change to any of them is **high-risk** and **must state its backward-compatibility impact in the PR description**.
+The plugin's compatibility contracts with third-party code are its WordPress-level surfaces: hooks, the public functions in `api/`, stored data, and its assumptions about the runtime environment. A change to any of them is **high-risk** and **must state its backward-compatibility impact in the PR description**.
 
 PHP classes, interfaces, and methods are **not** a compatibility contract, even when they are reachable via the module container or wired in `services.php`/`factories.php`/`extensions.php`. Change, rename, or remove them as needed: they need no deprecation window and no backward-compatibility statement.
 
@@ -22,8 +22,6 @@ PHP classes, interfaces, and methods are **not** a compatibility contract, even 
 **Hooks and filters are public contracts.** Every `do_action` and `apply_filters` call this plugin makes is an interface that third-party callbacks depend on. Removing a hook, renaming it, or removing/reordering its arguments breaks every attached callback. Changing *when* or *whether* a hook fires can break consumers that depend on its timing. Additive is the safe path: append new arguments at the end, never remove or reorder existing ones. To retire a hook, fire it through `do_action_deprecated()` / `apply_filters_deprecated()` for a deprecation window instead of deleting it.
 
 **Never trust data that flows through hooks.** Keep hook callback parameters untyped and validate or coerce the value before passing it to strictly typed code, since any callback can receive a value another one produced. And when firing a filter (`ppcp_*`, `woocommerce_paypal_payments_*`), validate the final return value before using it, since any callback in the chain can return the wrong thing.
-
-**Registered script and style handles are public contracts.** Third-party code enqueues this plugin's handles and lists them as dependencies - the `ppcp-*` module assets - including handles that were only ever registered incidentally. Renaming or removing a handle breaks those consumers. To rename with a compatibility window, register the legacy handle as an alias that depends on the new handle (the same pattern WordPress core uses for `jquery` -> `jquery-core`); do not register the same file under both handles, or pages with mixed consumers will load it twice.
 
 **Do not assume global state.** Code can run in admin, REST, WP-CLI, cron, PayPal webhook, and front-end contexts, and not all of them set the globals a front-end request does (`$post`, `$wp_query`, an initialized session or cart). A newly introduced read of a global, or of `WC()->…` state, in a path reachable outside a standard request is a fatal or a silent misbehavior in the contexts that do not set it - webhook and cron paths in this plugin are especially exposed. Guard the exact dependency explicitly: use `function_exists`/`class_exists` for symbols, `isset` for variables, `did_action` for lifecycle state, and verify that `WC()` and the required component are initialized before dereferencing `WC()->…`. The same caution applies to this plugin's own container: do not reach for services before the module has booted.
 
@@ -40,7 +38,7 @@ Settings and data migrations run from `CompatModule` (`modules/ppcp-compat`) on 
 
 ### Before changing an externally exposed surface (agent checklist)
 
-1. Identify the contract you are touching: hook, `api/` function, script or style handle, stored data, global/scope expectation, site topology, or install layout.
+1. Identify the contract you are touching: hook, `api/` function, stored data, global/scope expectation, site topology, or install layout.
 2. Assume unseen consumers. You cannot enumerate third-party code; if the surface is reachable from outside this plugin, someone consumes it.
 3. Prefer the additive path (appended hook argument, new hook or function plus deprecation of the old one) over changing what exists.
 4. State the impact in the PR description: what changed, who could consume it, and why it is safe or what the deprecation path is.
