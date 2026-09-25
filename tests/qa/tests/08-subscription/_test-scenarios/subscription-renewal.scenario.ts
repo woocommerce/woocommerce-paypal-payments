@@ -9,61 +9,104 @@ import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 /**
- * Diagnostic for PCP-2514: attaches whether PayPal vaulted the payment method
- * of the parent order, and how long until it shows in the customer's token list.
- * Never fails the test.
+ * Diagnostic for PCP-2514, snapshot-then-renew: records PayPal's token list once
+ * right before the renewal, without waiting, then the renewal outcome, whether
+ * the WC card is still saved, and when PayPal lists the token. Never fails the test.
  *
  * @param root0                The diagnostic inputs.
  * @param root0.wooCommerceApi The WooCommerce API client.
  * @param root0.payPalApi      The PayPal API client.
  * @param root0.merchant       The merchant that owns the order.
- * @param root0.orderId        The parent WooCommerce order id.
  * @param root0.purchasedAt    Timestamp (ms) when the purchase completed.
  */
-const attachSavedPaymentMethodDiagnostics = async ( {
+const savedPaymentMethodDiagnostics = ( {
 	wooCommerceApi,
 	payPalApi,
 	merchant,
-	orderId,
 	purchasedAt,
 } ) => {
-	test.setTimeout( test.info().timeout + 60_000 );
 	const log = [];
+	let vault;
 	const note = ( entry ) =>
 		log.push( { elapsedMs: Date.now() - purchasedAt, ...entry } );
-
-	try {
-		const payPalOrderId = await payPalApi.getOrderIdFromWooCommerce(
-			await wooCommerceApi.getOrder( orderId )
-		);
-		const payPalOrder = await payPalApi.getOrder( payPalOrderId, merchant );
-		const [ sourceName ] = Object.keys( payPalOrder.payment_source ?? {} );
-		const vault =
-			payPalOrder.payment_source?.[ sourceName ]?.attributes?.vault;
-		note( { payPalOrderId, sourceName, vault } );
-
-		const customerId = vault?.customer?.id;
-		for ( let attempt = 1; customerId && attempt <= 9; attempt++ ) {
-			const tokens = await payPalApi.getVaultTokensForCustomer(
-				customerId,
+	const listTokenIds = async () =>
+		(
+			await payPalApi.getVaultTokensForCustomer(
+				vault.customer.id,
 				merchant
-			);
-			const tokenIds = tokens.map( ( token ) => token.id );
-			note( { attempt, tokenIds } );
-			if ( vault.id && tokenIds.includes( vault.id ) ) {
-				break;
-			}
-			await new Promise( ( resolve ) => setTimeout( resolve, 5_000 ) );
+			)
+		).map( ( token ) => token.id );
+	const safely = async ( fn ) => {
+		try {
+			await fn();
+		} catch ( error ) {
+			note( { error: String( error ) } );
 		}
-	} catch ( error ) {
-		note( { error: String( error ) } );
-	}
+	};
 
-	console.log( `[saved-payment-method] ${ JSON.stringify( log ) }` );
-	await test.info().attach( 'saved-payment-method-diagnostics', {
-		body: JSON.stringify( log, null, 2 ),
-		contentType: 'application/json',
-	} );
+	return {
+		beforeRenewal: ( orderId: number ) =>
+			safely( async () => {
+				const payPalOrderId = await payPalApi.getOrderIdFromWooCommerce(
+					await wooCommerceApi.getOrder( orderId )
+				);
+				const payPalOrder = await payPalApi.getOrder(
+					payPalOrderId,
+					merchant
+				);
+				const [ sourceName ] = Object.keys(
+					payPalOrder.payment_source ?? {}
+				);
+				vault =
+					payPalOrder.payment_source?.[ sourceName ]?.attributes
+						?.vault;
+				note( {
+					phase: 'before renewal',
+					payPalOrderId,
+					sourceName,
+					vault,
+				} );
+				if ( vault?.customer?.id ) {
+					note( {
+						phase: 'before renewal',
+						tokenIds: await listTokenIds(),
+					} );
+				}
+			} ),
+		afterRenewal: ( renewalOrderIds: number[], isCardSavedInWc: boolean ) =>
+			safely( async () => {
+				for ( const id of renewalOrderIds ) {
+					const { status } = await wooCommerceApi.getOrder( id );
+					note( {
+						phase: 'after renewal',
+						renewalOrderId: id,
+						status,
+					} );
+				}
+				note( { phase: 'after renewal', isCardSavedInWc } );
+				for (
+					let attempt = 1;
+					vault?.customer?.id && attempt <= 6;
+					attempt++
+				) {
+					const tokenIds = await listTokenIds();
+					note( { phase: 'after renewal', attempt, tokenIds } );
+					if ( tokenIds.includes( vault.id ) ) {
+						break;
+					}
+					await new Promise( ( resolve ) =>
+						setTimeout( resolve, 5_000 )
+					);
+				}
+			} ),
+		attach: async () => {
+			console.log( `[saved-payment-method] ${ JSON.stringify( log ) }` );
+			await test.info().attach( 'saved-payment-method-diagnostics', {
+				body: JSON.stringify( log, null, 2 ),
+				contentType: 'application/json',
+			} );
+		},
+	};
 };
 
 export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
@@ -85,6 +128,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				classicCheckout,
 				orderReceived,
 				customerSubscriptions,
+				customerPaymentMethods,
 				wooCommerceApi,
 				payPalApi,
 				pcpApi,
@@ -189,17 +233,22 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					);
 				} );
 
-				if ( ! ( await pcpApi.isPayPalSubscription( subscriptionJson ) ) ) {
-					await test.step( 'Diagnose: saved payment method', async () => {
-						await attachSavedPaymentMethodDiagnostics( {
-							wooCommerceApi,
-							payPalApi,
-							merchant,
-							orderId,
-							purchasedAt,
-						} );
+				const isWcSubscription =
+					! ( await pcpApi.isPayPalSubscription( subscriptionJson ) );
+				const diagnostics = savedPaymentMethodDiagnostics( {
+					wooCommerceApi,
+					payPalApi,
+					merchant,
+					purchasedAt,
+				} );
+				if ( isWcSubscription ) {
+					test.setTimeout( test.info().timeout + 60_000 );
+					await test.step( 'Diagnose: saved payment method before renewal', async () => {
+						await diagnostics.beforeRenewal( orderId );
 					} );
 				}
+
+
 
 				await test.step( `Subscription renewal`, async () => {
 					if ( await pcpApi.isPayPalSubscription( subscriptionJson ) ) {
@@ -238,6 +287,21 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						} );
 					}
 				} );
+
+				if ( isWcSubscription ) {
+					await test.step( 'Diagnose: saved payment method after renewal', async () => {
+						await customerPaymentMethods.visit();
+						const isCardSavedInWc =
+							await customerPaymentMethods.isSavedPaymentMethod(
+								payment
+							);
+						await diagnostics.afterRenewal(
+							relatedRenewalOrders.map( ( order ) => order.id ),
+							isCardSavedInWc
+						);
+						await diagnostics.attach();
+					} );
+				}
 
 				await test.step( `Assert related orders on order edit page`, async () => {
 					await wooCommerceOrderEdit.visit( orderId );
