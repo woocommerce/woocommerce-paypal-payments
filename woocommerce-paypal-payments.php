@@ -4,8 +4,8 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version: 4.1.3-alpha20260922+pcp-6263-package-tracking-breaks-compatibility-with-woo-commerce-shipment-tracking.f03300c
- * SHA: f03300c122b88decd9f393ed6e5d24fcc48d7264
+ * Version: 4.1.3-alpha20260922+pcp-6263-package-tracking-breaks-compatibility-with-woo-commerce-shipment-tracking.dc7358b
+ * SHA: dc7358bffd14cc6095005b0872f46c3d5d73996d
  * Author:      PayPal
  * Author URI:  https://paypal.com/
  * License:     GPL-2.0
