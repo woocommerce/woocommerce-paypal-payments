@@ -4,7 +4,6 @@ Minimal instructions for coding agents working in this repository.
 
 ## CRITICAL Rules
 
-- CRITICAL: Keep `CLAUDE.md` as a pointer to this file (`@AGENTS.md`).
 - CRITICAL: Maintain PHP `7.4+` compatibility unless project requirements change.
 - CRITICAL: Do not edit WordPress core, `vendor/`, or `node_modules/`.
 - CRITICAL: For frontend work, edit `modules/*/resources/*`.
