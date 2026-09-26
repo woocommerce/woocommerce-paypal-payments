@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { test as setup } from '../../utils';
+import { test as setup, assertSdkVersion } from '../../utils';
 import {
 	merchants,
 	storeConfigGermany,
@@ -28,6 +28,7 @@ setup( 'setup:pcp:usa;', async ( { utils, pcpApi } ) => {
 		merchants.usa.client_id,
 		merchants.usa.client_secret
 	);
+	await assertSdkVersion( pcpApi.requestUtils );
 } );
 
 setup( 'setup:pcp:germany;', async ( { utils, pcpApi } ) => {
@@ -38,6 +39,7 @@ setup( 'setup:pcp:germany;', async ( { utils, pcpApi } ) => {
 		merchants.germany.client_id,
 		merchants.germany.client_secret
 	);
+	await assertSdkVersion( pcpApi.requestUtils );
 } );
 
 setup( 'setup:pcp:mexico;', async ( { utils, pcpApi } ) => {
@@ -48,6 +50,7 @@ setup( 'setup:pcp:mexico;', async ( { utils, pcpApi } ) => {
 		merchants.mexico.client_id,
 		merchants.mexico.client_secret
 	);
+	await assertSdkVersion( pcpApi.requestUtils );
 } );
 
 // =====================================================================

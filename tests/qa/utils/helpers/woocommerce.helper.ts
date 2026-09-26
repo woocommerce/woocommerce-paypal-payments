@@ -45,6 +45,21 @@ const installPluginResolveActiveState = async ( {
 	}
 };
 
+/**
+ * Asserts the site loads correct PayPal JS SDK version
+ *
+ * @param requestUtils The request utils.
+ */
+export const assertSdkVersion = async ( requestUtils ) => {
+	const { version } = await requestUtils.rest( {
+		path: '/pcp-qa/v1/sdk-version',
+	} );
+	expect(
+		version,
+		`Assert the site loads PayPal JS SDK ${ sdkVersion() }`
+	).toEqual( sdkVersion() );
+};
+
 export const setupWooCommerce = async () => {
 	setup(
 		`Setup PCP SDK Version Flag (${ sdkVersion() })`,
@@ -56,10 +71,11 @@ export const setupWooCommerce = async () => {
 				isActive: true,
 				forceReinstall: true,
 			} );
+			// v6 is PCP's default; only v5 is forced via the feature flag.
 			await requestUtils.rest( {
 				method: 'POST',
-				path: '/pcp-qa/v1/sdk-v6',
-				data: { enabled: sdkVersion() === 'v6' },
+				path: '/pcp-qa/v1/sdk-version',
+				data: { version: sdkVersion() },
 			} );
 		}
 	);
