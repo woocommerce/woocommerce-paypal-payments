@@ -51,23 +51,29 @@ Detailed information about current test project can be found in [docs](./docs/RE
 
 ### Installation of `playwright-utils` for local development
 
-1. Add `yarn` to `devDependencies` in `package.json`:
+No changes to `package.json` or `package-lock.json` are needed. See the [`playwright-utils` development docs](https://github.com/inpsyde/playwright-utils/blob/main/README.md#development) for details.
 
-	```json
-	"devDependencies": {
-		"yarn": "^1.22.21",
-	```
-
-
-2. Execute steps for local development described [here](https://github.com/inpsyde/playwright-utils/blob/main/README.md#development).
-
-	General one-line `tsc-watch` command is:
+1. Install the test project dependencies:
 
 	```bash
-	npm run e2e:setup:tests && cd ./playwright-utils && yarn devLocal
+	npm run e2e:setup:tests
 	```
 
-3. After development is finished cleanup `package.json` and regenerate the `package-lock.json`. 
+2. Clone `playwright-utils` outside of this repository, for example next to it, and install its dependencies:
+
+	```bash
+	git clone https://github.com/inpsyde/playwright-utils.git
+	cd playwright-utils
+	npm ci
+	```
+
+3. Start the watcher with the path to this repository. Each successful build is copied to `./node_modules/@inpsyde/playwright-utils/`:
+
+	```bash
+	npm run devLocal -- ../woocommerce-paypal-payments
+	```
+
+4. When development is finished, restore the published version by running `npm ci` in this repository.
 
 ## Running tests
 

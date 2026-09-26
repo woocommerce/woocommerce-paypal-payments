@@ -117,7 +117,7 @@ test.describe( () => {
 						'Assert payment methods page content is visible (PayPal, Venmo enabled)'
 					).toBeVisible();
 
-					const locations: Pcp.Admin.Styling.Location[] = [
+					const locations: Pcp.Admin.Styling.LocationPage[] = [
 						'Cart',
 						'Classic Checkout',
 						'Express Checkout',
