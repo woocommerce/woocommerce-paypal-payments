@@ -9,7 +9,7 @@ import {
 	guests,
 } from '../../../resources';
 
-const { payPal } = payments;
+const { payPalRefund } = payments;
 const customer = customers.usa;
 const guest = guests.usa;
 
@@ -17,7 +17,7 @@ export const refundPayPalFromCheckout: ShopRefund[] = [
 	{
 		title: 'PCP-1394 | Refund - Full - PayPal - Order from shop @Critical @Smoke',
 		...orders.default,
-		payment: payPal,
+		payment: payPalRefund,
 		isApiOrder: false,
 		refundPercentage: 100,
 		refundOrderStatus: 'refunded',
@@ -28,7 +28,7 @@ export const refundPayPalFromCheckout: ShopRefund[] = [
 	{
 		title: 'PCP-1395 | Refund - Partial - PayPal - Order from shop @Critical @Smoke',
 		...orders.default,
-		payment: payPal,
+		payment: payPalRefund,
 		isApiOrder: false,
 		refundPercentage: 50,
 		refundOrderStatus: 'processing',
@@ -42,7 +42,7 @@ export const refundPayPalFromPayByLink: ShopRefund[] = [
 	{
 		title: 'PCP-1405 | Refund - Full - PayPal - Order from dashboard',
 		...orders.default,
-		payment: payPal,
+		payment: payPalRefund,
 		isApiOrder: true,
 		refundPercentage: 100,
 		refundOrderStatus: 'refunded',
@@ -53,7 +53,7 @@ export const refundPayPalFromPayByLink: ShopRefund[] = [
 	{
 		title: 'PCP-1406 | Refund - Partial - PayPal - Order from dashboard',
 		...orders.default,
-		payment: payPal,
+		payment: payPalRefund,
 		isApiOrder: true,
 		refundPercentage: 50,
 		refundOrderStatus: 'processing',
