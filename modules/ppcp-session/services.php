@@ -15,7 +15,13 @@ use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 
 return array(
 	'session.handler'                 => function ( ContainerInterface $container ): SessionHandler {
-		return new SessionHandler();
+		return new SessionHandler( $container->get( 'woocommerce.logger.woocommerce' ) );
+	},
+	'session.order-reloader'          => static function ( ContainerInterface $container ): SessionOrderReloader {
+		return new SessionOrderReloader(
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 	'session.cancellation.view'       => function ( ContainerInterface $container ): CancelView {
 		return new CancelView(
