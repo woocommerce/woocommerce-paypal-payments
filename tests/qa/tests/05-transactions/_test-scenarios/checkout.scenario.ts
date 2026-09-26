@@ -2,7 +2,12 @@
  * Internal dependencies
  */
 import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
-import { annotateVisitor, test, waitForOrderStatus } from '../../../utils';
+import {
+	annotateVisitor,
+	test,
+	waitForOrderStatus,
+	waitForTransactionId,
+} from '../../../utils';
 
 export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant, orderStatus } = testOrder;
@@ -26,13 +31,6 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 				test.setTimeout( 3 * 60_000 ); // 3 minutes for PUI/OXXO async capture
 			}
 
-			// PUI/OXXO capture completion relies on an async PayPal webhook, which
-			// can't reach the ephemeral CI environment. In CI, skip waiting for it
-			// and finish the assertions with the order still in its synchronous,
-			// pre-capture status.
-			const skipCaptureWait = isAsyncCaptureGateway && !! process.env.CI;
-			const syncOrderStatus = gatewayTitle === 'OXXO' ? 'pending' : 'on-hold';
-
 			await test.step( `Add product(s) to the cart`, async () => {
 				await utils.fillVisitorsCart( products );
 			} );
@@ -52,16 +50,14 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 
 				orderId = await orderReceived.getOrderNumber();
 
-				if ( skipCaptureWait ) {
-					return;
-				}
-
 				await waitForOrderStatus( wooCommerceApi, orderId, {
 					expectedStatus: orderStatus,
 					timeout: isAsyncCaptureGateway ? 2.5 * 60_000 : undefined,
 				} );
-				const transactionId =
-						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+				const transactionId = await waitForTransactionId(
+					wooCommerceApi,
+					orderId
+				);
 
 				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
 					transactionId,
@@ -78,10 +74,10 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 
 			await test.step( `Assert details on order edit page`, async () => {
 				await wooCommerceOrderEdit.visit( orderId );
-				const orderEditData = skipCaptureWait
-					? { ...testOrder, orderStatus: syncOrderStatus }
-					: testOrder;
-				await wooCommerceOrderEdit.assertOrderDetails( orderEditData, payPalPaymentDetails );
+				await wooCommerceOrderEdit.assertOrderDetails(
+					testOrder,
+					payPalPaymentDetails
+				);
 			} );
 		}
 	);
