@@ -164,6 +164,69 @@ export class PayPalApi {
 	};
 
 	/**
+	 * Lists the vault payment tokens PayPal has for a customer.
+	 *
+	 * @param customerId - PayPal customer ID
+	 * @param merchant   - { client_id: '...', client_secret: '...' }
+	 */
+	getVaultTokensForCustomer = async (
+		customerId: string,
+		merchant: Pcp.Merchant
+	): Promise< { id: string }[] > => {
+		const token = await this.getAuthToken( merchant );
+		const response = await this.request.get(
+			`${ this.sandboxBaseUrl }/v3/vault/payment-tokens`,
+			{
+				headers: { Authorization: `Bearer ${ token }` },
+				params: { customer_id: customerId },
+			}
+		);
+		if ( ! response.ok() ) {
+			throw new Error(
+				`getVaultTokensForCustomer failed with status ${ response.status() }: ${ await response.text() }`
+			);
+		}
+		return ( await response.json() ).payment_tokens ?? [];
+	};
+
+	/**
+	 * Waits until PayPal lists at least one vault token for the WooCommerce customer.
+	 *
+	 * @param customer - WooCommerce customer holding the PayPal customer ID in user meta
+	 * @param merchant - { client_id: '...', client_secret: '...' }
+	 */
+	waitForVaultToken = async (
+		customer: WooCommerce.Customer,
+		merchant: Pcp.Merchant
+	) => {
+		const meta = customer.meta_data as { key: string; value: string }[];
+		const customerId = [ '_ppcp_target_customer_id', 'ppcp_customer_id' ]
+			.map( ( key ) => meta.find( ( item ) => item.key === key )?.value )
+			.find( Boolean );
+		expect(
+			customerId,
+			'Assert the customer has a PayPal customer ID'
+		).toBeTruthy();
+
+		await expect
+			.poll(
+				async () =>
+					(
+						await this.getVaultTokensForCustomer(
+							customerId,
+							merchant
+						)
+					).length,
+				{
+					message: `Assert PayPal lists a vault token for customer ${ customerId }`,
+					timeout: 60_000,
+					intervals: [ 2_000 ],
+				}
+			)
+			.toBeGreaterThan( 0 );
+	};
+
+	/**
 	 * Gets PayPal order ID stored in WooCommerce meta_data
 	 *
 	 * @param wooCommerceOrderJson

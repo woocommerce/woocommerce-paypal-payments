@@ -24,8 +24,6 @@ const vaultingRenewal: ShopOrder[] = [
 		products: [ products.subscription100 ],
 		currency,
 	},
-	// Fails intermittently in CI until PCP-6991 is fixed: the renewal runs before
-	// PayPal lists the new card, so the saved WC card token gets deleted.
 	{
 		title: 'PCP-2514 | Vaulting subscription - ACDC - Order renewal @Critical @Smoke',
 		...orders.default,
@@ -47,7 +45,6 @@ const vaultingFreeTrialRenewal: ShopOrder[] = [
 		products: [ products.subscriptionFreeTrial ],
 		currency,
 	},
-	// Fails intermittently in CI until PCP-6991 is fixed (same cause as PCP-2514).
 	{
 		title: 'PCP-4914 | Vaulting subscription - ACDC - Free trial order renewal',
 		...orders.default,
