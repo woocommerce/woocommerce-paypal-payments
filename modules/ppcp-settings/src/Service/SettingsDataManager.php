@@ -20,7 +20,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
@@ -37,7 +36,6 @@ class SettingsDataManager
     private SettingsModel $payment_settings;
     private StylingSettings $styling_settings;
     private PaymentSettings $payment_methods;
-    private SettingsProvider $settings_provider;
     /**
      * Data accessors for pay later messaging settings.
      *
@@ -61,7 +59,6 @@ class SettingsDataManager
         PaymentSettings $payment_methods,
         array $paylater_messaging,
         // TODO should be migrated to an AbstractDataModel.
-        SettingsProvider $settings_provider,
         AbstractDataModel ...$data_models
     )
     {
@@ -78,7 +75,6 @@ class SettingsDataManager
         $this->payment_settings = $payment_settings;
         $this->styling_settings = $styling_settings;
         $this->payment_methods = $payment_methods;
-        $this->settings_provider = $settings_provider;
         $this->paylater_messaging = $paylater_messaging;
     }
     /**
@@ -140,6 +136,8 @@ class SettingsDataManager
     {
         // Apply defaults for the "Settings" tab.
         $this->apply_payment_settings($flags);
+        // Assign defaults for the "Payment Methods" tab.
+        $this->apply_payment_methods($flags);
         // Assign defaults for the "Styling" tab.
         $this->apply_location_styles($flags);
         // Assign defaults for the "Pay Later Messaging" tab.
@@ -177,9 +175,13 @@ class SettingsDataManager
         // Enable the Fastlane watermark by default.
         $this->payment_methods->set_fastlane_display_watermark(\true);
         foreach ($all_methods as $method) {
+            // Pay Later is set once by apply_payment_methods(), so a reconnect keeps the merchant's choice.
+            if ('pay-later' === $method['id']) {
+                continue;
+            }
             $this->payment_methods->toggle_method_state($method['id'], \false);
         }
-        // Always enable PayPal, Venmo and Pay Later.
+        // Always enable PayPal and Venmo.
         $this->payment_methods->toggle_method_state(PayPalGateway::ID, \true);
         $this->payment_methods->toggle_method_state('venmo', \true);
         if (!$flags->is_business_seller && $flags->use_card_payments) {
@@ -190,12 +192,6 @@ class SettingsDataManager
             if ($flags->use_card_payments) {
                 // Enable ACDC for business sellers.
                 $this->payment_methods->toggle_method_state(CreditCardGateway::ID, \true);
-                // Enable Pay Later for business sellers. Selecting subscriptions automatically enables
-                // the "Save PayPal and Venmo" option, which suppresses Pay Later unless the merchant
-                // may combine the two.
-                if (!$flags->use_subscriptions || $this->settings_provider->pay_later_with_vaulting_enabled()) {
-                    $this->payment_methods->toggle_method_state('pay-later', \true);
-                }
                 // Enable BCDC for business sellers without ACDC.
                 $this->payment_methods->toggle_method_state(CardButtonGateway::ID, \true);
             }
@@ -237,6 +233,16 @@ class SettingsDataManager
             $this->payment_settings->set_save_card_details(\true);
         }
         $this->payment_settings->save();
+    }
+    /**
+     * Applies the payment method defaults that a reconnect must not reset.
+     *
+     * @param ConfigurationFlagsDTO $flags Shop configuration flags.
+     */
+    protected function apply_payment_methods(ConfigurationFlagsDTO $flags): void
+    {
+        $this->payment_methods->toggle_method_state('pay-later', \true);
+        $this->payment_methods->save();
     }
     /**
      * Applies the default styling details for the shop.
