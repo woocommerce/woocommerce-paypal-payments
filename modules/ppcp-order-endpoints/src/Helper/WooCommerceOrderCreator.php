@@ -162,7 +162,13 @@ class WooCommerceOrderCreator {
 			);
 			$item->set_product_id( $product_id );
 			$item->set_quantity( $quantity );
-			$item->set_order( $wc_order );
+
+			// set_order() only exists since WC 10.9.
+			if ( is_object( $item ) && method_exists( $item, 'set_order' ) ) {
+				$item->set_order( $wc_order );
+			} else {
+				$item->set_order_id( $wc_order->get_id() );
+			}
 
 			if ( isset( $cart_item['bundled_by'] ) ) {
 				$item->add_meta_data( '_bundled_by', $cart_item['bundled_by'], true );
