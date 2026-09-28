@@ -50,6 +50,13 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	// Actions
 
 	/**
+	 * Captures an authorized PayPal payment from the Order actions box.
+	 */
+	captureAuthorizedPayment = async () => {
+		await this.makeOrderAction( 'ppcp_authorize_order' );
+	};
+
+	/**
 	 * Performs refund
 	 *
 	 * @param paymentMethod

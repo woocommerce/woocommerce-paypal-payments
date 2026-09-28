@@ -3,7 +3,10 @@
  */
 import { test } from '../../utils';
 import { customers, gateways, negative12FeePlugin, taxSettings } from '../../resources';
-import { transactionsOnClassicCheckout } from './_test-scenarios';
+import {
+	captureAuthorizedPayment,
+	transactionsOnClassicCheckout,
+} from './_test-scenarios';
 import {
 	payPalClassicCheckout,
 	payPalClassicCheckoutExcludingTax,
@@ -19,6 +22,7 @@ import {
 import {
 	acdcClassicCheckout,
 	acdcClassicCheckoutIntentAuthorized,
+	acdcCaptureAuthorized,
 	acdcClassicCheckoutExcludingTax,
 	acdcClassicCheckout3ds,
 	acdcClassicCheckoutNegativeFee,
@@ -101,6 +105,10 @@ test.describe( () => {
 
 	for ( const testOrder of acdcClassicCheckoutIntentAuthorized ) {
 		transactionsOnClassicCheckout( testOrder );
+	}
+
+	for ( const testOrder of acdcCaptureAuthorized ) {
+		captureAuthorizedPayment( testOrder );
 	}
 
 	test.afterAll( async ( { pcpApi } ) => {

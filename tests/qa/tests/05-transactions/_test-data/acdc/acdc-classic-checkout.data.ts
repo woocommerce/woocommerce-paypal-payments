@@ -87,3 +87,16 @@ export const acdcClassicCheckoutNegativeFee: ShopOrder[] = [
 		customer: guest,
 	},
 ];
+
+export const acdcCaptureAuthorized: ShopOrder[] = [
+	{
+		// TODO: replace PCP-0000 with the Xray key once the test case is created.
+		title: 'PCP-0000 | Transaction - Classic checkout - ACDC - Capture authorized payment @Smoke',
+		...orders.default,
+		payment: {
+			...payments.acdc,
+			isAuthorized: true,
+		},
+		customer: guest,
+	},
+];
