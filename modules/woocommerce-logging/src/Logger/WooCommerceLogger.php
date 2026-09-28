@@ -61,9 +61,11 @@ class WooCommerceLogger implements LoggerInterface
         // phpcs:disable -- Intentionally not sanitized, for logging purposes.
         $method = wp_unslash($_SERVER['REQUEST_METHOD'] ?? 'CLI');
         $request_uri = wp_unslash($_SERVER['REQUEST_URI'] ?? '-');
+        $started_at = (float) ($_SERVER['REQUEST_TIME_FLOAT'] ?? microtime(\true));
         // phpcs:enable
+        $started_at_label = sprintf('%s.%03d', gmdate('H:i:s', (int) $started_at), (int) (($started_at - floor($started_at)) * 1000));
         $request_path = wp_parse_url($request_uri, \PHP_URL_PATH);
-        $this->request_info = "{$method} {$request_path}";
+        $this->request_info = "{$method} {$request_path} (started {$started_at_label})";
     }
     /**
      * Logs a message.
