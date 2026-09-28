@@ -136,7 +136,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
-    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@9a9395ac91179e80c4f64bdac6120045cb1512d4 # feature/playwright-ngrok-tunnel
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@236c6b5a7fea73b5058b6f11bd17ff4b80994e54 # pinning PR #292
     with:
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
