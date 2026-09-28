@@ -45,3 +45,4 @@ test-results
 /tests/qa/resources/files/woocommerce-paypal-payments*.zip
 /tests/qa/resources/files/woocommerce-subscriptions*.zip
 .google-session.json
+/tests/qa/resources/e2e-snippets/ngrok-host.txt

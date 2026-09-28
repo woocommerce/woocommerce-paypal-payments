@@ -45,3 +45,16 @@ add_filter('woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabl
  * Disable the WooCommerce order milestone celebration
  */
 add_filter( 'wc_order_milestone_egg_enabled', '__return_false' );
+
+/**
+ * Load NGROK_HOST from a CI-written file, since wp-env can't pass env vars.
+ */
+if ( ! getenv( 'NGROK_HOST' ) ) {
+	$ngrok_host_file = __DIR__ . '/ngrok-host.txt';
+	if ( file_exists( $ngrok_host_file ) ) {
+		$ngrok_host = trim( (string) file_get_contents( $ngrok_host_file ) );
+		if ( $ngrok_host ) {
+			putenv( 'NGROK_HOST=' . $ngrok_host );
+		}
+	}
+}

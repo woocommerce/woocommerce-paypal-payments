@@ -7,6 +7,7 @@ import {
 	expect,
 	annotateVisitor,
 	waitForOrderStatus,
+	waitForTransactionId,
 } from '../../../utils';
 
 export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
@@ -32,13 +33,6 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 				test.setTimeout( 3 * 60_000 ); // 3 minutes for PUI/OXXO async capture
 			}
 
-			// PUI/OXXO capture completion relies on an async PayPal webhook, which
-			// can't reach the ephemeral CI environment. In CI, skip waiting for it
-			// and finish the assertions with the order still in its synchronous,
-			// pre-capture status.
-			const skipCaptureWait = isAsyncCaptureGateway && !! process.env.CI;
-			const syncOrderStatus = gatewayTitle === 'OXXO' ? 'pending' : 'on-hold';
-
 			await test.step( `Precondition: create order via API (dashboard)`, async () => {
 				order = await wooCommerceUtils.createApiOrder( testOrder );
 			} );
@@ -60,16 +54,14 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 					`Assert order ID (${ order.id }) matches order number on Order Received page`
 				).toEqual( orderNumber );
 
-				if ( skipCaptureWait ) {
-					return;
-				}
-
 				await waitForOrderStatus( wooCommerceApi, order.id, {
 					expectedStatus: orderStatus,
 					timeout: isAsyncCaptureGateway ? 2.5 * 60_000 : undefined,
 				} );
-				const transactionId =
-						( await wooCommerceApi.getOrder( order.id ) ).transaction_id;
+				const transactionId = await waitForTransactionId(
+					wooCommerceApi,
+					order.id
+				);
 
 				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
 					transactionId,
@@ -86,10 +78,10 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 
 			await test.step( `Assert details on order edit page`, async () => {
 				await wooCommerceOrderEdit.visit( order.id );
-				const orderEditData = skipCaptureWait
-					? { ...testOrder, orderStatus: syncOrderStatus }
-					: testOrder;
-				await wooCommerceOrderEdit.assertOrderDetails( orderEditData, payPalPaymentDetails );
+				await wooCommerceOrderEdit.assertOrderDetails(
+					testOrder,
+					payPalPaymentDetails
+				);
 			} );
 		}
 	);
