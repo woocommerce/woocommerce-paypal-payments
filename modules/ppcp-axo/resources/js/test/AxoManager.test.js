@@ -133,6 +133,75 @@ describe( 'AxoManager.rerender', () => {
 	} );
 } );
 
+describe( 'AxoManager.rerender > refreshing WooCommerce enhanced selects', () => {
+	// WooCommerce only upgrades select.country_select to select2 on page load while
+	// it is visible. AXO hides the WooCommerce form before that runs, so revealing it
+	// again must ask WooCommerce to redo the upgrade, or the country/state fields stay
+	// plain <select> elements instead of the select2 combobox.
+	afterEach( () => {
+		document.body.innerHTML = '';
+	} );
+
+	test.each( [
+		[
+			'the Gary flow reveals the default WooCommerce form (active, valid email, no profile)',
+			{ active: true, validEmail: true, hasProfile: false },
+		],
+		[
+			'AXO is inactive and the default WooCommerce form takes over',
+			{ active: false },
+		],
+		[
+			'the Ryan flow reveals the form for a recognized profile (active, valid email, has profile)',
+			{ active: true, validEmail: true, hasProfile: true },
+		],
+	] )( 'triggers country_to_state_changed on document.body when %s', ( _label, status ) => {
+		document.body.innerHTML = `
+			<div id="ppcp-axo-shipping-address"></div>
+			<div id="ppcp-axo-watermark-container"></div>
+			<div id="billing_email_field"><div class="woocommerce-input-wrapper"></div></div>`;
+		const manager = buildRerenderManager( status );
+		const listener = jest.fn();
+		jQuery( document.body ).on( 'country_to_state_changed', listener );
+
+		manager.rerender();
+
+		expect( listener ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'does not trigger country_to_state_changed while the form stays hidden waiting for a valid email', () => {
+		document.body.innerHTML = `
+			<div id="ppcp-axo-watermark-container"></div>
+			<div id="billing_email_field"><div class="woocommerce-input-wrapper"></div></div>`;
+		const manager = buildRerenderManager( {
+			active: true,
+			validEmail: false,
+		} );
+		const listener = jest.fn();
+		jQuery( document.body ).on( 'country_to_state_changed', listener );
+
+		manager.rerender();
+
+		expect( listener ).not.toHaveBeenCalled();
+	} );
+} );
+
+describe( 'AxoManager.refreshEnhancedSelects', () => {
+	afterEach( () => {
+		document.body.innerHTML = '';
+	} );
+
+	test( 'triggers country_to_state_changed on document.body', () => {
+		const manager = buildManager();
+		const listener = jest.fn();
+		jQuery( document.body ).on( 'country_to_state_changed', listener );
+
+		manager.refreshEnhancedSelects();
+
+		expect( listener ).toHaveBeenCalledTimes( 1 );
+	} );
+} );
+
 describe( 'AxoManager.ensureShippingFieldsConsistency', () => {
 	afterEach( () => {
 		document.body.innerHTML = '';
