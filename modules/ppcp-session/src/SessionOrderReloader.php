@@ -18,14 +18,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 
 /**
- * Re-fetches a pending session order so that an approval made outside the
- * buttons (e.g. an APM that never redirects back) is picked up.
- *
- * Only checkout requests need that: button approvals store the approved order
- * themselves. The session order is read on almost every request (including
- * mini-cart fragments and Store API calls), so other requests never fetch,
- * checkout fetches at most once per interval per order, and an order PayPal no
- * longer knows about is dropped from the session instead of being fetched again.
+ * Re-fetches a pending session order on the checkout page, so that an approval
+ * made outside the buttons (e.g. an APM that never redirects back) is picked up.
+ * The session order is read on almost every request, so fetches are throttled
+ * per order, and an order that PayPal no longer knows is removed from the session.
  */
 class SessionOrderReloader {
 
@@ -131,9 +127,8 @@ class SessionOrderReloader {
 	}
 
 	/**
-	 * The order endpoint also raises code 404 for an empty response body, which
-	 * counts as gone here: the order cannot be recovered either way, and the
-	 * buyer creates a new one with the next button click.
+	 * The endpoint also uses code 404 for an empty response body. That order is lost
+	 * too; the next button click creates a new one.
 	 */
 	private function is_not_found( Throwable $exception ): bool {
 		if ( $exception instanceof PayPalApiException ) {
