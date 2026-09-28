@@ -111,6 +111,11 @@ class SdkClientToken {
 		$access_token = $json->access_token;
 		$expires_in   = (int) $json->expires_in;
 
+		// Stop serving the token shortly before it expires, so the SDK can still use it.
+		if ( $expires_in > 150 ) {
+			$expires_in -= 30;
+		}
+
 		$this->cache->set( $cache_key, $access_token, $expires_in );
 		$this->rate_limiter->clear( self::RATE_LIMIT_SCOPE );
 
