@@ -27,6 +27,7 @@ describe( 'postJson', () => {
 
 	test( 'marks server-provided messages as user facing', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
+			status: 400,
 			json: async () => ( {
 				success: false,
 				data: { message: 'Übersetzter Fehler' },
@@ -38,6 +39,7 @@ describe( 'postJson', () => {
 		).rejects.toMatchObject( {
 			message: 'Übersetzter Fehler',
 			isUserFacing: true,
+			status: 400,
 		} );
 	} );
 
@@ -50,6 +52,56 @@ describe( 'postJson', () => {
 			postJson( { endpoint: '/e', nonce: 'n' } )
 		).rejects.toMatchObject( {
 			isUserFacing: false,
+		} );
+	} );
+
+	test( 'forwards the errors list and refresh flag from a validation failure', async () => {
+		global.fetch = jest.fn().mockResolvedValue( {
+			json: async () => ( {
+				success: false,
+				data: {
+					message: 'Session expired.',
+					errors: [ 'Session expired.' ],
+					refresh: true,
+				},
+			} ),
+		} );
+
+		await expect(
+			postJson( { endpoint: '/e', nonce: 'n' } )
+		).rejects.toMatchObject( {
+			errors: [ 'Session expired.' ],
+			refresh: true,
+		} );
+	} );
+
+	test( 'throws with the status attached when the response is not JSON', async () => {
+		global.fetch = jest.fn().mockResolvedValue( {
+			status: 500,
+			json: async () => {
+				throw new SyntaxError( 'Unexpected token' );
+			},
+		} );
+
+		await expect(
+			postJson( { endpoint: '/e', nonce: 'n' } )
+		).rejects.toMatchObject( {
+			message: 'Endpoint returned no usable JSON (HTTP 500).',
+			status: 500,
+		} );
+	} );
+
+	test( 'rejects the bare 0 WordPress replies with for an unregistered ajax action', async () => {
+		global.fetch = jest.fn().mockResolvedValue( {
+			status: 400,
+			json: async () => 0,
+		} );
+
+		await expect(
+			postJson( { endpoint: '/e', nonce: 'n' } )
+		).rejects.toMatchObject( {
+			message: 'Endpoint returned no usable JSON (HTTP 400).',
+			status: 400,
 		} );
 	} );
 } );

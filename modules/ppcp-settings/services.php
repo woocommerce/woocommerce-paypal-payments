@@ -106,8 +106,7 @@ return array(
 			$container->get( 'settings.data.settings' ),
 			$container->get( 'settings.data.styling' ),
 			$container->get( 'settings.data.fastlane' ),
-			$container->get( 'settings.data.paylater-messaging-settings' ),
-			$container->get( 'button.helper.messages-apply' )
+			$container->get( 'settings.data.paylater-messaging-settings' )
 		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
@@ -408,7 +407,6 @@ return array(
 			$container->get( 'settings.data.styling' ),
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.paylater-messaging' ),
-			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.data.todos' ),
 		);
 	},
@@ -512,9 +510,7 @@ return array(
 		);
 	},
 	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
-		return new PaymentMethodsDependenciesDefinition(
-			$container->get( 'settings.settings-provider' )
-		);
+		return new PaymentMethodsDependenciesDefinition();
 	},
 	'settings.service.pay_later_status'                   => static function ( ContainerInterface $container ): array {
 		$pay_later_endpoint = $container->get( 'settings.rest.pay_later_messaging' );
@@ -727,8 +723,7 @@ return array(
 			$container->get( 'settings.service.features_eligibilities' ),
 			$container->get( 'settings.data.general' ),
 			$merchant_capabilities,
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'settings.settings-provider' )
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'settings.service.features_eligibilities'             => static function ( ContainerInterface $container ): FeaturesEligibilityService {

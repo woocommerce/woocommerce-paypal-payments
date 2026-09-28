@@ -12,6 +12,7 @@ import {
 } from '../Helper/PaymentButtonHelpers';
 import { isVisible } from '../Helper/Hiding';
 import { isDisabled, setEnabled } from '../Helper/ButtonDisabler';
+import { logFrontendEvent } from '../Helper/FrontendLog';
 
 /**
  * Collection of all available styling options for this button.
@@ -701,6 +702,27 @@ export default class PaymentButton {
 	 */
 	error( ...args ) {
 		this.#logger.error( ...args );
+	}
+
+	/**
+	 * Records an event in the WooCommerce log.
+	 *
+	 * Distinct from error(), which reaches the console only, and only for a
+	 * merchant who turned button debugging on. A wallet sheet fails inside
+	 * native UI where no console is readable at all.
+	 *
+	 * @param {string} event    - What happened, as a stable slug.
+	 * @param {string} [detail] - Named facts about the event.
+	 * @param {string} [level]  - The level to record it at.
+	 */
+	logEvent( event, detail = '', level = 'error' ) {
+		logFrontendEvent(
+			this.ppcpConfig?.ajax?.frontend_log,
+			this.methodId,
+			event,
+			detail,
+			level
+		);
 	}
 
 	/**
