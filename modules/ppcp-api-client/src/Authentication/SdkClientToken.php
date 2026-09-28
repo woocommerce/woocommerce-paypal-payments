@@ -21,15 +21,18 @@ class SdkClientToken {
 
 	use RequestTrait;
 
-	const CACHE_KEY = 'sdk-client-token-key';
+	public const CACHE_KEY = 'sdk-client-token-key';
 
 	/**
 	 * The rate-limiter scope key for the SDK client token.
 	 */
-	const RATE_LIMIT_SCOPE = 'sdk-client-token';
+	public const RATE_LIMIT_SCOPE = 'sdk-client-token';
 
 	private string $host;
 
+	/**
+	 * @phpstan-ignore property.onlyWritten (Read by RequestTrait.)
+	 */
 	private LoggerInterface $logger;
 
 	private ClientCredentials $client_credentials;
