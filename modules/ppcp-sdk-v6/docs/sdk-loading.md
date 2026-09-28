@@ -53,7 +53,7 @@ Four behaviours of that class:
 - A failure arms a cool-down keyed on `sdk-client-token`; requests during it throw instead of reaching PayPal.
 - The domain comes from `home_url()`, not the request host, so a site whose `home_url()` disagrees with the host the buyer is on fails domain validation.
 
-[`ClientTokenEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Endpoint/ClientTokenEndpoint.php) exposes it behind a nonce and a [`RateLimiter`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Helper/RateLimiter.php) of 10 requests per 60 seconds, keyed on the WooCommerce session customer id and falling back to the IP. PayPal errors are logged with detail and answered with a generic message.
+[`ClientTokenEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Endpoint/ClientTokenEndpoint.php) exposes it behind a nonce. PayPal errors are logged with detail and answered with a generic message.
 
 ### Token scope
 
