@@ -71,7 +71,8 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     outputs:
-      matrix: ${{ steps.resolve.outputs.matrix }}
+      matrix-v6: ${{ steps.resolve.outputs.matrix-v6 }}
+      matrix-v5: ${{ steps.resolve.outputs.matrix-v5 }}
     steps:
       - name: Resolve test scripts
         id: resolve
@@ -101,43 +102,44 @@ jobs:
             fi
           }
 
+          # One matrix per SDK (empty = job skipped); v5 runs after v6 to avoid duplicate orders on shared merchants.
           if [[ "$TEST_SUITE" == *':parallel' ]]; then
             SUFFIX=""
             [[ "$TEST_SUITE" != "all:parallel" ]] && SUFFIX=":${TEST_SUITE%:parallel}"
-
-            entry() { echo "{\"script\":\"e2e:test:shard:${1}${SUFFIX}\",\"name_suffix\":\" / ${1} / ${2}\",\"artifact_name\":\"playwright-artifact-${1}-${2}\",\"sdk_version\":\"${2}\",\"slug\":\"${1}\"}"; }
-
-            ITEMS=()
+            SCRIPTS=()
+            NAMES=()
             for shard in "${SHARDS[@]}"; do
-              for v in $(sdk_versions); do
-                ITEMS+=("$(entry "$shard" "$v")")
-              done
+              SCRIPTS+=("e2e:test:shard:${shard}${SUFFIX}")
+              NAMES+=("$shard")
             done
-            JOINED=$(IFS=,; echo "${ITEMS[*]}")
-
-            echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
           else
-            NAME="${TEST_SUITE#shard:}"
-
-            ITEMS=()
-            for v in $(sdk_versions); do
-              ITEMS+=("{\"script\":\"e2e:test:${TEST_SUITE}\",\"name_suffix\":\" / ${NAME} / ${v}\",\"artifact_name\":\"playwright-artifact-${NAME}-${v}\",\"sdk_version\":\"${v}\",\"slug\":\"${NAME}\"}")
-            done
-            JOINED=$(IFS=,; echo "${ITEMS[*]}")
-
-            echo "matrix={\"include\":[${JOINED}]}" >> "$GITHUB_OUTPUT"
+            SCRIPTS=("e2e:test:${TEST_SUITE}")
+            NAMES=("${TEST_SUITE#shard:}")
           fi
 
-  e2e-playwright:
+          for v in v6 v5; do
+            MATRIX=""
+            if [[ " $(sdk_versions) " == *" $v "* ]]; then
+              ITEMS=()
+              for i in "${!SCRIPTS[@]}"; do
+                ITEMS+=("{\"script\":\"${SCRIPTS[$i]}\",\"name_suffix\":\" / ${NAMES[$i]} / ${v}\",\"artifact_name\":\"playwright-artifact-${NAMES[$i]}-${v}\",\"sdk_version\":\"${v}\",\"slug\":\"${NAMES[$i]}\"}")
+              done
+              MATRIX="{\"include\":[$(IFS=,; echo "${ITEMS[*]}")]}"
+            fi
+            echo "matrix-${v}=${MATRIX}" >> "$GITHUB_OUTPUT"
+          done
+
+  e2e-playwright-v6:
     name: Run Playwright E2E Tests${{ matrix.name_suffix }}
     needs:
       - build
       - resolve-playwright-matrix
+    if: needs.resolve-playwright-matrix.outputs.matrix-v6 != ''
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix-v6) }}
     uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@236c6b5a7fea73b5058b6f11bd17ff4b80994e54 # pinning PR #292
-    with:
+    with: &playwright-inputs
       PLAYWRIGHT_SCRIPT: ${{ matrix.script }}
       PLAYWRIGHT_ARTIFACT_NAME: ${{ matrix.artifact_name }}
       PLAYWRIGHT_ARTIFACT_PATH: |
@@ -148,31 +150,19 @@ jobs:
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
-      # Only the shards whose tests wait on a PayPal webhook get a tunnel. PUI
-      # (Germany) and OXXO (Mexico) capture asynchronously, so their orders reach
-      # the expected status only once PayPal delivers the capture event. The refund
-      # shard's refund from PayPal reaches WooCommerce only as a webhook. Every
-      # other gateway captures during checkout, and subscription renewals are
-      # charged directly, so those shards need no public URL.
+      # Tunnel only for shards that wait on a PayPal webhook (PUI/OXXO capture, refund from PayPal).
       NGROK_ENABLED: ${{ contains(fromJson('["transaction-germany","transaction-mexico","refund"]'), matrix.slug) }}
-      # Stable per shard and SDK version, deliberately without the run id: a
-      # constant hostname means the next run's webhook URL matches the one already
-      # registered on the PayPal app, so the plugin recognises and replaces its own
-      # registration instead of orphaning one every run, against a per-app limit.
-      # The cost is that two runs of the same shard cannot overlap.
+      # Fixed per shard+SDK (no run id) so the webhook is replaced, not orphaned; overlapping runs of a shard collide.
       NGROK_DOMAIN: ${{ matrix.slug }}-${{ matrix.sdk_version }}.e2e.paypal.syde.wpinfra.cloud
       # Site stays local; only the webhook URL goes through the tunnel (see e2e-snippets.php)
       NGROK_REWRITE_URLS: false
       PRE_SCRIPT: |
-        # Write the bare tunnel host for e2e-snippets.php, which cannot read runner env vars.
-        # Only tunnel shards get the file: 03-pcp.setup.ts treats its presence as "tunnel on".
+        # Tunnel host for e2e-snippets.php; its presence tells 03-pcp.setup.ts the tunnel is on.
         if [ -n "$NGROK_URL" ]; then
           echo -n "${NGROK_URL#https://}" > tests/qa/resources/e2e-snippets/ngrok-host.txt
         fi
 
-        # 0. v6 is PCP's default and needs nothing. For v5 jobs, playwright.config.ts
-        # loads .env.ci via dotenv, so this reaches process.env.PCP_JS_SDK_VERSION
-        # for both the v5 feature flag and the page objects' locators.
+        # 0. v6 is the default; v5 jobs set PCP_JS_SDK_VERSION (read via .env.ci) for the flag and locators.
         if [ "${{ matrix.sdk_version }}" = "v5" ]; then
           echo "PCP_JS_SDK_VERSION=v5" >> .env.ci
         fi
@@ -189,8 +179,26 @@ jobs:
         # 2. Add private composer repository and download WooCommerce Subscriptions
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
         composer require "inpsyde-mirror/woocommerce-subscriptions"
-    secrets:
+    secrets: &playwright-secrets
       ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
       NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
       NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+
+  # Runs after v6 (whatever its result) so both SDKs never order on the shared merchants at once.
+  e2e-playwright-v5:
+    name: Run Playwright E2E Tests${{ matrix.name_suffix }}
+    needs:
+      - build
+      - resolve-playwright-matrix
+      - e2e-playwright-v6
+    if: >-
+      !cancelled() &&
+      needs.build.result == 'success' &&
+      needs.resolve-playwright-matrix.outputs.matrix-v5 != ''
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.resolve-playwright-matrix.outputs.matrix-v5) }}
+    uses: inpsyde/reusable-workflows/.github/workflows/test-playwright.yml@236c6b5a7fea73b5058b6f11bd17ff4b80994e54 # pinning PR #292
+    with: *playwright-inputs
+    secrets: *playwright-secrets
