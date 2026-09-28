@@ -48,7 +48,6 @@ const {
 
 const defaultConfig = {
 	placementEnabled: true,
-	settingsUrl: '/wp-admin/settings',
 	payLaterSettingsUrl: '/wp-admin/paylater-settings',
 	ajax: {
 		cart_script_params: { endpoint: '/wp-json/ppcp/cart-script-params' },
@@ -143,22 +142,6 @@ test( 'does not show placeholder when PayPalMessages renders within 10 seconds',
 
 	expect(
 		screen.queryByText( /Pay Later messaging preview unavailable/ )
-	).not.toBeInTheDocument();
-} );
-
-test( 'ignores a legacy payLaterDisabledByVaulting flag on the global and still renders the preview', () => {
-	global.PcpCheckoutPayLaterBlock = {
-		...defaultConfig,
-		payLaterDisabledByVaulting: true,
-	};
-	useScriptParams.mockReturnValue( {
-		url_params: { 'client-id': 'test' },
-	} );
-
-	render( <Edit { ...defaultProps } /> );
-
-	expect(
-		screen.queryByText( /PayPal Vaulting is active/ )
 	).not.toBeInTheDocument();
 } );
 

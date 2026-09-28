@@ -97,22 +97,6 @@ afterEach( () => {
 } );
 
 describe( 'Edit', () => {
-	test( 'ignores a legacy payLaterDisabledByVaulting flag on the global and still renders the preview', () => {
-		global.PcpProductPayLaterBlock = {
-			...defaultConfig,
-			payLaterDisabledByVaulting: true,
-		};
-		useScriptParams.mockReturnValue( {
-			url_params: { 'client-id': 'test' },
-		} );
-
-		render( <Edit { ...defaultProps } /> );
-
-		expect(
-			screen.queryByText( /PayPal Vaulting is active/ )
-		).not.toBeInTheDocument();
-	} );
-
 	test( 'shows the placement-disabled warning when the "Product" placement is disabled', () => {
 		global.PcpProductPayLaterBlock = {
 			...defaultConfig,

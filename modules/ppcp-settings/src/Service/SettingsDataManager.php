@@ -147,6 +147,9 @@ class SettingsDataManager {
 		// Apply defaults for the "Settings" tab.
 		$this->apply_payment_settings( $flags );
 
+		// Assign defaults for the "Payment Methods" tab.
+		$this->apply_payment_methods( $flags );
+
 		// Assign defaults for the "Styling" tab.
 		$this->apply_location_styles( $flags );
 
@@ -190,10 +193,15 @@ class SettingsDataManager {
 		$this->payment_methods->set_fastlane_display_watermark( true );
 
 		foreach ( $all_methods as $method ) {
+			// Pay Later is set once by apply_payment_methods(), so a reconnect keeps the merchant's choice.
+			if ( 'pay-later' === $method['id'] ) {
+				continue;
+			}
+
 			$this->payment_methods->toggle_method_state( $method['id'], false );
 		}
 
-		// Always enable PayPal, Venmo and Pay Later.
+		// Always enable PayPal and Venmo.
 		$this->payment_methods->toggle_method_state( PayPalGateway::ID, true );
 		$this->payment_methods->toggle_method_state( 'venmo', true );
 
@@ -206,9 +214,6 @@ class SettingsDataManager {
 			if ( $flags->use_card_payments ) {
 				// Enable ACDC for business sellers.
 				$this->payment_methods->toggle_method_state( CreditCardGateway::ID, true );
-
-				// Enable Pay Later for business sellers.
-				$this->payment_methods->toggle_method_state( 'pay-later', true );
 
 				// Enable BCDC for business sellers without ACDC.
 				$this->payment_methods->toggle_method_state( CardButtonGateway::ID, true );
@@ -257,6 +262,16 @@ class SettingsDataManager {
 		}
 
 		$this->payment_settings->save();
+	}
+
+	/**
+	 * Applies the payment method defaults that a reconnect must not reset.
+	 *
+	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
+	 */
+	protected function apply_payment_methods( ConfigurationFlagsDTO $flags ): void {
+		$this->payment_methods->toggle_method_state( 'pay-later', true );
+		$this->payment_methods->save();
 	}
 
 	/**

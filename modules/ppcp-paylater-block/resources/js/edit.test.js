@@ -139,22 +139,6 @@ test( 'does not show placeholder when PayPalMessages renders within 10 seconds',
 	).not.toBeInTheDocument();
 } );
 
-test( 'ignores a legacy payLaterDisabledByVaulting flag on the global and still renders the preview', () => {
-	global.PcpPayLaterBlock = {
-		...defaultConfig,
-		payLaterDisabledByVaulting: true,
-	};
-	useScriptParams.mockReturnValue( {
-		url_params: { 'client-id': 'test' },
-	} );
-
-	render( <Edit { ...defaultProps } /> );
-
-	expect(
-		screen.queryByText( /PayPal Vaulting is active/ )
-	).not.toBeInTheDocument();
-} );
-
 test( 'shows placement warning when placement is disabled', () => {
 	global.PcpPayLaterBlock = { ...defaultConfig, placementEnabled: false };
 	useScriptParams.mockReturnValue( null );

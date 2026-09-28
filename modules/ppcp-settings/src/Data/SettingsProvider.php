@@ -13,7 +13,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data;
 
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -30,8 +29,6 @@ class SettingsProvider {
 	private FastlaneSettings $fastlane_settings;
 	private PayLaterMessagingSettings $paylater_messaging_settings;
 
-	private MessagesApply $messages_apply;
-
 	public function __construct(
 		GeneralSettings $general_settings,
 		OnboardingProfile $onboarding_profile,
@@ -39,8 +36,7 @@ class SettingsProvider {
 		SettingsModel $settings_model,
 		StylingSettings $styling_settings,
 		FastlaneSettings $fastlane_settings,
-		PayLaterMessagingSettings $paylater_messaging_settings,
-		MessagesApply $messages_apply
+		PayLaterMessagingSettings $paylater_messaging_settings
 	) {
 		$this->general_settings            = $general_settings;
 		$this->onboarding_profile          = $onboarding_profile;
@@ -49,7 +45,6 @@ class SettingsProvider {
 		$this->styling_settings            = $styling_settings;
 		$this->fastlane_settings           = $fastlane_settings;
 		$this->paylater_messaging_settings = $paylater_messaging_settings;
-		$this->messages_apply              = $messages_apply;
 	}
 
 	/**
@@ -435,47 +430,6 @@ class SettingsProvider {
 	public function can_save_vault_token(): bool {
 		return (bool) $this->merchant_data()->client_id
 			&& $this->save_paypal_and_venmo();
-	}
-
-	/**
-	 * Whether Pay Later may run alongside vaulting ("Save PayPal and Venmo").
-	 *
-	 * @deprecated 4.1.4 - Pay Later and vaulting are no longer mutually exclusive, so
-	 *             this is always true. The plugin no longer calls it.
-	 *
-	 * @return bool Always true.
-	 */
-	public function pay_later_with_vaulting_enabled(): bool {
-		/**
-		 * Filters whether Pay Later features may run while "Save PayPal and Venmo"
-		 * (vaulting) is active.
-		 *
-		 * @deprecated 4.1.4 - Pay Later is always available alongside vaulting; the
-		 *             return value is ignored.
-		 *
-		 * @param bool $enabled Whether Pay Later is allowed alongside vaulting.
-		 */
-		apply_filters_deprecated(
-			'woocommerce_paypal_payments_pay_later_with_vaulting',
-			array( $this->messages_apply->for_country() ),
-			'4.1.4',
-			'',
-			'Pay Later is always available alongside vaulting.'
-		);
-
-		return true;
-	}
-
-	/**
-	 * Whether Pay Later is currently disabled because of vaulting.
-	 *
-	 * @deprecated 4.1.4 - Pay Later and vaulting are no longer mutually exclusive, so
-	 *             this is always false. The plugin no longer calls it.
-	 *
-	 * @return bool Always false.
-	 */
-	public function pay_later_disabled_by_vaulting(): bool {
-		return false;
 	}
 
 	/**

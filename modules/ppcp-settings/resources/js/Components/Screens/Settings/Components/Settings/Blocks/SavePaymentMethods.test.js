@@ -152,13 +152,13 @@ describe( 'SavePaymentMethods', () => {
 			).toBeInTheDocument();
 		} );
 
-		it( 'renders when save_paypal_and_venmo feature is enabled and OwnBrand is false', () => {
-			mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = true;
+        it( 'renders when save_paypal_and_venmo feature is enabled and OwnBrand is false', () => {
+            mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = true;
 
 			render( <SavePaymentMethods ownBrandOnly={ true } /> );
 
 			expect(
-				screen.getByTestId( 'settings-block' )
+                screen.getByTestId( 'settings-block' )
 			).toBeInTheDocument();
 		} );
 	} );
@@ -247,19 +247,6 @@ describe( 'SavePaymentMethods', () => {
 				'Save Credit and Debit Cards',
 				'woocommerce-paypal-payments'
 			);
-		} );
-	} );
-
-	describe( 'Save PayPal and Venmo description', () => {
-		it( 'always shows the plain description, never the Pay Later disable warning', () => {
-			const { container } = render( <SavePaymentMethods /> );
-
-			expect(
-				screen.getByText(
-					/Securely store your customers' PayPal accounts/
-				)
-			).toBeInTheDocument();
-			expect( container.innerHTML ).not.toContain( 'This will disable' );
 		} );
 	} );
 

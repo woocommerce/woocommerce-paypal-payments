@@ -40,6 +40,7 @@ on:
         options:
           - v6
           - v5
+          - both
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
@@ -148,10 +149,12 @@ jobs:
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
       PRE_SCRIPT: |
-        # 0. Record which SDK version this matrix job tests. playwright.config.ts
+        # 0. v6 is PCP's default and needs nothing. For v5 jobs, playwright.config.ts
         # loads .env.ci via dotenv, so this reaches process.env.PCP_JS_SDK_VERSION
-        # for both the WP-side flag toggle and the page objects' locators.
-        echo "PCP_JS_SDK_VERSION=${{ matrix.sdk_version }}" >> .env.ci
+        # for both the v5 feature flag and the page objects' locators.
+        if [ "${{ matrix.sdk_version }}" = "v5" ]; then
+          echo "PCP_JS_SDK_VERSION=v5" >> .env.ci
+        fi
 
         # 1. Download and unzip the built plugin
         gh run download ${{ github.run_id }} -p "woocommerce-paypal-payments-*" -D tests/qa/resources/files

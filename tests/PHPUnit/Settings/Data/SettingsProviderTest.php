@@ -5,7 +5,6 @@ declare( strict_types=1 );
 namespace PHPUnit\Settings\Data;
 
 use Mockery;
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
@@ -33,7 +32,6 @@ class SettingsProviderTest extends TestCase {
 	private StylingSettings $styling_settings;
 	private FastlaneSettings $fastlane_settings;
 	private PayLaterMessagingSettings $paylater_messaging_settings;
-	private MessagesApply $messages_apply;
 
 	public function setUp(): void {
 		$this->general_settings            = Mockery::mock( GeneralSettings::class );
@@ -43,7 +41,6 @@ class SettingsProviderTest extends TestCase {
 		$this->styling_settings            = Mockery::mock( StylingSettings::class );
 		$this->fastlane_settings           = Mockery::mock( FastlaneSettings::class );
 		$this->paylater_messaging_settings = Mockery::mock( PayLaterMessagingSettings::class );
-		$this->messages_apply              = Mockery::mock( MessagesApply::class );
 
 		$this->provider = new SettingsProvider(
 			$this->general_settings,
@@ -52,8 +49,7 @@ class SettingsProviderTest extends TestCase {
 			$this->settings_model,
 			$this->styling_settings,
 			$this->fastlane_settings,
-			$this->paylater_messaging_settings,
-			$this->messages_apply
+			$this->paylater_messaging_settings
 		);
 	}
 
@@ -490,104 +486,6 @@ class SettingsProviderTest extends TestCase {
 				'db_value'        => false,
 				'filter_override' => true,
 				'expected'        => true,
-			],
-		];
-	}
-
-	/**
-	 * GIVEN a merchant that either is or isn't eligible to use Pay Later
-	 * WHEN pay_later_with_vaulting_enabled() is called
-	 * THEN Pay Later is always reported as allowed to run alongside vaulting, since the two are
-	 *      no longer mutually exclusive
-	 * AND the deprecated filter still fires so existing callbacks keep running, even though its
-	 *     return value is ignored
-	 *
-	 * @dataProvider pay_later_eligibility_provider
-	 */
-	public function test_pay_later_with_vaulting_enabled_is_always_true( bool $eligible ): void {
-		$this->messages_apply
-			->shouldReceive( 'for_country' )
-			->andReturn( $eligible );
-
-		expect( 'apply_filters_deprecated' )
-			->once()
-			->with(
-				'woocommerce_paypal_payments_pay_later_with_vaulting',
-				array( $eligible ),
-				'4.1.4',
-				'',
-				Mockery::type( 'string' )
-			);
-
-		$this->assertTrue( $this->provider->pay_later_with_vaulting_enabled() );
-	}
-
-	/**
-	 * GIVEN a merchant's Pay Later eligibility
-	 * WHEN a callback on the deprecated woocommerce_paypal_payments_pay_later_with_vaulting
-	 *      filter returns false
-	 * THEN pay_later_with_vaulting_enabled() still returns true, because the filter's return
-	 *      value is no longer consulted
-	 */
-	public function test_pay_later_with_vaulting_enabled_ignores_filter_return_value(): void {
-		$this->messages_apply
-			->shouldReceive( 'for_country' )
-			->andReturn( true );
-
-		expect( 'apply_filters_deprecated' )
-			->once()
-			->andReturn( false );
-
-		$this->assertTrue( $this->provider->pay_later_with_vaulting_enabled() );
-	}
-
-	public function pay_later_eligibility_provider(): array {
-		return [
-			'merchant eligible for Pay Later'     => [ true ],
-			'merchant not eligible for Pay Later' => [ false ],
-		];
-	}
-
-	/**
-	 * GIVEN any combination of vaulting ("Save PayPal and Venmo") state and Pay Later eligibility
-	 * WHEN pay_later_disabled_by_vaulting() is called
-	 * THEN Pay Later is never reported as suppressed by vaulting, since the two are no longer
-	 *      mutually exclusive
-	 *
-	 * @dataProvider pay_later_disabled_by_vaulting_provider
-	 */
-	public function test_pay_later_disabled_by_vaulting_is_always_false(
-		bool $save_paypal_and_venmo,
-		bool $pay_later_eligible
-	): void {
-		$this->settings_model
-			->shouldReceive( 'get_save_paypal_and_venmo' )
-			->andReturn( $save_paypal_and_venmo );
-
-		$this->messages_apply
-			->shouldReceive( 'for_country' )
-			->andReturn( $pay_later_eligible );
-
-		$this->assertFalse( $this->provider->pay_later_disabled_by_vaulting() );
-	}
-
-	public function pay_later_disabled_by_vaulting_provider(): array {
-		return [
-			'vaulting off, merchant not eligible' => [
-				'save_paypal_and_venmo' => false,
-				'pay_later_eligible'    => false,
-			],
-			'vaulting off, merchant eligible'     => [
-				'save_paypal_and_venmo' => false,
-				'pay_later_eligible'    => true,
-			],
-			'vaulting on, merchant eligible'      => [
-				'save_paypal_and_venmo' => true,
-				'pay_later_eligible'    => true,
-			],
-			'vaulting on, merchant not eligible'  => [
-				'save_paypal_and_venmo' => true,
-				'pay_later_eligible'    => false,
 			],
 		];
 	}

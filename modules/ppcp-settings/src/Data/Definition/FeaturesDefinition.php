@@ -10,7 +10,6 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
@@ -91,20 +90,17 @@ class FeaturesDefinition {
 	 */
 	protected array $merchant_capabilities;
 	protected LoggerInterface $logger;
-	protected SettingsProvider $settings_provider;
 
 	public function __construct(
 		FeaturesEligibilityService $eligibilities,
 		GeneralSettings $settings,
 		array $merchant_capabilities,
-		LoggerInterface $logger,
-		SettingsProvider $settings_provider
+		LoggerInterface $logger
 	) {
 		$this->eligibilities         = $eligibilities;
 		$this->settings              = $settings;
 		$this->merchant_capabilities = $merchant_capabilities;
 		$this->logger                = $logger;
-		$this->settings_provider     = $settings_provider;
 	}
 
 	/**

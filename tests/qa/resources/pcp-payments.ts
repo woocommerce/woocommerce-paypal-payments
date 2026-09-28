@@ -18,6 +18,24 @@ const payPalVaulted: Pcp.Payment = {
 	isVaulted: true,
 };
 
+/**
+ * Shards that run concurrently must not share a PayPal buyer account to avoid each other session invalidation
+ */
+const payPalRefund: Pcp.Payment = {
+	...payPal,
+	payPalAccount: payPalAccounts.usaRefund,
+};
+
+const payPalVaulting: Pcp.Payment = {
+	...payPal,
+	payPalAccount: payPalAccounts.usaVaulting,
+};
+
+const payPalSubscription: Pcp.Payment = {
+	...payPal,
+	payPalAccount: payPalAccounts.usaSubscription,
+};
+
 const payLater: Pcp.Payment = {
 	gateway: gateways.payLater,
 	payPalAccount: payPalAccounts[ country ],
@@ -84,6 +102,9 @@ const googlePay: Pcp.Payment = {
 export const payments = {
 	payPal,
 	payPalVaulted,
+	payPalRefund,
+	payPalVaulting,
+	payPalSubscription,
 	payLater,
 	oxxo,
 	venmo,

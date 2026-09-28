@@ -245,16 +245,15 @@ export function V6CardFieldsComponent( {
 	const isVaultingEnabled = Boolean( config.card_fields.is_vaulting_enabled );
 	const showLockedSaveOption = hasSubscriptions && isVaultingEnabled;
 
-	// The v6 SDK uses the billing address for AVS / 3D Secure.
+	// Billing address for the card submit: countryCode is required, postalCode optional.
 	const billingAddress = billing?.billingAddress || billing?.billingData;
+	const countryCode = billingAddress?.country?.trim();
 	const postalCode = billingAddress?.postcode?.trim();
 	const billingRef = useLatestRef(
-		postalCode
+		countryCode
 			? {
-					postalCode,
-					...( billingAddress?.country
-						? { countryCode: billingAddress.country }
-						: {} ),
+					countryCode,
+					...( postalCode ? { postalCode } : {} ),
 			  }
 			: null
 	);
