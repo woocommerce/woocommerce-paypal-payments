@@ -11,12 +11,24 @@ const TabPayLaterMessaging = () => {
 		setHome,
 		setCustom_placement,
 	} = PayLaterMessagingHooks.usePayLaterMessaging();
+	const { isReady } = PayLaterMessagingHooks.useStore();
 	const { clientId: merchantClientId } = CommonHooks.useMerchant();
 	const PcpPayLaterConfigurator =
 		window.ppcpSettings?.PcpPayLaterConfigurator;
 
 	useEffect( () => {
-		if ( window.merchantConfigurators && PcpPayLaterConfigurator ) {
+		/*
+		 * Wait for the stored config: the configurator seeds its checkbox state
+		 * from the config it first receives and never re-seeds it, so mounting
+		 * it before the REST hydration lands leaves it showing PayPal's
+		 * defaults. Saving from there writes those defaults over the merchant's
+		 * own locations.
+		 */
+		if (
+			isReady &&
+			window.merchantConfigurators &&
+			PcpPayLaterConfigurator
+		) {
 			// Shop and home are banner-only and v6 serves neither, so a
 			// configuration here would render nothing.
 			const isSdkV6Active = !! PcpPayLaterConfigurator.isSdkV6Active;
@@ -56,7 +68,7 @@ const TabPayLaterMessaging = () => {
 				},
 			} );
 		}
-	}, [ PcpPayLaterConfigurator, config, merchantClientId ] );
+	}, [ isReady, PcpPayLaterConfigurator, config, merchantClientId ] );
 
 	return (
 		<div
