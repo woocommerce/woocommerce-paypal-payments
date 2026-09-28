@@ -35,7 +35,7 @@ on:
       SDK_VERSION:
         description: 'PayPal JS SDK version to test'
         required: true
-        default: 'v5'
+        default: 'v6'
         type: choice
         options:
           - v6
