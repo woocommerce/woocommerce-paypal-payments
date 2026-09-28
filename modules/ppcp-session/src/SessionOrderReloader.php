@@ -31,13 +31,9 @@ class SessionOrderReloader {
 
 	public const LAST_RELOAD_SESSION_KEY = 'ppcp_session_order_last_reload';
 
-	/**
-	 * Seconds between two fetches of the same order: the window in which an
-	 * approval made outside the buttons can go unnoticed.
-	 */
-	private const RELOAD_INTERVAL = 15;
+	private const RELOAD_INTERVAL_SECONDS = 15;
 
-	private const TERMINAL_STATUSES = array(
+	private const STATUSES_WITHOUT_RELOAD = array(
 		OrderStatus::APPROVED,
 		OrderStatus::COMPLETED,
 		OrderStatus::VOIDED,
@@ -62,7 +58,7 @@ class SessionOrderReloader {
 			return;
 		}
 
-		foreach ( self::TERMINAL_STATUSES as $status ) {
+		foreach ( self::STATUSES_WITHOUT_RELOAD as $status ) {
 			if ( $order->status()->is( $status ) ) {
 				return;
 			}
@@ -114,7 +110,7 @@ class SessionOrderReloader {
 
 		$last_reload_age = time() - (int) ( $last_reload['time'] ?? 0 );
 
-		return $last_reload_age < self::RELOAD_INTERVAL;
+		return $last_reload_age < self::RELOAD_INTERVAL_SECONDS;
 	}
 
 	private function mark_as_reloaded( string $order_id ): void {
