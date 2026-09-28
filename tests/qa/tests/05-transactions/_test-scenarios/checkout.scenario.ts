@@ -40,7 +40,7 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 				await checkout.completeCheckoutDetails( testOrder );
 				await checkout.payPalUi.makePayment( { merchant, payment } );
 			} );
-
+				
 			let orderId: number;
 			let payPalPaymentDetails: PayPalPaymentDetails;
 
@@ -64,7 +64,7 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 					testOrder,
 				);
 
-				if ( payPalPaymentDetails && payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders
+				if ( payPalPaymentDetails && payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders; undefined for PUI
 					await orderReceived.assertTotalEqualsPayPalTotal(
 						payPalPaymentDetails.amount,
 						testOrder.currency

@@ -68,7 +68,7 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 					testOrder,
 				);
 
-				if ( payPalPaymentDetails && payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders
+				if ( payPalPaymentDetails && payPalPaymentDetails.amount !== '0' ) { // can be 0 for free trial or free orders; undefined for PUI
 					await orderReceived.assertTotalEqualsPayPalTotal(
 						payPalPaymentDetails.amount,
 						testOrder.currency
