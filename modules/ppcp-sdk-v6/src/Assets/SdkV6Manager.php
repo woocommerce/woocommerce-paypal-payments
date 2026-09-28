@@ -2,8 +2,6 @@
 
 /**
  * Manages the SDK v6 frontend assets.
- *
- * @package WooCommerce\PayPalCommerce\SdkV6\Assets
  */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
@@ -18,6 +16,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\FrontendLogEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
@@ -1002,6 +1001,7 @@ class SdkV6Manager
                 'create_setup_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreateSetupToken::ENDPOINT), 'nonce' => wp_create_nonce(CreateSetupToken::nonce())),
                 'create_payment_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreatePaymentToken::ENDPOINT), 'nonce' => wp_create_nonce(CreatePaymentToken::nonce())),
                 'create_payment_token_for_guest' => array('endpoint' => \WC_AJAX::get_endpoint(CreatePaymentTokenForGuest::ENDPOINT), 'nonce' => wp_create_nonce(CreatePaymentTokenForGuest::nonce())),
+                'frontend_log' => array('endpoint' => \WC_AJAX::get_endpoint(FrontendLogEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(FrontendLogEndpoint::nonce())),
                 'wc_store_api' => array('cart' => $store_api_base, 'select_shipping_rate' => $store_api_base . '/select-shipping-rate', 'update_customer' => $store_api_base . '/update-customer', 'nonce' => wp_create_nonce('wc_store_api')),
             ),
             'urls' => array('checkout' => wc_get_checkout_url()),

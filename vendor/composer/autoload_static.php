@@ -527,6 +527,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\ApproveOrderEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Endpoint/ApproveOrderEndpoint.php',
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\ChangeCartEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Endpoint/ChangeCartEndpoint.php',
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\CreateOrderEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Endpoint/CreateOrderEndpoint.php',
+        'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\FrontendLogEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Endpoint/FrontendLogEndpoint.php',
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\RequestData' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Endpoint/RequestData.php',
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\UpdateShippingEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Endpoint/UpdateShippingEndpoint.php',
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\CartProductsHelper' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Helper/CartProductsHelper.php',

@@ -310,6 +310,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\ApproveOrderEndpoint' => $baseDir . '/modules/ppcp-order-endpoints/src/Endpoint/ApproveOrderEndpoint.php',
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\ChangeCartEndpoint' => $baseDir . '/modules/ppcp-order-endpoints/src/Endpoint/ChangeCartEndpoint.php',
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\CreateOrderEndpoint' => $baseDir . '/modules/ppcp-order-endpoints/src/Endpoint/CreateOrderEndpoint.php',
+    'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\FrontendLogEndpoint' => $baseDir . '/modules/ppcp-order-endpoints/src/Endpoint/FrontendLogEndpoint.php',
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\RequestData' => $baseDir . '/modules/ppcp-order-endpoints/src/Endpoint/RequestData.php',
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\UpdateShippingEndpoint' => $baseDir . '/modules/ppcp-order-endpoints/src/Endpoint/UpdateShippingEndpoint.php',
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\CartProductsHelper' => $baseDir . '/modules/ppcp-order-endpoints/src/Helper/CartProductsHelper.php',
