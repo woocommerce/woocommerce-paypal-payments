@@ -285,7 +285,10 @@ export class GooglePayPopup {
 	 * own try/catch: a rejection here would abort the poll instead of retrying.
 	 */
 	private advancePastPrompt = async (): Promise< boolean > => {
-		if ( this.page.url().includes( 'pay.google.com' ) ) {
+		// Compare the host, not the whole URL: sign-in and challenge pages on
+		// accounts.google.com carry `continue=https://pay.google.com/...` in
+		// their query, which a substring match mistakes for the payment sheet.
+		if ( new URL( this.page.url() ).hostname === 'pay.google.com' ) {
 			return true;
 		}
 
