@@ -60,7 +60,7 @@ class SessionOrderReloader {
 			}
 		}
 
-		if ( ! $this->is_checkout_request() ) {
+		if ( ! $this->is_checkout_page_request() ) {
 			return;
 		}
 
@@ -93,7 +93,7 @@ class SessionOrderReloader {
 	 * Checkout AJAX requests also pass `is_checkout()`, but skip the PayPal GET:
 	 * the page load already refreshed the session order.
 	 */
-	private function is_checkout_request(): bool {
+	private function is_checkout_page_request(): bool {
 		if ( ! did_action( 'wp' ) ) {
 			return false;
 		}
