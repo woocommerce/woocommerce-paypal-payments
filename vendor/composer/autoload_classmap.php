@@ -383,6 +383,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Session\\MemoryWcSession' => $baseDir . '/modules/ppcp-session/src/MemoryWcSession.php',
     'WooCommerce\\PayPalCommerce\\Session\\SessionHandler' => $baseDir . '/modules/ppcp-session/src/SessionHandler.php',
     'WooCommerce\\PayPalCommerce\\Session\\SessionModule' => $baseDir . '/modules/ppcp-session/src/SessionModule.php',
+    'WooCommerce\\PayPalCommerce\\Session\\SessionOrderReloader' => $baseDir . '/modules/ppcp-session/src/SessionOrderReloader.php',
     'WooCommerce\\PayPalCommerce\\Settings\\DTO\\ConfigurationFlagsDTO' => $baseDir . '/modules/ppcp-settings/src/DTO/ConfigurationFlagsDTO.php',
     'WooCommerce\\PayPalCommerce\\Settings\\DTO\\LocationStylingDTO' => $baseDir . '/modules/ppcp-settings/src/DTO/LocationStylingDTO.php',
     'WooCommerce\\PayPalCommerce\\Settings\\DTO\\MerchantConnectionDTO' => $baseDir . '/modules/ppcp-settings/src/DTO/MerchantConnectionDTO.php',

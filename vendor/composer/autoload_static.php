@@ -600,6 +600,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\Session\\MemoryWcSession' => __DIR__ . '/../..' . '/modules/ppcp-session/src/MemoryWcSession.php',
         'WooCommerce\\PayPalCommerce\\Session\\SessionHandler' => __DIR__ . '/../..' . '/modules/ppcp-session/src/SessionHandler.php',
         'WooCommerce\\PayPalCommerce\\Session\\SessionModule' => __DIR__ . '/../..' . '/modules/ppcp-session/src/SessionModule.php',
+        'WooCommerce\\PayPalCommerce\\Session\\SessionOrderReloader' => __DIR__ . '/../..' . '/modules/ppcp-session/src/SessionOrderReloader.php',
         'WooCommerce\\PayPalCommerce\\Settings\\DTO\\ConfigurationFlagsDTO' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/DTO/ConfigurationFlagsDTO.php',
         'WooCommerce\\PayPalCommerce\\Settings\\DTO\\LocationStylingDTO' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/DTO/LocationStylingDTO.php',
         'WooCommerce\\PayPalCommerce\\Settings\\DTO\\MerchantConnectionDTO' => __DIR__ . '/../..' . '/modules/ppcp-settings/src/DTO/MerchantConnectionDTO.php',
