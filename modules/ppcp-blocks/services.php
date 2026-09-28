@@ -13,7 +13,6 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
-use WooCommerce\PayPalCommerce\PayLaterWCBlocks\HookedBlocksRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -119,7 +118,7 @@ return array(
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
-		$add_to_cart_anchors = array( 'woocommerce/add-to-cart-form', 'woocommerce/add-to-cart-with-options' );
+		$add_to_cart_anchors = ProductBlocks::ADD_TO_CART_ANCHORS;
 
 		// The predicate is settings-based only (no is_product() guard): Block Hooks evaluates
 		// it while resolving the Single Product template in the Site Editor too, where

@@ -2,12 +2,12 @@
 /**
  * Auto-inserts PayPal blocks into block-theme templates via the Block Hooks API.
  *
- * @package WooCommerce\PayPalCommerce\PayLaterWCBlocks
+ * @package WooCommerce\PayPalCommerce\Blocks
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
+namespace WooCommerce\PayPalCommerce\Blocks;
 
 /**
  * The foundation for rendering PayPal buttons and Pay Later messaging inside the
@@ -67,13 +67,13 @@ class HookedBlocksRegistrar {
 	/**
 	 * Declares which of our blocks WordPress should auto-insert at a given anchor.
 	 *
-	 * @param mixed       $hooked_block_types  The block types already hooked here; expected array, coerced defensively.
-	 * @param string      $relative_position   Where the anchor wants children/siblings: before|after|first_child|last_child.
-	 * @param string|null $anchor_block_type   The block the insertion is positioned against.
-	 * @param mixed       $context             The template, part or pattern being rendered (unused).
+	 * @param mixed $hooked_block_types  The block types already hooked here; expected array, coerced defensively.
+	 * @param mixed $relative_position   Where the anchor wants children/siblings: before|after|first_child|last_child.
+	 * @param mixed $anchor_block_type   The block the insertion is positioned against.
+	 * @param mixed $context             The template, part or pattern being rendered (unused).
 	 * @return array<int, string> The block types to insert at this position.
 	 */
-	public function add_hooked_block_types( $hooked_block_types, string $relative_position, $anchor_block_type, $context ): array {
+	public function add_hooked_block_types( $hooked_block_types, $relative_position, $anchor_block_type, $context ): array {
 		// The value travels through a public filter, so a third-party callback
 		// earlier in the chain may have replaced it with a non-array.
 		$hooked_block_types = is_array( $hooked_block_types ) ? $hooked_block_types : array();
@@ -101,16 +101,16 @@ class HookedBlocksRegistrar {
 	 * render, which is how a location switched off in the settings - or anything
 	 * else the entry's predicate rejects - keeps the block out of the template.
 	 *
-	 * @param mixed  $parsed_hooked_block The parsed block to insert, or null if an earlier callback already dropped it.
-	 * @param string $hooked_block_type   The block type being considered.
-	 * @param string $relative_position   The insertion position (unused).
-	 * @param mixed  $parsed_anchor_block The anchor block (unused).
-	 * @param mixed  $context             The template, part or pattern being rendered (unused).
+	 * @param mixed $parsed_hooked_block The parsed block to insert, or null if an earlier callback already dropped it.
+	 * @param mixed $hooked_block_type   The block type being considered.
+	 * @param mixed $relative_position   The insertion position (unused).
+	 * @param mixed $parsed_anchor_block The anchor block (unused).
+	 * @param mixed $context             The template, part or pattern being rendered (unused).
 	 * @return array<string, mixed>|null The block to insert, or null to skip it.
 	 */
-	public function gate_insertion( $parsed_hooked_block, string $hooked_block_type, string $relative_position, $parsed_anchor_block, $context ) {
+	public function gate_insertion( $parsed_hooked_block, $hooked_block_type, $relative_position, $parsed_anchor_block, $context ) {
 		// Already dropped upstream, or not one of ours: leave the decision alone.
-		if ( null === $parsed_hooked_block || ! isset( $this->insertions[ $hooked_block_type ] ) ) {
+		if ( null === $parsed_hooked_block || ! is_string( $hooked_block_type ) || ! isset( $this->insertions[ $hooked_block_type ] ) ) {
 			return $parsed_hooked_block;
 		}
 

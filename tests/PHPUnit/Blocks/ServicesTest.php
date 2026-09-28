@@ -5,7 +5,6 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\PayLaterWCBlocks\HookedBlocksRegistrar;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -22,7 +21,7 @@ use function Brain\Monkey\Filters\expectAdded;
  * the product Smart Buttons and Pay Later messaging blocks into block-theme templates via
  * the Block Hooks API.
  *
- * @covers \WooCommerce\PayPalCommerce\PayLaterWCBlocks\HookedBlocksRegistrar
+ * @covers \WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar
  */
 class ServicesTest extends TestCase
 {

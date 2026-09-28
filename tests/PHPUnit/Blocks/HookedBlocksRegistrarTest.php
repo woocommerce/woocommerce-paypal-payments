@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
+namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Filters\expectAdded;
 use function Brain\Monkey\Functions\when;
 
 /**
- * @covers \WooCommerce\PayPalCommerce\PayLaterWCBlocks\HookedBlocksRegistrar
+ * @covers \WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar
  */
 class HookedBlocksRegistrarTest extends TestCase
 {

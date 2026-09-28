@@ -8,11 +8,29 @@ use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
+use function Brain\Monkey\Functions\when;
+
 /**
  * @covers \WooCommerce\PayPalCommerce\Blocks\ProductBlocks
  */
 class ProductBlocksTest extends TestCase
 {
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        // Faithful stand-in for WordPress core's has_block(): a namespaced block name is
+        // matched literally, a bare name is assumed to be a core/ block, and a null post
+        // content never contains a block.
+        when('has_block')->alias(static function ($block_name, $content = null): bool {
+            if (false === strpos($block_name, '/')) {
+                $block_name = 'core/' . $block_name;
+            }
+
+            return null !== $content && false !== strpos((string) $content, '<!-- wp:' . $block_name . ' ');
+        });
+    }
+
     /**
      * GIVEN a settings status that reports the product Pay Later placement on or off
      * WHEN is_messaging_enabled() is asked whether the product Pay Later placement is on
@@ -102,5 +120,73 @@ class ProductBlocksTest extends TestCase
             'predicate resolves true'  => array(true),
             'predicate resolves false' => array(false),
         );
+    }
+
+    /**
+     * GIVEN no block template content applies to the current page
+     * WHEN template_renders_blocks() is asked whether the template renders the blocks
+     * THEN it reports false, since there is nothing to inspect
+     */
+    public function testTemplateRendersBlocksIsFalseWhenContentIsNull(): void
+    {
+        $this->assertFalse(ProductBlocks::template_renders_blocks(null));
+    }
+
+    /**
+     * GIVEN a block template that delegates to the classic PHP template via the Classic
+     *       template block, even when it also contains an add-to-cart anchor
+     * WHEN template_renders_blocks() is asked whether the template renders the blocks
+     * THEN it reports false, since the classic PHP template is authoritative and must render
+     *      the buttons/messaging itself
+     */
+    public function testTemplateRendersBlocksIsFalseWhenLegacyTemplateBlockIsPresent(): void
+    {
+        $content = '<!-- wp:woocommerce/legacy-template {"template":"single-product"} /-->'
+            . '<!-- wp:woocommerce/add-to-cart-form /-->';
+
+        $this->assertFalse(ProductBlocks::template_renders_blocks($content));
+    }
+
+    /**
+     * GIVEN a block template whose content places a Smart Buttons/Pay Later block explicitly,
+     *       or contains an add-to-cart anchor the blocks are auto-inserted after
+     * WHEN template_renders_blocks() is asked whether the template renders the blocks
+     * THEN it reports true, so the classic product render path stands down
+     *
+     * @dataProvider template_renders_blocks_provider
+     */
+    public function testTemplateRendersBlocksIsTrueWhenAnAnchorOrExplicitBlockIsPresent(string $content): void
+    {
+        $this->assertTrue(ProductBlocks::template_renders_blocks($content));
+    }
+
+    public function template_renders_blocks_provider(): array
+    {
+        return array(
+            'add-to-cart-form anchor present'          => array('<!-- wp:woocommerce/add-to-cart-form /-->'),
+            'add-to-cart-with-options anchor present'   => array(
+                '<!-- wp:woocommerce/add-to-cart-with-options -->'
+                . '<!-- wp:woocommerce/product-buttons /-->'
+                . '<!-- /wp:woocommerce/add-to-cart-with-options -->'
+            ),
+            'smart buttons block explicitly placed'     => array(
+                '<!-- wp:woocommerce-paypal-payments/product-smart-buttons /-->'
+            ),
+            'pay later messaging block explicitly placed' => array(
+                '<!-- wp:woocommerce-paypal-payments/product-paylater-messages /-->'
+            ),
+        );
+    }
+
+    /**
+     * GIVEN a block template whose content contains only unrelated blocks
+     * WHEN template_renders_blocks() is asked whether the template renders the blocks
+     * THEN it reports false, since neither an anchor nor an explicit block is present
+     */
+    public function testTemplateRendersBlocksIsFalseWhenOnlyUnrelatedBlocksArePresent(): void
+    {
+        $content = '<!-- wp:paragraph --><p>x</p><!-- /wp:paragraph -->';
+
+        $this->assertFalse(ProductBlocks::template_renders_blocks($content));
     }
 }
