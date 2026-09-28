@@ -38,6 +38,10 @@ class SessionOrderReloaderTest extends TestCase
 		$this->order_endpoint   = Mockery::mock(OrderEndpoint::class);
 		$this->logger           = Mockery::mock(LoggerInterface::class)->shouldIgnoreMissing();
 		$this->session_handler  = Mockery::mock(SessionHandler::class);
+
+		// A checkout page request after the main query ran, unless a test says otherwise.
+		when('did_action')->justReturn(1);
+		when('is_checkout')->justReturn(true);
 	}
 
 	private function create_reloader(): SessionOrderReloader
@@ -342,5 +346,82 @@ class SessionOrderReloaderTest extends TestCase
 			),
 			$store[SessionOrderReloader::LAST_RELOAD_SESSION_KEY]
 		);
+	}
+
+	/**
+	 * GIVEN a pending session order
+	 * WHEN it is read on a non-checkout page, e.g. the home page with the mini-cart
+	 *      or a mini-cart fragments refresh
+	 * THEN PayPal is not queried and no reload is recorded
+	 */
+	public function test_skips_non_checkout_requests(): void
+	{
+		$store = [];
+		when('WC')->justReturn((object) array('session' => $this->session_with($store)));
+		when('is_checkout')->justReturn(false);
+
+		$order = $this->order_with('WC-ORDER-1', OrderStatus::CREATED);
+
+		$this->order_endpoint->shouldNotReceive('order');
+		$this->session_handler->shouldNotReceive('replace_order');
+
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
+
+		$this->assertSame(array(), $store);
+	}
+
+	/**
+	 * GIVEN a pending session order
+	 * WHEN it is read before the main query ran, e.g. on wp_loaded or during a
+	 *      Store API request from the block mini-cart (REST never reaches `wp`)
+	 * THEN PayPal is not queried and is_checkout() is not consulted
+	 */
+	public function test_skips_requests_before_the_main_query(): void
+	{
+		$store = [];
+		when('WC')->justReturn((object) array('session' => $this->session_with($store)));
+		when('did_action')->justReturn(0);
+		when('is_checkout')->alias(
+			function (): bool {
+				$this->fail('is_checkout() must not run before the main query.');
+			}
+		);
+
+		$order = $this->order_with('WC-ORDER-1', OrderStatus::CREATED);
+
+		$this->order_endpoint->shouldNotReceive('order');
+		$this->session_handler->shouldNotReceive('replace_order');
+
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
+
+		$this->assertSame(array(), $store);
+	}
+
+	/**
+	 * GIVEN a reader that ran on a non-checkout request of the same instance
+	 * WHEN a later reader runs once the request is known to be checkout
+	 * THEN the later reader still performs the reload
+	 */
+	public function test_skipped_read_does_not_block_later_checkout_reload(): void
+	{
+		$store = [];
+		when('WC')->justReturn((object) array('session' => $this->session_with($store)));
+		when('time')->justReturn(self::NOW);
+
+		$order       = $this->order_with('WC-ORDER-1', OrderStatus::CREATED);
+		$fresh_order = Mockery::mock(Order::class);
+
+		$this->order_endpoint->shouldReceive('order')->once()->with('WC-ORDER-1')->andReturn($fresh_order);
+		$this->session_handler->shouldReceive('replace_order')->once()->with($fresh_order);
+
+		$reloader = $this->create_reloader();
+
+		when('did_action')->justReturn(0);
+		$reloader->maybe_reload($order, $this->session_handler);
+
+		when('did_action')->justReturn(1);
+		$reloader->maybe_reload($order, $this->session_handler);
+
+		$this->addToAssertionCount(1);
 	}
 }

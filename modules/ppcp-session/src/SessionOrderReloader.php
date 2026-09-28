@@ -20,9 +20,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
  * Re-fetches a pending session order so that an approval made outside the
  * buttons (e.g. an APM that never redirects back) is picked up.
  *
- * The session order is read on almost every request, so the fetch is limited
- * to once per interval per order, and an order PayPal no longer knows about
- * is dropped from the session instead of being fetched again.
+ * Only checkout requests need that: button approvals store the approved order
+ * themselves. The session order is read on almost every request (including
+ * mini-cart fragments and Store API calls), so other requests never fetch,
+ * checkout fetches at most once per interval per order, and an order PayPal no
+ * longer knows about is dropped from the session instead of being fetched again.
  */
 class SessionOrderReloader {
 
@@ -65,6 +67,10 @@ class SessionOrderReloader {
 			}
 		}
 
+		if ( ! $this->is_checkout_request() ) {
+			return;
+		}
+
 		$order_id = $order->id();
 		if ( $this->reloaded_recently( $order_id ) ) {
 			return;
@@ -84,6 +90,19 @@ class SessionOrderReloader {
 
 			$this->logger->warning( 'Failed to reload PayPal order in the session: ' . $exception->getMessage() );
 		}
+	}
+
+	/**
+	 * Classic checkout AJAX defines WOOCOMMERCE_CHECKOUT; page checks need the
+	 * parsed query, so earlier readers (and REST requests, which never reach
+	 * `wp`) are skipped and the first reader after `wp` does the reload.
+	 */
+	private function is_checkout_request(): bool {
+		if ( ! function_exists( 'is_checkout' ) ) {
+			return false;
+		}
+
+		return ( defined( 'WOOCOMMERCE_CHECKOUT' ) || did_action( 'wp' ) ) && is_checkout();
 	}
 
 	private function reloaded_recently( string $order_id ): bool {
