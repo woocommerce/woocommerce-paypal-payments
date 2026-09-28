@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
+use WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -28,10 +29,10 @@ return array(
      * reflects the current Pay Later messaging placement settings. On a classic
      * (non-block) theme the registrar is a no-op.
      */
-    'paylater-wc-blocks.hooked-blocks-registrar' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\PayLaterWCBlocks\HookedBlocksRegistrar {
+    'paylater-wc-blocks.hooked-blocks-registrar' => static function (ContainerInterface $container): HookedBlocksRegistrar {
         $settings_status = $container->get('wcgateway.settings.status');
         assert($settings_status instanceof SettingsStatus);
-        return new \WooCommerce\PayPalCommerce\PayLaterWCBlocks\HookedBlocksRegistrar(array('woocommerce-paypal-payments/cart-paylater-messages' => array('anchor' => 'woocommerce/cart-totals-block', 'position' => 'last_child', 'enabled' => static function () use ($settings_status): bool {
+        return new HookedBlocksRegistrar(array('woocommerce-paypal-payments/cart-paylater-messages' => array('anchor' => 'woocommerce/cart-totals-block', 'position' => 'last_child', 'enabled' => static function () use ($settings_status): bool {
             return \WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule::is_placement_enabled($settings_status, 'cart');
         }), 'woocommerce-paypal-payments/checkout-paylater-messages' => array('anchor' => 'woocommerce/checkout-totals-block', 'position' => 'last_child', 'enabled' => static function () use ($settings_status): bool {
             return \WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule::is_placement_enabled($settings_status, 'checkout');

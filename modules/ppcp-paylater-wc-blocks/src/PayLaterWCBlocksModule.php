@@ -9,6 +9,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
@@ -144,7 +145,6 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule
             wp_localize_script($script_handle, 'PcpCartPayLaterBlock', array(
                 'ajax' => array('cart_script_params' => array('endpoint' => \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT))),
                 'config' => $config_factory->from_settings($paylater_settings),
-                'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
                 'placementEnabled' => self::is_placement_enabled($c->get('wcgateway.settings.status'), 'cart'),
                 'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
                 'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
@@ -157,7 +157,6 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule
             wp_localize_script($script_handle, 'PcpCheckoutPayLaterBlock', array(
                 'ajax' => array('cart_script_params' => array('endpoint' => \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT))),
                 'config' => $config_factory->from_settings($paylater_settings),
-                'settingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
                 'placementEnabled' => self::is_placement_enabled($c->get('wcgateway.settings.status'), 'checkout'),
                 'payLaterSettingsUrl' => admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway'),
                 // Module loaded, not page ownership: the editor has no page
@@ -170,7 +169,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule
         // it covers what the classic `woocommerce_*` hooks and the imperative editor
         // inserter cannot reach (template parts and the Site Editor canvas).
         $hooked_blocks_registrar = $c->get('paylater-wc-blocks.hooked-blocks-registrar');
-        assert($hooked_blocks_registrar instanceof \WooCommerce\PayPalCommerce\PayLaterWCBlocks\HookedBlocksRegistrar);
+        assert($hooked_blocks_registrar instanceof HookedBlocksRegistrar);
         $hooked_blocks_registrar->register();
         /**
          * Registers slugs as block categories with WordPress.

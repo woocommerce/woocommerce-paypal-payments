@@ -21,17 +21,11 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 /**
  * Defines dependency relationships between payment methods and settings.
  */
 class PaymentMethodsDependenciesDefinition
 {
-    protected SettingsProvider $settings_provider;
-    public function __construct(SettingsProvider $settings_provider)
-    {
-        $this->settings_provider = $settings_provider;
-    }
     /**
      * Get payment method to payment method dependencies
      *

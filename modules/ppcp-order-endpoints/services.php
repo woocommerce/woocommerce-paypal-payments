@@ -2,8 +2,6 @@
 
 /**
  * The order endpoints module services.
- *
- * @package WooCommerce\PayPalCommerce\OrderEndpoints
  */
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\OrderEndpoints;
@@ -12,6 +10,7 @@ use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\FrontendLogEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
@@ -64,6 +63,9 @@ return array(
     },
     'order-endpoints.endpoint.update-shipping' => static function (ContainerInterface $container): UpdateShippingEndpoint {
         return new UpdateShippingEndpoint($container->get('order-endpoints.request-data'), $container->get('api.endpoint.order'), $container->get('api.factory.purchase-unit'), $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'));
+    },
+    'order-endpoints.endpoint.frontend-log' => static function (ContainerInterface $container): FrontendLogEndpoint {
+        return new FrontendLogEndpoint($container->get('order-endpoints.request-data'), $container->get('woocommerce.logger.woocommerce'));
     },
     'order-endpoints.is-logged-in' => static function (ContainerInterface $container): bool {
         return is_user_logged_in();

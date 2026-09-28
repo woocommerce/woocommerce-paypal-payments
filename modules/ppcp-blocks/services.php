@@ -12,7 +12,6 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
-use WooCommerce\PayPalCommerce\PayLaterWCBlocks\HookedBlocksRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -64,12 +63,12 @@ return array(
      * active template uses. The messaging entry is only added where Pay Later applies to the
      * merchant's country; every predicate is evaluated lazily at render time.
      */
-    'blocks.product-hooked-blocks-registrar' => static function (ContainerInterface $container): HookedBlocksRegistrar {
+    'blocks.product-hooked-blocks-registrar' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar {
         $settings_status = $container->get('wcgateway.settings.status');
         assert($settings_status instanceof SettingsStatus);
         $messages_apply = $container->get('button.helper.messages-apply');
         assert($messages_apply instanceof MessagesApply);
-        $add_to_cart_anchors = array('woocommerce/add-to-cart-form', 'woocommerce/add-to-cart-with-options');
+        $add_to_cart_anchors = \WooCommerce\PayPalCommerce\Blocks\ProductBlocks::ADD_TO_CART_ANCHORS;
         // The predicate is settings-based only (no is_product() guard): Block Hooks evaluates
         // it while resolving the Single Product template in the Site Editor too, where
         // is_product() is false - guarding on it there would hide the blocks from the merchant
@@ -83,6 +82,6 @@ return array(
                 return \WooCommerce\PayPalCommerce\Blocks\ProductBlocks::is_messaging_enabled($settings_status);
             });
         }
-        return new HookedBlocksRegistrar($insertions);
+        return new \WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar($insertions);
     },
 );

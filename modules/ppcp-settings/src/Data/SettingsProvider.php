@@ -12,7 +12,6 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Data;
 
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -28,8 +27,7 @@ class SettingsProvider
     private \WooCommerce\PayPalCommerce\Settings\Data\StylingSettings $styling_settings;
     private \WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings $fastlane_settings;
     private \WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings $paylater_messaging_settings;
-    private MessagesApply $messages_apply;
-    public function __construct(\WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings $general_settings, \WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile $onboarding_profile, \WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings $payment_settings, \WooCommerce\PayPalCommerce\Settings\Data\SettingsModel $settings_model, \WooCommerce\PayPalCommerce\Settings\Data\StylingSettings $styling_settings, \WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings $fastlane_settings, \WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings $paylater_messaging_settings, MessagesApply $messages_apply)
+    public function __construct(\WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings $general_settings, \WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile $onboarding_profile, \WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings $payment_settings, \WooCommerce\PayPalCommerce\Settings\Data\SettingsModel $settings_model, \WooCommerce\PayPalCommerce\Settings\Data\StylingSettings $styling_settings, \WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings $fastlane_settings, \WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings $paylater_messaging_settings)
     {
         $this->general_settings = $general_settings;
         $this->onboarding_profile = $onboarding_profile;
@@ -38,7 +36,6 @@ class SettingsProvider
         $this->styling_settings = $styling_settings;
         $this->fastlane_settings = $fastlane_settings;
         $this->paylater_messaging_settings = $paylater_messaging_settings;
-        $this->messages_apply = $messages_apply;
     }
     /**
      * Gets the 'use sandbox' setting.
@@ -423,40 +420,6 @@ class SettingsProvider
     public function can_save_vault_token(): bool
     {
         return (bool) $this->merchant_data()->client_id && $this->save_paypal_and_venmo();
-    }
-    /**
-     * Whether Pay Later may run alongside vaulting ("Save PayPal and Venmo").
-     *
-     * @deprecated 4.1.4 - Pay Later and vaulting are no longer mutually exclusive, so
-     *             this is always true. The plugin no longer calls it.
-     *
-     * @return bool Always true.
-     */
-    public function pay_later_with_vaulting_enabled(): bool
-    {
-        /**
-         * Filters whether Pay Later features may run while "Save PayPal and Venmo"
-         * (vaulting) is active.
-         *
-         * @deprecated 4.1.4 - Pay Later is always available alongside vaulting; the
-         *             return value is ignored.
-         *
-         * @param bool $enabled Whether Pay Later is allowed alongside vaulting.
-         */
-        apply_filters_deprecated('woocommerce_paypal_payments_pay_later_with_vaulting', array($this->messages_apply->for_country()), '4.1.4', '', 'Pay Later is always available alongside vaulting.');
-        return \true;
-    }
-    /**
-     * Whether Pay Later is currently disabled because of vaulting.
-     *
-     * @deprecated 4.1.4 - Pay Later and vaulting are no longer mutually exclusive, so
-     *             this is always false. The plugin no longer calls it.
-     *
-     * @return bool Always false.
-     */
-    public function pay_later_disabled_by_vaulting(): bool
-    {
-        return \false;
     }
     /**
      * Gets the instant payments only setting.
