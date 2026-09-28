@@ -86,16 +86,19 @@ class SessionOrderReloader {
 	}
 
 	/**
-	 * Classic checkout AJAX defines WOOCOMMERCE_CHECKOUT; page checks need the
-	 * parsed query, so earlier readers (and REST requests, which never reach
-	 * `wp`) are skipped and the first reader after `wp` does the reload.
+	 * The checkout page is known only after `wp` parsed the main query, so the first
+	 * session read after `wp` does the reload. REST requests never fire `wp` and do
+	 * not need the reload.
+	 *
+	 * Checkout AJAX requests also pass `is_checkout()`, but skip the PayPal GET:
+	 * the page load already refreshed the session order.
 	 */
 	private function is_checkout_request(): bool {
-		if ( ! function_exists( 'is_checkout' ) ) {
+		if ( ! did_action( 'wp' ) ) {
 			return false;
 		}
 
-		return ( defined( 'WOOCOMMERCE_CHECKOUT' ) || did_action( 'wp' ) ) && is_checkout();
+		return ! wp_doing_ajax() && is_checkout();
 	}
 
 	private function reloaded_recently( string $order_id ): bool {
