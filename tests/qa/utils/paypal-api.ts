@@ -190,40 +190,45 @@ export class PayPalApi {
 	};
 
 	/**
-	 * Waits until PayPal lists at least one vault token for the WooCommerce customer.
+	 * Waits until PayPal lists the vault token created by a WooCommerce order.
+	 * Returns false, without waiting, when the order carries no vault data.
 	 *
-	 * @param customer - WooCommerce customer holding the PayPal customer ID in user meta
-	 * @param merchant - { client_id: '...', client_secret: '...' }
+	 * @param wooCommerceOrder - WooCommerce order that vaulted the payment method
+	 * @param merchant         - { client_id: '...', client_secret: '...' }
 	 */
 	waitForVaultToken = async (
-		customer: WooCommerce.Customer,
+		wooCommerceOrder: WooCommerce.Order,
 		merchant: Pcp.Merchant
-	) => {
-		const meta = customer.meta_data as { key: string; value: string }[];
-		const customerId = [ '_ppcp_target_customer_id', 'ppcp_customer_id' ]
-			.map( ( key ) => meta.find( ( item ) => item.key === key )?.value )
-			.find( Boolean );
-		expect(
-			customerId,
-			'Assert the customer has a PayPal customer ID'
-		).toBeTruthy();
+	): Promise< boolean > => {
+		const payPalOrderId =
+			await this.getOrderIdFromWooCommerce( wooCommerceOrder );
+		const paymentSource = payPalOrderId
+			? ( await this.getOrder( payPalOrderId, merchant ) ).payment_source
+			: undefined;
+		const vault = Object.values( paymentSource ?? {} )
+			.map( ( source: any ) => source?.attributes?.vault )
+			.find( ( item ) => item?.id && item?.customer?.id );
+		if ( ! vault ) {
+			return false;
+		}
 
 		await expect
 			.poll(
 				async () =>
 					(
 						await this.getVaultTokensForCustomer(
-							customerId,
+							vault.customer.id,
 							merchant
 						)
-					).length,
+					).some( ( token ) => token.id === vault.id ),
 				{
-					message: `Assert PayPal lists a vault token for customer ${ customerId }`,
+					message: `Assert PayPal lists vault token ${ vault.id }`,
 					timeout: 60_000,
 					intervals: [ 2_000 ],
 				}
 			)
-			.toBeGreaterThan( 0 );
+			.toBe( true );
+		return true;
 	};
 
 	/**
