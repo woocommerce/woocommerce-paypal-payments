@@ -231,7 +231,7 @@ export class PayPalApi {
 		const { merchant, payment } = shopOrder;
 		const fundingSource = payment.gateway.shortcut;
 		if ( fundingSource === 'pay_upon_invoice' ) {
-			// PUI is not captured via PayPal payments endpoints
+			// PUI is captured, but GET /v2/payments/captures/{id} returns 401 for the PUI merchant, so skip.
 			return undefined;
 		}
 		const payPalPayment = await this.getPayment( resourceId, merchant, payment.isAuthorized );
