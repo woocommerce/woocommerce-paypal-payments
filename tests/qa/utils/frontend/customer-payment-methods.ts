@@ -41,7 +41,7 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 			case 'paypal':
 				const payPalEmail = payment.payPalAccount.email;
 				const match = payPalEmail.replace( /.{2}-.{1}/, '' );
-				return new RegExp( `Paypal /.*${ match }`, 'i' );
+				return new RegExp( `PayPal ending in .*${ match }`, 'i' );
 
 			case 'acdc':
 				const { card } = payment;

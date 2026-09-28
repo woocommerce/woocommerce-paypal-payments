@@ -6,7 +6,7 @@ import { existsSync } from 'fs';
 /**
  * Internal dependencies
  */
-import { test as setup, expect, PcpApi } from '../../utils';
+import { test as setup, expect, PcpApi, assertSdkVersion } from '../../utils';
 import {
 	merchants,
 	storeConfigGermany,
@@ -85,6 +85,7 @@ setup( 'setup:pcp:usa;', async ( { utils, pcpApi, request } ) => {
 		merchants.usa.client_id,
 		merchants.usa.client_secret
 	);
+	await assertSdkVersion( pcpApi.requestUtils );
 	await assertWebhookPubliclyReachable( pcpApi, request );
 } );
 
@@ -96,6 +97,7 @@ setup( 'setup:pcp:germany;', async ( { utils, pcpApi, request } ) => {
 		merchants.germany.client_id,
 		merchants.germany.client_secret
 	);
+	await assertSdkVersion( pcpApi.requestUtils );
 	await assertWebhookPubliclyReachable( pcpApi, request );
 } );
 
@@ -107,6 +109,7 @@ setup( 'setup:pcp:mexico;', async ( { utils, pcpApi, request } ) => {
 		merchants.mexico.client_id,
 		merchants.mexico.client_secret
 	);
+	await assertSdkVersion( pcpApi.requestUtils );
 	await assertWebhookPubliclyReachable( pcpApi, request );
 } );
 

@@ -10,7 +10,7 @@ const savePaymentMethodData: ShopOrder[] = [
 		title: 'PCP-5382 | Vaulting - Transaction - Checkout - PayPal - Save payment method @Critical @Smoke',
 		...orders.default,
 		payment: {
-			...payments.payPal,
+			...payments.payPalVaulting,
 			saveToAccount: true,
 		},
 		customer,
@@ -61,7 +61,7 @@ const vaultedPaymentMethodData: ShopOrder[] = [
 		title: 'PCP-2051 | Vaulting - Transaction - Checkout - PayPal - Pay with vaulted account @Critical',
 		...orders.default,
 		payment: {
-			...payments.payPal,
+			...payments.payPalVaulting,
 			isVaulted: true,
 		},
 		customer,
