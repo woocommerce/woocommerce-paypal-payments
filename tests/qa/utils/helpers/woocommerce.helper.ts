@@ -19,6 +19,7 @@ import {
 	disableNoncePlugin,
 	subscriptionsPlugin,
 	disableWcSetupWizard,
+	disableWcOrderMilestoneEgg,
 	disableWebhookVerificationPlugin,
 	negative12FeePlugin,
 	pcpSdkVersionFlag,
@@ -99,6 +100,19 @@ export const setupWooCommerce = async () => {
 					requestUtils,
 					plugins,
 					...disableWcSetupWizard,
+				} );
+			}
+		);
+
+		// In CI the same filter is applied by the e2e-snippets mu-plugin, which
+		// wp-env maps in; a real host has no such mapping, so it needs the plugin.
+		setup(
+			'Setup Disable WC Order Milestone Egg plugin (active)',
+			async ( { requestUtils, plugins } ) => {
+				await installPluginResolveActiveState( {
+					requestUtils,
+					plugins,
+					...disableWcOrderMilestoneEgg,
 				} );
 			}
 		);
