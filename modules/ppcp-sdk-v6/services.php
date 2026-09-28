@@ -206,8 +206,7 @@ return array(
 		return new ClientTokenEndpoint(
 			$container->get( 'order-endpoints.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.sdk-client-token' ),
-			$container->get( 'sdk-v6.rate-limiter' )
+			$container->get( 'api.sdk-client-token' )
 		);
 	},
 
