@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Session;
 
 use Psr\Log\LoggerInterface;
 use Throwable;
+use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -126,6 +127,11 @@ class SessionOrderReloader {
 				'time'     => time(),
 			)
 		);
+
+		// WooCommerce saves the session at shutdown; save now so concurrent requests see the mark.
+		if ( WC()->session instanceof WC_Session_Handler ) {
+			WC()->session->save_data();
+		}
 	}
 
 	/**
