@@ -20,7 +20,7 @@ use function Brain\Monkey\Functions\when;
  */
 class SessionOrderReloaderTest extends TestCase
 {
-	// Mirrors the private SessionOrderReloader::RELOAD_INTERVAL constant.
+	// Mirrors the private SessionOrderReloader::RELOAD_INTERVAL_SECONDS constant.
 	private const INTERVAL = 15;
 
 	private const NOW = 1700000000;
@@ -42,6 +42,7 @@ class SessionOrderReloaderTest extends TestCase
 		// A checkout page request after the main query ran, unless a test says otherwise.
 		when('did_action')->justReturn(1);
 		when('is_checkout')->justReturn(true);
+		when('wp_doing_ajax')->justReturn(false);
 	}
 
 	private function create_reloader(): SessionOrderReloader
@@ -58,6 +59,31 @@ class SessionOrderReloaderTest extends TestCase
 	private function session_with(array &$store): WC_Session
 	{
 		$session = Mockery::mock(WC_Session::class);
+
+		$session->shouldReceive('get')->andReturnUsing(
+			static function (string $key) use (&$store) {
+				return $store[$key] ?? null;
+			}
+		);
+
+		$session->shouldReceive('set')->andReturnUsing(
+			static function (string $key, $value) use (&$store): void {
+				$store[$key] = $value;
+			}
+		);
+
+		return $session;
+	}
+
+	/**
+	 * A WC_Session_Handler double, distinct from the plain WC_Session used
+	 * elsewhere: only the handler triggers the immediate save_data() call.
+	 *
+	 * @param array<string, mixed> $store
+	 */
+	private function session_handler_with(array &$store): \WC_Session_Handler
+	{
+		$session = Mockery::mock(\WC_Session_Handler::class);
 
 		$session->shouldReceive('get')->andReturnUsing(
 			static function (string $key) use (&$store) {
@@ -99,6 +125,38 @@ class SessionOrderReloaderTest extends TestCase
 		$fresh_order = Mockery::mock(Order::class);
 
 		$this->order_endpoint->shouldReceive('order')->once()->with('WC-ORDER-1')->andReturn($fresh_order);
+		$this->session_handler->shouldReceive('replace_order')->once()->with($fresh_order);
+
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
+
+		$this->assertSame(
+			array(
+				'order_id' => 'WC-ORDER-1',
+				'time'     => self::NOW,
+			),
+			$store[SessionOrderReloader::LAST_RELOAD_SESSION_KEY]
+		);
+	}
+
+	/**
+	 * GIVEN a standard WooCommerce session handler, which only persists session data
+	 *      at shutdown by default
+	 * WHEN maybe_reload reloads an order
+	 * THEN the reload mark is saved immediately, before PayPal is queried, so a request
+	 *      that starts before this one ends still sees the mark
+	 */
+	public function test_persists_reload_mark_immediately_with_session_handler(): void
+	{
+		$store      = [];
+		$wc_session = $this->session_handler_with($store);
+		when('WC')->justReturn((object) array('session' => $wc_session));
+		when('time')->justReturn(self::NOW);
+
+		$order       = $this->order_with('WC-ORDER-1', OrderStatus::CREATED);
+		$fresh_order = Mockery::mock(Order::class);
+
+		$wc_session->shouldReceive('save_data')->once()->ordered();
+		$this->order_endpoint->shouldReceive('order')->once()->with('WC-ORDER-1')->ordered()->andReturn($fresh_order);
 		$this->session_handler->shouldReceive('replace_order')->once()->with($fresh_order);
 
 		$this->create_reloader()->maybe_reload($order, $this->session_handler);
@@ -386,6 +444,28 @@ class SessionOrderReloaderTest extends TestCase
 				$this->fail('is_checkout() must not run before the main query.');
 			}
 		);
+
+		$order = $this->order_with('WC-ORDER-1', OrderStatus::CREATED);
+
+		$this->order_endpoint->shouldNotReceive('order');
+		$this->session_handler->shouldNotReceive('replace_order');
+
+		$this->create_reloader()->maybe_reload($order, $this->session_handler);
+
+		$this->assertSame(array(), $store);
+	}
+
+	/**
+	 * GIVEN a pending session order
+	 * WHEN it is read during an AJAX request on the checkout page, e.g. the classic
+	 *      checkout AJAX submission that follows the page load
+	 * THEN PayPal is not queried and no reload is recorded
+	 */
+	public function test_skips_ajax_requests_even_on_checkout(): void
+	{
+		$store = [];
+		when('WC')->justReturn((object) array('session' => $this->session_with($store)));
+		when('wp_doing_ajax')->justReturn(true);
 
 		$order = $this->order_with('WC-ORDER-1', OrderStatus::CREATED);
 
