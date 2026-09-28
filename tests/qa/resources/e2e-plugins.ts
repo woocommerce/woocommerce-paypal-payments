@@ -18,6 +18,12 @@ export const disableWcSetupWizard = {
 	zipFilePath: `${ filePath }/disable-wc-setup-wizard.zip`,
 };
 
+export const disableWcOrderMilestoneEgg = {
+	name: 'Disable WC Order Milestone Egg',
+	slug: 'disable-wc-order-milestone-egg',
+	zipFilePath: `${ filePath }/disable-wc-order-milestone-egg.zip`,
+};
+
 export const disableWebhookVerificationPlugin = {
 	name: 'Disable webhook verification',
 	slug: 'disable-webhook-verification',

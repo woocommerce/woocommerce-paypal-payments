@@ -19,7 +19,7 @@ const vaultingGuest: ShopOrder[] = [
 	{
 		title: 'PCP-6959 | Vaulting subscription - Transaction - Checkout - PayPal - Sign-up fee order by guest',
 		...orders.default,
-		payment: payments.payPal,
+		payment: payments.payPalSubscription,
 		merchant,
 		customer: guest,
 		products: [ products.subscriptionSignUpFee ],
@@ -30,7 +30,7 @@ const vaultingCustomer: ShopOrder[] = [
 	{
 		title: 'PCP-0000 | Vaulting subscription - Transaction - Checkout - PayPal - Sign-up fee order by customer',
 		...orders.default,
-		payment: payments.payPal,
+		payment: payments.payPalSubscription,
 		merchant,
 		customer,
 		products: [ products.subscriptionSignUpFee ],
@@ -42,7 +42,7 @@ const payPalGuest: ShopOrder[] = [
 		title: 'PCP-6960 | PayPal subscription - Transaction - Checkout - Sign-up fee order by guest',
 		...orders.default,
 		payment: {
-			...payments.payPal,
+			...payments.payPalSubscription,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 			isPayPalSubscription: true,
 		},
@@ -57,7 +57,7 @@ const payPalCustomer: ShopOrder[] = [
 		title: 'PCP-0000 | PayPal subscription - Transaction - Checkout - Sign-up fee order by customer',
 		...orders.default,
 		payment: {
-			...payments.payPal,
+			...payments.payPalSubscription,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 			isPayPalSubscription: true,
 		},

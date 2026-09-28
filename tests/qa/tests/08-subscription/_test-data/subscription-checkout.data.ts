@@ -19,7 +19,7 @@ const vaultingGuest: ShopOrder[] = [
 	{
 		title: 'PCP-4895 | Vaulting subscription - Transaction - Checkout - PayPal - Order by guest @Critical @Smoke',
 		...orders.default,
-		payment: payments.payPal,
+		payment: payments.payPalSubscription,
 		merchant,
 		customer: guest,
 		products: [ products.subscription100 ],
@@ -29,7 +29,7 @@ const vaultingGuest: ShopOrder[] = [
 		// https://inpsyde.atlassian.net/browse/PCP-4897
 		title: 'PCP-4897 | Vaulting subscription - Transaction - Checkout - PayPal - Free trial order by guest @Smoke',
 		...orders.default,
-		payment: { ...payments.payPal, isFreeTrialSubscription: true },
+		payment: { ...payments.payPalSubscription, isFreeTrialSubscription: true },
 		merchant,
 		customer: guest,
 		products: [ products.subscriptionFreeTrial ],
@@ -56,7 +56,7 @@ const vaultingCustomer: ShopOrder[] = [
 	{
 		title: 'PCP-2570 | Vaulting subscription - Transaction - Checkout - PayPal - Order by customer @Critical',
 		...orders.default,
-		payment: payments.payPal,
+		payment: payments.payPalSubscription,
 		merchant,
 		customer,
 		products: [ products.subscription100 ],
@@ -64,7 +64,7 @@ const vaultingCustomer: ShopOrder[] = [
 	{
 		title: 'PCP-4899 | Vaulting subscription - Transaction - Checkout - PayPal - Free trial order by customer',
 		...orders.default,
-		payment: { ...payments.payPal, isFreeTrialSubscription: true },
+		payment: { ...payments.payPalSubscription, isFreeTrialSubscription: true },
 		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
@@ -92,7 +92,7 @@ const payPalGuest: ShopOrder[] = [
 		title: 'PCP-2574 | PayPal subscription - Transaction - Checkout - Order by guest @Critical',
 		...orders.default,
 		payment: {
-			...payments.payPal,
+			...payments.payPalSubscription,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 			isPayPalSubscription: true,
 		},
@@ -104,7 +104,7 @@ const payPalGuest: ShopOrder[] = [
 		title: 'PCP-4900 | PayPal subscription - Transaction - Checkout - Free trial order by guest',
 		...orders.default,
 		payment: {
-			...payments.payPal,
+			...payments.payPalSubscription,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 			isPayPalSubscription: true,
 		},
@@ -119,7 +119,7 @@ const payPalCustomer: ShopOrder[] = [
 		title: 'PCP-2576 | PayPal subscription - Transaction - Checkout - Order by customer @Critical',
 		...orders.default,
 		payment: {
-			...payments.payPal,
+			...payments.payPalSubscription,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 			isPayPalSubscription: true,
 		},
@@ -131,7 +131,7 @@ const payPalCustomer: ShopOrder[] = [
 		title: 'PCP-4901 | PayPal subscription - Transaction - Checkout - Free trial order by customer',
 		...orders.default,
 		payment: {
-			...payments.payPal,
+			...payments.payPalSubscription,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 			isPayPalSubscription: true,
 		},

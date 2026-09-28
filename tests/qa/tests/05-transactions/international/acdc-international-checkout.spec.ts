@@ -11,7 +11,7 @@ import {
 
 const { acdc } = gateways;
 
-for ( const { key, label, merchant } of acdcInternationalCountries ) {
+for ( const { key, label, merchant, tags } of acdcInternationalCountries ) {
 	test.describe( label, () => {
 		test.beforeAll( async ( { utils, pcpApi } ) => {
 			await utils.configureStore( {
@@ -30,7 +30,9 @@ for ( const { key, label, merchant } of acdcInternationalCountries ) {
 		} );
 
 		transactionsOnCheckout( {
-			title: `Transaction - Checkout - ACDC - ${ label } - Default order`,
+			title: `Transaction - Checkout - ACDC - ${ label } - Default order${
+				tags ? ` ${ tags }` : ''
+			}`,
 			...orders.default,
 			payment: payments.acdcVisa,
 			customer: guests[ key ],

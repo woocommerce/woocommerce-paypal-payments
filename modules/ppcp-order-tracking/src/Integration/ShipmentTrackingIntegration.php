@@ -69,7 +69,11 @@ class ShipmentTrackingIntegration implements Integration {
 	 * {@inheritDoc}
 	 */
 	public function integrate(): void {
-
+		/*
+		 * Priority 5: WooCommerce Shipment Tracking answers this action too and ends
+		 * in die(), so at the shared default this never ran. The tracking is read
+		 * from the request, so running first costs nothing.
+		 */
 		add_action(
 			'wp_ajax_wc_shipment_tracking_save_form',
 			function () {
@@ -102,7 +106,8 @@ class ShipmentTrackingIntegration implements Integration {
 				} catch ( Exception $exception ) {
 					return;
 				}
-			}
+			},
+			5
 		);
 
 		/**

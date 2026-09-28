@@ -21,6 +21,16 @@ jest.mock(
 	{ virtual: true }
 );
 
+const mockCartPayerData = jest.fn( () => null );
+
+jest.mock(
+	'@ppcp-button/Helper/CartPayerData',
+	() => ( {
+		cartPayerData: () => mockCartPayerData(),
+	} ),
+	{ virtual: true }
+);
+
 jest.mock( './utils/api', () => ( {
 	postJson: jest.fn(),
 	postStoreApi: jest.fn(),
@@ -230,6 +240,47 @@ describe( 'createOrder', () => {
 			order_id: 123,
 			order_key: 'wc_abc',
 		} );
+	} );
+
+	test( 'checkout-block context sends the payer from the cart store, without form_encoded since there is no classic form', async () => {
+		mockCartPayerData.mockReturnValueOnce( {
+			email_address: 'a@b.com',
+		} );
+		postJson.mockResolvedValueOnce( { id: 'PAYPAL7' } );
+
+		await createOrder( config, 'checkout-block', 'paypal' );
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.create_order, {
+			context: 'checkout-block',
+			purchase_units: [],
+			payment_method: 'ppcp-gateway',
+			funding_source: 'paypal',
+			save_order_in_session: 1,
+			payer: { email_address: 'a@b.com' },
+		} );
+	} );
+
+	test( 'checkout-block context sends no payer when the cart store has no email', async () => {
+		mockCartPayerData.mockReturnValueOnce( null );
+		postJson.mockResolvedValueOnce( { id: 'PAYPAL8' } );
+
+		await createOrder( config, 'checkout-block', 'paypal' );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.not.objectContaining( { payer: expect.anything() } )
+		);
+	} );
+
+	test( 'a context with no billing form sends no payer', async () => {
+		postJson.mockResolvedValueOnce( { id: 'PAYPAL9' } );
+
+		await createOrder( config, 'cart', 'paypal' );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.not.objectContaining( { payer: expect.anything() } )
+		);
 	} );
 } );
 
@@ -785,6 +836,46 @@ describe( 'createCardOrder', () => {
 			funding_source: 'card',
 			save_payment_method: false,
 		} );
+	} );
+
+	test( 'the checkout-block context sends the payer from the cart store', async () => {
+		mockCartPayerData.mockReturnValueOnce( {
+			email_address: 'a@b.com',
+		} );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER8' } );
+
+		await createCardOrder( config, 'checkout-block' );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.objectContaining( { payer: { email_address: 'a@b.com' } } )
+		);
+	} );
+
+	test( 'the checkout-block context sends no payer when the cart store has no email', async () => {
+		mockCartPayerData.mockReturnValueOnce( null );
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER9' } );
+
+		await createCardOrder( config, 'checkout-block' );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.not.objectContaining( { payer: expect.anything() } )
+		);
+	} );
+
+	test( 'a context with no billing form sends no payer', async () => {
+		postJson.mockResolvedValueOnce( { id: 'CARDORDER10' } );
+
+		await createCardOrder(
+			{ ...config, pay_now: { order_id: 456, order_key: 'wc_def' } },
+			'pay-now'
+		);
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_order,
+			expect.not.objectContaining( { payer: expect.anything() } )
+		);
 	} );
 } );
 

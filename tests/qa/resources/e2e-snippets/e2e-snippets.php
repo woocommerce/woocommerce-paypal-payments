@@ -42,6 +42,11 @@ add_filter( 'woocommerce_store_api_disable_nonce_check', '__return_true' );
 add_filter('woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled', '__return_true');
 
 /**
+ * Disable the WooCommerce order milestone celebration
+ */
+add_filter( 'wc_order_milestone_egg_enabled', '__return_false' );
+
+/**
  * Load NGROK_HOST from a CI-written file, since wp-env can't pass env vars.
  */
 if ( ! getenv( 'NGROK_HOST' ) ) {
