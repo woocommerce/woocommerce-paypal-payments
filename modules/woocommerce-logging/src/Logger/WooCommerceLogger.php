@@ -43,6 +43,8 @@ class WooCommerceLogger implements LoggerInterface {
 	 */
 	private string $request_uri;
 
+	private float $started_at;
+
 	/**
 	 * Whether the request was already announced in the log.
 	 */
@@ -65,12 +67,14 @@ class WooCommerceLogger implements LoggerInterface {
 		$this->source    = $source;
 
 		// phpcs:disable -- Intentionally not sanitized, for logging purposes.
-		$method = wp_unslash( $_SERVER['REQUEST_METHOD'] ?? 'CLI' );
-		$uri    = wp_unslash( $_SERVER['REQUEST_URI'] ?? '-' );
+		$method     = wp_unslash( $_SERVER['REQUEST_METHOD'] ?? 'CLI' );
+		$uri        = wp_unslash( $_SERVER['REQUEST_URI'] ?? '-' );
+		$started_at = (float) ( $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime( true ) );
 		// phpcs:enable
 
 		$this->request_method = is_string( $method ) ? $method : 'CLI';
 		$this->request_uri    = is_string( $uri ) ? $uri : '-';
+		$this->started_at     = $started_at;
 	}
 
 	/**
@@ -170,10 +174,15 @@ class WooCommerceLogger implements LoggerInterface {
 
 		$prefix       = self::$prefix;
 		$request_path = wp_parse_url( $this->request_uri, PHP_URL_PATH );
+		$started_at   = sprintf(
+			'@ %s.%03d',
+			gmdate( 'H:i:s', (int) $this->started_at ),
+			(int) ( ( $this->started_at - floor( $this->started_at ) ) * 1000 )
+		);
 
 		$this->wc_logger->log(
 			'debug',
-			"{$prefix}[New Request] $this->request_method $request_path",
+			"{$prefix}[New Request] $this->request_method $request_path $started_at",
 			array( 'source' => $source )
 		);
 	}
