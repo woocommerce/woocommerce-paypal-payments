@@ -17,10 +17,17 @@ export type PayPalAccount = {
 	password: string;
 };
 
+// WooCommerce product with PCP test-only options
+export type ShopProduct = WooCommerce.CreateProduct & {
+	variationToSelect?: Record< string, string >; // Attribute name => option to select on the product page
+};
+
 export type ShopOrder = WooCommerce.ShopOrder & {
 	title?: string;
 	payment?: Pcp.Payment;
 	merchant?: Pcp.Merchant;
+	products?: ShopProduct[];
+	isPayNowEnabled?: boolean; // Is Pay Now Experience option enabled in PCP Settings > Payment Methods
 };
 
 export type ShopRefund = ShopOrder & {
@@ -191,14 +198,7 @@ export namespace Pcp {
 			// Per-location styling block (mirrors Admin.Styling.Config)
 			export type LocationPageConfig = {
 				enabled?: boolean;
-				methods?: Extract <
-					GatewayId,
-					| 'ppcp-gateway'
-					| 'pay-later'
-					| 'venmo'
-					| 'ppcp-googlepay'
-					| 'ppcp-applepay'
-				>[];
+				methods?: GatewayId[]; // Button gateways: PayPal, Pay Later, Venmo, Google Pay, Apple Pay
 				label?: ButtonLabel;
 				shape?: ButtonShape;
 				color?: ButtonColor;
