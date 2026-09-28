@@ -25,7 +25,6 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
-use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedQuote;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedShippingRate;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedTaxBasis;
@@ -239,14 +238,6 @@ return array(
 			$container->get( 'sdk-v6.recorded-tax-basis' ),
 			$container->get( 'sdk-v6.recorded-quote' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-
-	'sdk-v6.rate-limiter'               => static function (): RateLimiter {
-		return new RateLimiter(
-			'ppcp_sdk_v6_rl_',
-			10,
-			60
 		);
 	},
 
