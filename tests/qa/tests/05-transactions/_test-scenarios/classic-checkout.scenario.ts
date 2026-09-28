@@ -31,13 +31,6 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 				test.setTimeout( 3 * 60_000 ); // 3 minutes for PUI/OXXO async capture
 			}
 
-			// PUI/OXXO capture completion relies on an async PayPal webhook. CI now
-			// tunnels through ngrok, so the webhook can reach it and this no longer
-			// needs to be skipped.
-			// const skipCaptureWait = isAsyncCaptureGateway && !! process.env.CI;
-			const skipCaptureWait = false;
-			const syncOrderStatus = gatewayTitle === 'OXXO' ? 'pending' : 'on-hold';
-
 			await test.step( `Add product(s) to the cart`, async () => {
 				await utils.fillVisitorsCart( products );
 			} );
@@ -56,10 +49,6 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 				await orderReceived.assertNoErrors();
 
 				orderId = await orderReceived.getOrderNumber();
-
-				if ( skipCaptureWait ) {
-					return;
-				}
 
 				await waitForOrderStatus( wooCommerceApi, orderId, {
 					expectedStatus: orderStatus,
@@ -85,10 +74,10 @@ export const transactionsOnClassicCheckout = ( testOrder: ShopOrder ) => {
 
 			await test.step( `Assert details on order edit page`, async () => {
 				await wooCommerceOrderEdit.visit( orderId );
-				const orderEditData = skipCaptureWait
-					? { ...testOrder, orderStatus: syncOrderStatus }
-					: testOrder;
-				await wooCommerceOrderEdit.assertOrderDetails( orderEditData, payPalPaymentDetails );
+				await wooCommerceOrderEdit.assertOrderDetails(
+					testOrder,
+					payPalPaymentDetails
+				);
 			} );
 		}
 	);

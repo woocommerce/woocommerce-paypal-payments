@@ -19,10 +19,7 @@ const payPalVaulted: Pcp.Payment = {
 };
 
 /**
- * Shards that run concurrently must not share a PayPal buyer account: a second
- * login invalidates the first one's session, which surfaces as the checkout
- * popup closing mid-flow and the order-received redirect never arriving. The
- * shards below each get their own account; transaction-usa keeps the default.
+ * Shards that run concurrently must not share a PayPal buyer account to avoid each other session invalidation
  */
 const payPalRefund: Pcp.Payment = {
 	...payPal,

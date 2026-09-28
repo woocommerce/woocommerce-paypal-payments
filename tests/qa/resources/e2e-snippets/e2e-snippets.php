@@ -47,13 +47,7 @@ add_filter('woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabl
 add_filter( 'wc_order_milestone_egg_enabled', '__return_false' );
 
 /**
- * Per README.md's "Webhooks" section: for testing webhooks with ngrok, the
- * site itself stays local — only the webhook listening URL is exposed via
- * the public tunnel, through the NGROK_HOST environment variable that
- * IncomingWebhookEndpoint::url() reads via getenv(). wp-env has no way to
- * pass an arbitrary host env var into the tests-wordpress container, so in
- * CI the workflow writes the bare tunnel host next to this file instead,
- * and this reads it back into the request's environment.
+ * Load NGROK_HOST from a CI-written file, since wp-env can't pass env vars.
  */
 if ( ! getenv( 'NGROK_HOST' ) ) {
 	$ngrok_host_file = __DIR__ . '/ngrok-host.txt';

@@ -1,7 +1,10 @@
 /**
  * External dependencies
  */
-import { countTotals, getAmountPercentage } from '@inpsyde/playwright-utils/build';
+import {
+	countTotals,
+	getAmountPercentage,
+} from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
@@ -15,15 +18,7 @@ import {
 import { ShopRefund } from '../../../resources';
 
 /**
- * Refund initiated on PayPal's side, not from WooCommerce.
- *
- * The existing testRefund scenario refunds through the WooCommerce order-edit
- * screen, which calls the PayPal API directly and updates the order in the same
- * request - the webhook is irrelevant to whether it passes. Here the refund is
- * issued straight to PayPal, as a merchant refunding from the PayPal dashboard
- * would, so WooCommerce has no way of hearing about it except the
- * PAYMENT.CAPTURE.REFUNDED webhook. That makes the refund showing up in
- * WooCommerce a genuine end-to-end assertion of webhook delivery.
+ * Refunds on PayPal's side, so only the PAYMENT.CAPTURE.REFUNDED webhook can update the order.
  *
  * @param testData The refund test data.
  */
@@ -49,8 +44,7 @@ export const testRefundFromPayPal = ( testData: ShopRefund ) => {
 			wooCommerceApi,
 			payPalApi,
 		} ) => {
-			// Generous: the refund has to round-trip through PayPal and come
-			// back as a webhook, the same budget the async-capture gateways get.
+			// Same budget as the async-capture gateways: the refund comes back as a webhook.
 			test.setTimeout( 3 * 60_000 );
 
 			let orderId: number;
@@ -103,8 +97,7 @@ export const testRefundFromPayPal = ( testData: ShopRefund ) => {
 			} );
 
 			await test.step( 'Assert WooCommerce learns about the refund via webhook', async () => {
-				// Nothing in WooCommerce initiated this refund, so reaching the
-				// refunded state at all proves PAYMENT.CAPTURE.REFUNDED arrived.
+				// Only the refund webhook can move the order to refunded.
 				await waitForOrderStatus( wooCommerceApi, orderId, {
 					expectedStatus: refundOrderStatus,
 					timeout: 2.5 * 60_000,

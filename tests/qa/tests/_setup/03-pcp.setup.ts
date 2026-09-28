@@ -3,7 +3,6 @@
  */
 import { APIRequestContext } from '@playwright/test';
 import { existsSync } from 'fs';
-import { join } from 'path';
 /**
  * Internal dependencies
  */
@@ -21,22 +20,26 @@ import {
 const { payPal, payLater, venmo, acdc, bcdc, fastlane, googlepay, oxxo, pui } = gateways;
 
 /**
- * Asserts the registered webhook URL uses the public ngrok host and is
- * reachable. Skipped without a tunnel: the host file is only written
- * for shards with NGROK_ENABLED.
+ * Path the CI workflow writes the public tunnel host to. Its presence is what
+ * tells us a tunnel was set up for this shard: only the shards whose tests wait
+ * on a PayPal webhook get one, so on every other shard there is nothing to check.
+ */
+const ngrokHostFile = 'tests/qa/resources/e2e-snippets/ngrok-host.txt';
+
+/**
+ * On a tunnelled shard in CI, confirms the webhook URL PayPal has on file was
+ * rewritten to the public host instead of the local site host, and that it is
+ * actually reachable. Catches a broken tunnel right after connect, instead of
+ * as a confusing multi-minute timeout deep inside a transaction test.
  *
- * @param pcpApi  The PCP API client.
- * @param request The Playwright request context.
+ * @param pcpApi  The PCP API client, used to read back the registered webhook URL.
+ * @param request The Playwright request context, used to probe the URL.
  */
 const assertWebhookPubliclyReachable = async (
 	pcpApi: PcpApi,
 	request: APIRequestContext
 ) => {
-	const ngrokHostFile = join(
-		process.cwd(),
-		'tests/qa/resources/e2e-snippets/ngrok-host.txt'
-	);
-	if ( ! existsSync( ngrokHostFile ) ) {
+	if ( ! process.env.CI || ! existsSync( ngrokHostFile ) ) {
 		return;
 	}
 
@@ -53,7 +56,7 @@ const assertWebhookPubliclyReachable = async (
 
 	expect(
 		registeredHost,
-		`Assert the registered webhook host (${ registeredHost }) was rewritten to the public ngrok host, not the local site host (${ localHost })`
+		`Assert the registered webhook host (${ registeredHost }) was rewritten to the public tunnel host, not the local site host (${ localHost })`
 	).not.toEqual( localHost );
 
 	let isReachable = true;

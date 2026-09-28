@@ -332,9 +332,8 @@ export const waitForTransactionId = async (
 	await expect
 		.poll(
 			async () => {
-				transactionId = (
-					await wooCommerceApi.getOrder( orderId )
-				 ).transaction_id;
+				transactionId = ( await wooCommerceApi.getOrder( orderId ) )
+					.transaction_id;
 				return transactionId;
 			},
 			{

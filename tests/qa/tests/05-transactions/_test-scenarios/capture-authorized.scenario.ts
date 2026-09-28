@@ -11,16 +11,7 @@ import {
 } from '../../../utils';
 
 /**
- * Captures an authorization from the WooCommerce order screen.
- *
- * The Intent Authorized tests stop once the order reaches on-hold, which is the
- * correct state for an authorization: funds are reserved, nothing is captured,
- * so the order is not paid. Nothing then exercises the other half of the flow -
- * the merchant capturing the authorization - even though that is the ordinary
- * way an authorized order gets completed.
- *
- * The capture is initiated from WooCommerce and calls PayPal directly, so this
- * needs no webhook.
+ * Captures an authorized payment from the WooCommerce order screen.
  *
  * @param testOrder The order test data; expects payment.isAuthorized.
  */

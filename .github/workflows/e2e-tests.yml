@@ -148,9 +148,18 @@ jobs:
       NODE_VERSION: 22
       PLAYWRIGHT_BROWSER_ARGS: 'chromium --with-deps'
       XRAY_TEST_EXEC_KEY: ${{ inputs.XRAY_TEST_EXEC_KEY }}
-      # Only shards whose tests wait on a PayPal webhook
+      # Only the shards whose tests wait on a PayPal webhook get a tunnel. PUI
+      # (Germany) and OXXO (Mexico) capture asynchronously, so their orders reach
+      # the expected status only once PayPal delivers the capture event. The refund
+      # shard's refund from PayPal reaches WooCommerce only as a webhook. Every
+      # other gateway captures during checkout, and subscription renewals are
+      # charged directly, so those shards need no public URL.
       NGROK_ENABLED: ${{ contains(fromJson('["transaction-germany","transaction-mexico","refund"]'), matrix.slug) }}
-      # Next run's webhook URL matches the one already registered on the app
+      # Stable per shard and SDK version, deliberately without the run id: a
+      # constant hostname means the next run's webhook URL matches the one already
+      # registered on the PayPal app, so the plugin recognises and replaces its own
+      # registration instead of orphaning one every run, against a per-app limit.
+      # The cost is that two runs of the same shard cannot overlap.
       NGROK_DOMAIN: ${{ matrix.slug }}-${{ matrix.sdk_version }}.e2e.paypal.syde.wpinfra.cloud
       # Site stays local; only the webhook URL goes through the tunnel (see e2e-snippets.php)
       NGROK_REWRITE_URLS: false
