@@ -46,7 +46,7 @@ const payLater: Pcp.Gateway = {
 	titleInModal: 'PayPal Pay Later',
 	titleInPcpSettings: 'Pay Later',
 	hasSettingsButton: false,
-	enabled: false,
+	enabled: true, // enabled on every onboarding since PCP-6968
 };
 
 const acdc: Pcp.Gateway = {
