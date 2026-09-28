@@ -418,6 +418,23 @@ class AxoManager {
 
 		this.ensureBillingFieldsConsistency();
 		this.ensureShippingFieldsConsistency();
+
+		if ( scenario.defaultFormFields || scenario.extraFormFields ) {
+			this.refreshEnhancedSelects();
+		}
+	}
+
+	/**
+	 * Asks WooCommerce to upgrade the country and state dropdowns it skipped.
+	 *
+	 * WooCommerce only enhances selects that are visible, and it does so once on
+	 * page load - by which time this class has already hidden the checkout form.
+	 * The fields would otherwise stay plain selects when the form is revealed,
+	 * unlike the same checkout without Fastlane. Core fires this event for the
+	 * same reason after it reveals the cart's shipping calculator.
+	 */
+	refreshEnhancedSelects() {
+		this.$( document.body ).trigger( 'country_to_state_changed' );
 	}
 
 	identifyScenario( active, validEmail, hasProfile ) {
