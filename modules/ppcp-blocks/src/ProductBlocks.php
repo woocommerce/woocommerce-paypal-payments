@@ -50,10 +50,26 @@ class ProductBlocks {
 
 	/**
 	 * The action hook the classic product renderer is redirected to when the blocks render the
-	 * page: a name nothing ever fires, so the classic render path stands down and the blocks
-	 * are the sole product renderer.
+	 * page: a name nothing fires on its own, so the classic render path stands down and the
+	 * blocks are the sole product renderer. Fired from the original hook only when a page
+	 * builder replaces the block template (see restore_classic_render_for_builders()).
 	 */
 	private const NEUTRALIZED_RENDER_HOOK = 'ppcp_product_blocks_render_noop';
+
+	/**
+	 * The renderer hook the classic path was redirected away from on this request, or null
+	 * when it was not redirected.
+	 *
+	 * @var string|null
+	 */
+	private static $neutralized_from = null;
+
+	/**
+	 * Whether the neutralized callbacks were already bridged back onto the original hook.
+	 *
+	 * @var bool
+	 */
+	private static $classic_render_restored = false;
 
 	/**
 	 * Whether the product Pay Later messaging surface is enabled, per the merchant's
@@ -124,15 +140,72 @@ class ProductBlocks {
 		add_filter(
 			'woocommerce_paypal_payments_single_product_renderer_hook',
 			static function ( $hook ) {
-				if ( ! self::is_block_theme() ) {
+				if ( ! is_string( $hook ) || ! self::is_block_theme() ) {
 					return $hook;
 				}
 
-				return self::template_renders_blocks( self::current_product_template_content() )
-					? self::NEUTRALIZED_RENDER_HOOK
-					: $hook;
+				if ( ! self::template_renders_blocks( self::current_product_template_content() ) ) {
+					return $hook;
+				}
+
+				self::$neutralized_from = $hook;
+
+				return self::NEUTRALIZED_RENDER_HOOK;
 			},
 			20
+		);
+
+		// The decision above runs on `wp`, but a page builder (Elementor Pro, Divi Builder, ...)
+		// can still replace the block template on `template_include`. The latest priority sees
+		// the template that actually renders.
+		add_filter(
+			'template_include',
+			static function ( $template ) {
+				self::restore_classic_render_for_builders( $template );
+
+				return $template;
+			},
+			PHP_INT_MAX
+		);
+	}
+
+	/**
+	 * Whether the template about to render is something other than core's block-template
+	 * canvas, meaning a page builder replaced the block template and our blocks will not
+	 * render.
+	 *
+	 * @param mixed $template The template path from `template_include`.
+	 */
+	public static function builder_overrode_template( $template ): bool {
+		if ( ! is_string( $template ) || '' === $template ) {
+			return false;
+		}
+
+		return wp_normalize_path( $template ) !== wp_normalize_path( ABSPATH . WPINC . '/template-canvas.php' );
+	}
+
+	/**
+	 * Fires the neutralized classic render callbacks from the original hook when a page builder
+	 * replaced the block template, so the product page does not lose buttons and messaging.
+	 *
+	 * Priority 30 matches the earliest classic product callback (messaging); the callbacks
+	 * parked on the neutralized hook then run in their own priority order.
+	 *
+	 * @param mixed $template The template path from `template_include`.
+	 */
+	public static function restore_classic_render_for_builders( $template ): void {
+		if ( null === self::$neutralized_from || self::$classic_render_restored || ! self::builder_overrode_template( $template ) ) {
+			return;
+		}
+
+		self::$classic_render_restored = true;
+
+		add_action(
+			self::$neutralized_from,
+			static function () {
+				do_action( self::NEUTRALIZED_RENDER_HOOK );
+			},
+			30
 		);
 	}
 

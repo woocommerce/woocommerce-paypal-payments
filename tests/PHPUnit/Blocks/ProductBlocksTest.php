@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Blocks;
 
+use Brain\Monkey\Actions;
 use Mockery;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -18,6 +19,16 @@ class ProductBlocksTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
+
+        if (!defined('ABSPATH')) {
+            define('ABSPATH', '/var/www/html/');
+        }
+        if (!defined('WPINC')) {
+            define('WPINC', 'wp-includes');
+        }
+
+        $this->set_static('neutralized_from', null);
+        $this->set_static('classic_render_restored', false);
 
         // Faithful stand-in for WordPress core's has_block(): a namespaced block name is
         // matched literally, a bare name is assumed to be a core/ block, and a null post
@@ -188,5 +199,140 @@ class ProductBlocksTest extends TestCase
         $content = '<!-- wp:paragraph --><p>x</p><!-- /wp:paragraph -->';
 
         $this->assertFalse(ProductBlocks::template_renders_blocks($content));
+    }
+
+    /**
+     * GIVEN the template WordPress is about to render is core's block-template canvas
+     *       (in any path spelling)
+     * WHEN builder_overrode_template() is asked whether a page builder replaced the template
+     * THEN it reports false, since the block template and its blocks will render
+     *
+     * @dataProvider canvas_template_provider
+     */
+    public function testBuilderOverrodeTemplateIsFalseForTheCoreCanvas(string $spelling): void
+    {
+        $canvas   = $this->canvas_template();
+        $template = array(
+            'core'           => $canvas,
+            'backslashes'    => str_replace('/', '\\', $canvas),
+            'double slashes' => '/' . str_replace('/', '//', substr($canvas, 1)),
+        )[$spelling];
+
+        $this->assertFalse(ProductBlocks::builder_overrode_template($template));
+    }
+
+    public function canvas_template_provider(): array
+    {
+        return array(
+            'canvas path as core builds it'   => array('core'),
+            'canvas path with backslashes'    => array('backslashes'),
+            'canvas path with double slashes' => array('double slashes'),
+        );
+    }
+
+    /**
+     * GIVEN a page builder supplies its own template file
+     * WHEN builder_overrode_template() is asked whether a page builder replaced the template
+     * THEN it reports true
+     */
+    public function testBuilderOverrodeTemplateIsTrueForAnotherTemplate(): void
+    {
+        $template = '/var/www/wp-content/plugins/elementor/modules/page-templates/templates/canvas.php';
+
+        $this->assertTrue(ProductBlocks::builder_overrode_template($template));
+    }
+
+    /**
+     * GIVEN a template_include value that is not a usable path
+     * WHEN builder_overrode_template() is asked whether a page builder replaced the template
+     * THEN it reports false, since nothing can be concluded from it
+     *
+     * @dataProvider unusable_template_provider
+     * @param mixed $template
+     */
+    public function testBuilderOverrodeTemplateIsFalseForUnusableValues($template): void
+    {
+        $this->assertFalse(ProductBlocks::builder_overrode_template($template));
+    }
+
+    public function unusable_template_provider(): array
+    {
+        return array(
+            'null'         => array(null),
+            'array'        => array(array('canvas.php')),
+            'empty string' => array(''),
+        );
+    }
+
+    /**
+     * GIVEN the classic product render was redirected away from a hook and a page builder
+     *       replaced the block template
+     * WHEN the classic render is restored twice
+     * THEN the callbacks are bridged back onto the original hook only once
+     */
+    public function testRestoreClassicRenderBridgesOntoTheOriginalHookOnce(): void
+    {
+        $this->set_static('neutralized_from', 'woocommerce_after_add_to_cart_form');
+        Actions\expectAdded('woocommerce_after_add_to_cart_form')
+            ->once()
+            ->with(Mockery::type('Closure'), 30);
+
+        ProductBlocks::restore_classic_render_for_builders('/var/www/wp-content/plugins/elementor/canvas.php');
+        ProductBlocks::restore_classic_render_for_builders('/var/www/wp-content/plugins/elementor/canvas.php');
+
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * GIVEN the classic product render was redirected away from a hook
+     * WHEN the template about to render is core's block-template canvas
+     * THEN nothing is bridged back, since the blocks render the page
+     */
+    public function testRestoreClassicRenderDoesNothingWhenCoreCanvasRenders(): void
+    {
+        $this->set_static('neutralized_from', 'woocommerce_after_add_to_cart_form');
+        Actions\expectAdded('woocommerce_after_add_to_cart_form')->never();
+
+        ProductBlocks::restore_classic_render_for_builders($this->canvas_template());
+
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * GIVEN the classic product render was never redirected on this request
+     * WHEN a page builder replaces the template
+     * THEN nothing is bridged back, since the classic path still renders
+     */
+    public function testRestoreClassicRenderDoesNothingWhenRenderWasNotRedirected(): void
+    {
+        $this->set_static('neutralized_from', null);
+        Actions\expectAdded('woocommerce_after_add_to_cart_form')->never();
+
+        ProductBlocks::restore_classic_render_for_builders('/var/www/wp-content/plugins/elementor/canvas.php');
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function tearDown(): void
+    {
+        $this->set_static('neutralized_from', null);
+        $this->set_static('classic_render_restored', false);
+
+        parent::tearDown();
+    }
+
+    private function canvas_template(): string
+    {
+        return ABSPATH . WPINC . '/template-canvas.php';
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private function set_static(string $property, $value): void
+    {
+        $reflection = new \ReflectionProperty(ProductBlocks::class, $property);
+        $reflection->setAccessible(true);
+        $reflection->setValue(null, $value);
     }
 }
