@@ -18,7 +18,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 /**
  * Registers a Pay Later messaging block and a Smart Buttons block for the Single Product
  * page and auto-inserts them into the block-theme Single Product template, where the classic
- * `woocommerce_*` hooks the SDK renders through do not fire.
+ * `woocommerce_*` hooks the SDK renders through do not fire: messaging below the product
+ * price (see messaging_placement()), buttons after the add-to-cart block.
  *
  * This lives in the always-loaded blocks module rather than a module of its own; the blocks
  * simply ship with the plugin and appear where the merchant's "Product" button / Pay Later
@@ -38,6 +39,18 @@ class ProductBlocks
      * The add-to-cart block variants the blocks are auto-inserted after.
      */
     public const ADD_TO_CART_ANCHORS = array('woocommerce/add-to-cart-form', 'woocommerce/add-to-cart-with-options');
+    /**
+     * The product price block, the messaging block's default anchor.
+     */
+    public const PRICE_ANCHOR = 'woocommerce/product-price';
+    /**
+     * Where the messaging block is auto-inserted relative to its anchor by default.
+     */
+    public const MESSAGING_DEFAULT_POSITION = 'after';
+    /**
+     * The relative positions the Block Hooks API accepts.
+     */
+    private const BLOCK_HOOK_POSITIONS = array('before', 'after', 'first_child', 'last_child');
     /**
      * The WooCommerce block that renders the classic PHP template inside a block template.
      */
@@ -81,6 +94,62 @@ class ProductBlocks
     public static function is_buttons_enabled(SettingsStatus $settings_status): bool
     {
         return $settings_status->is_smart_button_enabled_for_location('product');
+    }
+    /**
+     * Where the messaging block is auto-inserted into the Single Product template: directly
+     * below the product price by default.
+     *
+     * @return array{anchor: array<int, string>, position: string}
+     */
+    public static function messaging_placement(): array
+    {
+        $default = array('anchor' => array(self::PRICE_ANCHOR), 'position' => self::MESSAGING_DEFAULT_POSITION);
+        /**
+         * Filters where the Pay Later messaging block is auto-inserted into block-theme
+         * Single Product templates.
+         *
+         * @param array $placement {
+         *     @type string|string[] $anchor   The block type(s) to insert the messaging block next to.
+         *     @type string          $position One of before, after, first_child or last_child.
+         * }
+         */
+        $placement = apply_filters('woocommerce_paypal_payments_product_messages_block_placement', array('anchor' => self::PRICE_ANCHOR, 'position' => self::MESSAGING_DEFAULT_POSITION));
+        if (!is_array($placement)) {
+            return $default;
+        }
+        $anchor = $placement['anchor'] ?? null;
+        $anchors = is_string($anchor) ? array($anchor) : $anchor;
+        $position = $placement['position'] ?? null;
+        if (!is_array($anchors) || !in_array($position, self::BLOCK_HOOK_POSITIONS, \true)) {
+            return $default;
+        }
+        $anchors = array_values(array_filter($anchors, static function ($block_type): bool {
+            return is_string($block_type) && '' !== $block_type;
+        }));
+        if (!$anchors) {
+            return $default;
+        }
+        return array('anchor' => $anchors, 'position' => $position);
+    }
+    /**
+     * Whether a messaging insertion may be positioned against this anchor block.
+     *
+     * A price block only qualifies when it prices the product the template is about: the
+     * related-products and other loops in the template reuse the same block, and Block Hooks
+     * would otherwise put a message under each of their prices. Other anchors always qualify.
+     *
+     * @param mixed $parsed_anchor_block The parsed anchor block.
+     */
+    public static function is_single_product_price_anchor($parsed_anchor_block): bool
+    {
+        if (!is_array($parsed_anchor_block)) {
+            return \false;
+        }
+        if (self::PRICE_ANCHOR !== ($parsed_anchor_block['blockName'] ?? null)) {
+            return \true;
+        }
+        $attrs = is_array($parsed_anchor_block['attrs'] ?? null) ? $parsed_anchor_block['attrs'] : array();
+        return !empty($attrs['isDescendentOfSingleProductTemplate']) && empty($attrs['isDescendentOfQueryLoop']);
     }
     /**
      * Whether the SDK v6 stack is rendering the current page.
@@ -227,8 +296,8 @@ class ProductBlocks
      * Whether a block template's content renders the blocks, so the classic product render path
      * must stand down.
      *
-     * True when the template places a block explicitly or contains an add-to-cart anchor the
-     * blocks are auto-inserted after. False when there is no block template, or it delegates
+     * True when the template places a block explicitly or contains an add-to-cart or price
+     * anchor the blocks are auto-inserted next to. False when there is no block template, or it delegates
      * to the classic PHP template through the Classic template block.
      *
      * @param string|null $content The block template content, or null when none applies.
@@ -238,7 +307,7 @@ class ProductBlocks
         if (null === $content || has_block(self::LEGACY_TEMPLATE_BLOCK, $content)) {
             return \false;
         }
-        foreach (array_merge(array(self::BUTTONS_BLOCK, self::MESSAGING_BLOCK), self::ADD_TO_CART_ANCHORS) as $block_type) {
+        foreach (array_merge(array(self::BUTTONS_BLOCK, self::MESSAGING_BLOCK, self::PRICE_ANCHOR), self::ADD_TO_CART_ANCHORS) as $block_type) {
             if (has_block($block_type, $content)) {
                 return \true;
             }

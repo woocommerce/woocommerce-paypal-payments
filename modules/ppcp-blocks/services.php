@@ -57,11 +57,12 @@ return array(
         return new \WooCommerce\PayPalCommerce\Blocks\ProductSmartButtonsRenderer();
     },
     /**
-     * Auto-inserts the product Smart Buttons and Pay Later messaging blocks after the
-     * add-to-cart block in block-theme Single Product templates, via the Block Hooks API.
-     * Each entry anchors against both add-to-cart block variants so it works whichever the
-     * active template uses. The messaging entry is only added where Pay Later applies to the
-     * merchant's country; every predicate is evaluated lazily at render time.
+     * Auto-inserts the product Smart Buttons and Pay Later messaging blocks into block-theme
+     * Single Product templates, via the Block Hooks API. The buttons anchor against both
+     * add-to-cart block variants so they work whichever the active template uses; messaging
+     * goes below the product price by default (filterable, see
+     * ProductBlocks::messaging_placement()). The messaging entry is only added where Pay Later
+     * applies to the merchant's country; every predicate is evaluated lazily at render time.
      */
     'blocks.product-hooked-blocks-registrar' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar {
         $settings_status = $container->get('wcgateway.settings.status');
@@ -78,9 +79,10 @@ return array(
             return \WooCommerce\PayPalCommerce\Blocks\ProductBlocks::is_buttons_enabled($settings_status);
         }));
         if ($messages_apply->for_country() && $container->has('paylater-configurator.factory.config')) {
-            $insertions[\WooCommerce\PayPalCommerce\Blocks\ProductBlocks::MESSAGING_BLOCK] = array('anchor' => $add_to_cart_anchors, 'position' => 'after', 'enabled' => static function () use ($settings_status): bool {
+            $messaging_placement = \WooCommerce\PayPalCommerce\Blocks\ProductBlocks::messaging_placement();
+            $insertions[\WooCommerce\PayPalCommerce\Blocks\ProductBlocks::MESSAGING_BLOCK] = array('anchor' => $messaging_placement['anchor'], 'position' => $messaging_placement['position'], 'enabled' => static function () use ($settings_status): bool {
                 return \WooCommerce\PayPalCommerce\Blocks\ProductBlocks::is_messaging_enabled($settings_status);
-            });
+            }, 'anchor_filter' => array(\WooCommerce\PayPalCommerce\Blocks\ProductBlocks::class, 'is_single_product_price_anchor'));
         }
         return new \WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar($insertions);
     },
