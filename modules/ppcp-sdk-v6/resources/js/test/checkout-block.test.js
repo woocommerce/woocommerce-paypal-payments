@@ -62,6 +62,7 @@ const baseConfig = ( overrides = {} ) => ( {
 	page_context: 'checkout',
 	supported_features: [ 'products', 'subscriptions' ],
 	pay_later_button: { checkout: true },
+	venmo_button: { checkout: true },
 	google_pay: {
 		enabled: true,
 		styles: { checkout: {} },
