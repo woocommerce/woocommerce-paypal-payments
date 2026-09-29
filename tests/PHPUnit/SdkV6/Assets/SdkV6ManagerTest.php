@@ -2608,4 +2608,107 @@ class SdkV6ManagerTest extends TestCase
             $this->assertNotSame('', $label);
         }
     }
+
+    // -------------------------------------------------------------------------
+    // add_variation_message_amount() — woocommerce_available_variation filter
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN a variable product's variation priced 200 including tax
+     * WHEN the woocommerce_available_variation filter data is assembled for that variation
+     * THEN ppcp_message_amount is added as a 2-decimal string taken from the
+     *      tax-inclusive price, not a float
+     * AND the rest of the incoming data (e.g. display_price) survives unchanged
+     */
+    public function testAddVariationMessageAmountAddsTaxInclusiveAmountAsString(): void
+    {
+        $variation = Mockery::mock(\WC_Product::class);
+        when('wc_get_price_including_tax')->justReturn(200.0);
+
+        $testee = $this->createTestee();
+        $result = $testee->add_variation_message_amount(
+            ['display_price' => 180.0, 'sku' => 'VAR-1'],
+            null,
+            $variation
+        );
+
+        $this->assertSame('200.00', $result['ppcp_message_amount']);
+        $this->assertIsString($result['ppcp_message_amount']);
+        $this->assertSame(180.0, $result['display_price']);
+        $this->assertSame('VAR-1', $result['sku']);
+    }
+
+    /**
+     * GIVEN a value that is not a WC_Product standing in for $variation (null, or an
+     *       unrelated object), which the filter's callers cannot be trusted to avoid
+     * WHEN the variation data is assembled
+     * THEN the data is returned untouched, since there is no variation to price
+     *
+     * @dataProvider non_product_variation_provider
+     */
+    public function testAddVariationMessageAmountLeavesDataUntouchedWithoutAWcProductVariation($variation): void
+    {
+        $testee = $this->createTestee();
+        $data   = ['display_price' => 180.0];
+
+        $result = $testee->add_variation_message_amount($data, null, $variation);
+
+        $this->assertSame($data, $result);
+    }
+
+    public function non_product_variation_provider(): array
+    {
+        return [
+            'null variation' => [null],
+            'a plain stdClass standing in for the variation' => [new \stdClass()],
+        ];
+    }
+
+    /**
+     * GIVEN an earlier callback on the filter returned something other than an array
+     *       (e.g. a string, or null)
+     * WHEN the variation data is assembled
+     * THEN the value is returned untouched rather than being coerced or causing a fatal
+     *
+     * @dataProvider non_array_data_provider
+     */
+    public function testAddVariationMessageAmountLeavesNonArrayDataUntouched($data): void
+    {
+        $variation = Mockery::mock(\WC_Product::class);
+
+        $testee = $this->createTestee();
+        $result = $testee->add_variation_message_amount($data, null, $variation);
+
+        $this->assertSame($data, $result);
+    }
+
+    public function non_array_data_provider(): array
+    {
+        return [
+            'a string returned by an earlier callback' => ['not-an-array'],
+            'null returned by an earlier callback' => [null],
+        ];
+    }
+
+    /**
+     * GIVEN a merchant filter switches Pay Later messaging over to pricing through the
+     *       cart-simulation endpoint
+     * WHEN the variation data is assembled
+     * THEN the data is returned untouched, since the front end does not read this value
+     *      while simulation is on
+     */
+    public function testAddVariationMessageAmountLeavesDataUntouchedUnderCartSimulation(): void
+    {
+        expectApplied('woocommerce_paypal_payments_sdk_v6_messages_use_cart_simulation')
+            ->once()
+            ->andReturn(true);
+
+        $variation = Mockery::mock(\WC_Product::class);
+        $data      = ['display_price' => 180.0];
+
+        $testee = $this->createTestee();
+        $result = $testee->add_variation_message_amount($data, null, $variation);
+
+        $this->assertSame($data, $result);
+    }
 }

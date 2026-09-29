@@ -78,7 +78,18 @@ describe( 'watchProductAmount()', () => {
 		expect( onChange ).toHaveBeenCalledWith( '100.00' );
 	} );
 
-	test( 'found_variation switches the unit price to display_price, and the quantity still multiplies it', () => {
+	test( 'found_variation switches the unit price to ppcp_message_amount, and the quantity still multiplies it', () => {
+		const form = renderProductForm( 2 );
+		const onChange = jest.fn();
+		watchProductAmount( config( '25.00' ), onChange );
+
+		jQuery( form ).trigger( 'found_variation', [ { ppcp_message_amount: 40 } ] );
+		jest.advanceTimersByTime( DEBOUNCE_MS );
+
+		expect( onChange ).toHaveBeenCalledWith( '80.00' );
+	} );
+
+	test( 'found_variation falls back to the seed rather than display_price, so the tax basis never changes', () => {
 		const form = renderProductForm( 2 );
 		const onChange = jest.fn();
 		watchProductAmount( config( '25.00' ), onChange );
@@ -86,7 +97,21 @@ describe( 'watchProductAmount()', () => {
 		jQuery( form ).trigger( 'found_variation', [ { display_price: 40 } ] );
 		jest.advanceTimersByTime( DEBOUNCE_MS );
 
-		expect( onChange ).toHaveBeenCalledWith( '80.00' );
+		expect( onChange ).toHaveBeenCalledWith( '50.00' );
+	} );
+
+	test.each( [
+		[ 'ppcp_message_amount is absent', {} ],
+		[ 'ppcp_message_amount is not a number', { ppcp_message_amount: 'not-a-price' } ],
+	] )( 'found_variation falls back to the seed when %s', ( _label, variation ) => {
+		const form = renderProductForm( 2 );
+		const onChange = jest.fn();
+		watchProductAmount( config( '25.00' ), onChange );
+
+		jQuery( form ).trigger( 'found_variation', [ variation ] );
+		jest.advanceTimersByTime( DEBOUNCE_MS );
+
+		expect( onChange ).toHaveBeenCalledWith( '50.00' );
 	} );
 
 	test( 'reset_data reverts the unit price to the seed', () => {
@@ -94,7 +119,7 @@ describe( 'watchProductAmount()', () => {
 		const onChange = jest.fn();
 		watchProductAmount( config( '25.00' ), onChange );
 
-		jQuery( form ).trigger( 'found_variation', [ { display_price: 40 } ] );
+		jQuery( form ).trigger( 'found_variation', [ { ppcp_message_amount: 40 } ] );
 		jest.advanceTimersByTime( DEBOUNCE_MS );
 		onChange.mockClear();
 
@@ -162,7 +187,7 @@ describe( 'watchProductAmount()', () => {
 
 		form.querySelector( '[name="quantity"]' ).value = '9';
 		form.dispatchEvent( new Event( 'input' ) );
-		jQuery( form ).trigger( 'found_variation', [ { display_price: 99 } ] );
+		jQuery( form ).trigger( 'found_variation', [ { ppcp_message_amount: 99 } ] );
 		jest.advanceTimersByTime( DEBOUNCE_MS );
 
 		expect( onChange ).toHaveBeenCalledTimes( 1 );
