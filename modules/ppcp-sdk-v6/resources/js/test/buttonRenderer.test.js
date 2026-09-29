@@ -2,7 +2,11 @@
 // resolve; the button click path is not exercised here.
 jest.mock( '../utils/errorHandler', () => ( { handleError: jest.fn() } ) );
 
-import { createMethodButton, renderButtons } from '../components/buttonRenderer';
+import {
+	createMethodButton,
+	createPreviewButton,
+	renderButtons,
+} from '../components/buttonRenderer';
 
 const noop = () => {};
 
@@ -95,6 +99,85 @@ describe( 'createMethodButton', () => {
 		} );
 
 		expect( button ).toBeNull();
+	} );
+} );
+
+describe( 'createPreviewButton', () => {
+	test( 'returns null for an unknown method', () => {
+		const button = createPreviewButton( document, {
+			method: 'nope',
+			styles: {},
+		} );
+
+		expect( button ).toBeNull();
+	} );
+
+	test.each( [
+		[ 'paypal', 'paypal-button', 'pay' ],
+		[ 'venmo', 'venmo-button', 'pay' ],
+		[ 'paylater', 'paypal-pay-later-button', '' ],
+	] )(
+		'creates a %s element with the %s type attribute',
+		( method, tagName, type ) => {
+			const button = createPreviewButton( document, {
+				method,
+				styles: {},
+			} );
+
+			expect( button.tagName.toLowerCase() ).toBe( tagName );
+			expect( button.getAttribute( 'type' ) ).toBe( type || null );
+		}
+	);
+
+	test( 'applies colour, height and border radius to the element', () => {
+		const button = createPreviewButton( document, {
+			method: 'paypal',
+			styles: {
+				colorClass: 'paypal-blue',
+				height: '35px',
+				borderRadius: '8px',
+			},
+		} );
+
+		expect( button.className ).toBe( 'paypal-blue' );
+		expect( button.style.height ).toBe( '35px' );
+		expect(
+			button.style.getPropertyValue( '--paypal-button-border-radius' )
+		).toBe( '8px' );
+	} );
+
+	test( 'sets the border radius on the property the Venmo element actually reads', () => {
+		const venmo = createPreviewButton( document, {
+			method: 'venmo',
+			styles: { borderRadius: '30px' },
+		} );
+
+		expect(
+			venmo.style.getPropertyValue( '--venmo-button-border-radius' )
+		).toBe( '30px' );
+		expect(
+			venmo.style.getPropertyValue( '--paypal-button-border-radius' )
+		).toBe( '' );
+	} );
+
+	test( 'creates the element in the given document, not the top-level one', () => {
+		const fakeElement = {
+			setAttribute: jest.fn(),
+			style: { setProperty: jest.fn() },
+		};
+		const fakeDoc = {
+			createElement: jest.fn( () => fakeElement ),
+		};
+
+		const button = createPreviewButton( fakeDoc, {
+			method: 'paypal',
+			styles: { colorClass: 'paypal-blue' },
+		} );
+
+		expect( fakeDoc.createElement ).toHaveBeenCalledWith( 'paypal-button' );
+		expect( button ).toBe( fakeElement );
+		expect( button.setAttribute ).toHaveBeenCalledWith( 'type', 'pay' );
+		expect( button.className ).toBe( 'paypal-blue' );
 	} );
 } );
 

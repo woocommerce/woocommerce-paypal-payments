@@ -224,4 +224,93 @@ class ServicesTest extends TestCase
 
         $this->addToAssertionCount(1);
     }
+
+    /**
+     * Resolves the 'blocks.mini-cart-hooked-blocks-registrar' callable from the real
+     * services.php, backed by a container that serves 'wcgateway.settings.status'.
+     */
+    private function resolveMiniCartRegistrar(SettingsStatus $settings_status): HookedBlocksRegistrar
+    {
+        $container = Mockery::mock(ContainerInterface::class);
+        $container->shouldReceive('get')
+            ->with('wcgateway.settings.status')
+            ->andReturn($settings_status);
+
+        $services = require ROOT_DIR . '/modules/ppcp-blocks/services.php';
+
+        $factory = $services['blocks.mini-cart-hooked-blocks-registrar'];
+
+        return $factory($container);
+    }
+
+    /**
+     * GIVEN the container serves the required collaborators
+     * WHEN the 'blocks.mini-cart-hooked-blocks-registrar' service is resolved
+     * THEN it produces a HookedBlocksRegistrar
+     */
+    public function testMiniCartFactoryReturnsAHookedBlocksRegistrar(): void
+    {
+        $registrar = $this->resolveMiniCartRegistrar(Mockery::mock(SettingsStatus::class));
+
+        $this->assertInstanceOf(HookedBlocksRegistrar::class, $registrar);
+    }
+
+    /**
+     * GIVEN the merchant's mini-cart Smart Buttons placement setting is on
+     * WHEN the resolved registrar's ->register() is called and the Block Hooks API consults
+     *      the mini-cart insertion's 'enabled' predicate
+     * THEN the insertion is kept, since the predicate reflects the settings status answer
+     * for the 'mini-cart' location
+     */
+    public function testMiniCartInsertionIsEnabledWhenPlacementSettingIsOn(): void
+    {
+        $settings_status = Mockery::mock(SettingsStatus::class);
+        $settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('mini-cart')
+            ->andReturn(true);
+
+        $registrar = $this->resolveMiniCartRegistrar($settings_status);
+        $parsed_block = array('blockName' => MiniCartBlocks::BUTTONS_BLOCK);
+
+        $result = $registrar->gate_insertion($parsed_block, MiniCartBlocks::BUTTONS_BLOCK, 'last_child', null, null);
+
+        $this->assertSame($parsed_block, $result);
+    }
+
+    /**
+     * GIVEN the merchant's mini-cart Smart Buttons placement setting is off
+     * WHEN the resolved registrar's ->register() is called and the Block Hooks API consults
+     *      the mini-cart insertion's 'enabled' predicate
+     * THEN the insertion is suppressed, since the predicate reflects the settings status
+     * answer for the 'mini-cart' location
+     */
+    public function testMiniCartInsertionIsSuppressedWhenPlacementSettingIsOff(): void
+    {
+        $settings_status = Mockery::mock(SettingsStatus::class);
+        $settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('mini-cart')
+            ->andReturn(false);
+
+        $registrar = $this->resolveMiniCartRegistrar($settings_status);
+        $parsed_block = array('blockName' => MiniCartBlocks::BUTTONS_BLOCK);
+
+        $result = $registrar->gate_insertion($parsed_block, MiniCartBlocks::BUTTONS_BLOCK, 'last_child', null, null);
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * GIVEN the container serves the required collaborators
+     * WHEN the 'blocks.mini-cart-buttons-renderer' service is resolved
+     * THEN it produces a MiniCartSmartButtonsRenderer
+     */
+    public function testMiniCartButtonsRendererFactoryReturnsAMiniCartSmartButtonsRenderer(): void
+    {
+        $container = Mockery::mock(ContainerInterface::class);
+
+        $services = require ROOT_DIR . '/modules/ppcp-blocks/services.php';
+        $factory = $services['blocks.mini-cart-buttons-renderer'];
+
+        $this->assertInstanceOf(MiniCartSmartButtonsRenderer::class, $factory($container));
+    }
 }
