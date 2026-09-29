@@ -759,14 +759,6 @@ class SdkV6Manager
     }
     /**
      * Whether a product page's message re-prices through the cart-simulation endpoint.
-     *
-     * It no longer does by default. A message illustrates an instalment, and the
-     * quantity and variation it has to follow are both on the page, so a request
-     * per change bought accuracy nobody was reading. The endpoint still prices the
-     * Apple Pay sheet, where the total has to match what is charged.
-     *
-     * A store that would rather have the simulated figure can turn this back on
-     * while the local calculation settles.
      */
     private function messages_use_cart_simulation(): bool
     {
@@ -809,6 +801,34 @@ class SdkV6Manager
             return number_format((float) $cart->get_total('edit'), 2, '.', '');
         }
         return '';
+    }
+    /**
+     * Adds the price the Pay Later message should use to each variation.
+     *
+     * WooCommerce reports `display_price`, which follows the shop's tax display
+     * setting, while the message's opening amount always carries tax. Left
+     * mixed, picking a variation would change the tax basis rather than only
+     * the figure, and on a shop displaying prices excluding tax the message
+     * would price less than the shopper pays. Tax-inclusive throughout keeps
+     * the amount the cart-simulation endpoint used to report.
+     *
+     * Param types are omitted because any callback on this filter may have
+     * replaced the value first.
+     *
+     * @param mixed $data      The variation data assembled so far.
+     * @param mixed $product   The parent variable product.
+     * @param mixed $variation The variation being described.
+     * @return mixed The variation data, carrying ppcp_message_amount.
+     *
+     * @psalm-suppress MissingParamType
+     */
+    public function add_variation_message_amount($data, $product = null, $variation = null)
+    {
+        if (!is_array($data) || !$variation instanceof WC_Product || $this->messages_use_cart_simulation()) {
+            return $data;
+        }
+        $data['ppcp_message_amount'] = number_format((float) wc_get_price_including_tax($variation), 2, '.', '');
+        return $data;
     }
     /**
      * The action hook the message wrapper renders on, or null when this
