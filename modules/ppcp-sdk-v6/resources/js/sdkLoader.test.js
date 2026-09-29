@@ -87,6 +87,26 @@ describe( 'loadSdkV6', () => {
 		);
 	} );
 
+	test.each( [
+		[ 'venmo is on for one context only', { checkout: true, cart: false }, true ],
+		[ 'venmo is on for every context', { product: true, cart: true }, true ],
+		[ 'venmo is off for every context', { checkout: false, cart: false }, false ],
+		[ 'venmo_button is an empty map', {}, false ],
+		[ 'venmo_button is missing', undefined, false ],
+	] )(
+		'requests venmo-payments only when at least one context enables it: %s',
+		async ( label, venmoButton, expected ) => {
+			await loadSdkV6(
+				baseConfig( { venmo_button: venmoButton } ),
+				'checkout'
+			);
+
+			const { components } =
+				window.paypal.createInstance.mock.calls[ 0 ][ 0 ];
+			expect( components.includes( 'venmo-payments' ) ).toBe( expected );
+		}
+	);
+
 	test( 'requests fastlane, card fields and apple pay all enabled', async () => {
 		await loadSdkV6(
 			baseConfig( {
