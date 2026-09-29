@@ -3,6 +3,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\OrderEndpoints\Helper;
 
+use Error;
 use Mockery;
 use ReflectionMethod;
 use WC_Customer;
@@ -23,6 +24,14 @@ use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
+
+/**
+ * Test double simulating a WC 10.9+ order item class, which declares set_order()
+ * itself (unlike the stubs this test suite otherwise runs against).
+ */
+class TestableOrderItemProductWithSetOrder extends WC_Order_Item_Product {
+	public function set_order( $order ) {}
+}
 
 class WooCommerceOrderCreatorTest extends TestCase {
 	/**
@@ -65,12 +74,16 @@ class WooCommerceOrderCreatorTest extends TestCase {
 	 * WHEN configure_line_items() builds the WC order line items via reflection
 	 * THEN the order line item is created through the WooCommerce Core
 	 *      "woocommerce_checkout_create_order_line_item_object" filter
-	 * AND the resulting item is attached to the order via set_order()
+	 * AND the resulting item is attached to the order via set_order() when the item's
+	 *      class declares it (WC 10.9+), or via set_order_id() as a fallback when it
+	 *      does not (WC < 10.9, where set_order() does not exist yet)
 	 * AND the "woocommerce_checkout_create_order_line_item" action fires with the
 	 *      item, cart item key, cart item data and the order
 	 * AND the filtered item is the one added to the order
+	 *
+	 * @dataProvider set_order_support_provider
 	 */
-	public function test_configure_line_items_uses_core_checkout_filter_and_action_for_each_cart_item(): void {
+	public function test_configure_line_items_uses_core_checkout_filter_and_action_for_each_cart_item( bool $item_declares_set_order ): void {
 		$cart_item_key = 'abc123';
 		$cart_item     = array(
 			'product_id'    => 10,
@@ -85,10 +98,22 @@ class WooCommerceOrderCreatorTest extends TestCase {
 
 		$wc_order = Mockery::mock( WC_Order::class );
 
-		$item = Mockery::mock( WC_Order_Item_Product::class );
+		$item = $item_declares_set_order
+			? Mockery::mock( TestableOrderItemProductWithSetOrder::class )
+			: Mockery::mock( WC_Order_Item_Product::class );
+
 		$item->shouldReceive( 'set_product_id' )->once()->with( 10 );
 		$item->shouldReceive( 'set_quantity' )->once()->with( 2 );
-		$item->shouldReceive( 'set_order' )->once()->with( $wc_order );
+
+		if ( $item_declares_set_order ) {
+			$item->shouldReceive( 'set_order' )->once()->with( $wc_order );
+			$item->shouldReceive( 'set_order_id' )->never();
+		} else {
+			$wc_order->shouldReceive( 'get_id' )->once()->andReturn( 123 );
+			$item->shouldReceive( 'set_order_id' )->once()->with( 123 );
+			$item->shouldReceive( 'set_order' )->never();
+		}
+
 		$item->shouldReceive( 'set_name' )->once()->with( 'Test product' );
 		$item->shouldReceive( 'set_subtotal' )->once()->with( '20' );
 		$item->shouldReceive( 'set_total' )->once()->with( '20' );
@@ -150,6 +175,13 @@ class WooCommerceOrderCreatorTest extends TestCase {
 		$method->invoke( $sut, $wc_order, $cart_data, null, null );
 
 		$this->addToAssertionCount( 1 );
+	}
+
+	public function set_order_support_provider(): array {
+		return array(
+			'WC < 10.9 item has no set_order() falls back to set_order_id()' => array( false ),
+			'WC 10.9+ item declares set_order() and it is used'              => array( true ),
+		);
 	}
 
 	/**
@@ -401,6 +433,55 @@ class WooCommerceOrderCreatorTest extends TestCase {
 		$result = $sut->create_from_paypal_order( $order, $cart_data );
 
 		$this->assertSame( $wc_order, $result );
+	}
+
+	/**
+	 * GIVEN a build step raises a PHP Error rather than an Exception (e.g. calling a
+	 *      method that does not exist on the running WooCommerce version)
+	 * WHEN create_from_paypal_order() builds the WC order
+	 * THEN the half-built order is deleted
+	 * AND the exact same Error instance propagates unchanged, not wrapped in a
+	 *      RuntimeException, since callers surface exception messages to the buyer
+	 * AND the order is never saved
+	 * AND the "woocommerce_paypal_payments_woocommerce_order_created_from_cart" action
+	 *      never fires
+	 */
+	public function test_create_from_paypal_order_rethrows_error_unchanged_and_deletes_order(): void {
+		$cart_data = new CartData( array(), array(), false, 0, 'cart-hash' );
+
+		$order = Mockery::mock( Order::class );
+		$order->shouldReceive( 'payer' )->andReturn( null );
+		$order->shouldReceive( 'purchase_units' )->andReturn( array() );
+
+		$boom = new Error( 'boom' );
+
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'set_payment_method' )->once()->with( PayPalGateway::ID )->andThrow( $boom );
+		$wc_order->shouldReceive( 'delete' )->once()->with( true );
+		$wc_order->shouldReceive( 'save' )->never();
+		$wc_order->shouldReceive( 'set_cart_hash' )->never();
+
+		expect( 'wc_create_order' )->once()->andReturn( $wc_order );
+		expect( 'do_action' )->never();
+
+		$session_handler = Mockery::mock( SessionHandler::class );
+		$session_handler->shouldReceive( 'funding_source' )->once()->andReturn( null );
+
+		$sut = new WooCommerceOrderCreator(
+			Mockery::mock( FundingSourceRenderer::class ),
+			$session_handler,
+			Mockery::mock( SubscriptionHelper::class ),
+			Mockery::mock( CartDataFactory::class ),
+			Mockery::mock( ShippingFactory::class ),
+			Mockery::mock( PayerFactory::class )
+		);
+
+		try {
+			$sut->create_from_paypal_order( $order, $cart_data );
+			$this->fail( 'Expected the Error to propagate.' );
+		} catch ( Error $caught ) {
+			$this->assertSame( $boom, $caught );
+		}
 	}
 
 	/**
