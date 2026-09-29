@@ -32,6 +32,52 @@ function stubElement( selector ) {
 }
 
 /**
+ * Wraps a manager's `this.$` so the country/state select query used by
+ * `refreshEnhancedSelects()` is driven directly instead of through real layout.
+ *
+ * jsdom never computes layout - `offsetWidth`, `offsetHeight` and
+ * `getClientRects()` are always 0/empty - so jQuery's `:visible` can never
+ * match a real `<select>` here. Every other selector `rerender()` touches
+ * still goes through the real jQuery the manager already has, so DOM effects
+ * elsewhere remain observable.
+ *
+ * @param {AxoManager}      manager - Manager whose `$` gets wrapped.
+ * @param {Array<string[]>} selects - One entry per visible country/state
+ *                                    select, each its list of classes.
+ * @return {Function} The spy standing in for `.trigger()` on `document.body`.
+ */
+function stubEnhancedSelectQuery( manager, selects ) {
+	const realDollar = manager.$;
+	const trigger = jest.fn();
+
+	manager.$ = ( selector ) => {
+		if (
+			selector ===
+			'select.country_select:visible, select.state_select:visible'
+		) {
+			return {
+				// The production code excludes by class selector, while the
+				// fixtures list bare class names.
+				not: ( classSelector ) => ( {
+					length: selects.filter(
+						( classes ) =>
+							! classes.includes(
+								classSelector.replace( /^\./, '' )
+							)
+					).length,
+				} ),
+			};
+		}
+		if ( selector === document.body ) {
+			return { trigger };
+		}
+		return realDollar( selector );
+	};
+
+	return trigger;
+}
+
+/**
  * Builds an AxoManager with everything `rerender()` touches stubbed out, driven by
  * the given `status` so the real `identifyScenario()` determines the scenario.
  *
@@ -155,19 +201,25 @@ describe( 'AxoManager.rerender > refreshing WooCommerce enhanced selects', () =>
 			'the Ryan flow reveals the form for a recognized profile (active, valid email, has profile)',
 			{ active: true, validEmail: true, hasProfile: true },
 		],
-	] )( 'triggers country_to_state_changed on document.body when %s', ( _label, status ) => {
-		document.body.innerHTML = `
-			<div id="ppcp-axo-shipping-address"></div>
-			<div id="ppcp-axo-watermark-container"></div>
-			<div id="billing_email_field"><div class="woocommerce-input-wrapper"></div></div>`;
-		const manager = buildRerenderManager( status );
-		const listener = jest.fn();
-		jQuery( document.body ).on( 'country_to_state_changed', listener );
+	] )(
+		'triggers country_to_state_changed when %s and a plain country select is still present',
+		( _label, status ) => {
+			document.body.innerHTML = `
+				<div id="ppcp-axo-shipping-address"></div>
+				<div id="ppcp-axo-watermark-container"></div>
+				<div id="billing_email_field"><div class="woocommerce-input-wrapper"></div></div>`;
+			const manager = buildRerenderManager( status );
+			const trigger = stubEnhancedSelectQuery( manager, [
+				[ 'country_select' ],
+			] );
 
-		manager.rerender();
+			manager.rerender();
 
-		expect( listener ).toHaveBeenCalledTimes( 1 );
-	} );
+			expect( trigger ).toHaveBeenCalledWith(
+				'country_to_state_changed'
+			);
+		}
+	);
 
 	test( 'does not trigger country_to_state_changed while the form stays hidden waiting for a valid email', () => {
 		document.body.innerHTML = `
@@ -177,12 +229,28 @@ describe( 'AxoManager.rerender > refreshing WooCommerce enhanced selects', () =>
 			active: true,
 			validEmail: false,
 		} );
-		const listener = jest.fn();
-		jQuery( document.body ).on( 'country_to_state_changed', listener );
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'country_select' ],
+		] );
 
 		manager.rerender();
 
-		expect( listener ).not.toHaveBeenCalled();
+		expect( trigger ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not trigger country_to_state_changed when every visible select is already select2-enhanced', () => {
+		document.body.innerHTML = `
+			<div id="ppcp-axo-shipping-address"></div>
+			<div id="ppcp-axo-watermark-container"></div>
+			<div id="billing_email_field"><div class="woocommerce-input-wrapper"></div></div>`;
+		const manager = buildRerenderManager( { active: false } );
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'country_select', 'select2-hidden-accessible' ],
+		] );
+
+		manager.rerender();
+
+		expect( trigger ).not.toHaveBeenCalled();
 	} );
 } );
 
@@ -191,14 +259,47 @@ describe( 'AxoManager.refreshEnhancedSelects', () => {
 		document.body.innerHTML = '';
 	} );
 
-	test( 'triggers country_to_state_changed on document.body', () => {
+	test( 'triggers country_to_state_changed when a visible select.country_select lacks select2-hidden-accessible', () => {
 		const manager = buildManager();
-		const listener = jest.fn();
-		jQuery( document.body ).on( 'country_to_state_changed', listener );
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'country_select' ],
+		] );
 
 		manager.refreshEnhancedSelects();
 
-		expect( listener ).toHaveBeenCalledTimes( 1 );
+		expect( trigger ).toHaveBeenCalledWith( 'country_to_state_changed' );
+	} );
+
+	test( 'triggers country_to_state_changed when a visible select.state_select lacks select2-hidden-accessible', () => {
+		const manager = buildManager();
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'state_select' ],
+		] );
+
+		manager.refreshEnhancedSelects();
+
+		expect( trigger ).toHaveBeenCalledWith( 'country_to_state_changed' );
+	} );
+
+	test( 'does not trigger country_to_state_changed when every visible select is already select2-enhanced (churn guard)', () => {
+		const manager = buildManager();
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'country_select', 'select2-hidden-accessible' ],
+			[ 'state_select', 'select2-hidden-accessible' ],
+		] );
+
+		manager.refreshEnhancedSelects();
+
+		expect( trigger ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not trigger country_to_state_changed when there are no country or state selects', () => {
+		const manager = buildManager();
+		const trigger = stubEnhancedSelectQuery( manager, [] );
+
+		manager.refreshEnhancedSelects();
+
+		expect( trigger ).not.toHaveBeenCalled();
 	} );
 } );
 
