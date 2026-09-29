@@ -213,6 +213,15 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 				continue;
 			}
 
+			// Venmo renders only where the merchant offers it; without any such
+			// location, venmo-payments is not requested.
+			if (
+				method === FundingSources.VENMO &&
+				! config.venmo_button?.[ context ]
+			) {
+				continue;
+			}
+
 			sessions.map[ method ] = createSession(
 				sdk,
 				method,
