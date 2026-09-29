@@ -181,9 +181,11 @@ class SdkV6ManagerTest extends TestCase
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
     }
 
-    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null): SdkV6Manager
+    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null, bool $wcs_plugin_active = false): SdkV6Manager
     {
-        return new SdkV6Manager(
+        $class_name = $wcs_plugin_active ? TestableSdkV6ManagerWithWcsActive::class : SdkV6Manager::class;
+
+        return new $class_name(
             $this->asset_getter,
             '1.0.0',
             $this->environment,
@@ -2562,5 +2564,158 @@ class SdkV6ManagerTest extends TestCase
             $this->assertIsString($label);
             $this->assertNotSame('', $label);
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // determine_render_places()['product'] and the free-trial guard
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN the smart button is enabled for the product location
+     * WHEN determining which locations should render, for a range of viewed-product
+     *      free-trial situations
+     * THEN the product location is suppressed only when the viewed product is a genuine
+     *      free-trial subscription — not merely a subscription, and not one carrying the
+     *      native-PayPal-Subscriptions product meta
+     *
+     * @dataProvider free_trial_product_provider
+     */
+    public function testDetermineRenderPlacesProductGatedByFreeTrialProduct(
+        bool $is_subscription,
+        string $native_subscription_meta,
+        int $trial_length,
+        bool $is_synced,
+        bool $expected_product
+    ): void {
+        $this->context->shouldReceive('init_context')->never();
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $product = Mockery::mock();
+        when('wc_get_product')->justReturn($product);
+
+        // One alias mock per class: a second Mockery::mock('alias:…') for the same
+        // name leaves its expectations off the class the code actually calls.
+        $subscriptions_product = Mockery::mock('alias:WC_Subscriptions_Product');
+        $subscriptions_product->shouldReceive('is_subscription')
+            ->andReturn($is_subscription);
+
+        if ($is_subscription) {
+            $product->shouldReceive('get_meta')
+                ->with('_ppcp_enable_subscription_product')
+                ->andReturn($native_subscription_meta);
+
+            if ('yes' !== $native_subscription_meta) {
+                $subscriptions_product->shouldReceive('get_trial_length')
+                    ->andReturn($trial_length);
+
+                if ($trial_length <= 0) {
+                    Mockery::mock('alias:WC_Subscriptions_Synchroniser')
+                        ->shouldReceive('is_product_synced')
+                        ->andReturn($is_synced);
+                }
+            }
+        }
+
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, true);
+
+        $this->assertSame($expected_product, $testee->determine_render_places()['product']);
+    }
+
+    public function free_trial_product_provider(): array
+    {
+        return [
+            'free-trial subscription product suppresses the product location' => [
+                true, '', 5, false, false,
+            ],
+            'subscription product with no trial keeps the product location enabled' => [
+                true, '', 0, false, true,
+            ],
+            'ordinary non-subscription product keeps the product location enabled' => [
+                false, '', 0, false, true,
+            ],
+            'native-PayPal-Subscriptions product is not treated as a free trial' => [
+                true, 'yes', 5, false, true,
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN the product-location smart button setting itself is off
+     * WHEN determining which locations should render, even for a viewed product that would
+     *      otherwise qualify as a free trial
+     * THEN the product location stays suppressed by the location setting alone — the
+     *      free-trial guard adds a restriction on top of the setting, it never overrides it
+     */
+    public function testDetermineRenderPlacesProductFalseWhenLocationDisabledRegardlessOfFreeTrialProduct(): void
+    {
+        $this->context->shouldReceive('init_context')->never();
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('product')
+            ->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->andReturn(true)
+            ->byDefault();
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        // No product/WC_Subscriptions_* stubbing at all: PHP's && short-circuit means
+        // is_free_trial_product() must never be reached once the location setting is
+        // off, so an unstubbed wc_get_product() call would fail this test if it were.
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, true);
+
+        $this->assertFalse($testee->determine_render_places()['product']);
+    }
+
+    /**
+     * GIVEN a free-trial subscription product is being viewed, which suppresses only the
+     *       product location
+     * WHEN determining which locations should render
+     * THEN the checkout location keeps following its own, unrelated cart-based rule —
+     *      proving the free-trial-product guard is scoped to 'product' and does not leak
+     *      into the other returned locations
+     */
+    public function testDetermineRenderPlacesFreeTrialProductDoesNotAffectOtherLocations(): void
+    {
+        $this->context->shouldReceive('init_context')->never();
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $product = Mockery::mock();
+        when('wc_get_product')->justReturn($product);
+        $product->shouldReceive('get_meta')
+            ->with('_ppcp_enable_subscription_product')
+            ->andReturn('');
+
+        $subscriptions_product = Mockery::mock('alias:WC_Subscriptions_Product');
+        $subscriptions_product->shouldReceive('is_subscription')->andReturn(true);
+        $subscriptions_product->shouldReceive('get_trial_length')->andReturn(5);
+
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, true);
+        $result = $testee->determine_render_places();
+
+        $this->assertFalse($result['product']);
+        $this->assertTrue($result['checkout']);
+    }
+}
+
+/**
+ * Testable subclass overriding the protected WCS-active check so the free-trial-product
+ * tests can exercise FreeTrialHandlerTrait's real logic without depending on whether the
+ * real WC_Subscriptions class happens to be loaded.
+ */
+class TestableSdkV6ManagerWithWcsActive extends SdkV6Manager
+{
+    protected function is_wcs_plugin_active(): bool
+    {
+        return true;
     }
 }
