@@ -231,11 +231,12 @@ export async function createOrder(
 /**
  * Reports an approved PayPal order and takes the buyer wherever it leads.
  *
- * should_create_wc_order is requested except for the card button and for Venmo
- * with vaulting, and the server decides: with the Pay Now experience it creates
- * the WC order and responds with order_received_url, otherwise it only stores the
- * approved order in the session and the gateway processes it on Place Order. On
- * classic checkout the WC checkout form is submitted after approval instead.
+ * should_create_wc_order is requested except on classic checkout, for the card
+ * button and for Venmo with vaulting, and the server decides: with the Pay Now
+ * experience it creates the WC order and responds with order_received_url,
+ * otherwise it only stores the approved order in the session and the gateway
+ * processes it on Place Order. On classic checkout the WC checkout form is
+ * submitted after approval instead.
  *
  * @param {Object} config                    - The wc_ppcp_sdk_v6 config object.
  * @param {string} context                   - The page context.
@@ -266,14 +267,16 @@ export async function approveOrder(
 		return;
 	}
 
+	// Never on classic checkout: its form submit must create the order, and an
+	// order created here would consume the reCAPTCHA result that submit re-checks.
 	// Never for the card button: ApproveOrderEndpoint would run
 	// PayPalGateway::process_payment() and pin chosen_payment_method to the
 	// PayPal gateway, so CardButtonGateway::process_payment() is never reached.
 	// False routes us through the classic form submit below instead.
 	const canCreateOrder =
+		context !== 'checkout' &&
 		fundingSource !== FundingSources.CARD &&
-		( ! config.vaulting_enabled ||
-			fundingSource !== FundingSources.VENMO );
+		( ! config.vaulting_enabled || fundingSource !== FundingSources.VENMO );
 
 	const body = {
 		order_id: orderId,

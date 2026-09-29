@@ -521,6 +521,102 @@ describe( 'approveOrder', () => {
 		}
 	);
 
+	describe( 'classic checkout never creates the WC order here', () => {
+		test( 'sends should_create_wc_order false and drops a supplied contact, then submits the form', async () => {
+			postJson.mockResolvedValueOnce( {} );
+			document.body.innerHTML = '<form class="checkout"></form>';
+			const trigger = jest.fn();
+			global.jQuery = jest.fn( ( selector ) =>
+				typeof selector === 'string'
+					? { length: 1, trigger }
+					: { trigger }
+			);
+
+			await approveOrder(
+				config,
+				'checkout',
+				'paypal',
+				'ORDER-CHECKOUT',
+				{
+					payer: { email_address: 'a@b.com' },
+					shippingAddress: { country_code: 'US' },
+				}
+			);
+
+			expect( postJson ).toHaveBeenCalledTimes( 1 );
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.approve_order,
+				{
+					order_id: 'ORDER-CHECKOUT',
+					funding_source: 'paypal',
+					should_create_wc_order: false,
+				}
+			);
+			expect( trigger ).toHaveBeenCalledWith( 'submit' );
+
+			delete global.jQuery;
+		} );
+
+		test( 'rejects on a failed approve request without retrying, so the form is never submitted', async () => {
+			const error = new Error( 'No shipping method has been selected.' );
+			postJson.mockRejectedValueOnce( error );
+			document.body.innerHTML = '<form class="checkout"></form>';
+			const trigger = jest.fn();
+			global.jQuery = jest.fn( ( selector ) =>
+				typeof selector === 'string'
+					? { length: 1, trigger }
+					: { trigger }
+			);
+
+			await expect(
+				approveOrder(
+					config,
+					'checkout',
+					'paypal',
+					'ORDER-CHECKOUT-FAIL'
+				)
+			).rejects.toThrow( error );
+
+			expect( postJson ).toHaveBeenCalledTimes( 1 );
+			expect( trigger ).not.toHaveBeenCalled();
+
+			delete global.jQuery;
+		} );
+
+		test( "a wallet's own gateway on classic checkout also sends should_create_wc_order false", async () => {
+			postJson.mockResolvedValueOnce( {} );
+			document.body.innerHTML =
+				'<form class="checkout">' +
+				'<input type="radio" id="payment_method_ppcp-googlepay" checked /></form>';
+			const trigger = jest.fn();
+			global.jQuery = jest.fn( ( selector ) =>
+				typeof selector === 'string'
+					? { length: 1, trigger }
+					: { trigger }
+			);
+
+			await approveOrder(
+				config,
+				'checkout',
+				'googlepay',
+				'ORDER-CHECKOUT-WALLET',
+				{},
+				'ppcp-googlepay'
+			);
+
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.approve_order,
+				{
+					order_id: 'ORDER-CHECKOUT-WALLET',
+					funding_source: 'googlepay',
+					should_create_wc_order: false,
+				}
+			);
+
+			delete global.jQuery;
+		} );
+	} );
+
 	describe( 'contact handling', () => {
 		const contact = {
 			payer: { email_address: 'a@b.com' },
