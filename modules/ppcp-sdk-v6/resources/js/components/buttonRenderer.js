@@ -40,6 +40,38 @@ const BUTTON_ELEMENTS = {
 };
 
 /**
+ * Applies color, shape and height to a new button element. Shared by the front-end button
+ * and the editor preview; `doc` lets the preview build it in the editor canvas iframe.
+ *
+ * @param {Document} doc            - The document to create the element in.
+ * @param {string}   tagName        - The web component tag.
+ * @param {string}   type           - The button type attribute.
+ * @param {string}   radiusProperty - The element's border-radius custom property.
+ * @param {Object}   styles         - Style config from ButtonStyleMapper.
+ * @return {HTMLElement} The styled button element.
+ */
+function styleButtonElement( doc, tagName, type, radiusProperty, styles ) {
+	const button = doc.createElement( tagName );
+	if ( type ) {
+		button.setAttribute( 'type', type );
+	}
+
+	if ( styles.colorClass ) {
+		button.className = styles.colorClass;
+	}
+
+	if ( styles.borderRadius ) {
+		button.style.setProperty( radiusProperty, styles.borderRadius );
+	}
+
+	if ( styles.height ) {
+		button.style.height = styles.height;
+	}
+
+	return button;
+}
+
+/**
  * Creates a fully configured button Web Component, not yet in the DOM.
  *
  * Components read their configuration when they connect, so every
@@ -63,22 +95,13 @@ function createButton(
 	createOrderFn,
 	onClick
 ) {
-	const button = document.createElement( tagName );
-	if ( type ) {
-		button.setAttribute( 'type', type );
-	}
-
-	if ( styles.colorClass ) {
-		button.className = styles.colorClass;
-	}
-
-	if ( styles.borderRadius ) {
-		button.style.setProperty( radiusProperty, styles.borderRadius );
-	}
-
-	if ( styles.height ) {
-		button.style.height = styles.height;
-	}
+	const button = styleButtonElement(
+		document,
+		tagName,
+		type,
+		radiusProperty,
+		styles
+	);
 
 	button.addEventListener( 'click', async () => {
 		try {
@@ -151,6 +174,31 @@ export function createMethodButton( {
 	}
 
 	return button;
+}
+
+/**
+ * Creates a styled, behavior-free button element for a block-editor preview, or null when the
+ * method has no button element. No session or click handler is bound.
+ *
+ * @param {Document} doc            - The document to create the element in.
+ * @param {Object}   options        - Button options.
+ * @param {string}   options.method - The funding method (paypal, venmo, paylater).
+ * @param {Object}   options.styles - Button styles ({ colorClass, borderRadius, height }).
+ * @return {?HTMLElement} The styled button element, or null.
+ */
+export function createPreviewButton( doc, { method, styles } ) {
+	const element = BUTTON_ELEMENTS[ method ];
+	if ( ! element ) {
+		return null;
+	}
+
+	return styleButtonElement(
+		doc,
+		element.tagName,
+		element.type,
+		element.radiusProperty,
+		styles
+	);
 }
 
 /**

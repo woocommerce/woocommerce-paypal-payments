@@ -104,6 +104,32 @@ return array(
 		return new ProductSmartButtonsRenderer();
 	},
 
+	'blocks.mini-cart-buttons-renderer'      => static function ( ContainerInterface $container ): MiniCartSmartButtonsRenderer {
+		return new MiniCartSmartButtonsRenderer();
+	},
+
+	/**
+	 * Auto-inserts the mini-cart Smart Buttons block as the last child of the mini-cart footer,
+	 * so it sits below "Proceed to checkout". The predicate is settings-based only (no page
+	 * guard) so it also resolves in the Site Editor; the render callback re-checks the location.
+	 */
+	'blocks.mini-cart-hooked-blocks-registrar' => static function ( ContainerInterface $container ): HookedBlocksRegistrar {
+		$settings_status = $container->get( 'wcgateway.settings.status' );
+		assert( $settings_status instanceof SettingsStatus );
+
+		return new HookedBlocksRegistrar(
+			array(
+				MiniCartBlocks::BUTTONS_BLOCK => array(
+					'anchor'   => MiniCartBlocks::FOOTER_ANCHOR,
+					'position' => 'last_child',
+					'enabled'  => static function () use ( $settings_status ): bool {
+						return MiniCartBlocks::is_buttons_enabled( $settings_status );
+					},
+				),
+			)
+		);
+	},
+
 	/**
 	 * Auto-inserts the product Smart Buttons and Pay Later messaging blocks into block-theme
 	 * Single Product templates, via the Block Hooks API. The buttons anchor against both

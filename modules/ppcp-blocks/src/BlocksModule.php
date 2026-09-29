@@ -50,6 +50,7 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			'init',
 			static function () use ( $c ): void {
 				ProductBlocks::register( $c );
+				MiniCartBlocks::register( $c );
 			},
 			20
 		);
