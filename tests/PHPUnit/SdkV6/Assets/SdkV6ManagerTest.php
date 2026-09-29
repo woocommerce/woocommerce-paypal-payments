@@ -2717,4 +2717,69 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame($data, $result);
     }
+
+    /**
+     * GIVEN the disabled funding sources of a location do or do not contain venmo
+     * WHEN the SDK bootstrap data is generated on that page
+     * THEN the Venmo button is enabled for the page context only when venmo is not disabled
+     *
+     * @dataProvider venmo_page_context_provider
+     */
+    public function testScriptDataVenmoButtonFollowsDisabledFundingSourcesOfPageContext(string $page_context, array $disabled_sources, bool $expected): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->context->shouldReceive('location')->andReturn($page_context);
+        $this->disabled_funding_sources->shouldReceive('sources')->with($page_context)->andReturn($disabled_sources);
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame([$page_context => $expected], $data['venmo_button']);
+    }
+
+    public function venmo_page_context_provider(): array
+    {
+        return [
+            'checkout with no disabled sources shows venmo' => ['checkout', [], true],
+            'checkout with venmo disabled hides venmo' => ['checkout', ['venmo'], false],
+            'cart with only other sources disabled shows venmo' => ['cart', ['card', 'credit'], true],
+            'cart with venmo among disabled sources hides venmo' => ['cart', ['card', 'venmo'], false],
+        ];
+    }
+
+    /**
+     * GIVEN the mini-cart button is enabled and venmo is disabled for the mini-cart only
+     * WHEN the SDK bootstrap data is generated on the checkout page
+     * THEN the Venmo button is decided separately per location
+     *      (shown on the checkout, hidden in the mini-cart)
+     */
+    public function testScriptDataVenmoButtonIsDecidedSeparatelyForMiniCart(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->context->shouldReceive('location')->andReturn('checkout');
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->with('mini-cart')->andReturn(true);
+        $this->disabled_funding_sources->shouldReceive('sources')->with('checkout')->andReturn([]);
+        $this->disabled_funding_sources->shouldReceive('sources')->with('mini-cart')->andReturn(['venmo']);
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame(['checkout' => true, 'mini-cart' => false], $data['venmo_button']);
+    }
+
+    /**
+     * GIVEN the mini-cart button is disabled and the page has no button context
+     * WHEN the SDK bootstrap data is generated
+     * THEN no Venmo decision is sent for any location
+     */
+    public function testScriptDataVenmoButtonIsEmptyWithoutButtonLocations(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn('');
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame([], $data['venmo_button']);
+    }
 }
