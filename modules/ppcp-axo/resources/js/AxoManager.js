@@ -432,9 +432,20 @@ class AxoManager {
 	 * The fields would otherwise stay plain selects when the form is revealed,
 	 * unlike the same checkout without Fastlane. Core fires this event for the
 	 * same reason after it reveals the cart's shipping calculator.
+	 *
+	 * Only when something still needs it: every status change re-renders, and
+	 * the event is public, so firing it unconditionally would rebuild dropdowns
+	 * the shopper may be using and hand other listeners needless work. select2
+	 * marks the elements it has taken over, which is what identifies the rest.
 	 */
 	refreshEnhancedSelects() {
-		this.$( document.body ).trigger( 'country_to_state_changed' );
+		const plain = this.$(
+			'select.country_select:visible, select.state_select:visible'
+		).not( '.select2-hidden-accessible' );
+
+		if ( plain.length ) {
+			this.$( document.body ).trigger( 'country_to_state_changed' );
+		}
 	}
 
 	identifyScenario( active, validEmail, hasProfile ) {
