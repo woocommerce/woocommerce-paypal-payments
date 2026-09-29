@@ -32,6 +32,52 @@ function stubElement( selector ) {
 }
 
 /**
+ * Wraps a manager's `this.$` so the country/state select query used by
+ * `refreshEnhancedSelects()` is driven directly instead of through real layout.
+ *
+ * jsdom never computes layout - `offsetWidth`, `offsetHeight` and
+ * `getClientRects()` are always 0/empty - so jQuery's `:visible` can never
+ * match a real `<select>` here. Every other selector `rerender()` touches
+ * still goes through the real jQuery the manager already has, so DOM effects
+ * elsewhere remain observable.
+ *
+ * @param {AxoManager}      manager - Manager whose `$` gets wrapped.
+ * @param {Array<string[]>} selects - One entry per visible country/state
+ *                                    select, each its list of classes.
+ * @return {Function} The spy standing in for `.trigger()` on `document.body`.
+ */
+function stubEnhancedSelectQuery( manager, selects ) {
+	const realDollar = manager.$;
+	const trigger = jest.fn();
+
+	manager.$ = ( selector ) => {
+		if (
+			selector ===
+			'select.country_select:visible, select.state_select:visible'
+		) {
+			return {
+				// The production code excludes by class selector, while the
+				// fixtures list bare class names.
+				not: ( classSelector ) => ( {
+					length: selects.filter(
+						( classes ) =>
+							! classes.includes(
+								classSelector.replace( /^\./, '' )
+							)
+					).length,
+				} ),
+			};
+		}
+		if ( selector === document.body ) {
+			return { trigger };
+		}
+		return realDollar( selector );
+	};
+
+	return trigger;
+}
+
+/**
  * Builds an AxoManager with everything `rerender()` touches stubbed out, driven by
  * the given `status` so the real `identifyScenario()` determines the scenario.
  *
@@ -130,6 +176,130 @@ describe( 'AxoManager.rerender', () => {
 				manager.el.billingEmailSubmitButton.show
 			).toHaveBeenCalled();
 		} );
+	} );
+} );
+
+describe( 'AxoManager.rerender > refreshing WooCommerce enhanced selects', () => {
+	// WooCommerce only upgrades select.country_select to select2 on page load while
+	// it is visible. AXO hides the WooCommerce form before that runs, so revealing it
+	// again must ask WooCommerce to redo the upgrade, or the country/state fields stay
+	// plain <select> elements instead of the select2 combobox.
+	afterEach( () => {
+		document.body.innerHTML = '';
+	} );
+
+	test.each( [
+		[
+			'the Gary flow reveals the default WooCommerce form (active, valid email, no profile)',
+			{ active: true, validEmail: true, hasProfile: false },
+		],
+		[
+			'AXO is inactive and the default WooCommerce form takes over',
+			{ active: false },
+		],
+		[
+			'the Ryan flow reveals the form for a recognized profile (active, valid email, has profile)',
+			{ active: true, validEmail: true, hasProfile: true },
+		],
+	] )(
+		'triggers country_to_state_changed when %s and a plain country select is still present',
+		( _label, status ) => {
+			document.body.innerHTML = `
+				<div id="ppcp-axo-shipping-address"></div>
+				<div id="ppcp-axo-watermark-container"></div>
+				<div id="billing_email_field"><div class="woocommerce-input-wrapper"></div></div>`;
+			const manager = buildRerenderManager( status );
+			const trigger = stubEnhancedSelectQuery( manager, [
+				[ 'country_select' ],
+			] );
+
+			manager.rerender();
+
+			expect( trigger ).toHaveBeenCalledWith(
+				'country_to_state_changed'
+			);
+		}
+	);
+
+	test( 'does not trigger country_to_state_changed while the form stays hidden waiting for a valid email', () => {
+		document.body.innerHTML = `
+			<div id="ppcp-axo-watermark-container"></div>
+			<div id="billing_email_field"><div class="woocommerce-input-wrapper"></div></div>`;
+		const manager = buildRerenderManager( {
+			active: true,
+			validEmail: false,
+		} );
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'country_select' ],
+		] );
+
+		manager.rerender();
+
+		expect( trigger ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not trigger country_to_state_changed when every visible select is already select2-enhanced', () => {
+		document.body.innerHTML = `
+			<div id="ppcp-axo-shipping-address"></div>
+			<div id="ppcp-axo-watermark-container"></div>
+			<div id="billing_email_field"><div class="woocommerce-input-wrapper"></div></div>`;
+		const manager = buildRerenderManager( { active: false } );
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'country_select', 'select2-hidden-accessible' ],
+		] );
+
+		manager.rerender();
+
+		expect( trigger ).not.toHaveBeenCalled();
+	} );
+} );
+
+describe( 'AxoManager.refreshEnhancedSelects', () => {
+	afterEach( () => {
+		document.body.innerHTML = '';
+	} );
+
+	test( 'triggers country_to_state_changed when a visible select.country_select lacks select2-hidden-accessible', () => {
+		const manager = buildManager();
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'country_select' ],
+		] );
+
+		manager.refreshEnhancedSelects();
+
+		expect( trigger ).toHaveBeenCalledWith( 'country_to_state_changed' );
+	} );
+
+	test( 'triggers country_to_state_changed when a visible select.state_select lacks select2-hidden-accessible', () => {
+		const manager = buildManager();
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'state_select' ],
+		] );
+
+		manager.refreshEnhancedSelects();
+
+		expect( trigger ).toHaveBeenCalledWith( 'country_to_state_changed' );
+	} );
+
+	test( 'does not trigger country_to_state_changed when every visible select is already select2-enhanced (churn guard)', () => {
+		const manager = buildManager();
+		const trigger = stubEnhancedSelectQuery( manager, [
+			[ 'country_select', 'select2-hidden-accessible' ],
+			[ 'state_select', 'select2-hidden-accessible' ],
+		] );
+
+		manager.refreshEnhancedSelects();
+
+		expect( trigger ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not trigger country_to_state_changed when there are no country or state selects', () => {
+		const manager = buildManager();
+		const trigger = stubEnhancedSelectQuery( manager, [] );
+
+		manager.refreshEnhancedSelects();
+
+		expect( trigger ).not.toHaveBeenCalled();
 	} );
 } );
 
