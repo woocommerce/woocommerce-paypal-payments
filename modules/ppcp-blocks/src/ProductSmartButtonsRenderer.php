@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 
 /**
  * Emits the button wrapper the existing Smart Buttons front-end pipeline mounts into.
@@ -22,6 +23,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  * localize `context='product'` + `single_product_buttons_enabled='1'`.
  */
 class ProductSmartButtonsRenderer {
+	use FreeTrialHandlerTrait;
 
 	/**
 	 * The wrapper id the v5 Smart Buttons stack mounts into.
@@ -43,6 +45,12 @@ class ProductSmartButtonsRenderer {
 	 */
 	public function render( array $attributes, ContainerInterface $c ): string {
 		if ( ! ProductBlocks::is_buttons_enabled( $c->get( 'wcgateway.settings.status' ) ) || ! is_product() ) {
+			return '';
+		}
+
+		// A free trial is vaulted rather than charged, and only the checkout has a
+		// form for that; both button stacks stand down here for the same reason.
+		if ( $this->is_free_trial_product() ) {
 			return '';
 		}
 
