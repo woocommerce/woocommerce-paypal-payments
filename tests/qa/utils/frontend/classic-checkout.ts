@@ -68,8 +68,6 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 			// Checkout form and payment card is already prefilled
 			await this.assertShippingAddressIsPopulated( customer.shipping );
 		} else {
-			// Fails on JS SDK v6 until PCP-6904 is fixed: the form renders native
-			// country/state <select>s instead of select2 comboboxes.
 			await this.fillCheckoutForm( customer );
 		}
 	};
