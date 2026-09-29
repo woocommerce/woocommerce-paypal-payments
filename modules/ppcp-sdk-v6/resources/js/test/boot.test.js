@@ -308,6 +308,45 @@ describe( 'boot', () => {
 		} );
 	} );
 
+	describe( 'Venmo button visibility', () => {
+		beforeEach( () => {
+			mockCheckEligibility.mockResolvedValue( {
+				paypal: true,
+				venmo: true,
+				paylater: false,
+				payLaterDetails: null,
+			} );
+		} );
+
+		const sessionMethods = () =>
+			mockRenderButtons.mock.calls[ 0 ][ 0 ].sessions;
+
+		test( 'creates a Venmo session for an eligible buyer when the context flag is true', async () => {
+			buildDom();
+			boot( baseConfig( { venmo_button: { checkout: true } } ) );
+			await flush();
+
+			expect( Object.keys( sessionMethods() ) ).toContain( 'venmo' );
+		} );
+
+		test.each( [
+			[ 'the flag for the context is false', { checkout: false } ],
+			[ 'only another context has the flag', { cart: true } ],
+			[ 'venmo_button is missing', undefined ],
+		] )(
+			'creates no Venmo session for an eligible buyer when %s',
+			async ( label, venmoButton ) => {
+				buildDom();
+				boot( baseConfig( { venmo_button: venmoButton } ) );
+				await flush();
+
+				const methods = Object.keys( sessionMethods() );
+				expect( methods ).not.toContain( 'venmo' );
+				expect( methods ).toContain( 'paypal' );
+			}
+		);
+	} );
+
 	describe( 'DOM-replacing update events', () => {
 		test.each( [
 			[ 'updated_checkout' ],
