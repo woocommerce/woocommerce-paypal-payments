@@ -1136,7 +1136,7 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN Pay Later messaging is not enabled for the current page
      * WHEN the SDK bootstrap data is generated
-     * THEN the messages payload still carries all six documented keys, with enabled: false
+     * THEN the messages payload still carries all seven documented keys, with enabled: false
      *      rather than the key being omitted — so the bootstrap can branch on it directly
      */
     public function testScriptDataMessagesShapeIncludesAllKeysEvenWhenDisabled(): void
@@ -1152,10 +1152,55 @@ class SdkV6ManagerTest extends TestCase
         $data   = $testee->script_data();
 
         $this->assertSame(
-            ['enabled', 'wrapper', 'is_hidden', 'amount', 'page_type', 'style'],
+            ['enabled', 'wrapper', 'is_hidden', 'amount', 'page_type', 'style', 'use_cart_simulation'],
             array_keys($data['messages'])
         );
         $this->assertFalse($data['messages']['enabled']);
+    }
+
+    /**
+     * GIVEN no merchant filter overrides whether Pay Later messaging re-prices a product
+     *       page through the cart-simulation endpoint
+     * WHEN the SDK bootstrap data is generated
+     * THEN use_cart_simulation defaults to false, since the message now prices locally
+     *      from the product form
+     */
+    public function testScriptDataMessagesUseCartSimulationDefaultsToFalse(): void
+    {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_hidden')->with('checkout')->andReturn(false);
+        $this->message_style_mapper->shouldReceive('styles_for_location')->with('checkout')->andReturn([]);
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertFalse($data['messages']['use_cart_simulation']);
+    }
+
+    /**
+     * GIVEN a merchant filter opts back into pricing Pay Later messaging through the
+     *       cart-simulation endpoint
+     * WHEN the SDK bootstrap data is generated
+     * THEN use_cart_simulation is true, and carries a real boolean rather than the
+     *      filter's raw truthy return value
+     */
+    public function testScriptDataMessagesUseCartSimulationTrueWhenFilterEnablesIt(): void
+    {
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_hidden')->with('checkout')->andReturn(false);
+        $this->message_style_mapper->shouldReceive('styles_for_location')->with('checkout')->andReturn([]);
+
+        expectApplied('woocommerce_paypal_payments_sdk_v6_messages_use_cart_simulation')
+            ->once()
+            ->andReturn('yes');
+
+        $testee = $this->createTestee();
+        $data   = $testee->script_data();
+
+        $this->assertTrue($data['messages']['use_cart_simulation']);
+        $this->assertIsBool($data['messages']['use_cart_simulation']);
     }
 
     // -------------------------------------------------------------------------
@@ -2562,5 +2607,108 @@ class SdkV6ManagerTest extends TestCase
             $this->assertIsString($label);
             $this->assertNotSame('', $label);
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // add_variation_message_amount() — woocommerce_available_variation filter
+    // -------------------------------------------------------------------------
+
+    /**
+     * GIVEN a variable product's variation priced 200 including tax
+     * WHEN the woocommerce_available_variation filter data is assembled for that variation
+     * THEN ppcp_message_amount is added as a 2-decimal string taken from the
+     *      tax-inclusive price, not a float
+     * AND the rest of the incoming data (e.g. display_price) survives unchanged
+     */
+    public function testAddVariationMessageAmountAddsTaxInclusiveAmountAsString(): void
+    {
+        $variation = Mockery::mock(\WC_Product::class);
+        when('wc_get_price_including_tax')->justReturn(200.0);
+
+        $testee = $this->createTestee();
+        $result = $testee->add_variation_message_amount(
+            ['display_price' => 180.0, 'sku' => 'VAR-1'],
+            null,
+            $variation
+        );
+
+        $this->assertSame('200.00', $result['ppcp_message_amount']);
+        $this->assertIsString($result['ppcp_message_amount']);
+        $this->assertSame(180.0, $result['display_price']);
+        $this->assertSame('VAR-1', $result['sku']);
+    }
+
+    /**
+     * GIVEN a value that is not a WC_Product standing in for $variation (null, or an
+     *       unrelated object), which the filter's callers cannot be trusted to avoid
+     * WHEN the variation data is assembled
+     * THEN the data is returned untouched, since there is no variation to price
+     *
+     * @dataProvider non_product_variation_provider
+     */
+    public function testAddVariationMessageAmountLeavesDataUntouchedWithoutAWcProductVariation($variation): void
+    {
+        $testee = $this->createTestee();
+        $data   = ['display_price' => 180.0];
+
+        $result = $testee->add_variation_message_amount($data, null, $variation);
+
+        $this->assertSame($data, $result);
+    }
+
+    public function non_product_variation_provider(): array
+    {
+        return [
+            'null variation' => [null],
+            'a plain stdClass standing in for the variation' => [new \stdClass()],
+        ];
+    }
+
+    /**
+     * GIVEN an earlier callback on the filter returned something other than an array
+     *       (e.g. a string, or null)
+     * WHEN the variation data is assembled
+     * THEN the value is returned untouched rather than being coerced or causing a fatal
+     *
+     * @dataProvider non_array_data_provider
+     */
+    public function testAddVariationMessageAmountLeavesNonArrayDataUntouched($data): void
+    {
+        $variation = Mockery::mock(\WC_Product::class);
+
+        $testee = $this->createTestee();
+        $result = $testee->add_variation_message_amount($data, null, $variation);
+
+        $this->assertSame($data, $result);
+    }
+
+    public function non_array_data_provider(): array
+    {
+        return [
+            'a string returned by an earlier callback' => ['not-an-array'],
+            'null returned by an earlier callback' => [null],
+        ];
+    }
+
+    /**
+     * GIVEN a merchant filter switches Pay Later messaging over to pricing through the
+     *       cart-simulation endpoint
+     * WHEN the variation data is assembled
+     * THEN the data is returned untouched, since the front end does not read this value
+     *      while simulation is on
+     */
+    public function testAddVariationMessageAmountLeavesDataUntouchedUnderCartSimulation(): void
+    {
+        expectApplied('woocommerce_paypal_payments_sdk_v6_messages_use_cart_simulation')
+            ->once()
+            ->andReturn(true);
+
+        $variation = Mockery::mock(\WC_Product::class);
+        $data      = ['display_price' => 180.0];
+
+        $testee = $this->createTestee();
+        $result = $testee->add_variation_message_amount($data, null, $variation);
+
+        $this->assertSame($data, $result);
     }
 }

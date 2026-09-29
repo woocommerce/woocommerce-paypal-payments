@@ -78,6 +78,11 @@ jest.mock( '../utils/productButtonGate', () => ( {
 	initProductButtonGate: ( ...args ) => mockInitProductButtonGate( ...args ),
 } ) );
 
+const mockWatchProductAmount = jest.fn();
+jest.mock( '../messages/productAmount', () => ( {
+	watchProductAmount: ( ...args ) => mockWatchProductAmount( ...args ),
+} ) );
+
 const WRAPPER_SELECTOR = '#ppcp-button-checkout';
 const MINI_CART_WRAPPER_SELECTOR = '#ppcp-mini-cart-button';
 
@@ -322,7 +327,7 @@ describe( 'boot', () => {
 	} );
 
 	describe( 'product-page total watcher', () => {
-		test( 'subscribes to the shared watcher on a product page and forwards its pushes to the message amount', async () => {
+		test( 'subscribes to the shared watcher on a product page opted into cart simulation, forwarding its pushes to the message amount', async () => {
 			let notify;
 			mockWatchViewedTotal.mockReturnValue( {
 				get: () => '',
@@ -333,7 +338,12 @@ describe( 'boot', () => {
 			} );
 
 			buildDom();
-			boot( baseConfig( { page_context: 'product' } ) );
+			boot(
+				baseConfig( {
+					page_context: 'product',
+					messages: { use_cart_simulation: true },
+				} )
+			);
 			await flush();
 
 			expect( mockWatchViewedTotal ).toHaveBeenCalledWith(
@@ -349,11 +359,34 @@ describe( 'boot', () => {
 			expect( mockUpdateMessagesAmount ).toHaveBeenCalledWith( '42.00' );
 		} );
 
-		test( 'never subscribes to the watcher off a product page', async () => {
+		test( 'prices locally on a product page when cart simulation is not requested, issuing no simulate-cart watch', async () => {
+			buildDom();
+			boot(
+				baseConfig( {
+					page_context: 'product',
+					messages: { use_cart_simulation: false },
+				} )
+			);
+			await flush();
+
+			expect( mockWatchProductAmount ).toHaveBeenCalledWith(
+				expect.objectContaining( { page_context: 'product' } ),
+				expect.any( Function )
+			);
+			expect( mockWatchViewedTotal ).not.toHaveBeenCalled();
+
+			const onChange = mockWatchProductAmount.mock.calls[ 0 ][ 1 ];
+			onChange( '77.00' );
+
+			expect( mockUpdateMessagesAmount ).toHaveBeenCalledWith( '77.00' );
+		} );
+
+		test( 'neither watcher runs off a product page', async () => {
 			buildDom();
 			boot( baseConfig( { page_context: 'checkout' } ) );
 			await flush();
 
+			expect( mockWatchProductAmount ).not.toHaveBeenCalled();
 			expect( mockWatchViewedTotal ).not.toHaveBeenCalled();
 		} );
 	} );
