@@ -68,7 +68,7 @@ No payment code loads by default. `createInstance()` assembles `components` from
 | Component               | Requested when                                  |
 |-------------------------|-------------------------------------------------|
 | `paypal-payments`       | Always                                          |
-| `venmo-payments`        | Always                                          |
+| `venmo-payments`        | `config.venmo_button` is true for any context   |
 | `card-fields`           | `config.card_fields.enabled`                    |
 | `paypal-guest-payments` | `config.card_button.enabled`                    |
 | `fastlane`              | `config.fastlane.enabled`                       |
