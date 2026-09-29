@@ -7,6 +7,7 @@ use Mockery;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
@@ -53,6 +54,7 @@ class SdkV6ManagerTest extends TestCase
 	private $apple_pay_config;
 	private $fastlane_config;
 	private $card_field_styles;
+	private $disabled_funding_sources;
 
     public function setUp(): void
     {
@@ -107,6 +109,9 @@ class SdkV6ManagerTest extends TestCase
 
 		$this->card_field_styles = Mockery::mock(CardFieldStyles::class);
 		$this->card_field_styles->shouldReceive('overrides')->andReturn([])->byDefault();
+
+		$this->disabled_funding_sources = Mockery::mock(DisabledFundingSources::class);
+		$this->disabled_funding_sources->shouldReceive('sources')->andReturn([])->byDefault();
 
 		// Reached unconditionally by script_data()'s Apple Pay validation block.
 		when('admin_url')->justReturn('https://example.com/wp-admin/admin-ajax.php');
@@ -207,7 +212,8 @@ class SdkV6ManagerTest extends TestCase
 	        $this->google_pay_config,
 	        $this->apple_pay_config,
 	        $this->fastlane_config,
-	        $this->card_field_styles
+	        $this->card_field_styles,
+	        $this->disabled_funding_sources
         );
     }
 
