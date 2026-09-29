@@ -293,4 +293,128 @@ class HookedBlocksRegistrarTest extends TestCase
 
         $this->assertTrue($consulted);
     }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function insertions_with_anchor_filter(callable $anchor_filter): array
+    {
+        return array(
+            self::CART_BLOCK => array(
+                'anchor'        => 'woocommerce/cart-totals-block',
+                'position'      => 'last_child',
+                'enabled'       => fn (): bool => true,
+                'anchor_filter' => $anchor_filter,
+            ),
+        );
+    }
+
+    /**
+     * GIVEN an insertion with an anchor_filter that accepts the anchor block
+     * WHEN gate_insertion() is called
+     * THEN the parsed block is kept
+     */
+    public function testGateInsertionKeepsBlockWhenAnchorFilterAcceptsTheAnchor(): void
+    {
+        $registrar = new HookedBlocksRegistrar($this->insertions_with_anchor_filter(fn (): bool => true));
+        $parsed_block = array('blockName' => self::CART_BLOCK);
+
+        $result = $registrar->gate_insertion($parsed_block, self::CART_BLOCK, 'last_child', array('blockName' => 'a/anchor'), null);
+
+        $this->assertSame($parsed_block, $result);
+    }
+
+    /**
+     * GIVEN an insertion with an anchor_filter that rejects the anchor block
+     * WHEN gate_insertion() is called
+     * THEN null is returned, so the block is not inserted at that anchor
+     */
+    public function testGateInsertionDropsBlockWhenAnchorFilterRejectsTheAnchor(): void
+    {
+        $registrar = new HookedBlocksRegistrar($this->insertions_with_anchor_filter(fn (): bool => false));
+
+        $result = $registrar->gate_insertion(array('blockName' => self::CART_BLOCK), self::CART_BLOCK, 'last_child', array('blockName' => 'a/anchor'), null);
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * GIVEN an insertion without an anchor_filter
+     * WHEN gate_insertion() is called with any anchor
+     * THEN the outcome is decided by the enabled predicate alone
+     */
+    public function testGateInsertionIgnoresAnchorWhenEntryHasNoAnchorFilter(): void
+    {
+        $registrar = new HookedBlocksRegistrar($this->insertions());
+        $parsed_block = array('blockName' => self::CART_BLOCK);
+
+        $result = $registrar->gate_insertion($parsed_block, self::CART_BLOCK, 'last_child', 'not-an-array', null);
+
+        $this->assertSame($parsed_block, $result);
+    }
+
+    /**
+     * GIVEN an insertion with an anchor_filter
+     * WHEN gate_insertion() is called with an anchor that is not a parsed block array
+     * THEN null is returned without consulting the anchor_filter
+     */
+    public function testGateInsertionDropsBlockWithoutConsultingFilterWhenAnchorIsNotAnArray(): void
+    {
+        $consulted = false;
+        $registrar = new HookedBlocksRegistrar(
+            $this->insertions_with_anchor_filter(
+                function () use (&$consulted): bool {
+                    $consulted = true;
+                    return true;
+                }
+            )
+        );
+
+        $result = $registrar->gate_insertion(array('blockName' => self::CART_BLOCK), self::CART_BLOCK, 'last_child', null, null);
+
+        $this->assertNull($result);
+        $this->assertFalse($consulted);
+    }
+
+    /**
+     * GIVEN the template, pattern or other context being rendered
+     * WHEN gate_insertion() is called for an enabled insertion
+     * THEN the block is dropped only when the context content already contains the block
+     *
+     * @dataProvider context_provider
+     */
+    public function testGateInsertionDropsBlockAlreadyPresentInContext($context, bool $expected_kept): void
+    {
+        when('has_block')->alias(
+            static fn ($block_name, $content = null): bool => null !== $content && false !== strpos((string) $content, '<!-- wp:' . $block_name . ' ')
+        );
+
+        $registrar = new HookedBlocksRegistrar($this->insertions());
+        $parsed_block = array('blockName' => self::CART_BLOCK);
+
+        $result = $registrar->gate_insertion($parsed_block, self::CART_BLOCK, 'last_child', null, $context);
+
+        $this->assertSame($expected_kept ? $parsed_block : null, $result);
+    }
+
+    public function context_provider(): array
+    {
+        $with_block = '<!-- wp:' . self::CART_BLOCK . ' /-->';
+        $without_block = '<!-- wp:paragraph --><p>x</p><!-- /wp:paragraph -->';
+
+        $template_with = new \WP_Block_Template();
+        $template_with->content = $with_block;
+        $template_without = new \WP_Block_Template();
+        $template_without->content = $without_block;
+
+        return array(
+            'template already containing the block'   => array($template_with, false),
+            'pattern already containing the block'    => array(array('content' => $with_block), false),
+            'template without the block'              => array($template_without, true),
+            'pattern without the block'               => array(array('content' => $without_block), true),
+            'pattern without content'                 => array(array(), true),
+            'context that is neither array nor object' => array('unexpected', true),
+            'null context'                            => array(null, true),
+        );
+    }
 }

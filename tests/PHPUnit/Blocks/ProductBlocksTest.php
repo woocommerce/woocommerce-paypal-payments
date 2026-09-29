@@ -190,6 +190,113 @@ class ProductBlocksTest extends TestCase
     }
 
     /**
+     * GIVEN a block template containing only the single-product price block
+     * WHEN template_renders_blocks() is asked whether the template renders the blocks
+     * THEN it reports true, since the messaging block is auto-inserted after the price
+     */
+    public function testTemplateRendersBlocksIsTrueWhenOnlyThePriceAnchorIsPresent(): void
+    {
+        $content = '<!-- wp:woocommerce/product-price {"isDescendentOfSingleProductTemplate":true} /-->';
+
+        $this->assertTrue(ProductBlocks::template_renders_blocks($content));
+    }
+
+    /**
+     * GIVEN no filter overrides the messaging placement
+     * WHEN messaging_placement() is called
+     * THEN the messaging block is placed after the product price block
+     */
+    public function testMessagingPlacementDefaultsToAfterTheProductPrice(): void
+    {
+        $this->assertSame(
+            array('anchor' => array('woocommerce/product-price'), 'position' => 'after'),
+            ProductBlocks::messaging_placement()
+        );
+    }
+
+    /**
+     * GIVEN a filter callback that overrides the messaging placement
+     * WHEN messaging_placement() is called
+     * THEN the placement is normalized to a list of anchors, or falls back to the default
+     *      when the override is invalid
+     *
+     * @dataProvider messaging_placement_provider
+     * @param mixed $filtered
+     */
+    public function testMessagingPlacementHonoursValidOverridesAndFallsBackOtherwise($filtered, array $expected): void
+    {
+        when('apply_filters')->alias(
+            static fn ($hook, $value) => 'woocommerce_paypal_payments_product_messages_block_placement' === $hook ? $filtered : $value
+        );
+
+        $this->assertSame($expected, ProductBlocks::messaging_placement());
+    }
+
+    public function messaging_placement_provider(): array
+    {
+        $default = array('anchor' => array('woocommerce/product-price'), 'position' => 'after');
+
+        return array(
+            'string anchor'                    => array(
+                array('anchor' => 'woocommerce/post-title', 'position' => 'before'),
+                array('anchor' => array('woocommerce/post-title'), 'position' => 'before'),
+            ),
+            'array anchor'                     => array(
+                array('anchor' => array('a/one', 'a/two'), 'position' => 'last_child'),
+                array('anchor' => array('a/one', 'a/two'), 'position' => 'last_child'),
+            ),
+            'array anchor drops invalid items' => array(
+                array('anchor' => array('a/one', '', 5), 'position' => 'after'),
+                array('anchor' => array('a/one'), 'position' => 'after'),
+            ),
+            'non-array filter result'          => array('nope', $default),
+            'invalid position'                 => array(array('anchor' => 'a/one', 'position' => 'middle'), $default),
+            'missing position'                 => array(array('anchor' => 'a/one'), $default),
+            'empty string anchor'              => array(array('anchor' => '', 'position' => 'after'), $default),
+            'empty anchor array'               => array(array('anchor' => array(), 'position' => 'after'), $default),
+            'anchor array of non-strings'      => array(array('anchor' => array(1, null), 'position' => 'after'), $default),
+            'anchor array of empty strings'    => array(array('anchor' => array('', ''), 'position' => 'after'), $default),
+            'non-string non-array anchor'      => array(array('anchor' => 42, 'position' => 'after'), $default),
+        );
+    }
+
+    /**
+     * GIVEN a parsed anchor block
+     * WHEN is_single_product_price_anchor() is asked whether messaging may be inserted at it
+     * THEN a price block qualifies only when it belongs to the single product and not a query loop
+     * AND any other block qualifies, and a non-array never does
+     *
+     * @dataProvider single_product_price_anchor_provider
+     * @param mixed $anchor
+     */
+    public function testIsSingleProductPriceAnchor($anchor, bool $expected): void
+    {
+        $this->assertSame($expected, ProductBlocks::is_single_product_price_anchor($anchor));
+    }
+
+    public function single_product_price_anchor_provider(): array
+    {
+        return array(
+            'price of the single product'   => array(
+                array('blockName' => 'woocommerce/product-price', 'attrs' => array('isDescendentOfSingleProductTemplate' => true)),
+                true,
+            ),
+            'price inside a query loop'     => array(
+                array('blockName' => 'woocommerce/product-price', 'attrs' => array('isDescendentOfQueryLoop' => true)),
+                false,
+            ),
+            'price flagged for both'        => array(
+                array('blockName' => 'woocommerce/product-price', 'attrs' => array('isDescendentOfSingleProductTemplate' => true, 'isDescendentOfQueryLoop' => true)),
+                false,
+            ),
+            'price without attributes'      => array(array('blockName' => 'woocommerce/product-price'), false),
+            'other anchor block'            => array(array('blockName' => 'woocommerce/add-to-cart-form'), true),
+            'non-array anchor'              => array('woocommerce/product-price', false),
+            'null anchor'                   => array(null, false),
+        );
+    }
+
+    /**
      * GIVEN a block template whose content contains only unrelated blocks
      * WHEN template_renders_blocks() is asked whether the template renders the blocks
      * THEN it reports false, since neither an anchor nor an explicit block is present
