@@ -218,6 +218,25 @@ describe( 'checkout-block', () => {
 			] );
 		} );
 
+		test.each( [
+			[ 'the flag for the page context is false', { checkout: false } ],
+			[ 'only another context has the flag', { cart: true } ],
+			[ 'venmo_button is missing', undefined ],
+		] )(
+			'does not register the Venmo express method when %s',
+			( label, venmoButton ) => {
+				loadCheckoutBlock(
+					baseConfig( { venmo_button: venmoButton } )
+				);
+
+				const names = mockRegisterExpressPaymentMethod.mock.calls.map(
+					( [ args ] ) => args.name
+				);
+				expect( names ).not.toContain( 'ppcp-gateway-venmo' );
+				expect( names ).toContain( 'ppcp-gateway-paypal' );
+			}
+		);
+
 		test( 'ppcp-gateway-paypal processes through the gateway id the server supplied', () => {
 			loadCheckoutBlock( baseConfig( { id: 'ppcp-gateway-custom' } ) );
 
