@@ -105,21 +105,38 @@ class SdkClientTokenTest extends TestCase
         $this->sut->sdk_client_token();
     }
 
-    public function testSuccess()
+    /**
+     * GIVEN a successful token response from PayPal
+     * WHEN the reported lifetime is cached
+     * THEN a long-lived token is cached 30 seconds short of its reported lifetime
+     * AND a short-lived token (150 seconds or less) is cached unchanged
+     *
+     * @dataProvider cachedLifetimeProvider
+     */
+    public function testCachesTokenForAdjustedLifetime(int $expiresIn, int $expectedCachedLifetime)
     {
         $this->cache->shouldReceive('has')->andReturn(false);
         $this->credentials->shouldReceive('is_empty')->andReturn(false);
         $this->credentials->shouldReceive('credentials')->andReturn('Basic xxx');
         $this->rateLimiter->shouldReceive('retry_after_seconds')->andReturn(null);
         $this->rateLimiter->expects('clear')->with('sdk-client-token');
-        $this->cache->expects('set')->with(self::TEST_CACHE_KEY, 'tok', 3600);
+        $this->cache->expects('set')->with(self::TEST_CACHE_KEY, 'tok', $expectedCachedLifetime);
 
         $headers = $this->headers();
         expect('trailingslashit')->andReturn($this->host . '/');
-        expect('wp_remote_get')->andReturn(['body' => '{"access_token":"tok","expires_in":3600}', 'headers' => $headers]);
+        expect('wp_remote_get')->andReturn(['body' => '{"access_token":"tok","expires_in":' . $expiresIn . '}', 'headers' => $headers]);
         expect('wp_remote_retrieve_response_code')->andReturn(200);
 
         $this->assertSame('tok', $this->sut->sdk_client_token());
+    }
+
+    public function cachedLifetimeProvider(): array
+    {
+        return [
+            'long-lived token cached 30 seconds short of its reported lifetime' => [3600, 3570],
+            'short-lived token at the 150 second boundary cached unchanged' => [150, 150],
+            'short-lived token below the boundary cached unchanged' => [60, 60],
+        ];
     }
 
     public function testRetriesOnceOnConnectionError()
@@ -131,7 +148,7 @@ class SdkClientTokenTest extends TestCase
         $this->rateLimiter->expects('clear')->with('sdk-client-token');
         // A blip that recovers on retry must NOT arm the cool-down.
         $this->rateLimiter->shouldNotReceive('register_failure');
-        $this->cache->expects('set')->with(self::TEST_CACHE_KEY, 'tok', 3600);
+        $this->cache->expects('set')->with(self::TEST_CACHE_KEY, 'tok', 3570);
 
         $headers = $this->headers();
         $wpError = Mockery::mock('WP_Error');
