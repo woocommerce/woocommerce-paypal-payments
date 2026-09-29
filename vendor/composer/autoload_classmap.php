@@ -376,7 +376,6 @@ return array(
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MessageStyleMapper' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/MessageStyleMapper.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MessagesEligibility' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/MessagesEligibility.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MethodRenderGate' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/MethodRenderGate.php',
-    'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RateLimiter' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/RateLimiter.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedQuote' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/RecordedQuote.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedShippingRate' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/RecordedShippingRate.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedTaxBasis' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/RecordedTaxBasis.php',

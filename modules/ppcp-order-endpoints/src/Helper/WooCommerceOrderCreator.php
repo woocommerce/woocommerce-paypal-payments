@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\OrderEndpoints\Helper;
 
 use Exception;
 use RuntimeException;
+use Throwable;
 use WC_Cart;
 use WC_Customer;
 use WC_Data_Exception;
@@ -76,6 +77,7 @@ class WooCommerceOrderCreator
      * @param array|null       $paypal_data The PayPal Response Data.
      *
      * @throws RuntimeException If problem creating.
+     * @throws Throwable On PHP errors, after deleting the partial order.
      */
     public function create_from_paypal_order(Order $order, $cart, ?array $paypal_data = null): WC_Order
     {
@@ -105,6 +107,10 @@ class WooCommerceOrderCreator
         } catch (Exception $exception) {
             $wc_order->delete(\true);
             throw new RuntimeException('Failed to create WooCommerce order: ' . $exception->getMessage());
+        } catch (Throwable $error) {
+            // Keep PHP errors fatal so their internal message never reaches the buyer.
+            $wc_order->delete(\true);
+            throw $error;
         }
         do_action('woocommerce_paypal_payments_woocommerce_order_created_from_cart', $wc_order, $cart_data);
         return $wc_order;
@@ -133,7 +139,12 @@ class WooCommerceOrderCreator
             $item = apply_filters('woocommerce_checkout_create_order_line_item_object', new WC_Order_Item_Product(), $cart_item_key, $cart_item, $wc_order);
             $item->set_product_id($product_id);
             $item->set_quantity($quantity);
-            $item->set_order($wc_order);
+            // set_order() only exists since WC 10.9.
+            if (is_object($item) && method_exists($item, 'set_order')) {
+                $item->set_order($wc_order);
+            } else {
+                $item->set_order_id($wc_order->get_id());
+            }
             if (isset($cart_item['bundled_by'])) {
                 $item->add_meta_data('_bundled_by', $cart_item['bundled_by'], \true);
             }

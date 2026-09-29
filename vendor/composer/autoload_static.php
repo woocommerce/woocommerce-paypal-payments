@@ -593,7 +593,6 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MessageStyleMapper' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/MessageStyleMapper.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MessagesEligibility' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/MessagesEligibility.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\MethodRenderGate' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/MethodRenderGate.php',
-        'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RateLimiter' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/RateLimiter.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedQuote' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/RecordedQuote.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedShippingRate' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/RecordedShippingRate.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedTaxBasis' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/RecordedTaxBasis.php',
