@@ -4,6 +4,16 @@
  */
 const { execSync } = require( 'child_process' );
 
+let woocommerceVersion = null;
+if ( process.env.WOOCOMMERCE_VERSION ) {
+	if ( /^[0-9]+\.[0-9]+\.[0-9]+(-(beta|rc|RC)\.[0-9]+)?$/.test( process.env.WOOCOMMERCE_VERSION ) ) {
+		woocommerceVersion = process.env.WOOCOMMERCE_VERSION;
+	} else {
+		console.error( `❌ Invalid WooCommerce version: ${ process.env.WOOCOMMERCE_VERSION }` );
+		process.exit( 1 );
+	}
+}
+
 const commands = [
 	{
 		description: 'Install storefront theme',
@@ -15,7 +25,7 @@ const commands = [
 	},
 	{
 		description: 'Install WooCommerce',
-		command: 'wp-env run tests-cli -- wp plugin install woocommerce',
+		command: 'wp-env run tests-cli -- wp plugin install woocommerce' + ( woocommerceVersion ? ` --version=${ woocommerceVersion }"` : '' ),
 	},
 	{
 		description: 'Activate WooCommerce',

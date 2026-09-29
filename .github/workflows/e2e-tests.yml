@@ -41,6 +41,11 @@ on:
           - v6
           - v5
           - both
+      WOOCOMMERCE_VERSION:
+        description: 'WooCommerce version to test'
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
@@ -189,6 +194,12 @@ jobs:
         # 2. Add private composer repository and download WooCommerce Subscriptions
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
         composer require "inpsyde-mirror/woocommerce-subscriptions"
+
+        # 3. Set the WooCommerce version for the test environment
+        if [ -n "$WOOCOMMERCE_VERSION" ]; then
+          echo "WOOCOMMERCE_VERSION=$WOOCOMMERCE_VERSION" >> .env.ci
+        fi
+
     secrets:
       ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
       NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
