@@ -24,7 +24,6 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
-use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedQuote;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedShippingRate;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedTaxBasis;
@@ -157,7 +156,7 @@ return array(
         );
     },
     'sdk-v6.endpoint.client-token' => static function (ContainerInterface $container): ClientTokenEndpoint {
-        return new ClientTokenEndpoint($container->get('order-endpoints.request-data'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.sdk-client-token'), $container->get('sdk-v6.rate-limiter'));
+        return new ClientTokenEndpoint($container->get('order-endpoints.request-data'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.sdk-client-token'));
     },
     'sdk-v6.endpoint.simulate-cart' => static function (ContainerInterface $container): SimulateCartEndpoint {
         return new SimulateCartEndpoint($container->get('order-endpoints.request-data'), $container->get('order-endpoints.helper.cart-products'), $container->get('button.helper.isolated-cart-simulator'), $container->get('woocommerce.logger.woocommerce'));
@@ -173,9 +172,6 @@ return array(
     },
     'sdk-v6.endpoint.wallet-shipping' => static function (ContainerInterface $container): CartQuoteEndpoint {
         return new CartQuoteEndpoint($container->get('order-endpoints.request-data'), $container->get('api.factory.amount'), $container->get('sdk-v6.recorded-shipping-rate'), $container->get('sdk-v6.recorded-tax-basis'), $container->get('sdk-v6.recorded-quote'), $container->get('woocommerce.logger.woocommerce'));
-    },
-    'sdk-v6.rate-limiter' => static function (): RateLimiter {
-        return new RateLimiter('ppcp_sdk_v6_rl_', 10, 60);
     },
     'sdk-v6.blocks.place-order-enabled' => static function (ContainerInterface $container): callable {
         // Whether the non-express PayPal row is offered. A callable, since neither
