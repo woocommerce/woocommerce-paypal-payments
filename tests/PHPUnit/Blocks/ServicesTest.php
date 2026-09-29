@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 use function Brain\Monkey\Filters\expectAdded;
+use function Brain\Monkey\Functions\when;
 
 /**
  * Exercises the 'blocks.product-hooked-blocks-registrar' service exactly as it is defined in
@@ -100,6 +101,73 @@ class ServicesTest extends TestCase
         $registrar->register();
 
         $this->addToAssertionCount(1);
+    }
+
+    /**
+     * GIVEN Pay Later messaging applies to the merchant's country and the configurator is available
+     * WHEN the registrar is asked which blocks to hook at each anchor on a block theme
+     * THEN messaging is hooked after the product price block only
+     * AND the Smart Buttons block is still hooked after both add-to-cart blocks
+     */
+    public function testInsertionsAnchorMessagingToPriceAndButtonsToAddToCart(): void
+    {
+        when('wp_is_block_theme')->justReturn(true);
+
+        $messages_apply = Mockery::mock(MessagesApply::class);
+        $messages_apply->shouldReceive('for_country')->andReturn(true);
+
+        $registrar = $this->resolveRegistrar(Mockery::mock(SettingsStatus::class), $messages_apply, true);
+
+        $this->assertSame(
+            array(self::MESSAGING_BLOCK),
+            $registrar->add_hooked_block_types(array(), 'after', 'woocommerce/product-price', null)
+        );
+        $this->assertSame(
+            array(self::SMART_BUTTONS_BLOCK),
+            $registrar->add_hooked_block_types(array(), 'after', 'woocommerce/add-to-cart-form', null)
+        );
+        $this->assertSame(
+            array(self::SMART_BUTTONS_BLOCK),
+            $registrar->add_hooked_block_types(array(), 'after', 'woocommerce/add-to-cart-with-options', null)
+        );
+        $this->assertSame(
+            array(),
+            $registrar->add_hooked_block_types(array(), 'before', 'woocommerce/product-price', null)
+        );
+    }
+
+    /**
+     * GIVEN a registrar resolved with messaging enabled for the product location
+     * WHEN gate_insertion() considers the messaging block at different price anchors
+     * THEN it is kept at the single product's price and dropped at a query-loop price
+     */
+    public function testMessagingInsertionIsRestrictedToTheSingleProductPrice(): void
+    {
+        $messages_apply = Mockery::mock(MessagesApply::class);
+        $messages_apply->shouldReceive('for_country')->andReturn(true);
+        $settings_status = Mockery::mock(SettingsStatus::class);
+        $settings_status->shouldReceive('is_pay_later_messaging_enabled_for_location')->with('product')->andReturn(true);
+
+        $registrar = $this->resolveRegistrar($settings_status, $messages_apply, true);
+        $parsed_block = array('blockName' => self::MESSAGING_BLOCK);
+
+        $kept = $registrar->gate_insertion(
+            $parsed_block,
+            self::MESSAGING_BLOCK,
+            'after',
+            array('blockName' => 'woocommerce/product-price', 'attrs' => array('isDescendentOfSingleProductTemplate' => true)),
+            null
+        );
+        $dropped = $registrar->gate_insertion(
+            $parsed_block,
+            self::MESSAGING_BLOCK,
+            'after',
+            array('blockName' => 'woocommerce/product-price', 'attrs' => array('isDescendentOfQueryLoop' => true)),
+            null
+        );
+
+        $this->assertSame($parsed_block, $kept);
+        $this->assertNull($dropped);
     }
 
     /**
