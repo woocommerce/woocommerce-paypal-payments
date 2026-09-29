@@ -164,6 +164,74 @@ export class PayPalApi {
 	};
 
 	/**
+	 * Lists the vault payment tokens PayPal has for a customer.
+	 *
+	 * @param customerId - PayPal customer ID
+	 * @param merchant   - { client_id: '...', client_secret: '...' }
+	 */
+	getVaultTokensForCustomer = async (
+		customerId: string,
+		merchant: Pcp.Merchant
+	): Promise< { id: string }[] > => {
+		const token = await this.getAuthToken( merchant );
+		const response = await this.request.get(
+			`${ this.sandboxBaseUrl }/v3/vault/payment-tokens`,
+			{
+				headers: { Authorization: `Bearer ${ token }` },
+				params: { customer_id: customerId },
+			}
+		);
+		if ( ! response.ok() ) {
+			throw new Error(
+				`getVaultTokensForCustomer failed with status ${ response.status() }: ${ await response.text() }`
+			);
+		}
+		return ( await response.json() ).payment_tokens ?? [];
+	};
+
+	/**
+	 * Waits until PayPal lists the vault token created by a WooCommerce order.
+	 * Returns false, without waiting, when the order carries no vault data.
+	 *
+	 * @param wooCommerceOrder - WooCommerce order that vaulted the payment method
+	 * @param merchant         - { client_id: '...', client_secret: '...' }
+	 */
+	waitForVaultToken = async (
+		wooCommerceOrder: WooCommerce.Order,
+		merchant: Pcp.Merchant
+	): Promise< boolean > => {
+		const payPalOrderId =
+			await this.getOrderIdFromWooCommerce( wooCommerceOrder );
+		const paymentSource = payPalOrderId
+			? ( await this.getOrder( payPalOrderId, merchant ) ).payment_source
+			: undefined;
+		const vault = Object.values( paymentSource ?? {} )
+			.map( ( source: any ) => source?.attributes?.vault )
+			.find( ( item ) => item?.id && item?.customer?.id );
+		if ( ! vault ) {
+			return false;
+		}
+
+		await expect
+			.poll(
+				async () =>
+					(
+						await this.getVaultTokensForCustomer(
+							vault.customer.id,
+							merchant
+						)
+					).some( ( token ) => token.id === vault.id ),
+				{
+					message: `Assert PayPal lists vault token ${ vault.id }`,
+					timeout: 60_000,
+					intervals: [ 2_000 ],
+				}
+			)
+			.toBe( true );
+		return true;
+	};
+
+	/**
 	 * Gets PayPal order ID stored in WooCommerce meta_data
 	 *
 	 * @param wooCommerceOrderJson
@@ -231,7 +299,7 @@ export class PayPalApi {
 		const { merchant, payment } = shopOrder;
 		const fundingSource = payment.gateway.shortcut;
 		if ( fundingSource === 'pay_upon_invoice' ) {
-			// PUI is not captured via PayPal payments endpoints
+			// PUI is captured, but GET /v2/payments/captures/{id} returns 401 for the PUI merchant, so skip.
 			return undefined;
 		}
 		const payPalPayment = await this.getPayment( resourceId, merchant, payment.isAuthorized );

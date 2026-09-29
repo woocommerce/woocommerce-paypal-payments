@@ -169,7 +169,7 @@ setup( 'setup:transaction:germany;', async ( { utils, pcpApi } ) => {
 
 // --- Vaulting (re-connects with advanced merchant options) ---
 
-setup( 'setup:vaulting;', async ( { pcpApi } ) => {
+setup( 'setup:vaulting;', async ( { pcpApi, request } ) => {
 	await pcpApi.connectMerchant(
 		merchants.usa.client_id,
 		merchants.usa.client_secret,
@@ -178,6 +178,7 @@ setup( 'setup:vaulting;', async ( { pcpApi } ) => {
 			areOptionalPaymentMethodsEnabled: true,
 		}
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 	await pcpApi.updatePcpSettings( {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
@@ -191,7 +192,7 @@ setup( 'setup:vaulting;', async ( { pcpApi } ) => {
 
 // --- Subscription (re-connects with advanced + subscription products) ---
 
-setup( 'setup:subscription;', async ( { utils, pcpApi } ) => {
+setup( 'setup:subscription;', async ( { utils, pcpApi, request } ) => {
 	await utils.configureStore( {
 		enableWpDebugging: false,
 		enableSubscriptionsPlugin: true,
@@ -206,6 +207,7 @@ setup( 'setup:subscription;', async ( { utils, pcpApi } ) => {
 			products: [ 'physical', 'virtual', 'subscriptions' ],
 		}
 	);
+	await assertWebhookPubliclyReachable( pcpApi, request );
 	await pcpApi.updatePcpSettings( {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,

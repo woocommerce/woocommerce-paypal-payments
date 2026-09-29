@@ -4,10 +4,18 @@ Short log of unexpected changes that break autotests without actually affecting 
 
 ## Table of contents
 
+- [V4.2.0](#v420)
+  - [PayPal-related misbehaviors (v4.2.0)](#paypal-related-misbehaviors-v420)
 - [V4.1.3](#v413)
   - [Dev-related misbehaviors (v4.1.3)](#dev-related-misbehaviors-v413)
   - [PayPal-related misbehaviors (v4.1.3)](#paypal-related-misbehaviors-v413)
   - [QA blunders (v4.1.3)](#qa-blunders-v413)
+
+## V4.2.0
+
+### PayPal-related misbehaviors (v4.2.0)
+
+- PayPal lists a freshly vaulted card only seconds after checkout, so ACDC renewals triggered right away fail in CI (PCP-6991). The renewal scenarios wait for it via `PayPalApi.waitForVaultToken()`.
 
 ## V4.1.3
 

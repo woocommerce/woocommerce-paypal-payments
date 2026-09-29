@@ -136,6 +136,18 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 							subscriptionId
 						);
 					} else {
+						// TODO(PCP-6991): PayPal lists a new vault token only seconds after checkout; revisit after PayPal feedback.
+						if (
+							! ( await payPalApi.waitForVaultToken(
+								await wooCommerceApi.getOrder( orderId ),
+								merchant
+							) )
+						) {
+							// No vault data (a free trial vaults without a PayPal order): give PayPal time to list the token.
+							await new Promise( ( resolve ) =>
+								setTimeout( resolve, 30_000 )
+							);
+						}
 						await wooCommerceSubscriptionEdit.triggerSubscriptionRenewal(
 							subscriptionId
 						);
@@ -216,6 +228,7 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				orderReceived,
 				customerSubscriptions,
 				wooCommerceApi,
+				payPalApi,
 				pcpApi,
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
@@ -284,6 +297,18 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						subscriptionId
 					);
 				} else {
+					// TODO(PCP-6991): PayPal lists a new vault token only seconds after checkout; revisit after PayPal feedback.
+					if (
+						! ( await payPalApi.waitForVaultToken(
+							await wooCommerceApi.getOrder( orderId ),
+							merchant
+						) )
+					) {
+						// No vault data (a free trial vaults without a PayPal order): give PayPal time to list the token.
+						await new Promise( ( resolve ) =>
+							setTimeout( resolve, 30_000 )
+						);
+					}
 					await wooCommerceSubscriptionEdit.triggerSubscriptionRenewal(
 						subscriptionId
 					);
