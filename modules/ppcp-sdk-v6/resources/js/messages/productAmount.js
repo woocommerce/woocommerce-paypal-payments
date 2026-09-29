@@ -6,10 +6,10 @@
  * variation. Reading those from the form answers it instantly and, unlike the
  * cart-simulation endpoint, costs no request.
  *
- * What it gives up: the shop's own display setting decides whether a variation
- * price carries tax, so on a shop that displays prices excluding tax the figure
- * can move once a variation is chosen. A message is an illustration of an
- * instalment, not a quote, and the alternative was a request per keystroke.
+ * Prices stay tax-inclusive throughout, matching both the seed and the figure
+ * the cart-simulation endpoint used to report. WooCommerce's own
+ * `display_price` follows the shop's tax display setting, so reading it would
+ * change the tax basis when a variation is picked rather than only the figure.
  *
  * @package
  */
@@ -93,7 +93,9 @@ export function watchProductAmount(config, onChange) {
 
     if (hasJQuery()) {
         jQuery(form).on("found_variation", (event, variation) => {
-            const price = parseFloat(variation?.display_price);
+            // Added to the variation server-side. Falling back to the seed
+            // rather than display_price keeps the tax basis consistent.
+            const price = parseFloat(variation?.ppcp_message_amount);
             unit = isNaN(price) ? seed : price;
             schedule();
         });
