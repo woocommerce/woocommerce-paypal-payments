@@ -12,16 +12,18 @@ const CACHE_KEY = '__ppcpV6ScriptPromises';
  * On window rather than in module scope because each webpack bundle gets its own
  * copy of this module: a second bundle asking for the same URL would otherwise
  * inject the tag again, and these SDKs register custom elements, which throws on
- * the duplicate registration.
+ * the duplicate registration. Kept per window, since each one has its own
+ * custom element registry.
  *
+ * @param {Window} targetWindow - The window the scripts load into.
  * @return {Object} The cache.
  */
-function scriptPromiseCache() {
-	if ( ! window[ CACHE_KEY ] ) {
-		window[ CACHE_KEY ] = {};
+function scriptPromiseCache( targetWindow ) {
+	if ( ! targetWindow[ CACHE_KEY ] ) {
+		targetWindow[ CACHE_KEY ] = {};
 	}
 
-	return window[ CACHE_KEY ];
+	return targetWindow[ CACHE_KEY ];
 }
 
 /**
@@ -31,15 +33,19 @@ function scriptPromiseCache() {
  * failed load rejects every awaiting caller and clears the cache,
  * allowing a later retry to insert a fresh script tag.
  *
- * @param {string} url - The script URL.
+ * `targetWindow` loads into another window, such as the block editor canvas
+ * iframe, whose custom elements the top window's registry does not upgrade.
+ *
+ * @param {string} url            - The script URL.
+ * @param {Window} [targetWindow] - The window to load into. Defaults to this one.
  * @return {Promise<void>} Resolves when the script is loaded.
  */
-export function loadScript( url ) {
-	const scriptPromises = scriptPromiseCache();
+export function loadScript( url, targetWindow = window ) {
+	const scriptPromises = scriptPromiseCache( targetWindow );
 
 	if ( ! scriptPromises[ url ] ) {
 		scriptPromises[ url ] = new Promise( ( resolve, reject ) => {
-			const script = document.createElement( 'script' );
+			const script = targetWindow.document.createElement( 'script' );
 			script.src = url;
 			script.async = true;
 			script.onload = resolve;
@@ -48,7 +54,7 @@ export function loadScript( url ) {
 				delete scriptPromises[ url ];
 				reject( new Error( `Failed to load script: ${ url }` ) );
 			};
-			document.head.appendChild( script );
+			targetWindow.document.head.appendChild( script );
 		} );
 	}
 

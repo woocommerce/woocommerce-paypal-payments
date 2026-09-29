@@ -52,7 +52,7 @@ class PaymentMethodsDependenciesDefinition {
 			P24Gateway::ID            => array( PayPalGateway::ID ),
 			TrustlyGateway::ID        => array( PayPalGateway::ID ),
 			PayUponInvoiceGateway::ID => array( PayPalGateway::ID ),
-			OXXOGateway::ID                  => array( PayPalGateway::ID ),
+			OXXOGateway::ID           => array( PayPalGateway::ID ),
 			PWCGateway::ID            => array( PayPalGateway::ID ),
 			'venmo'                   => array( PayPalGateway::ID ),
 			'pay-later'               => array( PayPalGateway::ID ),

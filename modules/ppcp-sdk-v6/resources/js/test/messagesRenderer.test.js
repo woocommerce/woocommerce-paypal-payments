@@ -11,6 +11,7 @@ import {
 	renderMessages,
 	updateMessagesAmount,
 	resetMessages,
+	buildMessageElement,
 } from '../messages/renderer';
 
 // Matches the module's RESCAN_DEBOUNCE_MS. Not exported, so mirrored here.
@@ -117,9 +118,9 @@ describe( 'renderMessages()', () => {
 		await renderMessages( config, 'product' );
 		await renderMessages( config, 'product' );
 
-		expect(
-			document.querySelectorAll( 'paypal-message' )
-		).toHaveLength( 1 );
+		expect( document.querySelectorAll( 'paypal-message' ) ).toHaveLength(
+			1
+		);
 	} );
 
 	test( 'fills a wrapper again after WooCommerce empties and re-adds it on updated_checkout', async () => {
@@ -134,9 +135,9 @@ describe( 'renderMessages()', () => {
 
 		await renderMessages( config, 'product' );
 
-		expect(
-			document.querySelectorAll( 'paypal-message' )
-		).toHaveLength( 1 );
+		expect( document.querySelectorAll( 'paypal-message' ) ).toHaveLength(
+			1
+		);
 	} );
 
 	test( 'produces exactly one message when two renderMessages calls race on the same wrapper', async () => {
@@ -147,16 +148,18 @@ describe( 'renderMessages()', () => {
 		const second = renderMessages( config, 'product' );
 		await Promise.all( [ first, second ] );
 
-		expect(
-			document.querySelectorAll( 'paypal-message' )
-		).toHaveLength( 1 );
+		expect( document.querySelectorAll( 'paypal-message' ) ).toHaveLength(
+			1
+		);
 		expect( mockCreatePayPalMessages ).toHaveBeenCalledTimes( 1 );
 	} );
 
 	test( 'releases a failed wrapper so a later pass can retry it', async () => {
 		document.body.innerHTML = '<div class="ppcp-messages"></div>';
 		const config = baseConfig();
-		mockLoadSdkV6.mockRejectedValueOnce( new Error( 'sdk failed to load' ) );
+		mockLoadSdkV6.mockRejectedValueOnce(
+			new Error( 'sdk failed to load' )
+		);
 
 		await expect( renderMessages( config, 'product' ) ).rejects.toThrow(
 			'sdk failed to load'
@@ -278,6 +281,81 @@ describe( 'renderMessages()', () => {
 	} );
 } );
 
+describe( 'buildMessageElement()', () => {
+	const baseStyle = () => ( {
+		logoType: 'WORDMARK',
+		logoPosition: 'LEFT',
+		textColor: 'BLACK',
+		fontSize: '',
+	} );
+
+	test( 'sets auto-bootstrap and every attribute from the options', () => {
+		const element = buildMessageElement( document, {
+			amount: '100.00',
+			currency: 'USD',
+			pageType: 'product-details',
+			style: baseStyle(),
+		} );
+
+		expect( element.tagName.toLowerCase() ).toBe( 'paypal-message' );
+		expect( element.getAttribute( 'auto-bootstrap' ) ).toBe( '' );
+		expect( element.getAttribute( 'amount' ) ).toBe( '100.00' );
+		expect( element.getAttribute( 'currency-code' ) ).toBe( 'USD' );
+		expect( element.getAttribute( 'page-type' ) ).toBe( 'product-details' );
+		expect( element.getAttribute( 'logo-type' ) ).toBe( 'WORDMARK' );
+		expect( element.getAttribute( 'logo-position' ) ).toBe( 'LEFT' );
+		expect( element.getAttribute( 'text-color' ) ).toBe( 'BLACK' );
+	} );
+
+	test( 'omits the amount attribute when the amount is empty', () => {
+		const element = buildMessageElement( document, {
+			amount: '',
+			currency: 'USD',
+			pageType: 'cart',
+			style: baseStyle(),
+		} );
+
+		expect( element.hasAttribute( 'amount' ) ).toBe( false );
+	} );
+
+	test( 'sets the font-size custom property only when style.fontSize is set', () => {
+		const withoutFontSize = buildMessageElement( document, {
+			amount: '10.00',
+			currency: 'USD',
+			pageType: 'cart',
+			style: baseStyle(),
+		} );
+		const withFontSize = buildMessageElement( document, {
+			amount: '10.00',
+			currency: 'USD',
+			pageType: 'cart',
+			style: { ...baseStyle(), fontSize: '14px' },
+		} );
+
+		expect(
+			withoutFontSize.style.getPropertyValue(
+				'--paypal-message-font-size'
+			)
+		).toBe( '' );
+		expect(
+			withFontSize.style.getPropertyValue( '--paypal-message-font-size' )
+		).toBe( '14px' );
+	} );
+
+	test( 'creates the element via the given document', () => {
+		const otherDoc = document.implementation.createHTMLDocument( 'other' );
+
+		const element = buildMessageElement( otherDoc, {
+			amount: '10.00',
+			currency: 'USD',
+			pageType: 'cart',
+			style: baseStyle(),
+		} );
+
+		expect( element.ownerDocument ).toBe( otherDoc );
+	} );
+} );
+
 describe( 'updateMessagesAmount()', () => {
 	test( 'sets .amount on every rendered element', async () => {
 		document.body.innerHTML =
@@ -349,17 +427,20 @@ describe( 'initMessages()', () => {
 	test.each( [
 		[ 'messages.enabled is false', { enabled: false } ],
 		[ 'messages.is_hidden is true', { is_hidden: true } ],
-	] )( 'resolves to 0 without calling loadSdkV6 when %s', async ( _label, override ) => {
-		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+	] )(
+		'resolves to 0 without calling loadSdkV6 when %s',
+		async ( _label, override ) => {
+			document.body.innerHTML = '<div class="ppcp-messages"></div>';
 
-		const count = await initMessages(
-			baseConfig( { messages: override } ),
-			'product'
-		);
+			const count = await initMessages(
+				baseConfig( { messages: override } ),
+				'product'
+			);
 
-		expect( count ).toBe( 0 );
-		expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
-	} );
+			expect( count ).toBe( 0 );
+			expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+		}
+	);
 
 	test( 'mounts a fresh message after WooCommerce Blocks replaces the placeholder node', async () => {
 		document.body.innerHTML = '<div class="ppcp-messages"></div>';
@@ -389,8 +470,8 @@ describe( 'initMessages()', () => {
 		await jest.advanceTimersByTimeAsync( RESCAN_DEBOUNCE_MS );
 		await jest.advanceTimersByTimeAsync( RESCAN_DEBOUNCE_MS );
 
-		expect(
-			document.querySelectorAll( 'paypal-message' )
-		).toHaveLength( 1 );
+		expect( document.querySelectorAll( 'paypal-message' ) ).toHaveLength(
+			1
+		);
 	} );
 } );
