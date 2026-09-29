@@ -38,13 +38,16 @@ class HookedBlocksRegistrar {
 	 * - `anchor`   string|string[] The block type(s) the insertion is positioned against; the block is inserted at each.
 	 * - `position` string          Where to insert: before, after, first_child or last_child.
 	 * - `enabled`  callable        A predicate returning bool; the insertion is skipped when it returns false.
+	 * - `anchor_filter` callable    Optional. Receives the parsed anchor block and returns bool; the insertion is
+	 *                               skipped at anchors it rejects, so the same block type used elsewhere in the
+	 *                               template (e.g. inside a query loop) does not also get the block.
 	 *
-	 * @var array<string, array{anchor:string|array<int, string>, position:string, enabled:callable}>
+	 * @var array<string, array{anchor:string|array<int, string>, position:string, enabled:callable, anchor_filter?:callable}>
 	 */
 	private $insertions;
 
 	/**
-	 * @param array<string, array{anchor:string|array<int, string>, position:string, enabled:callable}> $insertions The insertions to register.
+	 * @param array<string, array{anchor:string|array<int, string>, position:string, enabled:callable, anchor_filter?:callable}> $insertions The insertions to register.
 	 */
 	public function __construct( array $insertions ) {
 		$this->insertions = $insertions;
@@ -100,12 +103,15 @@ class HookedBlocksRegistrar {
 	 * Returning null tells the Block Hooks API to drop the insertion for this
 	 * render, which is how a location switched off in the settings - or anything
 	 * else the entry's predicate rejects - keeps the block out of the template.
+	 * The insertion is also dropped at anchors the entry's `anchor_filter` rejects,
+	 * and when the template already contains the block, e.g. one saved from the
+	 * editor while the block was hooked to a different anchor.
 	 *
 	 * @param mixed $parsed_hooked_block The parsed block to insert, or null if an earlier callback already dropped it.
 	 * @param mixed $hooked_block_type   The block type being considered.
 	 * @param mixed $relative_position   The insertion position (unused).
-	 * @param mixed $parsed_anchor_block The anchor block (unused).
-	 * @param mixed $context             The template, part or pattern being rendered (unused).
+	 * @param mixed $parsed_anchor_block The anchor block the insertion is positioned against.
+	 * @param mixed $context             The template, part or pattern being rendered.
 	 * @return array<string, mixed>|null The block to insert, or null to skip it.
 	 */
 	public function gate_insertion( $parsed_hooked_block, $hooked_block_type, $relative_position, $parsed_anchor_block, $context ) {
@@ -114,7 +120,35 @@ class HookedBlocksRegistrar {
 			return $parsed_hooked_block;
 		}
 
-		return ( $this->insertions[ $hooked_block_type ]['enabled'] )() ? $parsed_hooked_block : null;
+		$insertion = $this->insertions[ $hooked_block_type ];
+
+		if ( isset( $insertion['anchor_filter'] ) && ( ! is_array( $parsed_anchor_block ) || ! ( $insertion['anchor_filter'] )( $parsed_anchor_block ) ) ) {
+			return null;
+		}
+
+		if ( $this->context_contains_block( $context, $hooked_block_type ) ) {
+			return null;
+		}
+
+		return ( $insertion['enabled'] )() ? $parsed_hooked_block : null;
+	}
+
+	/**
+	 * Whether the template, part or pattern being rendered already contains the block.
+	 *
+	 * @param mixed  $context    A WP_Block_Template, a pattern array, or anything else a third party passed.
+	 * @param string $block_type The block type to look for.
+	 */
+	private function context_contains_block( $context, string $block_type ): bool {
+		if ( $context instanceof \WP_Block_Template ) {
+			$content = $context->content;
+		} elseif ( is_array( $context ) ) {
+			$content = $context['content'] ?? null;
+		} else {
+			$content = null;
+		}
+
+		return is_string( $content ) && '' !== $content && has_block( $block_type, $content );
 	}
 
 	/**
