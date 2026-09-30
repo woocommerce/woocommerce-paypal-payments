@@ -18,6 +18,7 @@ import {
 	getCurrentPaymentMethod,
 	isSavedPayPalTokenSelected,
 	ORDER_BUTTON_SELECTOR,
+	PaymentContext,
 	PaymentMethods,
 } from '@ppcp-button/Helper/CheckoutMethodState';
 import { hasJQuery } from '../utils/api';
@@ -85,33 +86,34 @@ function setVisible( selector, visible ) {
 }
 
 /**
- * The button container belonging to a payment-method row, if this module owns one.
+ * Whether the selected row's own button takes the place of "Place order".
  *
  * @param {?string} methodId - The selected WC payment method id.
- * @return {?string} The container's selector, or null for any other row.
+ * @return {boolean} False for a row that is paid through "Place order".
  */
-function rowContainer( methodId ) {
+function replacesPlaceOrder( methodId ) {
 	if ( walletRows.has( methodId ) ) {
-		return walletRows.get( methodId );
+		return hasRenderedButton( walletRows.get( methodId ) );
 	}
 
 	// PayPal's express buttons stand in for "Place order" only for a NEW payment.
 	// A saved PayPal token is completed through the vault component and "Place
 	// order", so its row offers no express button and keeps "Place order".
-	if ( PaymentMethods.PAYPAL === methodId ) {
-		return isSavedPayPalTokenSelected() ? null : expressRow;
+	if ( PaymentMethods.PAYPAL !== methodId || isSavedPayPalTokenSelected() ) {
+		return false;
 	}
 
-	return null;
+	// The container only has to exist: the PayPal buttons may render after a
+	// wallet row has run this check, and nothing re-runs it once they do.
+	return !! expressRow && !! document.querySelector( expressRow );
 }
 
 /**
  * Whether a container actually holds a button the buyer could press.
  *
  * Asked rather than assumed, because it is what makes hiding "Place order" safe:
- * a row whose button never rendered (an ineligible wallet, or the continuation
- * flow, where the approved order is completed through the form) keeps it, instead
- * of leaving the buyer with no way to pay at all.
+ * a wallet whose button never rendered keeps it, instead of leaving the buyer
+ * with no way to pay at all.
  *
  * @param {?string} selector - The container's selector.
  * @return {boolean} False when the container is absent or empty.
@@ -151,10 +153,7 @@ function updateVisibility() {
 	// Answered once for all rows, not per wallet: each wallet asking only "am I
 	// selected" meant the last one to run always won, so selecting the first
 	// wallet left "Place order" showing next to its button.
-	setVisible(
-		ORDER_BUTTON_SELECTOR,
-		! hasRenderedButton( rowContainer( selected ) )
-	);
+	setVisible( ORDER_BUTTON_SELECTOR, ! replacesPlaceOrder( selected ) );
 }
 
 /**
@@ -218,6 +217,10 @@ export function revealMethodGateway( gateway, config ) {
 	syncGatewayVisibility( {
 		methodId: gateway.id,
 		wrapperSelector: gateway.wrapper,
-		expressSelector: config.wrapper,
+		// Only where the express buttons render: in the continuation flow PayPal's
+		// row completes the approved order through "Place order".
+		expressSelector: PaymentContext.Gateways.includes( config.page_context )
+			? config.wrapper
+			: null,
 	} );
 }
