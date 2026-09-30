@@ -110,7 +110,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 						$wc_order->update_meta_data( 'PayPal Transaction Fee', (string) $paypal_fee->value() );
 					}
 
-					$wc_order->save_meta_data();
+					$wc_order->save();
 				}
 
 				$order = $c->get( 'session.handler' )->order();
