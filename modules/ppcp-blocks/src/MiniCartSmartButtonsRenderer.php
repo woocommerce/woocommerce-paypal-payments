@@ -10,16 +10,14 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 /**
- * Prints the same mini-cart wrapper markup as SdkV6Manager::render_mini_cart_wrapper(), so
- * boot.js mounts the v6 buttons into it. The classic action that renders that wrapper does
- * not fire inside the block Mini-Cart; this block, hooked into the `woocommerce/mini-cart`
- * template part, fills the gap. No script is enqueued - the v6 manager already loads site-wide.
+ * Prints the mini-cart wrapper markup (matching SdkV6Manager::render_mini_cart_wrapper()) that
+ * boot.js mounts the v6 buttons into, inside the block Mini-Cart where the classic action never fires.
  */
 class MiniCartSmartButtonsRenderer
 {
     /**
-     * The v6 mount-target id. Must match SdkV6Manager::MINI_CART_WRAPPER_ID; duplicated as a
-     * literal to avoid coupling this module to the SDK v6 module.
+     * The v6 mount-target id; a literal that must match SdkV6Manager::MINI_CART_WRAPPER_ID,
+     * duplicated to avoid coupling this module to the SDK v6 module.
      */
     private const WRAPPER_ID = 'ppc-button-minicart-v6';
     /**

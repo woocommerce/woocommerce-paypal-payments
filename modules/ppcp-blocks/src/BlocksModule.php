@@ -86,6 +86,11 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule
             wp_register_style('wc-ppcp-blocks-editor', $asset_getter->get_asset_url('gateway-editor.css'), array(), $asset_version);
             wp_enqueue_style('wc-ppcp-blocks-editor');
         });
+        add_action('enqueue_block_assets', static function () use ($c) {
+            $asset_getter = $c->get('blocks.asset_getter');
+            assert($asset_getter instanceof AssetGetter);
+            wp_enqueue_style('wc-ppcp-mini-cart-buttons', $asset_getter->get_asset_url('mini-cart-buttons.css'), array(), $c->get('ppcp.asset-version'));
+        });
         add_filter('woocommerce_paypal_payments_sdk_components_hook', function (array $components, string $context) {
             if (substr($context, -6) === '-block') {
                 $components[] = 'buttons';

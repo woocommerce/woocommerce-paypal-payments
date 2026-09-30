@@ -25,8 +25,7 @@ class MiniCartBlocks
      */
     public const BUTTONS_BLOCK = 'woocommerce-paypal-payments/mini-cart-smart-buttons';
     /**
-     * The mini-cart footer block the buttons block is inserted into as the last child, so it
-     * sits below "Proceed to checkout" - matching the classic mini-cart button placement.
+     * The mini-cart footer block the buttons block is inserted into (as its last child).
      */
     public const FOOTER_ANCHOR = 'woocommerce/mini-cart-footer-block';
     /**
@@ -51,11 +50,8 @@ class MiniCartBlocks
         $hooked_blocks_registrar->register();
     }
     /**
-     * The editor's SDK v6 button preview data, or nulls when the v6 module is not loaded.
-     *
-     * The frontend config (wc_ppcp_sdk_v6) is never printed in admin, so the editor gets a
-     * public client id and the mini-cart button style from the same mapper the frontend uses.
-     * The '35px' height mirrors SdkV6Manager::button_height() for the mini-cart context.
+     * The editor's SDK v6 button preview data (public client id + mini-cart button style),
+     * or nulls when the v6 module is not loaded. The '35px' height matches the front end.
      *
      * @param ContainerInterface $c The container.
      * @return array{sdkV6: ?array, buttonStyle: ?array}
