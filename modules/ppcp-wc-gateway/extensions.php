@@ -49,11 +49,18 @@ return array(
 		assert( $settings_provider instanceof SettingsProvider );
 		return $settings_provider->client_secret();
 	},
+	/**
+	 * The invoice prefix exactly as the merchant configured it. An empty string is a
+	 * supported choice meaning "no prefix", so it must not be replaced by a default
+	 * here. New installations receive a generated, site-specific default instead.
+	 *
+	 * The vault customer ID does not depend on this key; it resolves
+	 * 'api.customer-prefix', which keeps a fallback of its own.
+	 */
 	'api.prefix'                     => static function ( string $previous, ContainerInterface $container ): string {
 		$settings_provider = $container->get( 'settings.settings-provider' );
 		assert( $settings_provider instanceof SettingsProvider );
-		$prefix = $settings_provider->invoice_prefix();
-		return $prefix ? $prefix : 'WC-';
+		return $settings_provider->invoice_prefix();
 	},
 	'woocommerce.logger.woocommerce' => function ( LoggerInterface $previous, ContainerInterface $container ): LoggerInterface {
 		if ( ! function_exists( 'wc_get_logger' ) || ! $container->get( 'wcgateway.logging.is-enabled' ) ) {
