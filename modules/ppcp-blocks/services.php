@@ -56,6 +56,20 @@ return array(
     'blocks.product-buttons-renderer' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Blocks\ProductSmartButtonsRenderer {
         return new \WooCommerce\PayPalCommerce\Blocks\ProductSmartButtonsRenderer();
     },
+    'blocks.mini-cart-buttons-renderer' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Blocks\MiniCartSmartButtonsRenderer {
+        return new \WooCommerce\PayPalCommerce\Blocks\MiniCartSmartButtonsRenderer();
+    },
+    /**
+     * Auto-inserts the mini-cart Smart Buttons block as the last child of the mini-cart footer.
+     * The predicate is settings-based only (no page guard) so it also resolves in the Site Editor.
+     */
+    'blocks.mini-cart-hooked-blocks-registrar' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar {
+        $settings_status = $container->get('wcgateway.settings.status');
+        assert($settings_status instanceof SettingsStatus);
+        return new \WooCommerce\PayPalCommerce\Blocks\HookedBlocksRegistrar(array(\WooCommerce\PayPalCommerce\Blocks\MiniCartBlocks::BUTTONS_BLOCK => array('anchor' => \WooCommerce\PayPalCommerce\Blocks\MiniCartBlocks::FOOTER_ANCHOR, 'position' => 'last_child', 'enabled' => static function () use ($settings_status): bool {
+            return \WooCommerce\PayPalCommerce\Blocks\MiniCartBlocks::is_buttons_enabled($settings_status);
+        })));
+    },
     /**
      * Auto-inserts the product Smart Buttons and Pay Later messaging blocks into block-theme
      * Single Product templates, via the Block Hooks API. The buttons anchor against both

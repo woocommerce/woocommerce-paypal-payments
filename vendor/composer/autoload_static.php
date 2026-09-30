@@ -428,6 +428,8 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\Blocks\\AdvancedCardPaymentMethod' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/AdvancedCardPaymentMethod.php',
         'WooCommerce\\PayPalCommerce\\Blocks\\BlocksModule' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/BlocksModule.php',
         'WooCommerce\\PayPalCommerce\\Blocks\\HookedBlocksRegistrar' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/HookedBlocksRegistrar.php',
+        'WooCommerce\\PayPalCommerce\\Blocks\\MiniCartBlocks' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/MiniCartBlocks.php',
+        'WooCommerce\\PayPalCommerce\\Blocks\\MiniCartSmartButtonsRenderer' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/MiniCartSmartButtonsRenderer.php',
         'WooCommerce\\PayPalCommerce\\Blocks\\PayPalPaymentMethod' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/PayPalPaymentMethod.php',
         'WooCommerce\\PayPalCommerce\\Blocks\\ProductBlocks' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/ProductBlocks.php',
         'WooCommerce\\PayPalCommerce\\Blocks\\ProductPayLaterMessagesRenderer' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/ProductPayLaterMessagesRenderer.php',

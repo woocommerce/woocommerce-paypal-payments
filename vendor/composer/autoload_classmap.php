@@ -211,6 +211,8 @@ return array(
     'WooCommerce\\PayPalCommerce\\Blocks\\AdvancedCardPaymentMethod' => $baseDir . '/modules/ppcp-blocks/src/AdvancedCardPaymentMethod.php',
     'WooCommerce\\PayPalCommerce\\Blocks\\BlocksModule' => $baseDir . '/modules/ppcp-blocks/src/BlocksModule.php',
     'WooCommerce\\PayPalCommerce\\Blocks\\HookedBlocksRegistrar' => $baseDir . '/modules/ppcp-blocks/src/HookedBlocksRegistrar.php',
+    'WooCommerce\\PayPalCommerce\\Blocks\\MiniCartBlocks' => $baseDir . '/modules/ppcp-blocks/src/MiniCartBlocks.php',
+    'WooCommerce\\PayPalCommerce\\Blocks\\MiniCartSmartButtonsRenderer' => $baseDir . '/modules/ppcp-blocks/src/MiniCartSmartButtonsRenderer.php',
     'WooCommerce\\PayPalCommerce\\Blocks\\PayPalPaymentMethod' => $baseDir . '/modules/ppcp-blocks/src/PayPalPaymentMethod.php',
     'WooCommerce\\PayPalCommerce\\Blocks\\ProductBlocks' => $baseDir . '/modules/ppcp-blocks/src/ProductBlocks.php',
     'WooCommerce\\PayPalCommerce\\Blocks\\ProductPayLaterMessagesRenderer' => $baseDir . '/modules/ppcp-blocks/src/ProductPayLaterMessagesRenderer.php',
