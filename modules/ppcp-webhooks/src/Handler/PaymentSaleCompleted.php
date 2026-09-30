@@ -84,7 +84,7 @@ class PaymentSaleCompleted implements RequestHandler {
 		}
 
 		$billing_agreement_id = wc_clean( wp_unslash( $request['resource']['billing_agreement_id'] ?? '' ) );
-		if ( ! $billing_agreement_id ) {
+		if ( ! $billing_agreement_id || ! is_string( $billing_agreement_id ) ) {
 			return $this->failure_response( 'Could not retrieve billing agreement id for subscription.' );
 		}
 
@@ -106,11 +106,29 @@ class PaymentSaleCompleted implements RequestHandler {
 
 		$subscriptions = wcs_get_subscriptions( $args );
 		if ( $subscriptions ) {
+			$subscription_ids = implode( ', #', array_map( 'strval', array_keys( $subscriptions ) ) );
+			$this->logger->info(
+				sprintf(
+					'PAYMENT.SALE.COMPLETED (transaction %1$s) matched WC subscription(s) #%2$s via billing agreement %3$s.',
+					$transaction_id,
+					$subscription_ids,
+					$billing_agreement_id
+				)
+			);
+
 			try {
 				$this->renewal_handler->process( $subscriptions, $transaction_id );
 			} catch ( WC_Data_Exception $exception ) {
 				return $this->failure_response( 'Could not update payment method.' );
 			}
+		} else {
+			$this->logger->warning(
+				sprintf(
+					'PAYMENT.SALE.COMPLETED (transaction %1$s) arrived for billing agreement %2$s but no WC subscription with a matching "ppcp_subscription" meta was found; no renewal order was created.',
+					$transaction_id,
+					$billing_agreement_id
+				)
+			);
 		}
 
 		return $this->success_response();
