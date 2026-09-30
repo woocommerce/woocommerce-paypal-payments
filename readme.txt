@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 4.1.3
+Stable tag: 4.2.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,9 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
+
+= 4.2.0 - XXXX-XX-XX =
+* TBD
 
 = 4.1.3 - 2026-09-09 =
 * Enhancement - PayPal JS SDK v6 is now the default for new store setups, moving PayPal buttons, Apple Pay, Google Pay, Advanced Card Fields, Fastlane, Pay Later messaging and vaulting subscriptions onto the new integration; existing stores remain on SDK v5 with this version #4641
