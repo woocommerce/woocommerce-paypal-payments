@@ -50,6 +50,7 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			'init',
 			static function () use ( $c ): void {
 				ProductBlocks::register( $c );
+				MiniCartBlocks::register( $c );
 			},
 			20
 		);
@@ -138,6 +139,21 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					$asset_version
 				);
 				wp_enqueue_style( 'wc-ppcp-blocks-editor' );
+			}
+		);
+
+		add_action(
+			'enqueue_block_assets',
+			static function () use ( $c ) {
+				$asset_getter = $c->get( 'blocks.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
+				wp_enqueue_style(
+					'wc-ppcp-mini-cart-buttons',
+					$asset_getter->get_asset_url( 'mini-cart-buttons.css' ),
+					array(),
+					$c->get( 'ppcp.asset-version' )
+				);
 			}
 		);
 
