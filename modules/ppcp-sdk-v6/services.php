@@ -136,7 +136,8 @@ return array(
             $container->get('sdk-v6.google-pay-config'),
             $container->get('sdk-v6.apple-pay-config'),
             $container->get('sdk-v6.fastlane-config'),
-            $container->get('sdk-v6.card-field-styles')
+            $container->get('sdk-v6.card-field-styles'),
+            $container->get('button.helper.disabled-funding-sources')
         );
     },
     'sdk-v6.add-payment-method-manager' => static function (ContainerInterface $container): AddPaymentMethodManager {

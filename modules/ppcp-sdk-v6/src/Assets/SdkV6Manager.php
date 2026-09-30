@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\FrontendLogEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
@@ -117,6 +118,7 @@ class SdkV6Manager
     private ApplePayConfig $apple_pay_config;
     private FastlaneConfig $fastlane_config;
     private CardFieldStyles $card_field_styles;
+    private DisabledFundingSources $disabled_funding_sources;
     /**
      * Every method this module places, in the order their rows are printed.
      *
@@ -149,7 +151,7 @@ class SdkV6Manager
      * @var bool|null
      */
     private ?bool $has_paylater_block = null;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, callable $get_subscriptions_mode, string $three_d_secure_contingency, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config, FastlaneConfig $fastlane_config, CardFieldStyles $card_field_styles)
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, callable $get_subscriptions_mode, string $three_d_secure_contingency, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config, FastlaneConfig $fastlane_config, CardFieldStyles $card_field_styles, DisabledFundingSources $disabled_funding_sources)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -174,6 +176,7 @@ class SdkV6Manager
         $this->apple_pay_config = $apple_pay_config;
         $this->fastlane_config = $fastlane_config;
         $this->card_field_styles = $card_field_styles;
+        $this->disabled_funding_sources = $disabled_funding_sources;
         $this->placements = array(new \WooCommerce\PayPalCommerce\SdkV6\Assets\MethodPlacement('google_pay', GooglePayGateway::ID, self::GOOGLE_PAY_WRAPPER_ID, 'https://pay.google.com/gp/p/js/pay.js', $google_pay_config, static function (string $context) use ($google_pay_config): array {
             return $google_pay_config->styles($context);
         }), new \WooCommerce\PayPalCommerce\SdkV6\Assets\MethodPlacement(
@@ -941,6 +944,10 @@ class SdkV6Manager
     {
         return $this->is_pay_later_filter_enabled($location) && $this->settings_status->is_pay_later_button_enabled_for_location($location);
     }
+    private function is_venmo_button_enabled(string $location): bool
+    {
+        return !in_array('venmo', $this->disabled_funding_sources->sources($location), \true);
+    }
     /**
      * Whether the filters v5 fires allow Pay Later in a location.
      *
@@ -992,13 +999,16 @@ class SdkV6Manager
         $store_api_base = rtrim(rest_url('wc/store/v1/cart'), '/');
         $button_styles = array();
         $pay_later_button = array();
+        $venmo_button = array();
         if ($page_context) {
             $button_styles[$page_context] = $this->button_styles($page_context);
             $pay_later_button[$page_context] = $this->is_pay_later_button_enabled($page_context);
+            $venmo_button[$page_context] = $this->is_venmo_button_enabled($page_context);
         }
         if ($this->settings_status->is_smart_button_enabled_for_location('mini-cart')) {
             $button_styles['mini-cart'] = $this->button_styles('mini-cart');
             $pay_later_button['mini-cart'] = $this->is_pay_later_button_enabled('mini-cart');
+            $venmo_button['mini-cart'] = $this->is_venmo_button_enabled('mini-cart');
         }
         // Fastlane replaces the standalone ACDC card row when it renders (guest,
         // non-subscription checkout), matching the v5 advanced-card block guard.
@@ -1066,6 +1076,7 @@ class SdkV6Manager
             'shipping' => array('in_context' => $shipping_contexts, 'countries' => $this->shipping_countries($shipping_contexts)),
             'button_styles' => $button_styles,
             'pay_later_button' => $pay_later_button,
+            'venmo_button' => $venmo_button,
             'button_height' => self::PAYMENT_BUTTON_HEIGHT,
             'wrapper' => '#' . self::WRAPPER_ID,
             'mini_cart_wrapper' => '#' . self::MINI_CART_WRAPPER_ID,
