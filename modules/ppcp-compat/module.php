@@ -1,14 +1,13 @@
 <?php
+
 /**
  * The compatibility module.
  *
  * @package WooCommerce\PayPalCommerce\Compat
  */
-
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat;
 
-return static function (): CompatModule {
-	return new CompatModule();
+return static function (): \WooCommerce\PayPalCommerce\Compat\CompatModule {
+    return new \WooCommerce\PayPalCommerce\Compat\CompatModule();
 };
