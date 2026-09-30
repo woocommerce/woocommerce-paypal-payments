@@ -2,6 +2,9 @@ import onApprove from '../OnApproveHandler/onApproveForContinue.js';
 import { payerData } from '../Helper/PayerData';
 import { PaymentMethods } from '../Helper/CheckoutMethodState';
 import ResumeFlowHelper from '../Helper/ResumeFlowHelper';
+import {
+	approvalRedirectUrl as resolveApprovalRedirectUrl,
+} from '../Helper/Subscriptions';
 
 class CartActionHandler {
 	constructor( config, errorHandler ) {
@@ -17,38 +20,47 @@ class CartActionHandler {
 					custom_id: this.config.subscription_custom_id,
 				} );
 			},
-			onApprove: ( data ) => {
-				fetch( this.config.ajax.approve_subscription.endpoint, {
-					method: 'POST',
-					credentials: 'same-origin',
-					body: JSON.stringify( {
-						nonce: this.config.ajax.approve_subscription.nonce,
-						order_id: data.orderID,
-						subscription_id: data.subscriptionID,
-						should_create_wc_order:
-							! this.config.vaultingEnabled ||
-							data.paymentSource !== 'venmo',
-					} ),
-				} )
-					.then( ( res ) => {
-						return res.json();
-					} )
-					.then( ( data ) => {
-						if ( ! data.success ) {
-							throw Error( data.data.message );
-						}
+			// Async so the SDK receives the rejection: returning nothing left a
+			// failed approval as an unhandled rejection and told the shopper
+			// nothing.
+			onApprove: async ( data ) => {
+				const res = await fetch(
+					this.config.ajax.approve_subscription.endpoint,
+					{
+						method: 'POST',
+						credentials: 'same-origin',
+						body: JSON.stringify( {
+							nonce: this.config.ajax.approve_subscription.nonce,
+							order_id: data.orderID,
+							subscription_id: data.subscriptionID,
+							should_create_wc_order:
+								! this.config.vaultingEnabled ||
+								data.paymentSource !== 'venmo',
+						} ),
+					}
+				);
 
-						const orderReceivedUrl = data.data?.order_received_url;
-
-						location.href = orderReceivedUrl
-							? orderReceivedUrl
-							: this.config.redirect;
-					} );
+				location.href = this.approvalRedirectUrl( await res.json() );
 			},
 			onError: ( err ) => {
 				console.error( err );
 			},
 		};
+	}
+
+	/**
+	 * Where to send the shopper once the subscription has been approved.
+	 *
+	 * @param {Object} response - The approve endpoint response.
+	 * @return {string} The URL to navigate to.
+	 * @throws {Error} When the endpoint reported a failure.
+	 */
+	approvalRedirectUrl( response ) {
+		return resolveApprovalRedirectUrl(
+			response,
+			this.errorHandler,
+			this.config.redirect
+		);
 	}
 
 	configuration() {
