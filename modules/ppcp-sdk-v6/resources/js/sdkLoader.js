@@ -94,7 +94,11 @@ async function createInstance( config, context ) {
 		throw new Error( 'PayPal SDK v6 global not found after script load.' );
 	}
 
-	const components = [ 'paypal-payments', 'venmo-payments' ];
+	const components = [ 'paypal-payments' ];
+	// One instance serves the page and the mini-cart.
+	if ( Object.values( config.venmo_button || {} ).some( Boolean ) ) {
+		components.push( 'venmo-payments' );
+	}
 	if ( config.card_fields?.enabled ) {
 		components.push( 'card-fields' );
 	}

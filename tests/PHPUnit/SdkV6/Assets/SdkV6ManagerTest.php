@@ -7,6 +7,7 @@ use Mockery;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
@@ -53,6 +54,7 @@ class SdkV6ManagerTest extends TestCase
 	private $apple_pay_config;
 	private $fastlane_config;
 	private $card_field_styles;
+	private $disabled_funding_sources;
 
     public function setUp(): void
     {
@@ -107,6 +109,9 @@ class SdkV6ManagerTest extends TestCase
 
 		$this->card_field_styles = Mockery::mock(CardFieldStyles::class);
 		$this->card_field_styles->shouldReceive('overrides')->andReturn([])->byDefault();
+
+		$this->disabled_funding_sources = Mockery::mock(DisabledFundingSources::class);
+		$this->disabled_funding_sources->shouldReceive('sources')->andReturn([])->byDefault();
 
 		// Reached unconditionally by script_data()'s Apple Pay validation block.
 		when('admin_url')->justReturn('https://example.com/wp-admin/admin-ajax.php');
@@ -209,7 +214,8 @@ class SdkV6ManagerTest extends TestCase
 	        $this->google_pay_config,
 	        $this->apple_pay_config,
 	        $this->fastlane_config,
-	        $this->card_field_styles
+	        $this->card_field_styles,
+	        $this->disabled_funding_sources
         );
     }
 
@@ -2852,6 +2858,71 @@ class SdkV6ManagerTest extends TestCase
         $result = $testee->add_variation_message_amount($data, null, $variation);
 
         $this->assertSame($data, $result);
+    }
+
+    /**
+     * GIVEN the disabled funding sources of a location do or do not contain venmo
+     * WHEN the SDK bootstrap data is generated on that page
+     * THEN the Venmo button is enabled for the page context only when venmo is not disabled
+     *
+     * @dataProvider venmo_page_context_provider
+     */
+    public function testScriptDataVenmoButtonFollowsDisabledFundingSourcesOfPageContext(string $page_context, array $disabled_sources, bool $expected): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->context->shouldReceive('location')->andReturn($page_context);
+        $this->disabled_funding_sources->shouldReceive('sources')->with($page_context)->andReturn($disabled_sources);
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame([$page_context => $expected], $data['venmo_button']);
+    }
+
+    public function venmo_page_context_provider(): array
+    {
+        return [
+            'checkout with no disabled sources shows venmo' => ['checkout', [], true],
+            'checkout with venmo disabled hides venmo' => ['checkout', ['venmo'], false],
+            'cart with only other sources disabled shows venmo' => ['cart', ['card', 'credit'], true],
+            'cart with venmo among disabled sources hides venmo' => ['cart', ['card', 'venmo'], false],
+        ];
+    }
+
+    /**
+     * GIVEN the mini-cart button is enabled and venmo is disabled for the mini-cart only
+     * WHEN the SDK bootstrap data is generated on the checkout page
+     * THEN the Venmo button is decided separately per location
+     *      (shown on the checkout, hidden in the mini-cart)
+     */
+    public function testScriptDataVenmoButtonIsDecidedSeparatelyForMiniCart(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->context->shouldReceive('location')->andReturn('checkout');
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->with('mini-cart')->andReturn(true);
+        $this->disabled_funding_sources->shouldReceive('sources')->with('checkout')->andReturn([]);
+        $this->disabled_funding_sources->shouldReceive('sources')->with('mini-cart')->andReturn(['venmo']);
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame(['checkout' => true, 'mini-cart' => false], $data['venmo_button']);
+    }
+
+    /**
+     * GIVEN the mini-cart button is disabled and the page has no button context
+     * WHEN the SDK bootstrap data is generated
+     * THEN no Venmo decision is sent for any location
+     */
+    public function testScriptDataVenmoButtonIsEmptyWithoutButtonLocations(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn('');
+        $this->context->shouldReceive('location')->andReturn('');
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame([], $data['venmo_button']);
     }
 }
 

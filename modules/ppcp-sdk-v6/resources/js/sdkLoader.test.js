@@ -43,29 +43,28 @@ describe( 'loadSdkV6', () => {
 		[
 			'no optional components enabled',
 			{},
-			[ 'paypal-payments', 'venmo-payments' ],
+			[ 'paypal-payments' ],
 		],
 		[
 			'card fields enabled',
 			{ card_fields: { enabled: true } },
-			[ 'paypal-payments', 'venmo-payments', 'card-fields' ],
+			[ 'paypal-payments', 'card-fields' ],
 		],
 		[
 			'google pay enabled',
 			{ google_pay: { enabled: true } },
-			[ 'paypal-payments', 'venmo-payments', 'googlepay-payments' ],
+			[ 'paypal-payments', 'googlepay-payments' ],
 		],
 		[
 			'apple pay enabled',
 			{ apple_pay: { enabled: true } },
-			[ 'paypal-payments', 'venmo-payments', 'applepay-payments' ],
+			[ 'paypal-payments', 'applepay-payments' ],
 		],
 		[
 			'card fields and google pay both enabled',
 			{ card_fields: { enabled: true }, google_pay: { enabled: true } },
 			[
 				'paypal-payments',
-				'venmo-payments',
 				'card-fields',
 				'googlepay-payments',
 			],
@@ -73,12 +72,12 @@ describe( 'loadSdkV6', () => {
 		[
 			'the card button rendering its classic row',
 			{ card_button: { row: true } },
-			[ 'paypal-payments', 'venmo-payments', 'paypal-guest-payments' ],
+			[ 'paypal-payments', 'paypal-guest-payments' ],
 		],
 		[
 			'fastlane enabled',
 			{ fastlane: { enabled: true } },
-			[ 'paypal-payments', 'venmo-payments', 'fastlane' ],
+			[ 'paypal-payments', 'fastlane' ],
 		],
 	] )( 'requests %s', async ( label, overrides, expectedComponents ) => {
 		await loadSdkV6( baseConfig( overrides ), 'checkout' );
@@ -87,6 +86,26 @@ describe( 'loadSdkV6', () => {
 			expect.objectContaining( { components: expectedComponents } )
 		);
 	} );
+
+	test.each( [
+		[ 'venmo is on for one context only', { checkout: true, cart: false }, true ],
+		[ 'venmo is on for every context', { product: true, cart: true }, true ],
+		[ 'venmo is off for every context', { checkout: false, cart: false }, false ],
+		[ 'venmo_button is an empty map', {}, false ],
+		[ 'venmo_button is missing', undefined, false ],
+	] )(
+		'requests venmo-payments only when at least one context enables it: %s',
+		async ( label, venmoButton, expected ) => {
+			await loadSdkV6(
+				baseConfig( { venmo_button: venmoButton } ),
+				'checkout'
+			);
+
+			const { components } =
+				window.paypal.createInstance.mock.calls[ 0 ][ 0 ];
+			expect( components.includes( 'venmo-payments' ) ).toBe( expected );
+		}
+	);
 
 	test( 'requests fastlane, card fields and apple pay all enabled', async () => {
 		await loadSdkV6(
@@ -105,7 +124,6 @@ describe( 'loadSdkV6', () => {
 		expect( [ ...components ].sort() ).toEqual(
 			[
 				'paypal-payments',
-				'venmo-payments',
 				'card-fields',
 				'applepay-payments',
 				'fastlane',
@@ -125,7 +143,7 @@ describe( 'loadSdkV6', () => {
 
 		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
 			expect.objectContaining( {
-				components: [ 'paypal-payments', 'venmo-payments' ],
+				components: [ 'paypal-payments' ],
 			} )
 		);
 	} );
@@ -138,7 +156,7 @@ describe( 'loadSdkV6', () => {
 
 		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
 			expect.objectContaining( {
-				components: [ 'paypal-payments', 'venmo-payments' ],
+				components: [ 'paypal-payments' ],
 			} )
 		);
 	} );

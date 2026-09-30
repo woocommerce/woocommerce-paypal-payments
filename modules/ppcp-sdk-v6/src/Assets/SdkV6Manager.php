@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\FrontendLogEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
@@ -130,6 +131,7 @@ class SdkV6Manager {
 
 	private FastlaneConfig $fastlane_config;
 	private CardFieldStyles $card_field_styles;
+	private DisabledFundingSources $disabled_funding_sources;
 
 	/**
 	 * Every method this module places, in the order their rows are printed.
@@ -192,7 +194,8 @@ class SdkV6Manager {
 		GooglePayConfig $google_pay_config,
 		ApplePayConfig $apple_pay_config,
 		FastlaneConfig $fastlane_config,
-		CardFieldStyles $card_field_styles
+		CardFieldStyles $card_field_styles,
+		DisabledFundingSources $disabled_funding_sources
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -217,6 +220,7 @@ class SdkV6Manager {
 		$this->apple_pay_config            = $apple_pay_config;
 		$this->fastlane_config             = $fastlane_config;
 		$this->card_field_styles           = $card_field_styles;
+		$this->disabled_funding_sources    = $disabled_funding_sources;
 
 		$this->placements = array(
 			new MethodPlacement(
@@ -1134,6 +1138,10 @@ class SdkV6Manager {
 			&& $this->settings_status->is_pay_later_button_enabled_for_location( $location );
 	}
 
+	private function is_venmo_button_enabled( string $location ): bool {
+		return ! in_array( 'venmo', $this->disabled_funding_sources->sources( $location ), true );
+	}
+
 	/**
 	 * Whether the filters v5 fires allow Pay Later in a location.
 	 *
@@ -1204,13 +1212,16 @@ class SdkV6Manager {
 
 		$button_styles    = array();
 		$pay_later_button = array();
+		$venmo_button     = array();
 		if ( $page_context ) {
 			$button_styles[ $page_context ]    = $this->button_styles( $page_context );
 			$pay_later_button[ $page_context ] = $this->is_pay_later_button_enabled( $page_context );
+			$venmo_button[ $page_context ]     = $this->is_venmo_button_enabled( $page_context );
 		}
 		if ( $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ) ) {
 			$button_styles['mini-cart']    = $this->button_styles( 'mini-cart' );
 			$pay_later_button['mini-cart'] = $this->is_pay_later_button_enabled( 'mini-cart' );
+			$venmo_button['mini-cart']     = $this->is_venmo_button_enabled( 'mini-cart' );
 		}
 
 		// Fastlane replaces the standalone ACDC card row when it renders (guest,
@@ -1342,6 +1353,7 @@ class SdkV6Manager {
 			),
 			'button_styles'       => $button_styles,
 			'pay_later_button'    => $pay_later_button,
+			'venmo_button'        => $venmo_button,
 			'button_height'       => self::PAYMENT_BUTTON_HEIGHT,
 			'wrapper'             => '#' . self::WRAPPER_ID,
 			'mini_cart_wrapper'   => '#' . self::MINI_CART_WRAPPER_ID,

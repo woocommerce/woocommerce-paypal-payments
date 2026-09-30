@@ -86,14 +86,18 @@ const PAYPAL_GATEWAY_ID = config?.id;
 // Wording for the error notices the bridges raise.
 setErrorLabels( config?.labels );
 
-// Pay Later carries a per-context merchant setting on top of eligibility;
-// renderButtons() applies the same flag for the classic stack.
+// Pay Later and Venmo carry a per-context merchant setting on top of
+// eligibility; boot.js applies the same flags for the classic stack.
 const FUNDING_SOURCES = ALL_FUNDING_SOURCES.filter( ( fundingSource ) => {
-	if ( fundingSource !== FundingSources.PAYLATER ) {
-		return true;
+	if ( fundingSource === FundingSources.PAYLATER ) {
+		return Boolean( config?.pay_later_button?.[ config.page_context ] );
 	}
 
-	return Boolean( config?.pay_later_button?.[ config.page_context ] );
+	if ( fundingSource === FundingSources.VENMO ) {
+		return Boolean( config?.venmo_button?.[ config.page_context ] );
+	}
+
+	return true;
 } );
 
 /**
