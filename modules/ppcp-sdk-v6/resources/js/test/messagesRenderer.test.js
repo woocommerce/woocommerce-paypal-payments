@@ -1,10 +1,30 @@
-const mockCreatePayPalMessages = jest.fn( () => ( {} ) );
+const mockMessagesInstance = () => ( {
+	fetchContent: jest.fn( () => Promise.resolve() ),
+	learnMore: { detachDefaultListener: jest.fn() },
+} );
+const mockCreatePayPalMessages = jest.fn( mockMessagesInstance );
 const mockLoadSdkV6 = jest.fn( () =>
 	Promise.resolve( { createPayPalMessages: mockCreatePayPalMessages } )
 );
+let mockInstanceChangeCallback = null;
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
 } ) );
+jest.mock( '../tokenRefresh', () => ( {
+	onSdkInstanceChange: ( callback ) => {
+		mockInstanceChangeCallback = callback;
+	},
+} ) );
+
+// The real element comes from the SDK script, which jsdom does not load.
+customElements.define(
+	'paypal-message',
+	class extends HTMLElement {
+		getFetchContentOptions() {
+			return { amount: this.amount ?? this.getAttribute( 'amount' ) };
+		}
+	}
+);
 
 import {
 	initMessages,
@@ -54,7 +74,7 @@ describe( 'renderMessages()', () => {
 
 		const message = document.querySelector( 'paypal-message' );
 		expect( message ).not.toBeNull();
-		expect( message.getAttribute( 'auto-bootstrap' ) ).toBe( '' );
+		expect( message.hasAttribute( 'auto-bootstrap' ) ).toBe( false );
 		expect( message.getAttribute( 'amount' ) ).toBe( '100.00' );
 		expect( message.getAttribute( 'currency-code' ) ).toBe( 'USD' );
 		expect( message.getAttribute( 'page-type' ) ).toBe( 'product-details' );
@@ -64,6 +84,54 @@ describe( 'renderMessages()', () => {
 		expect(
 			message.style.getPropertyValue( '--paypal-message-font-size' )
 		).toBe( '' );
+	} );
+
+	test( 'fetches the content of a rendered message through the messages instance', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+
+		await renderMessages( baseConfig(), 'product' );
+
+		const { fetchContent } = mockCreatePayPalMessages.mock.results[ 0 ].value;
+		expect( fetchContent ).toHaveBeenCalledWith( { amount: '100.00' } );
+	} );
+
+	describe( 'after an SDK instance change', () => {
+		const renderThenSwap = async () => {
+			document.body.innerHTML = '<div class="ppcp-messages"></div>';
+			await renderMessages( baseConfig(), 'product' );
+
+			const oldInstance = mockCreatePayPalMessages.mock.results[ 0 ].value;
+			const newInstance = mockMessagesInstance();
+			mockInstanceChangeCallback( {
+				createPayPalMessages: () => newInstance,
+			} );
+
+			return { oldInstance, newInstance };
+		};
+
+		test( 'fetches no content at swap time', async () => {
+			const { oldInstance, newInstance } = await renderThenSwap();
+
+			expect( oldInstance.fetchContent ).toHaveBeenCalledTimes( 1 );
+			expect( newInstance.fetchContent ).not.toHaveBeenCalled();
+		} );
+
+		test( 'detaches the learn-more listener of the old messages instance', async () => {
+			const { oldInstance } = await renderThenSwap();
+
+			expect( oldInstance.learnMore.detachDefaultListener ).toHaveBeenCalled();
+		} );
+
+		test( 'fetches the next content with the messages instance of the new SDK', async () => {
+			const { oldInstance, newInstance } = await renderThenSwap();
+
+			updateMessagesAmount( '250.00' );
+
+			expect( newInstance.fetchContent ).toHaveBeenCalledWith( {
+				amount: '250.00',
+			} );
+			expect( oldInstance.fetchContent ).toHaveBeenCalledTimes( 1 );
+		} );
 	} );
 
 	test( 'sets the font-size custom property when the config style has one', async () => {
@@ -289,7 +357,7 @@ describe( 'buildMessageElement()', () => {
 		fontSize: '',
 	} );
 
-	test( 'sets auto-bootstrap and every attribute from the options', () => {
+	test( 'sets every attribute from the options and no auto-bootstrap', () => {
 		const element = buildMessageElement( document, {
 			amount: '100.00',
 			currency: 'USD',
@@ -298,7 +366,7 @@ describe( 'buildMessageElement()', () => {
 		} );
 
 		expect( element.tagName.toLowerCase() ).toBe( 'paypal-message' );
-		expect( element.getAttribute( 'auto-bootstrap' ) ).toBe( '' );
+		expect( element.hasAttribute( 'auto-bootstrap' ) ).toBe( false );
 		expect( element.getAttribute( 'amount' ) ).toBe( '100.00' );
 		expect( element.getAttribute( 'currency-code' ) ).toBe( 'USD' );
 		expect( element.getAttribute( 'page-type' ) ).toBe( 'product-details' );
@@ -367,6 +435,16 @@ describe( 'updateMessagesAmount()', () => {
 		document.querySelectorAll( 'paypal-message' ).forEach( ( element ) => {
 			expect( element.amount ).toBe( '250.00' );
 		} );
+	} );
+
+	test( 'fetches the content again with the new amount', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+		await renderMessages( baseConfig(), 'product' );
+
+		updateMessagesAmount( '250.00' );
+
+		const { fetchContent } = mockCreatePayPalMessages.mock.results[ 0 ].value;
+		expect( fetchContent ).toHaveBeenLastCalledWith( { amount: '250.00' } );
 	} );
 
 	test( 'prunes and skips elements that are no longer connected to the document', async () => {

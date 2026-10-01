@@ -74,6 +74,24 @@ describe( 'useV6MessagePreview()', () => {
 		} );
 	} );
 
+	test( 'sets auto-bootstrap on the preview element so the SDK fetches the content', async () => {
+		mockLoadEditorMessages.mockResolvedValue();
+		const { result } = renderHook( () =>
+			useV6MessagePreview( baseProps() )
+		);
+
+		const container = attachContainer( result );
+		await act( async () => {
+			await Promise.resolve();
+		} );
+
+		expect(
+			container
+				.querySelector( 'paypal-message' )
+				.hasAttribute( 'auto-bootstrap' )
+		).toBe( true );
+	} );
+
 	test( 'marks loaded once the resize observer reports a non-zero height', async () => {
 		mockLoadEditorMessages.mockResolvedValue();
 		const { result } = renderHook( () =>
