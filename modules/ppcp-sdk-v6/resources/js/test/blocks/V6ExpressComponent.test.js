@@ -1,6 +1,18 @@
 const mockLoadSdkV6 = jest.fn();
+let mockInstanceListeners = [];
+const mockOnSdkInstanceChange = jest.fn( ( listener ) => {
+	mockInstanceListeners.push( listener );
+	return () => {
+		mockInstanceListeners = mockInstanceListeners.filter(
+			( registered ) => registered !== listener
+		);
+	};
+} );
 jest.mock( '../../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+jest.mock( '../../tokenRefresh', () => ( {
+	onSdkInstanceChange: ( ...args ) => mockOnSdkInstanceChange( ...args ),
 } ) );
 
 const mockCheckEligibility = jest.fn();
@@ -109,7 +121,11 @@ function renderComponent( overrides = {} ) {
 	);
 }
 
+const emitInstanceChange = ( sdk ) =>
+	mockInstanceListeners.forEach( ( listener ) => listener( sdk ) );
+
 beforeEach( () => {
+	mockInstanceListeners = [];
 	capturedHandlers = null;
 	paymentSetupCb = null;
 	checkoutFailCb = null;
@@ -309,6 +325,58 @@ describe( 'V6ExpressComponent', () => {
 		const { styles } = mockButtonContainer.mock.calls.at( -1 )[ 0 ];
 		expect( styles.borderRadius ).toBe( '24px' );
 		expect( styles.height ).toBeUndefined();
+	} );
+
+	describe( 'when the SDK instance changes', () => {
+		const newSdk = { sdk: 'new' };
+
+		test( 'builds the button from a session of the new instance', async () => {
+			renderComponent();
+			await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
+			mockCreateSession.mockReturnValueOnce( { fake: 'new-session' } );
+
+			act( () => emitInstanceChange( newSdk ) );
+
+			await waitFor( () =>
+				expect(
+					mockButtonContainer.mock.calls.at( -1 )[ 0 ].session
+				).toEqual( { fake: 'new-session' } )
+			);
+			expect( mockCreateSession.mock.calls.at( -1 )[ 0 ] ).toBe( newSdk );
+		} );
+
+		test( 'builds the free-trial save button from a save session of the new instance', async () => {
+			renderComponent( {
+				config: {
+					...config,
+					amount: '0.00',
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				},
+			} );
+			await waitFor( () =>
+				expect( mockCreateFreeTrialPayPalSession ).toHaveBeenCalled()
+			);
+
+			act( () => emitInstanceChange( newSdk ) );
+
+			await waitFor( () =>
+				expect(
+					mockCreateFreeTrialPayPalSession.mock.calls.at( -1 )[ 0 ]
+				).toBe( newSdk )
+			);
+		} );
+
+		test( 'ignores the change after the component unmounted', async () => {
+			const { unmount } = renderComponent();
+			await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
+			const sessionsBefore = mockCreateSession.mock.calls.length;
+
+			unmount();
+			emitInstanceChange( newSdk );
+
+			expect( mockCreateSession.mock.calls.length ).toBe( sessionsBefore );
+		} );
 	} );
 
 	test( 'keeps one session and one button across re-renders with new callback identities', async () => {
