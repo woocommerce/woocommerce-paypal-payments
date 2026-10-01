@@ -11,9 +11,10 @@
  * @package
  */
 
-import { mountField } from './mountField';
+import { mountField, unmountField } from './mountField';
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange, setSdkBusy } from '../tokenRefresh';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
 import {
 	createCardSetupToken,
@@ -214,6 +215,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 		event.preventDefault();
 		event.stopImmediatePropagation();
 		spinner?.block();
+		setSdkBusy( true );
 
 		try {
 			const cardSession = await ensureCardSession();
@@ -267,7 +269,21 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 			handleError( error );
 		} finally {
 			submitting = false;
+			setSdkBusy( false );
 			spinner?.unblock();
+		}
+	}
+
+	function remountCardFields() {
+		cardSessionPromise = null;
+
+		const inputs = getInputs();
+		for ( const fieldType of FIELD_TYPES ) {
+			unmountField( inputs[ fieldType ] );
+		}
+
+		if ( isCardGatewaySelected( paymentMethod ) ) {
+			ensureCardSession().catch( handleError );
 		}
 	}
 
@@ -308,6 +324,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 	}
 
 	attach();
+	onSdkInstanceChange( remountCardFields );
 
 	if ( hasJQuery() ) {
 		jQuery( document.body ).on( 'updated_checkout', attach );
