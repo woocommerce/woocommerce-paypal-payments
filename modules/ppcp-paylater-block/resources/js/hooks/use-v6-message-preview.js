@@ -60,6 +60,9 @@ export function useV6MessagePreview( { sdkV6, amount, pageType, style } ) {
 					pageType,
 					style: { logoType, logoPosition, textColor, fontSize },
 				} );
+				// Lets the SDK fetch the content; without it the element stays an
+				// empty one-line box.
+				element.setAttribute( 'auto-bootstrap', '' );
 
 				// The element gains height once the message content arrived.
 				observer = new targetWindow.ResizeObserver( () => {
