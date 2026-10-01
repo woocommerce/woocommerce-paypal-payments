@@ -8,6 +8,26 @@ jest.mock( '../utils/errorHandler', () => ( {
 	handleError: ( ...args ) => mockHandleError( ...args ),
 } ) );
 
+const mockSetSdkBusy = jest.fn();
+jest.mock( '../tokenRefresh', () => ( {
+	releasingSdkBusy: ( sessionConfig ) => {
+		for ( const name of [ 'onApprove', 'onCancel', 'onError' ] ) {
+			const callback = sessionConfig[ name ];
+			if ( ! callback ) {
+				continue;
+			}
+			sessionConfig[ name ] = async ( ...args ) => {
+				try {
+					return await callback( ...args );
+				} finally {
+					mockSetSdkBusy( false );
+				}
+			};
+		}
+		return sessionConfig;
+	},
+} ) );
+
 import {
 	createVaultSetupToken,
 	createCardSetupToken,
@@ -180,5 +200,85 @@ describe( 'createFreeTrialPayPalSession', () => {
 		sdk.capture.config.onError( error );
 
 		expect( mockHandleError ).toHaveBeenCalledWith( error );
+	} );
+
+	describe( 'releasing the SDK busy state', () => {
+		const releasedBusy = () =>
+			mockSetSdkBusy.mock.calls.some( ( [ busy ] ) => busy === false );
+
+		test.each( [
+			[
+				'onApprove',
+				( config ) => {
+					mockPostJson.mockResolvedValueOnce( {} );
+					return config.onApprove( { vaultSetupToken: 'SETUP1' } );
+				},
+			],
+			[ 'onCancel', ( config ) => config.onCancel() ],
+			[ 'onError', ( config ) => config.onError( new Error( 'sdk' ) ) ],
+		] )(
+			'%s releases it',
+			async ( name, trigger ) => {
+				const sdk = fakeSdk();
+				createFreeTrialPayPalSession( sdk, baseConfig() );
+
+				await trigger( sdk.capture.config );
+
+				expect( releasedBusy() ).toBe( true );
+			}
+		);
+
+		test( 'onApprove releases it only after the token exchange finished', async () => {
+			const sdk = fakeSdk();
+			let finishExchange;
+			mockPostJson.mockReturnValueOnce(
+				new Promise( ( resolve ) => {
+					finishExchange = resolve;
+				} )
+			);
+			createFreeTrialPayPalSession( sdk, baseConfig() );
+
+			const approval = sdk.capture.config.onApprove( {
+				vaultSetupToken: 'SETUP1',
+			} );
+			await Promise.resolve();
+			expect( releasedBusy() ).toBe( false );
+
+			finishExchange( {} );
+			await approval;
+
+			expect( releasedBusy() ).toBe( true );
+		} );
+
+		test( 'onApprove releases it and rejects when the provided onError throws', async () => {
+			const sdk = fakeSdk();
+			const failure = new Error( 'surface failed' );
+			mockPostJson.mockRejectedValueOnce( new Error( 'exchange' ) );
+			createFreeTrialPayPalSession( sdk, baseConfig(), {
+				onError: () => {
+					throw failure;
+				},
+			} );
+
+			await expect(
+				sdk.capture.config.onApprove( { vaultSetupToken: 'SETUP1' } )
+			).rejects.toBe( failure );
+			expect( releasedBusy() ).toBe( true );
+		} );
+
+		test( 'onError releases it and rejects when the provided onError throws', async () => {
+			const sdk = fakeSdk();
+			const failure = new Error( 'surface failed' );
+			createFreeTrialPayPalSession( sdk, baseConfig(), {
+				onError: () => {
+					throw failure;
+				},
+			} );
+
+			await expect(
+				sdk.capture.config.onError( new Error( 'sdk' ) )
+			).rejects.toBe( failure );
+			expect( releasedBusy() ).toBe( true );
+		} );
 	} );
 } );
