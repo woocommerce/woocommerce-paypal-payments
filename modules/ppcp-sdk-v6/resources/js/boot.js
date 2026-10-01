@@ -13,6 +13,7 @@
  */
 
 import { loadSdkV6 } from './sdkLoader';
+import { onSdkInstanceChange } from './tokenRefresh';
 import { checkEligibility } from './eligibility';
 import {
 	createSession,
@@ -20,7 +21,11 @@ import {
 } from './sessions/createSession';
 import { renderButtons } from './components/buttonRenderer';
 import { renderMethods } from './methods/renderMethods';
-import { isMethodEnabled, MERCHANT_PRESENTED_METHODS } from './methods/methodRegistry';
+import {
+	isMethodEnabled,
+	methodConfig,
+	MERCHANT_PRESENTED_METHODS,
+} from './methods/methodRegistry';
 import { FundingSources } from './utils/fundingSources';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
 import {
@@ -349,17 +354,9 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 			METHODS.some( ( m ) => previous[ m ] !== current[ m ] );
 
 		if ( changed ) {
-			for ( const key of Object.keys( sessionPromises ) ) {
-				delete sessionPromises[ key ];
-			}
-			for ( const target of targets ) {
-				const wrapper = document.querySelector(
-					target.wrapperSelector
-				);
-				if ( wrapper ) {
-					wrapper.innerHTML = '';
-				}
-			}
+			discardSessions(
+				targets.map( ( target ) => target.wrapperSelector )
+			);
 		}
 
 		renderAll();
@@ -467,6 +464,37 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		watchProductAmount( config, updateMessagesAmount );
 	}
 
+	/**
+	 * A render pass skips a wrapper that is not empty.
+	 *
+	 * @param {Array<?string>} wrapperSelectors - The wrappers to empty.
+	 */
+	function discardSessions( wrapperSelectors ) {
+		for ( const key of Object.keys( sessionPromises ) ) {
+			delete sessionPromises[ key ];
+		}
+
+		for ( const selector of wrapperSelectors.filter( Boolean ) ) {
+			const wrapper = document.querySelector( selector );
+			if ( wrapper ) {
+				wrapper.innerHTML = '';
+			}
+		}
+	}
+
+	function renderWithNewSessions() {
+		discardSessions( [
+			...targets.map( ( target ) => target.wrapperSelector ),
+			...MERCHANT_PRESENTED_METHODS.map(
+				( method ) => methodConfig( config, method )?.gateway?.wrapper
+			),
+			config.card_button?.row && config.card_button.wrapper,
+		] );
+
+		renderAll();
+		initCardButtonSafely();
+	}
+
 	function initialRender() {
 		renderAll();
 		initCardFieldsSafely();
@@ -475,6 +503,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		trackProductTotal();
 		initProductButtonGate( config );
 		syncPlaceOrderButton();
+		onSdkInstanceChange( renderWithNewSessions );
 	}
 
 	if ( document.readyState === 'loading' ) {
