@@ -30,8 +30,21 @@ jest.mock(
 );
 
 const mockLoadSdkV6 = jest.fn();
+const mockSetSdkBusy = jest.fn();
+let mockInstanceListeners = [];
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+jest.mock( '../tokenRefresh', () => ( {
+	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
+	onSdkInstanceChange: ( callback ) => {
+		mockInstanceListeners.push( callback );
+		return () => {
+			mockInstanceListeners = mockInstanceListeners.filter(
+				( listener ) => listener !== callback
+			);
+		};
+	},
 } ) );
 
 const mockCreateCardOrder = jest.fn();
@@ -107,11 +120,13 @@ const baseConfig = ( overrides = {} ) => ( {
 	...overrides,
 } );
 
-function makeCardSession( { state = 'succeeded' } = {} ) {
+function makeCardSession( { state = 'succeeded', id = 'session' } = {} ) {
 	return {
-		createCardFieldsComponent: jest.fn( () =>
-			document.createElement( 'div' )
-		),
+		createCardFieldsComponent: jest.fn( () => {
+			const element = document.createElement( 'div' );
+			element.dataset.session = id;
+			return element;
+		} ),
 		submit: jest.fn().mockResolvedValue( { state, data: {} } ),
 	};
 }
@@ -134,6 +149,10 @@ beforeEach( () => {
 	mockCreateCardSetupToken.mockReset();
 	mockExchangeSetupToken.mockReset();
 	bodyHandlers = {};
+	mockInstanceListeners = [];
+	mockLoadSdkV6.mockReset();
+	mockCreateCardOrder.mockReset();
+	mockApproveCardOrder.mockReset();
 	global.jQuery = jest.fn( () => ( {
 		on: ( event, handler ) => {
 			bodyHandlers[ event ] = bodyHandlers[ event ] || [];
@@ -145,6 +164,143 @@ beforeEach( () => {
 afterEach( () => {
 	delete global.jQuery;
 	document.body.innerHTML = '';
+} );
+
+const emitSdkInstanceChange = () =>
+	mockInstanceListeners.forEach( ( listener ) => listener( {} ) );
+
+describe( 'initCardFields after an SDK instance change', () => {
+	let oldSession;
+	let newSession;
+
+	function hostedFields() {
+		return [ ...document.querySelectorAll( '.ppcp-sdk-v6-card-field' ) ];
+	}
+
+	function useSessions() {
+		oldSession = makeCardSession( { id: 'old' } );
+		newSession = makeCardSession( { id: 'new' } );
+		mockLoadSdkV6
+			.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: () => oldSession,
+			} )
+			.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: () => newSession,
+			} );
+	}
+
+	test( 'replaces the hosted fields with ones from the new instance in the same slots', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		useSessions();
+		await initCardFields( baseConfig() );
+		await flushPromises();
+
+		emitSdkInstanceChange();
+		await flushPromises();
+
+		const fields = hostedFields();
+		expect( fields ).toHaveLength( 3 );
+		expect( fields.every( ( f ) => f.dataset.session === 'new' ) ).toBe(
+			true
+		);
+		for ( const id of [ 'number', 'expiry', 'cvc' ] ) {
+			const input = document.querySelector(
+				`#ppcp-credit-card-gateway-card-${ id }`
+			);
+			expect( input.hidden ).toBe( true );
+			expect( input.nextSibling.dataset.session ).toBe( 'new' );
+		}
+	} );
+
+	test( 'submits a later Place order through the new session', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		useSessions();
+		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+		mockApproveCardOrder.mockResolvedValue( undefined );
+		await initCardFields( baseConfig() );
+		await flushPromises();
+		emitSdkInstanceChange();
+		await flushPromises();
+
+		document.querySelector( '#place_order' ).click();
+		await flushPromises();
+
+		expect( newSession.submit ).toHaveBeenCalledWith( 'CARDORDER1' );
+		expect( oldSession.submit ).not.toHaveBeenCalled();
+	} );
+
+	test( 'mounts nothing until the card gateway is selected', async () => {
+		buildCheckoutDom( 'ppcp-gateway' );
+		newSession = makeCardSession( { id: 'new' } );
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => newSession,
+		} );
+		await initCardFields( baseConfig() );
+		await flushPromises();
+
+		emitSdkInstanceChange();
+		await flushPromises();
+		expect( hostedFields() ).toHaveLength( 0 );
+
+		document.querySelector( 'input[value="ppcp-gateway"]' ).checked = false;
+		document.querySelector(
+			'input[value="ppcp-credit-card-gateway"]'
+		).checked = true;
+		triggerBodyEvent( 'payment_method_selected' );
+		await flushPromises();
+
+		const fields = hostedFields();
+		expect( fields ).toHaveLength( 3 );
+		expect( fields[ 0 ].dataset.session ).toBe( 'new' );
+	} );
+
+	describe( 'SDK busy flag during a submit', () => {
+		let resolveSubmit;
+
+		async function startSubmit() {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			const cardSession = makeCardSession();
+			cardSession.submit.mockReturnValue(
+				new Promise( ( resolve ) => {
+					resolveSubmit = resolve;
+				} )
+			);
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () => cardSession,
+			} );
+			mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+			mockApproveCardOrder.mockResolvedValue( undefined );
+			await initCardFields( baseConfig() );
+			await flushPromises();
+
+			document.querySelector( '#place_order' ).click();
+			await flushPromises();
+		}
+
+		test.each( [
+			[ 'succeeds', { state: 'succeeded' } ],
+			[ 'fails', { state: 'failed' } ],
+			[ 'is canceled', { state: 'canceled' } ],
+		] )( 'is held until a submit that %s ends', async ( _label, result ) => {
+			await startSubmit();
+			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( true );
+
+			resolveSubmit( result );
+			await flushPromises();
+
+			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( false );
+		} );
+
+		test( 'is released when the submit throws', async () => {
+			await startSubmit();
+			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( true );
+
+			resolveSubmit( Promise.reject( new Error( 'boom' ) ) );
+			await flushPromises();
+
+			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( false );
+		} );
+	} );
 } );
 
 describe( 'initCardFields', () => {
