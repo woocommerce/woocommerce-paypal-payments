@@ -10,6 +10,7 @@
 
 import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange } from '../tokenRefresh';
 import { createSession } from '../sessions/createSession';
 import { amountFromBilling } from '../utils/amount';
 import { refreshCartUi } from '../utils/cartUi';
@@ -76,6 +77,9 @@ export function V6WalletComponent( {
 			active = false;
 		};
 	}, [ config, context ] );
+
+	// A new instance creates a new session, which draws the button again.
+	useEffect( () => onSdkInstanceChange( setSdk ), [] );
 
 	const totalRef = useRef( config.amount );
 	const total = amountFromBilling( billing ) || config.amount;
