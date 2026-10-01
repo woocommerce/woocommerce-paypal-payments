@@ -17,6 +17,7 @@ import {
 } from '@ppcp-button/Helper/CheckoutMethodState';
 import { setVisible, setVisibleByClass } from '@ppcp-button/Helper/Hiding';
 import { loadSdkV6 } from './sdkLoader';
+import { onSdkInstanceChange, setSdkBusy } from './tokenRefresh';
 import { checkVaultEligibility } from './eligibility';
 import { createSavePayPalSession } from './sessions/createSaveSession';
 import { initCardSaveFields } from './cardFields/saveRenderer';
@@ -64,12 +65,16 @@ import { handleError, setErrorLabels } from './utils/errorHandler';
 		}
 
 		button.addEventListener( 'click', async () => {
+			// The session callbacks release it.
+			setSdkBusy( true );
+
 			try {
 				await session.start(
 					{ presentationMode: 'auto' },
 					createVaultSetupToken()
 				);
 			} catch ( error ) {
+				setSdkBusy( false );
 				handleError( error );
 			}
 		} );
@@ -112,9 +117,18 @@ import { handleError, setErrorLabels } from './utils/errorHandler';
 		// Render the PayPal button only when both its wrapper is present and
 		// PayPal is eligible.
 		if ( wrapper && eligibility.paypal ) {
-			const session = createSavePayPalSession( sdk, config );
-			wrapper.innerHTML = '';
-			wrapper.appendChild( createPayPalButton( session ) );
+			const renderButton = ( sdkInstance ) => {
+				wrapper.innerHTML = '';
+				wrapper.appendChild(
+					createPayPalButton(
+						createSavePayPalSession( sdkInstance, config )
+					)
+				);
+			};
+
+			renderButton( sdk );
+			// The session keeps the client token of its SDK instance.
+			onSdkInstanceChange( renderButton );
 		}
 
 		// Card saving is independent of the PayPal wrapper; gate it only on
