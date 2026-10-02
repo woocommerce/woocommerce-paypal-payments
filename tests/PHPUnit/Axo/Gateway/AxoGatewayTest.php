@@ -22,10 +22,62 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\when;
 
 class AxoGatewayTestable extends AxoGateway
 {
+	/**
+	 * Option values that override the WC_Payment_Gateway stub's `get_option()`,
+	 * keyed by option name. Must be set before the parent constructor runs,
+	 * since title/description resolution happens there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private array $option_overrides;
+
+	public function __construct(
+		CardPaymentsConfiguration $dcc_configuration,
+		SessionHandler $session_handler,
+		OrderProcessor $order_processor,
+		array $card_icons,
+		OrderEndpoint $order_endpoint,
+		PurchaseUnitFactory $purchase_unit_factory,
+		ShippingPreferenceFactory $shipping_preference_factory,
+		TransactionUrlProvider $transaction_url_provider,
+		Environment $environment,
+		LoggerInterface $logger,
+		ExperienceContextBuilder $experience_context_builder,
+		SettingsModel $settings_model,
+		array $option_overrides = []
+	) {
+		$this->option_overrides = $option_overrides;
+
+		parent::__construct(
+			$dcc_configuration,
+			$session_handler,
+			$order_processor,
+			$card_icons,
+			$order_endpoint,
+			$purchase_unit_factory,
+			$shipping_preference_factory,
+			$transaction_url_provider,
+			$environment,
+			$logger,
+			$experience_context_builder,
+			$settings_model
+		);
+	}
+
+	public function get_option( string $key, $empty_value = null )
+	{
+		if ( array_key_exists( $key, $this->option_overrides ) ) {
+			return $this->option_overrides[ $key ];
+		}
+
+		return parent::get_option( $key, $empty_value );
+	}
+
 	public function update_option( $key, $value = '' ): bool
 	{
 		return true;
@@ -80,6 +132,114 @@ class AxoGatewayTest extends TestCase
 			Mockery::mock( ExperienceContextBuilder::class ),
 			Mockery::mock( SettingsModel::class )
 		);
+	}
+
+	/**
+	 * Builds a gateway instance with a given set of `get_option()` overrides,
+	 * so each test can control what the merchant "saved" for a setting (e.g.
+	 * the Fastlane title) without touching the other constructor collaborators.
+	 *
+	 * @param array<string, mixed>           $option_overrides  Option values, keyed by option name.
+	 * @param CardPaymentsConfiguration|null $dcc_configuration Defaults to the shared setUp() stub.
+	 */
+	private function create_gateway(
+		array $option_overrides = [],
+		?CardPaymentsConfiguration $dcc_configuration = null
+	): AxoGatewayTestable {
+		return new AxoGatewayTestable(
+			$dcc_configuration ?? $this->dcc_configuration,
+			Mockery::mock( SessionHandler::class ),
+			$this->order_processor,
+			[],
+			$this->order_endpoint,
+			Mockery::mock( PurchaseUnitFactory::class ),
+			Mockery::mock( ShippingPreferenceFactory::class ),
+			Mockery::mock( TransactionUrlProvider::class ),
+			Mockery::mock( Environment::class ),
+			$this->logger,
+			Mockery::mock( ExperienceContextBuilder::class ),
+			Mockery::mock( SettingsModel::class ),
+			$option_overrides
+		);
+	}
+
+	/**
+	 * GIVEN a merchant who saved a Fastlane title ("Pay with Fastlane")
+	 * AND the card (ACDC) gateway resolves to a different title ("Cards")
+	 * WHEN the Fastlane gateway is constructed
+	 * THEN the gateway's title is the merchant's saved Fastlane title, not the card gateway's
+	 *
+	 * This guards against regressing to passing Fastlane's title as a *fallback*
+	 * into the card gateway's title helper, which made the card title win whenever
+	 * one was configured — the common case.
+	 */
+	public function test_uses_configured_fastlane_title_even_when_card_gateway_title_differs(): void
+	{
+		$dcc_configuration = Mockery::mock( CardPaymentsConfiguration::class );
+		$dcc_configuration->shouldReceive( 'use_fastlane' )->andReturn( false );
+		$dcc_configuration->shouldReceive( 'gateway_title' )->andReturn( 'Cards' );
+
+		$gateway = $this->create_gateway( [ 'title' => 'Pay with Fastlane' ], $dcc_configuration );
+
+		$this->assertSame( 'Pay with Fastlane', $gateway->title );
+	}
+
+	/**
+	 * GIVEN a merchant who never saved a Fastlane title (empty string)
+	 * AND the card (ACDC) gateway resolves to "Cards"
+	 * WHEN the Fastlane gateway is constructed
+	 * THEN the gateway inherits the card gateway's title
+	 */
+	public function test_inherits_card_gateway_title_when_no_fastlane_title_configured(): void
+	{
+		$dcc_configuration = Mockery::mock( CardPaymentsConfiguration::class );
+		$dcc_configuration->shouldReceive( 'use_fastlane' )->andReturn( false );
+		$dcc_configuration->shouldReceive( 'gateway_title' )->andReturn( 'Cards' );
+
+		$gateway = $this->create_gateway( [ 'title' => '' ], $dcc_configuration );
+
+		$this->assertSame( 'Cards', $gateway->title );
+	}
+
+	/**
+	 * GIVEN a merchant who never saved a Fastlane title
+	 * AND the card (ACDC) gateway has no title of its own either, so it returns whatever
+	 *     fallback it is given
+	 * WHEN the Fastlane gateway is constructed
+	 * THEN the gateway's title falls back to its own method title
+	 */
+	public function test_falls_back_to_method_title_when_neither_fastlane_nor_card_title_configured(): void
+	{
+		$dcc_configuration = Mockery::mock( CardPaymentsConfiguration::class );
+		$dcc_configuration->shouldReceive( 'use_fastlane' )->andReturn( false );
+		$dcc_configuration->shouldReceive( 'gateway_title' )
+			->andReturnUsing( static fn ( string $fallback ): string => $fallback );
+
+		$gateway = $this->create_gateway( [ 'title' => '' ], $dcc_configuration );
+
+		$this->assertSame( 'Fastlane Debit & Credit Cards', $gateway->title );
+	}
+
+	/**
+	 * GIVEN a merchant who saved a Fastlane title
+	 * AND a callback attached to the `woocommerce_paypal_payments_axo_gateway_title` filter
+	 * WHEN the Fastlane gateway is constructed
+	 * THEN the filter's return value is used as the gateway's title, overriding the resolved one
+	 */
+	public function test_filter_can_override_resolved_title(): void
+	{
+		$dcc_configuration = Mockery::mock( CardPaymentsConfiguration::class );
+		$dcc_configuration->shouldReceive( 'use_fastlane' )->andReturn( false );
+		$dcc_configuration->shouldReceive( 'gateway_title' )->andReturn( 'Cards' );
+
+		expectApplied( 'woocommerce_paypal_payments_axo_gateway_title' )
+			->once()
+			->with( 'Pay with Fastlane', Mockery::type( AxoGateway::class ) )
+			->andReturn( 'Overridden Fastlane Title' );
+
+		$gateway = $this->create_gateway( [ 'title' => 'Pay with Fastlane' ], $dcc_configuration );
+
+		$this->assertSame( 'Overridden Fastlane Title', $gateway->title );
 	}
 
 	/**
