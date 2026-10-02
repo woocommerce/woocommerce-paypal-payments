@@ -33,7 +33,11 @@ export class PayPalPopup {
 			.getByRole( 'link', { name: 'Try another way' } )
 			.or( this.page.getByRole( 'button', { name: 'Try another way' } ) );
 	loginInput = () => this.page.locator( '[name="login_email"]' );
-	passwordInput = () => this.page.locator( '[name="login_password"]' );
+	// The email step also renders an invisible, aria-hidden password decoy.
+	passwordInput = () =>
+		this.page.locator(
+			'[name="login_password"]:not([aria-hidden="true"])'
+		);
 	nextButton = () =>
 		this.page
 			.locator( '#btnNext' )
@@ -82,11 +86,18 @@ export class PayPalPopup {
 	login = async ( email, password ) => {
 		await this.tryLoginWithPasswordInstead();
 
-		await this.loginInput().fill( email );
+		await this.fillLoginEmail( email );
 
 		// Track if Next advanced the page; we need checkout URL for redirect recovery.
 		const urlBeforeNext = this.page.url();
 		await this.tryClickNext();
+
+		// The sandbox can clear the email while the page initialises, so Next
+		// submits an empty field and stays on the email step. Re-submit it.
+		if ( await this.isLoginEmailCleared() ) {
+			await this.fillLoginEmail( email );
+			await this.tryClickNext();
+		}
 		const nextAdvancedPage = this.page.url() !== urlBeforeNext;
 
 		// URL has ctxId/returnUri for redirect recovery.
@@ -142,6 +153,34 @@ export class PayPalPopup {
 				await this.page.waitForLoadState();
 			}
 		} catch {}
+	};
+
+	/**
+	 * Fills the login email and re-fills it until the value sticks
+	 *
+	 * @param email
+	 */
+	fillLoginEmail = async ( email: string ) => {
+		await expect( async () => {
+			await this.loginInput().fill( email );
+			await expect( this.loginInput() ).toHaveValue( email, {
+				timeout: 1000,
+			} );
+		}, 'Assert PayPal login email is filled' ).toPass( { timeout: 15000 } );
+	};
+
+	/**
+	 * Checks whether the email step is still shown with an empty email field
+	 */
+	isLoginEmailCleared = async (): Promise< boolean > => {
+		try {
+			return (
+				( await this.loginInput().isVisible() ) &&
+				! ( await this.loginInput().inputValue( { timeout: 2000 } ) )
+			);
+		} catch {
+			return false;
+		}
 	};
 
 	/**
