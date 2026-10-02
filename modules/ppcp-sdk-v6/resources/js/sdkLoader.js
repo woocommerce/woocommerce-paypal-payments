@@ -12,6 +12,8 @@ import { startTokenRefresh } from './tokenRefresh';
 const INSTANCE_KEY = '__ppcpV6InstancePromise';
 const METADATA_ID_KEY = '__ppcpV6ClientMetadataId';
 
+const LOAD_TIMEOUT_MS = 15000;
+
 /**
  * The in-flight instance promise, shared across bundles.
  *
@@ -55,11 +57,32 @@ const PAGE_TYPE_MAP = {
 };
 
 /**
+ * Rejects when the promise has not settled within the given time.
+ *
+ * @param {Promise} promise - The promise to wait for.
+ * @param {number}  ms      - The time limit.
+ * @return {Promise} Settles as the promise does, or rejects on timeout.
+ */
+function withTimeout( promise, ms ) {
+	const error = new Error( `PayPal SDK v6 did not load within ${ ms } ms.` );
+	let timer;
+	const timeout = new Promise( ( resolve, reject ) => {
+		timer = setTimeout( () => reject( error ), ms );
+	} );
+
+	return Promise.race( [ promise, timeout ] ).finally( () =>
+		clearTimeout( timer )
+	);
+}
+
+/**
  * Loads the SDK script, fetches a client token and creates the instance.
  *
  * Memoized on the in-flight promise so concurrent callers share one
- * token fetch and one instance; reset on failure to allow retries.
- * Dispatches the ppcp-sdk-v6-ready event once, when the instance exists.
+ * token fetch and one instance; reset on failure or timeout to allow retries.
+ * Dispatches the ppcp-sdk-v6-ready event once, when the instance exists, and
+ * starts its token refresh; an instance that only arrives after the timeout is
+ * dropped.
  *
  * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
  * @param {string} context - The page context used for the SDK pageType.
@@ -67,12 +90,26 @@ const PAGE_TYPE_MAP = {
  */
 export function loadSdkV6( config, context ) {
 	if ( ! cachedInstance() ) {
-		window[ INSTANCE_KEY ] = createInstance( config, context ).catch(
-			( error ) => {
+		window[ INSTANCE_KEY ] = withTimeout(
+			createInstance( config, context ),
+			LOAD_TIMEOUT_MS
+		)
+			.then( ( { sdkInstance, tokenData, renewInstance } ) => {
+				// Later loadSdkV6() calls get the new instance.
+				startTokenRefresh( renewInstance, tokenData );
+
+				document.dispatchEvent(
+					new CustomEvent( 'ppcp-sdk-v6-ready', {
+						detail: { sdkInstance },
+					} )
+				);
+
+				return sdkInstance;
+			} )
+			.catch( ( error ) => {
 				delete window[ INSTANCE_KEY ];
 				throw error;
-			}
-		);
+			} );
 	}
 
 	return cachedInstance();
@@ -83,7 +120,8 @@ export function loadSdkV6( config, context ) {
  *
  * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
  * @param {string} context - The page context used for the SDK pageType.
- * @return {Promise<Object>} The SDK instance.
+ * @return {Promise<Object>} The { sdkInstance, tokenData } it was created with,
+ *                           and renewInstance(), which creates its successor.
  */
 async function createInstance( config, context ) {
 	const [ , tokenData ] = await Promise.all( [
@@ -126,23 +164,18 @@ async function createInstance( config, context ) {
 
 	const sdkInstance = await window.paypal.createInstance( instanceOptions );
 
-	// Later loadSdkV6() calls get the new instance.
-	startTokenRefresh( async () => {
-		const nextTokenData = await postJson( config.ajax.client_token );
-		const nextInstance = await window.paypal.createInstance( {
-			...instanceOptions,
-			clientToken: nextTokenData.client_token,
-		} );
-		window[ INSTANCE_KEY ] = Promise.resolve( nextInstance );
+	return {
+		sdkInstance,
+		tokenData,
+		renewInstance: async () => {
+			const nextTokenData = await postJson( config.ajax.client_token );
+			const nextInstance = await window.paypal.createInstance( {
+				...instanceOptions,
+				clientToken: nextTokenData.client_token,
+			} );
+			window[ INSTANCE_KEY ] = Promise.resolve( nextInstance );
 
-		return { sdkInstance: nextInstance, tokenData: nextTokenData };
-	}, tokenData );
-
-	document.dispatchEvent(
-		new CustomEvent( 'ppcp-sdk-v6-ready', {
-			detail: { sdkInstance },
-		} )
-	);
-
-	return sdkInstance;
+			return { sdkInstance: nextInstance, tokenData: nextTokenData };
+		},
+	};
 }
