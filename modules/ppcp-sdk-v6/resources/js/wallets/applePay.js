@@ -103,7 +103,7 @@ export async function renderApplePay( {
 		return;
 	}
 
-	revealMethodGateway( gateway, config );
+	revealMethodGateway( gateway );
 
 	// Synchronous either way: Safari refuses a sheet opened after an await.
 	const sheetTotal = overrides.sheetTotal ?? watchSheetTotal( config, context );

@@ -155,20 +155,16 @@ describe( 'initCardButton', () => {
 
 	test( 'reveals the wallet gateway row after the button is inserted', async () => {
 		const session = { start: jest.fn() };
-		const config = baseConfig();
 
-		await initCardButton( config, sessionsWithCard( session ) );
+		await initCardButton( baseConfig(), sessionsWithCard( session ) );
 
 		expect(
 			document.querySelector( '#card-button-wrapper' ).childElementCount
 		).toBeGreaterThan( 0 );
-		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
-			{
-				id: 'ppcp-card-button-gateway',
-				wrapper: '#card-button-wrapper',
-			},
-			config
-		);
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith( {
+			id: 'ppcp-card-button-gateway',
+			wrapper: '#card-button-wrapper',
+		} );
 	} );
 
 	test( 'does not react to a plain click event', async () => {

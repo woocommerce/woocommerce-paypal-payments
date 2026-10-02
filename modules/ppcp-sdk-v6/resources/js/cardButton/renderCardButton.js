@@ -90,11 +90,8 @@ export async function initCardButton( config, ensureSessions ) {
 
 	// After insertion, so the row counts as rendered when the placement logic
 	// decides what to do with "Place order".
-	revealMethodGateway(
-		{
-			id: config.card_button.payment_method,
-			wrapper: config.card_button.wrapper,
-		},
-		config
-	);
+	revealMethodGateway( {
+		id: config.card_button.payment_method,
+		wrapper: config.card_button.wrapper,
+	} );
 }

@@ -501,21 +501,15 @@ describe( 'as its own payment-method row (gateway set)', () => {
 	const gateway = { id: 'ppcp-googlepay', wrapper: '#gateway-row' };
 
 	test( 'reveals the row once isReadyToPay resolves truthy', async () => {
-		const { config } = await render( { gateway } );
+		await render( { gateway } );
 
-		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
-			gateway,
-			config
-		);
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith( gateway );
 	} );
 
 	test( 'passes no gateway on the express path, so nothing is revealed', async () => {
-		const { config } = await render();
+		await render();
 
-		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
-			undefined,
-			config
-		);
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith( undefined );
 	} );
 
 	test( 'never reveals an ineligible row', async () => {
