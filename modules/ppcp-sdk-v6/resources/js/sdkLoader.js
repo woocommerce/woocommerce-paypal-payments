@@ -7,6 +7,7 @@
 import { postJson } from './utils/api';
 import { loadScript } from './utils/scriptLoaders';
 import { methodSdkComponents } from './methods/methodRegistry';
+import { startTokenRefresh } from './tokenRefresh';
 
 const INSTANCE_KEY = '__ppcpV6InstancePromise';
 const METADATA_ID_KEY = '__ppcpV6ClientMetadataId';
@@ -115,13 +116,27 @@ async function createInstance( config, context ) {
 		components.push( 'paypal-messages' );
 	}
 
-	const sdkInstance = await window.paypal.createInstance( {
+	const instanceOptions = {
 		clientToken: tokenData.client_token,
 		components,
 		pageType: PAGE_TYPE_MAP[ context ] || 'checkout',
 		locale: config.locale,
 		clientMetadataId: clientMetadataId(),
-	} );
+	};
+
+	const sdkInstance = await window.paypal.createInstance( instanceOptions );
+
+	// Later loadSdkV6() calls get the new instance.
+	startTokenRefresh( async () => {
+		const nextTokenData = await postJson( config.ajax.client_token );
+		const nextInstance = await window.paypal.createInstance( {
+			...instanceOptions,
+			clientToken: nextTokenData.client_token,
+		} );
+		window[ INSTANCE_KEY ] = Promise.resolve( nextInstance );
+
+		return { sdkInstance: nextInstance, tokenData: nextTokenData };
+	}, tokenData );
 
 	document.dispatchEvent(
 		new CustomEvent( 'ppcp-sdk-v6-ready', {

@@ -10,6 +10,7 @@
  */
 
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange } from '../tokenRefresh';
 
 const MESSAGE_TAG_NAME = 'paypal-message';
 
@@ -211,10 +212,6 @@ export function buildMessageElement(
 ) {
 	const element = doc.createElement( MESSAGE_TAG_NAME );
 
-	// Required: without it the component lays out but never fetches, leaving an
-	// empty one-line box.
-	element.setAttribute( 'auto-bootstrap', '' );
-
 	if ( amount ) {
 		element.setAttribute( 'amount', amount );
 	}
@@ -252,6 +249,33 @@ function createMessage( wrapper, config, amount ) {
 }
 
 /**
+ * @param {Element} element - The message element.
+ */
+function fetchMessage( element ) {
+	messagesInstance
+		.fetchContent( element.getFetchContentOptions() )
+		.catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6] Pay Later message fetch failed', error );
+		} );
+}
+
+/**
+ * Rendered content stays; only the next fetch uses the new client token, so a
+ * token refresh shows no loading state.
+ *
+ * @param {Object} sdk    - The SDK instance.
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ */
+function setMessagesInstance( sdk, config ) {
+	// Otherwise every old instance also opens the learn-more popup on a click.
+	messagesInstance?.learnMore?.detachDefaultListener();
+	messagesInstance = sdk.createPayPalMessages( {
+		currencyCode: config.currency,
+	} );
+}
+
+/**
  * Fills every unclaimed placeholder with a message, once.
  *
  * The SDK is only loaded when there is something to render, so a page with no
@@ -280,9 +304,10 @@ export async function renderMessages( config, sdkPageType ) {
 		const sdk = await loadSdkV6( config, sdkPageType );
 
 		if ( ! messagesInstance ) {
-			messagesInstance = sdk.createPayPalMessages( {
-				currencyCode: config.currency,
-			} );
+			setMessagesInstance( sdk, config );
+			onSdkInstanceChange( ( nextSdk ) =>
+				setMessagesInstance( nextSdk, config )
+			);
 		}
 
 		const amount = currentAmount( config );
@@ -291,6 +316,7 @@ export async function renderMessages( config, sdkPageType ) {
 			const element = createMessage( wrapper, config, amount );
 			wrapper.appendChild( element );
 			rendered.push( element );
+			fetchMessage( element );
 		} );
 	} finally {
 		// Released either way, so a later pass can pick these up.
@@ -327,5 +353,6 @@ export function updateMessagesAmount( amount ) {
 	rendered = rendered.filter( ( element ) => element.isConnected );
 	rendered.forEach( ( element ) => {
 		element.amount = amount;
+		fetchMessage( element );
 	} );
 }

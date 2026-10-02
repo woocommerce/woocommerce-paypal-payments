@@ -6,6 +6,7 @@
 
 import { handleError } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
+import { setSdkBusy } from '../tokenRefresh';
 
 /**
  * @typedef {() => Promise<{orderId: string}>} OrderCreator
@@ -103,6 +104,9 @@ function createButton(
 	);
 
 	button.addEventListener( 'click', async () => {
+		// The session callbacks release it.
+		setSdkBusy( true );
+
 		try {
 			// Blocks express uses this to set the active payment method;
 			// classic passes nothing.
@@ -114,6 +118,7 @@ function createButton(
 				createOrderFn()
 			);
 		} catch ( error ) {
+			setSdkBusy( false );
 			handleError( error );
 		}
 	} );

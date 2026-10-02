@@ -11,6 +11,7 @@
 import { postJson } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 import { navigation } from '../utils/navigation';
+import { releasingSdkBusy } from '../tokenRefresh';
 
 /**
  * Creates a PayPal save-payment session for the add-payment-method page.
@@ -24,23 +25,25 @@ import { navigation } from '../utils/navigation';
  * @return {Object} The save payment session.
  */
 export function createSavePayPalSession( sdkInstance, config ) {
-	return sdkInstance.createPayPalSavePaymentSession( {
-		async onApprove( data ) {
-			try {
-				await postJson( config.ajax.create_payment_token, {
-					vault_setup_token: data.vaultSetupToken,
-				} );
+	return sdkInstance.createPayPalSavePaymentSession(
+		releasingSdkBusy( {
+			async onApprove( data ) {
+				try {
+					await postJson( config.ajax.create_payment_token, {
+						vault_setup_token: data.vaultSetupToken,
+					} );
 
-				navigation.assign( config.payment_methods_page );
-			} catch ( error ) {
+					navigation.assign( config.payment_methods_page );
+				} catch ( error ) {
+					handleError( error );
+				}
+			},
+
+			onCancel() {},
+
+			onError( error ) {
 				handleError( error );
-			}
-		},
-
-		onCancel() {},
-
-		onError( error ) {
-			handleError( error );
-		},
-	} );
+			},
+		} )
+	);
 }

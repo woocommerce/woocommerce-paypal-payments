@@ -11,6 +11,8 @@ jest.mock( './utils/scriptLoaders', () => ( {
 // loadSdkV6() memoizes on window-level state (shared across webpack bundles),
 // which survives jest.resetModules(), so each test also needs its own window keys.
 let loadSdkV6;
+let onSdkInstanceChange;
+let visibilityListeners;
 
 function baseConfig( overrides = {} ) {
 	return {
@@ -30,11 +32,31 @@ beforeEach( () => {
 	delete window.__ppcpV6InstancePromise;
 	delete window.__ppcpV6ScriptPromises;
 	delete window.__ppcpV6ClientMetadataId;
+	delete window.__ppcpV6TokenRefresh;
+
+	// The token refresh never removes its visibilitychange listener, so listeners
+	// of earlier tests would fire refreshes in later ones.
+	visibilityListeners = [];
+	const originalAddEventListener = document.addEventListener.bind( document );
+	jest.spyOn( document, 'addEventListener' ).mockImplementation(
+		( type, listener, ...rest ) => {
+			if ( type === 'visibilitychange' ) {
+				visibilityListeners.push( listener );
+			}
+			originalAddEventListener( type, listener, ...rest );
+		}
+	);
+
 	( { loadSdkV6 } = require( './sdkLoader' ) );
+	( { onSdkInstanceChange } = require( './tokenRefresh' ) );
 	window.paypal = { createInstance: jest.fn().mockResolvedValue( {} ) };
 } );
 
 afterEach( () => {
+	visibilityListeners.forEach( ( listener ) =>
+		document.removeEventListener( 'visibilitychange', listener )
+	);
+	jest.restoreAllMocks();
 	delete window.paypal;
 } );
 
@@ -247,5 +269,79 @@ describe( 'loadSdkV6', () => {
 
 		expect( firstId ).toEqual( expect.any( String ) );
 		expect( secondId ).toBe( firstId );
+	} );
+} );
+
+describe( 'client token refresh wiring', () => {
+	const REFRESH_IN = 240;
+	const REFRESH_MS = REFRESH_IN * 1000;
+
+	const tokenResponse = ( token ) => ( {
+		client_token: token,
+		refresh_in: REFRESH_IN,
+		retry_in: 15,
+	} );
+
+	const sdk1 = { name: 'sdk1' };
+	const sdk2 = { name: 'sdk2' };
+
+	const tick = ( ms ) => jest.advanceTimersByTimeAsync( ms );
+
+	beforeEach( () => {
+		jest.useFakeTimers();
+		window.paypal.createInstance
+			.mockReset()
+			.mockResolvedValueOnce( sdk1 )
+			.mockResolvedValueOnce( sdk2 );
+		mockPostJson
+			.mockReset()
+			.mockResolvedValueOnce( tokenResponse( 'T1' ) )
+			.mockResolvedValueOnce( tokenResponse( 'T2' ) );
+	} );
+
+	afterEach( () => {
+		jest.useRealTimers();
+	} );
+
+	test( 'creates a new instance with the new token and the other options unchanged', async () => {
+		await loadSdkV6(
+			baseConfig( { card_fields: { enabled: true } } ),
+			'checkout'
+		);
+		const { clientToken, ...firstOptions } =
+			window.paypal.createInstance.mock.calls[ 0 ][ 0 ];
+
+		await tick( REFRESH_MS );
+
+		expect( clientToken ).toBe( 'T1' );
+		expect( window.paypal.createInstance ).toHaveBeenCalledTimes( 2 );
+		expect( window.paypal.createInstance ).toHaveBeenLastCalledWith( {
+			...firstOptions,
+			clientToken: 'T2',
+		} );
+	} );
+
+	test( 'resolves later loadSdkV6 calls to the new instance', async () => {
+		await expect( loadSdkV6( baseConfig(), 'checkout' ) ).resolves.toBe(
+			sdk1
+		);
+
+		await tick( REFRESH_MS );
+
+		await expect( loadSdkV6( baseConfig(), 'checkout' ) ).resolves.toBe(
+			sdk2
+		);
+	} );
+
+	test( 'hands the new instance to onSdkInstanceChange() subscribers', async () => {
+		const listener = jest.fn();
+		onSdkInstanceChange( listener );
+		await loadSdkV6( baseConfig(), 'checkout' );
+
+		await tick( REFRESH_MS - 1 );
+		expect( listener ).not.toHaveBeenCalled();
+
+		await tick( 1 );
+		expect( listener ).toHaveBeenCalledWith( sdk2 );
 	} );
 } );

@@ -9,6 +9,7 @@
 import { createOrder } from '../endpointsAdapter';
 import { handleError } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
+import { setSdkBusy } from '../tokenRefresh';
 import { revealMethodGateway } from '../methods/gatewayPlacement';
 import {
 	CARD_BUTTON_CLICK_EVENT as CLICK_EVENT,
@@ -64,6 +65,9 @@ export async function initCardButton( config, ensureSessions ) {
 	target.appendChild( container );
 
 	button.addEventListener( CLICK_EVENT, async () => {
+		// The session callbacks release it.
+		setSdkBusy( true );
+
 		try {
 			await session.start(
 				// Naming the target beats the SDK's "last clicked button"
@@ -79,6 +83,7 @@ export async function initCardButton( config, ensureSessions ) {
 				)
 			);
 		} catch ( error ) {
+			setSdkBusy( false );
 			handleError( error );
 		}
 	} );

@@ -16,8 +16,17 @@ jest.mock( '@ppcp-button/Helper/Hiding', () => ( {
 } ) );
 
 const mockLoadSdkV6 = jest.fn();
+const mockOnSdkInstanceChange = jest.fn();
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+jest.mock( '../tokenRefresh', () => ( {
+	onSdkInstanceChange: ( ...args ) => mockOnSdkInstanceChange( ...args ),
+} ) );
+
+const mockInitCardButton = jest.fn();
+jest.mock( '../cardButton/renderCardButton', () => ( {
+	initCardButton: ( ...args ) => mockInitCardButton( ...args ),
 } ) );
 
 const mockCheckEligibility = jest.fn();
@@ -42,9 +51,11 @@ jest.mock( '../methods/renderMethods', () => ( {
 } ) );
 
 const mockIsWalletEnabled = jest.fn();
+const mockMethodConfig = jest.fn();
 jest.mock( '../methods/methodRegistry', () => ( {
 	isMethodEnabled: ( ...args ) => mockIsWalletEnabled( ...args ),
-	MERCHANT_PRESENTED_METHODS: [],
+	methodConfig: ( ...args ) => mockMethodConfig( ...args ),
+	MERCHANT_PRESENTED_METHODS: [ 'googlepay' ],
 } ) );
 
 const mockCreateOrder = jest.fn();
@@ -153,6 +164,8 @@ function boot( config ) {
  */
 const flush = () => jest.advanceTimersByTimeAsync( 0 );
 
+let instanceChangeCallback;
+
 beforeEach( () => {
 	jest.useFakeTimers();
 	jest.clearAllMocks();
@@ -161,6 +174,12 @@ beforeEach( () => {
 	global.jQuery = createFakeJQuery();
 
 	mockLoadSdkV6.mockResolvedValue( {} );
+	mockOnSdkInstanceChange.mockImplementation( ( callback ) => {
+		instanceChangeCallback = callback;
+		return () => {};
+	} );
+	mockInitCardButton.mockResolvedValue();
+	mockMethodConfig.mockReturnValue( undefined );
 	mockCheckEligibility.mockResolvedValue( {
 		paypal: true,
 		venmo: false,
@@ -362,6 +381,104 @@ describe( 'boot', () => {
 			await flush();
 
 			expect( mockRenderMessages ).toHaveBeenCalled();
+		} );
+	} );
+
+	describe( 'after the SDK instance changed', () => {
+		const oldSdk = { name: 'old' };
+		const newSdk = { name: 'new' };
+		const GATEWAY_WRAPPER_SELECTOR = '#ppcp-googlepay-gateway';
+		const CARD_WRAPPER_SELECTOR = '#ppcp-card-button';
+
+		// Every wrapper holds a button of the old instance, and a render pass
+		// skips a wrapper that is not empty.
+		function buildDomWithButtons() {
+			document.body.innerHTML = [
+				WRAPPER_SELECTOR,
+				MINI_CART_WRAPPER_SELECTOR,
+				GATEWAY_WRAPPER_SELECTOR,
+				CARD_WRAPPER_SELECTOR,
+			]
+				.map(
+					( selector ) =>
+						`<div id="${ selector.slice(
+							1
+						) }"><button></button></div>`
+				)
+				.join( '' );
+		}
+
+		async function bootAndChangeInstance( overrides = {} ) {
+			let currentSdk = oldSdk;
+			mockLoadSdkV6.mockImplementation( async () => currentSdk );
+			mockCreateSession.mockImplementation( ( sdk ) => ( { sdk } ) );
+			mockMethodConfig.mockReturnValue( {
+				gateway: { wrapper: GATEWAY_WRAPPER_SELECTOR },
+			} );
+
+			buildDomWithButtons();
+			boot(
+				baseConfig( {
+					card_button: { row: true, wrapper: CARD_WRAPPER_SELECTOR },
+					...overrides,
+				} )
+			);
+			await flush();
+			mockRenderButtons.mockClear();
+			mockInitCardButton.mockClear();
+
+			currentSdk = newSdk;
+			instanceChangeCallback( newSdk );
+			await flush();
+		}
+
+		test( 'draws the page and mini-cart buttons again with sessions from the new instance', async () => {
+			await bootAndChangeInstance();
+
+			const wrapperIds = mockRenderButtons.mock.calls.map(
+				( [ options ] ) => options.wrapper.id
+			);
+			expect( wrapperIds.sort() ).toEqual(
+				[
+					WRAPPER_SELECTOR.slice( 1 ),
+					MINI_CART_WRAPPER_SELECTOR.slice( 1 ),
+				].sort()
+			);
+			mockRenderButtons.mock.calls.forEach( ( [ options ] ) => {
+				expect( options.sessions ).toEqual( { paypal: { sdk: newSdk } } );
+			} );
+		} );
+
+		test( 'clears the wallet gateway row so the wallet renders again', async () => {
+			await bootAndChangeInstance();
+
+			expect(
+				document.querySelector( GATEWAY_WRAPPER_SELECTOR ).childElementCount
+			).toBe( 0 );
+			expect( mockRenderWallets ).toHaveBeenCalledWith(
+				expect.objectContaining( { sessions: { paypal: { sdk: newSdk } } } )
+			);
+		} );
+
+		test( 'clears the card button wrapper and renders it again with sessions from the new instance', async () => {
+			await bootAndChangeInstance();
+
+			expect(
+				document.querySelector( CARD_WRAPPER_SELECTOR ).childElementCount
+			).toBe( 0 );
+			expect( mockInitCardButton ).toHaveBeenCalledTimes( 1 );
+
+			const ensureSessions = mockInitCardButton.mock.calls[ 0 ][ 1 ];
+			const { map } = await ensureSessions( 'checkout' );
+			expect( map ).toEqual( { paypal: { sdk: newSdk } } );
+		} );
+
+		test( 'leaves a card button wrapper alone when the page has no card button row', async () => {
+			await bootAndChangeInstance( { card_button: { row: false } } );
+
+			expect(
+				document.querySelector( CARD_WRAPPER_SELECTOR ).childElementCount
+			).toBe( 1 );
 		} );
 	} );
 

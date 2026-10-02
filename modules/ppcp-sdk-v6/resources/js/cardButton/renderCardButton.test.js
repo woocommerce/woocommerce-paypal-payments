@@ -13,7 +13,15 @@ jest.mock( '../methods/gatewayPlacement', () => ( {
 	revealMethodGateway: ( ...args ) => mockRevealWalletGateway( ...args ),
 } ) );
 
+const mockSetSdkBusy = jest.fn();
+jest.mock( '../tokenRefresh', () => ( {
+	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
+} ) );
+
 import { initCardButton } from './renderCardButton';
+
+const isSdkBusy = () => mockSetSdkBusy.mock.calls.at( -1 )?.[ 0 ] === true;
+const flush = () => new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
 
 const baseConfig = ( overrides = {} ) => ( {
 	page_context: 'checkout',
@@ -217,5 +225,34 @@ describe( 'initCardButton', () => {
 		await Promise.resolve();
 
 		expect( mockHandleError ).toHaveBeenCalledWith( error );
+	} );
+
+	test( 'holds a pending SDK swap while the card flow runs, and leaves the release to the session callbacks', async () => {
+		const session = { start: jest.fn().mockResolvedValue( undefined ) };
+		await initCardButton( baseConfig(), sessionsWithCard( session ) );
+		const button = document.querySelector(
+			'#card-button-wrapper paypal-basic-card-button'
+		);
+
+		button.dispatchEvent( new Event( 'bcdc-click' ) );
+		expect( isSdkBusy() ).toBe( true );
+
+		await flush();
+		expect( isSdkBusy() ).toBe( true );
+	} );
+
+	test( 'releases the pending SDK swap when session.start() rejects', async () => {
+		const session = {
+			start: jest.fn().mockRejectedValue( new Error( 'card failed' ) ),
+		};
+		await initCardButton( baseConfig(), sessionsWithCard( session ) );
+		const button = document.querySelector(
+			'#card-button-wrapper paypal-basic-card-button'
+		);
+
+		button.dispatchEvent( new Event( 'bcdc-click' ) );
+		await flush();
+
+		expect( isSdkBusy() ).toBe( false );
 	} );
 } );

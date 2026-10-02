@@ -103,7 +103,14 @@ jest.mock(
 	{ virtual: true }
 );
 
+const mockSetSdkBusy = jest.fn();
+jest.mock( '../tokenRefresh', () => ( {
+	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
+} ) );
+
 import { renderApplePay } from './applePay';
+
+const isSdkBusy = () => mockSetSdkBusy.mock.calls.at( -1 )?.[ 0 ] === true;
 
 /**
  * Drains pending microtasks.
@@ -589,6 +596,87 @@ describe( 'a click on the rendered button', () => {
 		const secondSession = ApplePaySessionMock.mock.instances[ 1 ];
 		expect( secondSession.begin ).toHaveBeenCalledTimes( 1 );
 	} );
+} );
+
+describe( 'holding a pending SDK swap while the sheet is open', () => {
+	test( 'a tap that finds no total does not hold it', async () => {
+		mockWatchSheetTotal.mockReturnValue( { get: jest.fn( () => '' ) } );
+
+		const { wrapper } = await render();
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( isSdkBusy() ).toBe( false );
+	} );
+
+	test( 'holds it from the tap on', async () => {
+		await clickAndGetSession();
+
+		expect( isSdkBusy() ).toBe( true );
+	} );
+
+	test( 'releases it when Apple rejects the request', async () => {
+		ApplePaySessionMock.mockImplementationOnce( () => {
+			throw new Error( 'bad supportedNetworks' );
+		} );
+
+		await clickAndGetSession();
+
+		expect( isSdkBusy() ).toBe( false );
+	} );
+
+	test.each( [
+		[
+			'the buyer dismisses the sheet',
+			() => ( {} ),
+			async ( appleSession ) => appleSession.oncancel(),
+		],
+		[
+			'merchant validation fails',
+			() => ( {
+				session: makeSession( {
+					validateMerchant: jest
+						.fn()
+						.mockRejectedValue( new Error( 'unregistered domain' ) ),
+				} ),
+			} ),
+			async ( appleSession ) => {
+				appleSession.onvalidatemerchant( { validationURL: 'https://x' } );
+				await flushPromises();
+			},
+		],
+		[
+			'the payment fails',
+			() => {
+				mockPayWithWallet.mockRejectedValueOnce( new Error( 'declined' ) );
+				return {};
+			},
+			async ( appleSession ) => {
+				appleSession.onpaymentauthorized( paymentEvent );
+				await flushPromises();
+			},
+		],
+		[
+			'the payment succeeds',
+			() => ( {} ),
+			async ( appleSession ) => {
+				appleSession.onpaymentauthorized( paymentEvent );
+				await flushPromises();
+				expect( appleSession.completePayment ).toHaveBeenCalledWith(
+					'STATUS_SUCCESS'
+				);
+			},
+		],
+	] )(
+		'keeps holding it while the sheet is open and releases it when %s',
+		async ( _label, arrange, closeSheet ) => {
+			const { appleSession } = await clickAndGetSession( arrange() );
+			expect( isSdkBusy() ).toBe( true );
+
+			await closeSheet( appleSession );
+
+			expect( isSdkBusy() ).toBe( false );
+		}
+	);
 } );
 
 describe( 'surface overrides', () => {
