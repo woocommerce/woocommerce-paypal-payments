@@ -40,6 +40,13 @@ jest.mock( '../sessions/createSession', () => ( {
 	SUPPORTED_METHODS: [ 'paypal', 'venmo', 'paylater' ],
 } ) );
 
+const mockCreateFreeTrialPayPalSession = jest.fn();
+jest.mock( '../sessions/freeTrialSave', () => ( {
+	createFreeTrialPayPalSession: ( ...args ) =>
+		mockCreateFreeTrialPayPalSession( ...args ),
+	createVaultSetupToken: jest.fn(),
+} ) );
+
 const mockRenderButtons = jest.fn();
 jest.mock( '../components/buttonRenderer', () => ( {
 	renderButtons: ( ...args ) => mockRenderButtons( ...args ),
@@ -364,6 +371,61 @@ describe( 'boot', () => {
 				expect( methods ).toContain( 'paypal' );
 			}
 		);
+	} );
+
+	describe( 'free-trial cart targets', () => {
+		const savePaypalSession = { name: 'save-session' };
+		const renderedWrapperIds = () =>
+			mockRenderButtons.mock.calls.map(
+				( [ options ] ) => options.wrapper.id
+			);
+
+		beforeEach( () => {
+			mockCreateFreeTrialPayPalSession.mockReturnValue(
+				savePaypalSession
+			);
+		} );
+
+		test( 'renders the PayPal save session into the checkout wrapper', async () => {
+			buildDom();
+			boot( baseConfig( { cart_needs_vaulting: true, amount: '0.00' } ) );
+			await flush();
+
+			const checkoutCall = mockRenderButtons.mock.calls.find(
+				( [ options ] ) =>
+					options.wrapper.id === WRAPPER_SELECTOR.slice( 1 )
+			);
+			expect( checkoutCall[ 0 ].sessions ).toEqual( {
+				paypal: savePaypalSession,
+			} );
+		} );
+
+		test( 'leaves the mini-cart wrapper empty and creates no session for it', async () => {
+			buildDom();
+			boot( baseConfig( { cart_needs_vaulting: true, amount: '0.00' } ) );
+			await flush();
+
+			expect( renderedWrapperIds() ).not.toContain(
+				MINI_CART_WRAPPER_SELECTOR.slice( 1 )
+			);
+			expect(
+				document.querySelector( MINI_CART_WRAPPER_SELECTOR )
+					.childElementCount
+			).toBe( 0 );
+			expect( mockCreateSession ).not.toHaveBeenCalled();
+		} );
+
+		test( 'renders the mini-cart wrapper on a cart that is not a free trial', async () => {
+			buildDom();
+			boot(
+				baseConfig( { cart_needs_vaulting: false, amount: '0.00' } )
+			);
+			await flush();
+
+			expect( renderedWrapperIds() ).toContain(
+				MINI_CART_WRAPPER_SELECTOR.slice( 1 )
+			);
+		} );
 	} );
 
 	describe( 'DOM-replacing update events', () => {
