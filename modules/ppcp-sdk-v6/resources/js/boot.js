@@ -259,6 +259,15 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 			return;
 		}
 
+		// A free trial can only be saved where a checkout form follows; elsewhere
+		// (e.g. the block mini-cart) the wrapper stays empty.
+		if (
+			isFreeTrialCart( config, amount ) &&
+			! FREE_TRIAL_CONTEXTS.includes( target.context )
+		) {
+			return;
+		}
+
 		try {
 			await renderInto( wrapper, target );
 		} finally {
