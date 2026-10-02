@@ -162,7 +162,47 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 == Changelog ==
 
 = 4.2.0 - XXXX-XX-XX =
-* TBD
+* Enhancement - PayPal JS SDK v6 is now the default for all stores, including existing ones; SDK v5 remains available as a fallback via `woocommerce.feature-flags.woocommerce_paypal_payments.sdk_v6_enabled` filter #4720
+* Enhancement - Remove the leftover checks that let vaulting disable Pay Later, including the `woocommerce_paypal_payments_pay_later_with_vaulting` filter #4736
+* Enhancement - Enable the Pay Later payment method after onboarding on every onboarding path, keeping the merchant's previous choice on reconnect #4733
+* Enhancement - Render PayPal buttons and Pay Later messaging in block theme templates and the Site Editor #4731
+* Enhancement - Show PayPal buttons and Pay Later messaging in the block theme Single Product template, with messaging placed below the price by default #4759
+* Enhancement - PayPal buttons in the WooCommerce Mini Cart block, on the frontend and in the Site Editor #4767
+* Enhancement - Calculate Pay Later messaging installment amounts on the page with SDK v6 instead of through cart simulation, so amounts update instantly #4729
+* Enhancement - Keep WooCommerce's "Place order" button label instead of replacing it with "Proceed to PayPal", and remove the PayPal redirect notice from Block Checkout #4704
+* Enhancement - Debit & Credit Cards redirect gateway for Block Checkout with SDK v6 #4688
+* Enhancement - Remove the deprecated cardholder name field and its settings toggle for advanced card payments with SDK v6 #4713
+* Enhancement - Send the buyer's email, name, phone and billing address when creating a card payment to reduce card risk declines #4650
+* Enhancement - Stop the "Subscription could not be loaded" log entry on order screens #4629
+* Enhancement - Rework the Abilities API module to use the existing dependency injection system #4698
+* Enhancement - Show saved PayPal accounts on Block Checkout as "Use existing PayPal account" instead of the internal gateway ID #4718
+* Enhancement - Show a "Place order" fallback that redirects to PayPal when the PayPal buttons fail to load on SDK v6 classic checkout #4777
+* Fix - reCAPTCHA v3 token verified twice on SDK v6 classic checkout, causing a fallback to the v2 challenge #4761
+* Fix - PayPal buttons, card fields and Pay Later messages stop working on SDK v6 when a page stays open longer than 15 minutes #4772
+* Fix - PayPal buttons disappear after several page loads on SDK v6 due to a client token rate limit #4755
+* Fix - Fatal error on WooCommerce versions below 10.9 #4753
+* Fix - Venmo shown on SDK v6 even when disabled #4764
+* Fix - Advanced Card Processing support for Mexico merchants with SDK v6 #4730
+* Fix - Excessive PayPal API requests for orders that no longer exist on SDK v6, keeping customer sessions alive for days #4735
+* Fix - "Order total has changed" error when paying for a free trial subscription from the product page #4762
+* Fix - Pay Later messaging settings checkboxes not keeping their saved state on SDK v6 #4752
+* Fix - Fastlane classic checkout on SDK v6 shows plain country dropdowns instead of the enhanced WooCommerce fields #4754
+* Fix - Native "Proceed to PayPal" button intermittently shown next to the PayPal buttons on SDK v6 classic checkout #4766
+* Fix - PayPal buttons on product and cart pages redirect to checkout instead of completing the order when Pay Now is enabled on SDK v6 #4699
+* Fix - PayPal gateway missing on Block Checkout and PayPal button missing on classic checkout for free trial subscriptions #4725
+* Fix - Advanced Card Processing payment fails when part of the order is paid with store credit #4689
+* Fix - Cart emptied when adding a product while a cart simulation request is running #4708
+* Fix - Shipping line item missing from the order after a failed Advanced Card Processing payment and successful retry #4694
+* Fix - Payment method reverted to PayPal on order save after a failed PayPal attempt and switching gateways, sending BACS on-hold emails without bank details #4687
+* Fix - Declined vaulted card renewal stores the capture ID and blocks all later payment attempts #4695
+* Fix - Orders paid with WooPayments or BACS saved as PayPal orders when stale PayPal order data exists #4632
+* Fix - PayPal order amount ignores cart total reductions applied outside the WooCommerce discount APIs #4714
+* Fix - Negative fees ignored by Google Pay and other express payments on Block Checkout #4668
+* Fix - Tracking added with WooCommerce Shipment Tracking not synced to PayPal Package Tracking #4747
+* Fix - Add Apple Pay frontend logging and more detailed log prefixes to diagnose payments failing only on live sites #4680
+* Fix - reCAPTCHA rejections not logged unless plugin logging is enabled #4619
+* Fix - Pay Now ignored for PayPal Subscription products bought from the product page #4630
+* Fix - Store Sync no longer replaces the guest session cookie, which emptied the cart on the next page load #4734
 
 = 4.1.3 - 2026-09-09 =
 * Enhancement - PayPal JS SDK v6 is now the default for new store setups, moving PayPal buttons, Apple Pay, Google Pay, Advanced Card Fields, Fastlane, Pay Later messaging and vaulting subscriptions onto the new integration; existing stores remain on SDK v5 with this version #4641
