@@ -133,7 +133,7 @@ export async function renderGooglePay( {
 		return;
 	}
 
-	revealMethodGateway( gateway, config );
+	revealMethodGateway( gateway );
 
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;

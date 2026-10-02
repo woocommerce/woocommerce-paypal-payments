@@ -270,6 +270,147 @@ describe( 'loadSdkV6', () => {
 		expect( firstId ).toEqual( expect.any( String ) );
 		expect( secondId ).toBe( firstId );
 	} );
+	describe( 'load timeout', () => {
+		const TIMEOUT_MESSAGE = 'PayPal SDK v6 did not load within 15000 ms.';
+		const neverSettles = () => new Promise( () => {} );
+
+		let onReady;
+
+		const track = ( promise ) => {
+			const state = { settled: false, error: null, value: null };
+			promise.then(
+				( value ) => {
+					state.settled = true;
+					state.value = value;
+				},
+				( error ) => {
+					state.settled = true;
+					state.error = error;
+				}
+			);
+			return state;
+		};
+
+		beforeEach( () => {
+			jest.useFakeTimers();
+			onReady = jest.fn();
+			document.addEventListener( 'ppcp-sdk-v6-ready', onReady );
+		} );
+
+		afterEach( () => {
+			document.removeEventListener( 'ppcp-sdk-v6-ready', onReady );
+			jest.useRealTimers();
+		} );
+
+		test( 'stays pending just before the limit and rejects with the timeout error at 15000 ms', async () => {
+			window.paypal.createInstance.mockImplementation( neverSettles );
+
+			const state = track( loadSdkV6( baseConfig(), 'checkout' ) );
+
+			await jest.advanceTimersByTimeAsync( 14999 );
+			expect( state.settled ).toBe( false );
+
+			await jest.advanceTimersByTimeAsync( 1 );
+			expect( state.settled ).toBe( true );
+			expect( state.error ).toEqual( new Error( TIMEOUT_MESSAGE ) );
+		} );
+
+		test( 'times out when the script never loads', async () => {
+			mockLoadScript.mockImplementation( neverSettles );
+
+			const state = track( loadSdkV6( baseConfig(), 'checkout' ) );
+			await jest.advanceTimersByTimeAsync( 15000 );
+
+			expect( state.error ).toEqual( new Error( TIMEOUT_MESSAGE ) );
+		} );
+
+		test( 'starts a fresh load on the next call after a timeout', async () => {
+			window.paypal.createInstance.mockImplementationOnce( neverSettles );
+			const freshInstance = { fresh: true };
+			window.paypal.createInstance.mockResolvedValueOnce( freshInstance );
+
+			const first = track( loadSdkV6( baseConfig(), 'checkout' ) );
+			await jest.advanceTimersByTimeAsync( 15000 );
+			expect( first.error ).toBeInstanceOf( Error );
+
+			const second = await loadSdkV6( baseConfig(), 'checkout' );
+
+			expect( second ).toBe( freshInstance );
+			expect( mockLoadScript ).toHaveBeenCalledTimes( 2 );
+			expect( mockPostJson ).toHaveBeenCalledTimes( 2 );
+			expect( window.paypal.createInstance ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test( 'drops an instance that resolves only after the timeout', async () => {
+			let resolveInstance;
+			window.paypal.createInstance.mockImplementation(
+				() =>
+					new Promise( ( resolve ) => {
+						resolveInstance = resolve;
+					} )
+			);
+
+			const state = track( loadSdkV6( baseConfig(), 'checkout' ) );
+			await jest.advanceTimersByTimeAsync( 15000 );
+			resolveInstance( { late: true } );
+			await jest.advanceTimersByTimeAsync( 1000 );
+
+			expect( onReady ).not.toHaveBeenCalled();
+			expect( state.error ).toEqual( new Error( TIMEOUT_MESSAGE ) );
+			expect( state.value ).toBeNull();
+		} );
+
+		test( 'does not start a token refresh for an instance that resolves only after the timeout', async () => {
+			mockPostJson.mockResolvedValue( {
+				client_token: 'LATE',
+				refresh_in: 240,
+				retry_in: 15,
+			} );
+			let resolveInstance;
+			window.paypal.createInstance.mockImplementation(
+				() =>
+					new Promise( ( resolve ) => {
+						resolveInstance = resolve;
+					} )
+			);
+			const listener = jest.fn();
+			onSdkInstanceChange( listener );
+
+			track( loadSdkV6( baseConfig(), 'checkout' ) );
+			await jest.advanceTimersByTimeAsync( 15000 );
+			resolveInstance( { late: true } );
+			await jest.advanceTimersByTimeAsync( 10 * 240 * 1000 );
+
+			expect( window.paypal.createInstance ).toHaveBeenCalledTimes( 1 );
+			expect( listener ).not.toHaveBeenCalled();
+		} );
+
+		test( 'dispatches ppcp-sdk-v6-ready once with the instance and leaves no timer behind when the load succeeds in time', async () => {
+			const instance = { ready: true };
+			window.paypal.createInstance.mockResolvedValue( instance );
+
+			const result = await loadSdkV6( baseConfig(), 'checkout' );
+
+			expect( result ).toBe( instance );
+			expect( onReady ).toHaveBeenCalledTimes( 1 );
+			expect( onReady.mock.calls[ 0 ][ 0 ].detail.sdkInstance ).toBe(
+				instance
+			);
+			expect( jest.getTimerCount() ).toBe( 0 );
+		} );
+
+		test( 'rejects with the original error, not the timeout one, when the load fails in time', async () => {
+			mockPostJson.mockRejectedValue(
+				new Error( 'token request failed' )
+			);
+
+			await expect(
+				loadSdkV6( baseConfig(), 'checkout' )
+			).rejects.toThrow( 'token request failed' );
+			expect( onReady ).not.toHaveBeenCalled();
+			expect( jest.getTimerCount() ).toBe( 0 );
+		} );
+	} );
 } );
 
 describe( 'client token refresh wiring', () => {

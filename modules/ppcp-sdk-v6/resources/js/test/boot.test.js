@@ -10,9 +10,12 @@ jest.mock( '../utils/errorHandler', () => ( {
 	setErrorLabels: ( ...args ) => mockSetErrorLabels( ...args ),
 } ) );
 
-const mockSetVisible = jest.fn();
-jest.mock( '@ppcp-button/Helper/Hiding', () => ( {
-	setVisible: ( ...args ) => mockSetVisible( ...args ),
+const mockPlaceExpressButtons = jest.fn();
+const mockSetExpressButtonsFailed = jest.fn();
+jest.mock( '../methods/gatewayPlacement', () => ( {
+	placeExpressButtons: ( ...args ) => mockPlaceExpressButtons( ...args ),
+	setExpressButtonsFailed: ( ...args ) =>
+		mockSetExpressButtonsFailed( ...args ),
 } ) );
 
 const mockLoadSdkV6 = jest.fn();
@@ -176,6 +179,7 @@ let instanceChangeCallback;
 beforeEach( () => {
 	jest.useFakeTimers();
 	jest.clearAllMocks();
+	mockRenderButtons.mockReset();
 
 	mockHasJQuery.mockReturnValue( true );
 	global.jQuery = createFakeJQuery();
@@ -541,6 +545,117 @@ describe( 'boot', () => {
 			expect(
 				document.querySelector( CARD_WRAPPER_SELECTOR ).childElementCount
 			).toBe( 1 );
+		} );
+	} );
+
+	describe( 'express button placement', () => {
+		const drawButton = ( { wrapper } ) => {
+			wrapper.appendChild( document.createElement( 'paypal-button' ) );
+		};
+
+		test( 'places the express buttons once on the initial render, with the config', async () => {
+			const config = baseConfig();
+			buildDom();
+			boot( config );
+			await flush();
+
+			expect( mockPlaceExpressButtons ).toHaveBeenCalledTimes( 1 );
+			expect( mockPlaceExpressButtons ).toHaveBeenCalledWith( config );
+		} );
+
+		test( 'reports a failure when the SDK fails to load', async () => {
+			mockLoadSdkV6.mockRejectedValueOnce( new Error( 'sdk failed' ) );
+			mockRenderButtons.mockImplementation( drawButton );
+
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledWith( true );
+		} );
+
+		test( 'reports a failure when the buttons draw nothing', async () => {
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledWith( true );
+		} );
+
+		test( 'reports success when a button is drawn', async () => {
+			mockRenderButtons.mockImplementation( drawButton );
+
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledWith( false );
+		} );
+
+		test( 'reports success when a button is drawn but a wallet then fails to render', async () => {
+			mockRenderButtons.mockImplementation( drawButton );
+			mockRenderWallets.mockRejectedValue( new Error( 'wallet failed' ) );
+
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledWith( false );
+		} );
+
+		test( 'never reports for the mini-cart target when there is no page context', async () => {
+			mockRenderButtons.mockImplementation( drawButton );
+
+			buildDom();
+			boot( baseConfig( { page_context: '' } ) );
+			await flush();
+
+			expect( mockRenderButtons ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).not.toHaveBeenCalled();
+		} );
+
+		test( 'does not report when the page wrapper is already populated', async () => {
+			buildDom();
+			document
+				.querySelector( WRAPPER_SELECTOR )
+				.appendChild( document.createElement( 'paypal-button' ) );
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).not.toHaveBeenCalled();
+		} );
+
+		test( 'does not report when the page wrapper is absent', async () => {
+			document.body.innerHTML = `<div id="${ MINI_CART_WRAPPER_SELECTOR.slice(
+				1
+			) }"></div>`;
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).not.toHaveBeenCalled();
+		} );
+
+		test( 'a DOM-replacing event retries after a failed pass and reports success once a button is drawn', async () => {
+			mockLoadSdkV6.mockRejectedValueOnce( new Error( 'sdk failed' ) );
+			mockRenderButtons.mockImplementation( drawButton );
+
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+			expect( mockSetExpressButtonsFailed ).toHaveBeenLastCalledWith(
+				true
+			);
+
+			global.jQuery.trigger( 'updated_checkout' );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenLastCalledWith(
+				false
+			);
 		} );
 	} );
 
