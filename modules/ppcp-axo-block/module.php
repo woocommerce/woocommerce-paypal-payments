@@ -1,14 +1,13 @@
 <?php
+
 /**
  * The Axo Block module.
  *
  * @package WooCommerce\PayPalCommerce\AxoBlock
  */
-
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\AxoBlock;
 
-return static function (): AxoBlockModule {
-	return new AxoBlockModule();
+return static function (): \WooCommerce\PayPalCommerce\AxoBlock\AxoBlockModule {
+    return new \WooCommerce\PayPalCommerce\AxoBlock\AxoBlockModule();
 };
