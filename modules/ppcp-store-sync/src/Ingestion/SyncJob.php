@@ -116,7 +116,7 @@ class SyncJob {
 		$status_code   = wp_remote_retrieve_response_code( $response );
 		$response_body = wp_remote_retrieve_body( $response );
 
-		if ( $status_code >= 200 && $status_code < 422 ) {
+		if ( $status_code >= 200 && $status_code <= 422 ) {
 			$this->handle_successful_response( $response_body, $products );
 
 			return;
@@ -247,9 +247,9 @@ class SyncJob {
 	private function extract_product_errors( string $error_message, array $payload_products ): array {
 		$errors = array();
 
-		// Pattern: data/products/{index} followed by error text until comma or end.
+		// Pattern: data/products/{index}, then "/" or space, then error text until comma or end.
 		preg_match_all(
-			'/data\/products\/(\d+)\s+([^,]+)/',
+			'/data\/products\/(\d+)[\/\s]+([^,]+)/',
 			$error_message,
 			$matches,
 			PREG_SET_ORDER

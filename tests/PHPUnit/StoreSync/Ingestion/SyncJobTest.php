@@ -619,4 +619,67 @@ class SyncJobTest extends TestCase {
 		$this->assertSame( 0, $captured_action['synced'] );
 		$this->assertSame( 1, $captured_action['failed'] );
 	}
+
+	/**
+	 * GIVEN a batch of two products
+	 * WHEN the API answers HTTP 422 with a validation error naming the second product
+	 * THEN no exception is thrown, so Action Scheduler does not retry the batch
+	 * AND the named product is marked processed with its validation error
+	 * AND the ingestion-completed action reports one failure with status "validation_errors"
+	 */
+	public function test_execute_marks_named_product_with_validation_error_on_http_422(): void {
+		$product_one = $this->create_product_stub( 1, 'Product 1', '10' );
+		$product_two = $this->create_product_stub( 2, 'Product 2', '20' );
+
+		when( 'wc_get_product' )->alias( function ( $id ) use ( $product_one, $product_two ) {
+			return array( 1 => $product_one, 2 => $product_two )[ $id ] ?? false;
+		} );
+
+		$this->stub_http_error_response(
+			422,
+			json_encode(
+				array(
+					'success' => false,
+					'error'   => 'VALIDATION_ERROR',
+					'message' => 'Validation failed: data/products/1/description must pass "isNotEmpty" keyword validation',
+				)
+			)
+		);
+
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $product_one );
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $product_two );
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with(
+				$product_two,
+				Mockery::on( static fn( $error ) => is_string( $error ) && false !== strpos( $error, 'isNotEmpty' ) )
+			);
+
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			array( 1, 2 ),
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$sync_job->execute();
+
+		$this->assertSame( 'validation_errors', $captured_action['status'] );
+		$this->assertSame( 2, $captured_action['pushed'] );
+		$this->assertSame( 1, $captured_action['synced'] );
+		$this->assertSame( 1, $captured_action['failed'] );
+	}
 }
