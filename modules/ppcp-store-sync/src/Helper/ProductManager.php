@@ -18,6 +18,17 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 
 class ProductManager {
+	/**
+	 * Blank characters that are not ASCII whitespace. The ingestion API rejects
+	 * a description that contains only such characters as empty.
+	 */
+	private const UNICODE_SPACES = array(
+		"\u{00A0}", // No-break space, from "&nbsp;".
+		"\u{202F}", // Narrow no-break space.
+		"\u{3000}", // Ideographic space.
+		"\u{FEFF}", // Zero-width no-break space (byte order mark).
+	);
+
 	protected static array $product_cache = array();
 
 	private StoreCurrencyValue $store_currency;
@@ -115,7 +126,7 @@ class ProductManager {
 		$description = $product->get_description() ?: $fallback;
 		$plain_text  = wp_strip_all_tags( $description );
 		$plain_text  = html_entity_decode( $plain_text, ENT_QUOTES, 'UTF-8' );
-		$plain_text  = trim( preg_replace( '/\s+/', ' ', $plain_text ) ?? '' );
+		$plain_text  = $this->normalize_whitespace( $plain_text );
 
 		/**
 		 * Filters the product description for PayPal Agentic Commerce ingestion.
@@ -123,11 +134,19 @@ class ProductManager {
 		 * @param string     $plain_text The plain text description.
 		 * @param WC_Product $product    The WooCommerce product object.
 		 */
-		return apply_filters(
+		$filtered = apply_filters(
 			'woocommerce_paypal_payments_store_sync_item_description',
 			$plain_text,
 			$product
 		);
+
+		return $this->normalize_whitespace( $filtered );
+	}
+
+	private function normalize_whitespace( string $text ): string {
+		$text = str_replace( self::UNICODE_SPACES, ' ', $text );
+
+		return trim( preg_replace( '/\s+/', ' ', $text ) ?? '' );
 	}
 
 	/**
