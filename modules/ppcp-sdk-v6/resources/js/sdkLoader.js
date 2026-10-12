@@ -5,6 +5,7 @@
  */
 
 import { postJson } from './utils/api';
+import { createSdkInstance } from './utils/createSdkInstance';
 import { loadScript } from './utils/scriptLoaders';
 import { methodSdkComponents } from './methods/methodRegistry';
 
@@ -115,7 +116,7 @@ async function createInstance( config, context ) {
 		components.push( 'paypal-messages' );
 	}
 
-	const sdkInstance = await window.paypal.createInstance( {
+	const sdkInstance = await createSdkInstance( window.paypal, {
 		clientToken: tokenData.client_token,
 		components,
 		pageType: PAGE_TYPE_MAP[ context ] || 'checkout',

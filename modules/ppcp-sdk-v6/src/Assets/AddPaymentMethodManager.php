@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\SdkLocale;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -142,7 +143,7 @@ class AddPaymentMethodManager {
 		return array(
 			'sdk_url'              => $base_url . '/web-sdk/v6/core',
 			'currency'             => get_woocommerce_currency(),
-			'locale'               => str_replace( '_', '-', get_locale() ),
+			'locale'               => SdkLocale::from_wp_locale( get_locale() ),
 			'verification_method'  => $verification_method,
 			'payment_methods_page' => wc_get_account_endpoint_url( 'payment-methods' ),
 			'button'               => array(
