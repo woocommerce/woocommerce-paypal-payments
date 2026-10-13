@@ -83,6 +83,43 @@ describe( 'CartActionHandler subscriptionsConfiguration()', () => {
 		}
 	);
 
+	test.each( [
+		[
+			'the request fails',
+			new TypeError( 'Failed to fetch' ),
+			( error ) => {
+				global.fetch = jest.fn().mockRejectedValueOnce( error );
+			},
+		],
+		[
+			'the response body is not JSON',
+			new SyntaxError( 'Unexpected token < in JSON' ),
+			( error ) => {
+				global.fetch = jest.fn().mockResolvedValueOnce( {
+					json: async () => {
+						throw error;
+					},
+				} );
+			},
+		],
+	] )(
+		'rejects with the original error and reports a generic error when %s',
+		async ( _label, error, arrange ) => {
+			arrange( error );
+			const errorHandler = buildErrorHandler();
+			const handler = buildHandler( baseConfig(), errorHandler );
+			const { onApprove } =
+				handler.subscriptionsConfiguration( 'P-PLAN-ID' );
+
+			await expect(
+				onApprove( { orderID: 'o1', subscriptionID: 's1' } )
+			).rejects.toBe( error );
+
+			expect( errorHandler.genericError ).toHaveBeenCalledTimes( 1 );
+			expect( errorHandler.message ).not.toHaveBeenCalled();
+		}
+	);
+
 	test( 'navigates to the order received URL when the approve endpoint created and paid the order itself', async () => {
 		mockFetchResponse( {
 			success: true,

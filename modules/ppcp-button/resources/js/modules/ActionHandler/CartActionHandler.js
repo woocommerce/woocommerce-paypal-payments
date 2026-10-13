@@ -24,23 +24,33 @@ class CartActionHandler {
 			// failed approval as an unhandled rejection and told the shopper
 			// nothing.
 			onApprove: async ( data ) => {
-				const res = await fetch(
-					this.config.ajax.approve_subscription.endpoint,
-					{
-						method: 'POST',
-						credentials: 'same-origin',
-						body: JSON.stringify( {
-							nonce: this.config.ajax.approve_subscription.nonce,
-							order_id: data.orderID,
-							subscription_id: data.subscriptionID,
-							should_create_wc_order:
-								! this.config.vaultingEnabled ||
-								data.paymentSource !== 'venmo',
-						} ),
-					}
-				);
+				let response;
+				try {
+					const res = await fetch(
+						this.config.ajax.approve_subscription.endpoint,
+						{
+							method: 'POST',
+							credentials: 'same-origin',
+							body: JSON.stringify( {
+								nonce: this.config.ajax.approve_subscription
+									.nonce,
+								order_id: data.orderID,
+								subscription_id: data.subscriptionID,
+								should_create_wc_order:
+									! this.config.vaultingEnabled ||
+									data.paymentSource !== 'venmo',
+							} ),
+						}
+					);
+					response = await res.json();
+				} catch ( error ) {
+					// A network failure or a non-JSON body never reaches
+					// approvalRedirectUrl(), so it has to be reported here.
+					this.errorHandler.genericError();
+					throw error;
+				}
 
-				location.href = this.approvalRedirectUrl( await res.json() );
+				location.href = this.approvalRedirectUrl( response );
 			},
 			onError: ( err ) => {
 				console.error( err );
