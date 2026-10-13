@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -23,7 +22,7 @@ use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
-use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\PayNowOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -98,19 +97,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 */
 	protected $final_review_enabled;
 
-	/**
-	 * The WC gateway.
-	 *
-	 * @var PayPalGateway
-	 */
-	protected $gateway;
-
-	/**
-	 * The WooCommerce order creator.
-	 *
-	 * @var WooCommerceOrderCreator
-	 */
-	protected $wc_order_creator;
+	protected PayNowOrderHandler $pay_now_order_handler;
 
 	/**
 	 * The logger.
@@ -119,22 +106,6 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 */
 	protected $logger;
 
-	/**
-	 * ApproveOrderEndpoint constructor.
-	 *
-	 * @param RequestData             $request_data         The request data helper.
-	 * @param OrderEndpoint           $order_endpoint       The order endpoint.
-	 * @param SessionHandler          $session_handler      The session handler.
-	 * @param ThreeDSecure            $three_d_secure       The 3d secure helper object.
-	 * @param SettingsProvider        $settings_provider    The settings provider.
-	 * @param SettingsModel           $settings_model       The settings model.
-	 * @param DccApplies              $dcc_applies          The DCC applies object.
-	 * @param OrderHelper             $order_helper         The order helper.
-	 * @param bool                    $final_review_enabled Whether the final review is enabled.
-	 * @param PayPalGateway           $gateway              The WC gateway.
-	 * @param WooCommerceOrderCreator $wc_order_creator     The WooCommerce order creator.
-	 * @param LoggerInterface         $logger               The logger.
-	 */
 	public function __construct(
 		RequestData $request_data,
 		OrderEndpoint $order_endpoint,
@@ -145,25 +116,23 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		DccApplies $dcc_applies,
 		OrderHelper $order_helper,
 		bool $final_review_enabled,
-		PayPalGateway $gateway,
-		WooCommerceOrderCreator $wc_order_creator,
+		PayNowOrderHandler $pay_now_order_handler,
 		LoggerInterface $logger,
 		Context $context
 	) {
 
-		$this->request_data         = $request_data;
-		$this->api_endpoint         = $order_endpoint;
-		$this->session_handler      = $session_handler;
-		$this->threed_secure        = $three_d_secure;
-		$this->settings_provider    = $settings_provider;
-		$this->settings_model       = $settings_model;
-		$this->dcc_applies          = $dcc_applies;
-		$this->order_helper         = $order_helper;
-		$this->final_review_enabled = $final_review_enabled;
-		$this->gateway              = $gateway;
-		$this->wc_order_creator     = $wc_order_creator;
-		$this->logger               = $logger;
-		$this->context              = $context;
+		$this->request_data          = $request_data;
+		$this->api_endpoint          = $order_endpoint;
+		$this->session_handler       = $session_handler;
+		$this->threed_secure         = $three_d_secure;
+		$this->settings_provider     = $settings_provider;
+		$this->settings_model        = $settings_model;
+		$this->dcc_applies           = $dcc_applies;
+		$this->order_helper          = $order_helper;
+		$this->final_review_enabled  = $final_review_enabled;
+		$this->pay_now_order_handler = $pay_now_order_handler;
+		$this->logger                = $logger;
+		$this->context               = $context;
 	}
 
 	/**
@@ -272,18 +241,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
 			if ( $should_create_wc_order && ! $this->final_review_enabled && ! $this->context->is_checkout() ) {
-				$wc_order       = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart, $data );
-				$payment_result = $this->gateway->process_payment( $wc_order->get_id() );
-
-				// The buyer may never reach order-received, which would empty the cart.
-				// Not the payment result: a retry also returns success, for an unpaid order.
-				$paid_order = wc_get_order( $wc_order->get_id() );
-				if ( $paid_order instanceof WC_Order && $paid_order->is_paid() ) {
-					WC()->cart->empty_cart();
-				}
-
-				// Not always order-received: a retry or a failure redirects elsewhere.
-				wp_send_json_success( array( 'order_received_url' => $payment_result['redirect'] ) );
+				$redirect_url = $this->pay_now_order_handler->pay( $order, $data );
+				wp_send_json_success( array( 'order_received_url' => $redirect_url ) );
 			}
 			wp_send_json_success();
 

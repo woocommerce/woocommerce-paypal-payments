@@ -80,8 +80,7 @@ return array(
 		$dcc_applies          = $container->get( 'api.helpers.dccapplies' );
 		$order_helper         = $container->get( 'api.order-helper' );
 		$final_review_enabled = $container->get( 'blocks.settings.final_review_enabled' );
-		$wc_order_creator     = $container->get( 'order-endpoints.helper.wc-order-creator' );
-		$gateway              = $container->get( 'wcgateway.paypal-gateway' );
+		$pay_now_handler      = $container->get( 'order-endpoints.helper.pay-now-order-handler' );
 		$logger               = $container->get( 'woocommerce.logger.woocommerce' );
 		$context              = $container->get( 'button.helper.context' );
 
@@ -95,8 +94,7 @@ return array(
 			$dcc_applies,
 			$order_helper,
 			$final_review_enabled,
-			$gateway,
-			$wc_order_creator,
+			$pay_now_handler,
 			$logger,
 			$context
 		);
