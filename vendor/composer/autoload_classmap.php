@@ -381,6 +381,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedQuote' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/RecordedQuote.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedShippingRate' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/RecordedShippingRate.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedTaxBasis' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/RecordedTaxBasis.php',
+    'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\SdkLocale' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/SdkLocale.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\SessionRecord' => $baseDir . '/modules/ppcp-sdk-v6/src/Helper/SessionRecord.php',
     'WooCommerce\\PayPalCommerce\\SdkV6\\SdkV6Module' => $baseDir . '/modules/ppcp-sdk-v6/src/SdkV6Module.php',
     'WooCommerce\\PayPalCommerce\\Session\\Cancellation\\CancelController' => $baseDir . '/modules/ppcp-session/src/Cancellation/CancelController.php',

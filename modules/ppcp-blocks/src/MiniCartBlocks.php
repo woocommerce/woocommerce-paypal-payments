@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\SdkLocale;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -66,7 +67,7 @@ class MiniCartBlocks
         $style_mapper = $c->get('sdk-v6.button-style-mapper');
         assert($style_mapper instanceof ButtonStyleMapper);
         $base_url = $environment->is_sandbox() ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
-        return array('sdkV6' => array('sdkUrl' => $base_url . '/web-sdk/v6/core', 'clientId' => (string) $c->get('button.client_id'), 'currency' => get_woocommerce_currency(), 'locale' => str_replace('_', '-', get_locale())), 'buttonStyle' => array_merge($style_mapper->styles_for_context('mini-cart'), array('height' => '35px')));
+        return array('sdkV6' => array('sdkUrl' => $base_url . '/web-sdk/v6/core', 'clientId' => (string) $c->get('button.client_id'), 'currency' => get_woocommerce_currency(), 'locale' => SdkLocale::from_wp_locale(get_locale())), 'buttonStyle' => array_merge($style_mapper->styles_for_context('mini-cart'), array('height' => '35px')));
     }
     /**
      * Registers the block: editor script, localized data and the server render callback.

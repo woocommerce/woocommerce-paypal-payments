@@ -1,5 +1,5 @@
 <?php
 
 namespace {
-    return array('dependencies' => array('wp-i18n'), 'version' => '10f5c5e0dae0a68814e1');
+    return array('dependencies' => array('wp-i18n'), 'version' => 'c77cdf3e08455c7dbcd5');
 }

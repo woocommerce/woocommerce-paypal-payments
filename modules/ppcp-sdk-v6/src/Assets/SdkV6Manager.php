@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\SdkLocale;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -1028,7 +1029,7 @@ class SdkV6Manager
             'amount' => $this->transaction_amount(),
             'buyer_country' => $buyer_country,
             'merchant_country' => $this->merchant_country,
-            'locale' => str_replace('_', '-', get_locale()),
+            'locale' => SdkLocale::from_wp_locale(get_locale()),
             'vaulting_enabled' => $this->vaulting_enabled,
             'final_review' => $this->final_review_enabled,
             'is_free_trial_cart' => $this->free_trial_helper->is_free_trial_cart(),

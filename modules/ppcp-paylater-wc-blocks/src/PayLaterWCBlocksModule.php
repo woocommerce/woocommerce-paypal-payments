@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\SdkLocale;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -108,7 +109,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExecutableModule
         assert($style_mapper instanceof MessageStyleMapper);
         // Same script URL as SdkV6Manager::script_data().
         $base_url = $environment->is_sandbox() ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
-        return array('sdkV6' => array('sdkUrl' => $base_url . '/web-sdk/v6/core', 'clientId' => (string) $c->get('button.client_id'), 'currency' => get_woocommerce_currency(), 'locale' => str_replace('_', '-', get_locale())), 'messageStyle' => $style_mapper->styles_for_location($location));
+        return array('sdkV6' => array('sdkUrl' => $base_url . '/web-sdk/v6/core', 'clientId' => (string) $c->get('button.client_id'), 'currency' => get_woocommerce_currency(), 'locale' => SdkLocale::from_wp_locale(get_locale())), 'messageStyle' => $style_mapper->styles_for_location($location));
     }
     /**
      * Returns whether the under cart totals placement is enabled.

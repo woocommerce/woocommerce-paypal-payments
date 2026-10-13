@@ -598,6 +598,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedQuote' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/RecordedQuote.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedShippingRate' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/RecordedShippingRate.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\RecordedTaxBasis' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/RecordedTaxBasis.php',
+        'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\SdkLocale' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/SdkLocale.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\Helper\\SessionRecord' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/Helper/SessionRecord.php',
         'WooCommerce\\PayPalCommerce\\SdkV6\\SdkV6Module' => __DIR__ . '/../..' . '/modules/ppcp-sdk-v6/src/SdkV6Module.php',
         'WooCommerce\\PayPalCommerce\\Session\\Cancellation\\CancelController' => __DIR__ . '/../..' . '/modules/ppcp-session/src/Cancellation/CancelController.php',
