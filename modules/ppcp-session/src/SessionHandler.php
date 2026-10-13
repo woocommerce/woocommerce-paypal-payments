@@ -58,6 +58,11 @@ class SessionHandler {
 	 */
 	private $checkout_form = array();
 
+	/**
+	 * The PayPal order the buyer was sent back to PayPal to approve again.
+	 */
+	private string $payer_action_order_id = '';
+
 	public function __construct( ?LoggerInterface $logger = null ) {
 		$this->logger = $logger ?? new NullLogger();
 	}
@@ -168,6 +173,20 @@ class SessionHandler {
 		$this->store_session();
 	}
 
+	public function payer_action_order_id(): string {
+		$this->load_session();
+
+		return $this->payer_action_order_id;
+	}
+
+	public function replace_payer_action_order_id( string $order_id ): void {
+		$this->load_session();
+
+		$this->payer_action_order_id = $order_id;
+
+		$this->store_session();
+	}
+
 	/**
 	 * Returns how many times the customer tried to use the PayPal Gateway in this session.
 	 *
@@ -214,6 +233,7 @@ class SessionHandler {
 		$this->insufficient_funding_tries = 0;
 		$this->funding_source             = null;
 		$this->checkout_form              = array();
+		$this->payer_action_order_id      = '';
 		$this->store_session();
 		return $this;
 	}
@@ -251,7 +271,8 @@ class SessionHandler {
 		if ( ! is_string( $this->funding_source ) ) {
 			$this->funding_source = null;
 		}
-		$this->checkout_form = $data['checkout_form'] ?? array();
+		$this->checkout_form         = $data['checkout_form'] ?? array();
+		$this->payer_action_order_id = (string) ( $data['payer_action_order_id'] ?? '' );
 	}
 
 	/**
@@ -267,6 +288,7 @@ class SessionHandler {
 			'insufficient_funding_tries' => $obj->insufficient_funding_tries,
 			'funding_source'             => $obj->funding_source,
 			'checkout_form'              => $obj->checkout_form,
+			'payer_action_order_id'      => $obj->payer_action_order_id,
 		);
 	}
 }
