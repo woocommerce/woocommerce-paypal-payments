@@ -11,17 +11,38 @@ namespace WooCommerce\PayPalCommerce\OrderEndpoints\Helper;
 
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 class PayNowOrderHandler {
 
 	private WooCommerceOrderCreator $wc_order_creator;
-
 	private PayPalGateway $gateway;
+	private SettingsProvider $settings_provider;
+	private Context $context;
 
-	public function __construct( WooCommerceOrderCreator $wc_order_creator, PayPalGateway $gateway ) {
-		$this->wc_order_creator = $wc_order_creator;
-		$this->gateway          = $gateway;
+	public function __construct(
+		WooCommerceOrderCreator $wc_order_creator,
+		PayPalGateway $gateway,
+		SettingsProvider $settings_provider,
+		Context $context
+	) {
+		$this->wc_order_creator  = $wc_order_creator;
+		$this->gateway           = $gateway;
+		$this->settings_provider = $settings_provider;
+		$this->context           = $context;
+	}
+
+	/**
+	 * Whether the approval completes the purchase here, without the checkout form.
+	 *
+	 * @param array $request_data The approval request; the client asks with `should_create_wc_order`.
+	 */
+	public function applies( array $request_data ): bool {
+		return ( $request_data['should_create_wc_order'] ?? false )
+			&& $this->settings_provider->enable_pay_now()
+			&& ! $this->context->is_checkout();
 	}
 
 	/**

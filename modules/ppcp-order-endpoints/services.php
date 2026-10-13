@@ -173,7 +173,9 @@ return array(
 	'order-endpoints.helper.pay-now-order-handler'         => static function ( ContainerInterface $container ): PayNowOrderHandler {
 		return new PayNowOrderHandler(
 			$container->get( 'order-endpoints.helper.wc-order-creator' ),
-			$container->get( 'wcgateway.paypal-gateway' )
+			$container->get( 'wcgateway.paypal-gateway' ),
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'button.helper.context' )
 		);
 	},
 );
