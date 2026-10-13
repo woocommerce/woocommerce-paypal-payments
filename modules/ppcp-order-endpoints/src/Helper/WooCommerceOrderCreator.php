@@ -112,7 +112,6 @@ class WooCommerceOrderCreator
             $wc_order->delete(\true);
             throw $error;
         }
-        $this->mark_awaiting_payment($wc_order);
         do_action('woocommerce_paypal_payments_woocommerce_order_created_from_cart', $wc_order, $cart_data);
         return $wc_order;
     }
@@ -299,17 +298,6 @@ class WooCommerceOrderCreator
             $wc_order->add_item($shipping);
         }
         $wc_order->calculate_totals();
-    }
-    /**
-     * Lets WC core empty the cart on the next page load once this order is paid
-     * (wc_clear_cart_after_payment()). Otherwise, only the order-received page empties it.
-     */
-    protected function mark_awaiting_payment(WC_Order $wc_order): void
-    {
-        if (!WC()->session) {
-            return;
-        }
-        WC()->session->set('order_awaiting_payment', $wc_order->get_id());
     }
     /**
      * Configures the payment source.
