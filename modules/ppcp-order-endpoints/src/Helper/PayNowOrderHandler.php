@@ -48,12 +48,16 @@ class PayNowOrderHandler
         $cart = WC()->cart;
         $wc_order = $this->wc_order_creator->create_from_paypal_order($order, $cart, $paypal_data);
         $payment_result = $this->gateway->process_payment($wc_order->get_id());
-        // The order-received page empties the cart, but the buyer may never reach it.
-        // Not the payment result: a retry also returns success, for an unpaid order.
-        // Reloaded, because process_payment() updates its own copy of the order.
+        // Re-fetch order, because process_payment() does not update our initial copy.
         $paid_order = wc_get_order($wc_order->get_id());
-        if ($paid_order instanceof WC_Order && $paid_order->is_paid()) {
-            $cart->empty_cart();
+        if ($paid_order instanceof WC_Order) {
+            // Not the payment result: a retry also returns success, for an unpaid order.
+            // Not is_paid(): an authorized order is on-hold. Same rule as wc_clear_cart_after_payment().
+            $was_processed = !$paid_order->has_status(array('pending', 'failed', 'cancelled'));
+            // The order-received page empties the cart, but the buyer may never reach it.
+            if ($was_processed) {
+                $cart->empty_cart();
+            }
         }
         return $payment_result['redirect'];
     }
