@@ -161,7 +161,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 			}
 
 			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
-			if ( ! $this->final_review_enabled && ! $this->context->is_checkout() && $should_create_wc_order ) {
+			if ( $should_create_wc_order && ! $this->final_review_enabled && ! $this->context->is_checkout() ) {
 				$wc_order       = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart );
 				$payment_result = $this->gateway->process_payment( $wc_order->get_id() );
 
