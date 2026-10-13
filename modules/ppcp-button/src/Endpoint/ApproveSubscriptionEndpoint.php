@@ -18,7 +18,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\PayNowOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -33,13 +32,6 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 	const ENDPOINT = 'ppc-approve-subscription';
 
 	const VALID_SUBSCRIPTION_STATUSES = array( 'ACTIVE', 'APPROVED' );
-
-	/**
-	 * Helper providing context: is current page is checkout, what type of checkout it is, etc.
-	 *
-	 * @var Context $context
-	 */
-	private Context $context;
 
 	/**
 	 * The request data helper.
@@ -62,13 +54,6 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 	 */
 	private $session_handler;
 
-	/**
-	 * Whether the final review is enabled.
-	 *
-	 * @var bool
-	 */
-	protected $final_review_enabled;
-
 	private PayNowOrderHandler $pay_now_order_handler;
 	private BillingSubscriptions $billing_subscriptions;
 	private LoggerInterface $logger;
@@ -78,9 +63,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 		RequestData $request_data,
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
-		bool $final_review_enabled,
 		PayNowOrderHandler $pay_now_order_handler,
-		Context $context,
 		BillingSubscriptions $billing_subscriptions,
 		LoggerInterface $logger,
 		SubscriptionHelper $subscription_helper
@@ -88,9 +71,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 		$this->request_data          = $request_data;
 		$this->order_endpoint        = $order_endpoint;
 		$this->session_handler       = $session_handler;
-		$this->final_review_enabled  = $final_review_enabled;
 		$this->pay_now_order_handler = $pay_now_order_handler;
-		$this->context               = $context;
 		$this->billing_subscriptions = $billing_subscriptions;
 		$this->logger                = $logger;
 		$this->subscription_helper   = $subscription_helper;
@@ -144,8 +125,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 				WC()->session->set( 'ppcp_subscription_cart_hash', WC()->cart->get_cart_hash() );
 			}
 
-			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
-			if ( $should_create_wc_order && ! $this->final_review_enabled && ! $this->context->is_checkout() ) {
+			if ( $this->pay_now_order_handler->applies( $data ) ) {
 				$redirect_url = $this->pay_now_order_handler->pay( $order );
 				wp_send_json_success( array( 'order_received_url' => $redirect_url ) );
 			}
