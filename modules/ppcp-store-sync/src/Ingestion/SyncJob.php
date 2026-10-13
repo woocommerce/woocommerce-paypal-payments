@@ -4,7 +4,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
-use RuntimeException;
 use Psr\Log\LoggerInterface;
 use JsonException;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
@@ -52,9 +51,7 @@ class SyncJob {
 	 * 2. Sends the data to the agentic commerce API
 	 * 3. Handles successful responses by marking products as synced
 	 * 4. Handles validation errors by logging the error of each affected product
-	 * 5. Handles API/network errors by logging and re-throwing exceptions for retry
-	 *
-	 * @throws RuntimeException When a retryable error occurs during sync.
+	 * 5. Handles API/network errors by logging them
 	 */
 	public function execute(): void {
 		$this->logger->info(
@@ -109,8 +106,9 @@ class SyncJob {
 		$this->logger->debug( '[Sync] Started...', $this->build_log_context( $body ) );
 
 		if ( is_wp_error( $response ) ) {
-			// Log the error message and throw an Exception.
 			$this->handle_api_error( $this->product_ids, $response->get_error_message() );
+
+			return;
 		}
 
 		$status_code   = wp_remote_retrieve_response_code( $response );
@@ -122,7 +120,6 @@ class SyncJob {
 			return;
 		}
 
-		// Log the error message and throw an Exception.
 		$this->handle_api_error( $this->product_ids, "HTTP {$status_code}: {$response_body}" );
 	}
 
@@ -287,15 +284,12 @@ class SyncJob {
 	}
 
 	/**
-	 * Handle API or network errors by logging and throwing exception for retry.
-	 *
-	 * This method handles actual API failures (not validation errors) that should
-	 * trigger retry logic. The error is logged and an exception is thrown to signal
-	 * Action Scheduler to retry; products are left unmarked so they are retried.
+	 * Logs an API or network error without throwing: Action Scheduler must not
+	 * count it as a failed run. The products stay unmarked, so the next run sends
+	 * them again.
 	 *
 	 * @param array  $product_ids   Product IDs that failed to sync.
 	 * @param string $error_message The error message.
-	 * @throws RuntimeException When an error occurs during sync.
 	 */
 	private function handle_api_error( array $product_ids, string $error_message ): void {
 		$this->logger->warning(
@@ -310,8 +304,6 @@ class SyncJob {
 
 		$pushed = count( $product_ids );
 		$this->fire_completed_action( 'api_error', $pushed, 0, $pushed, $error_message );
-
-		throw new RuntimeException( sprintf( 'Agentic sync failed: %s', $error_message ) );
 	}
 
 	/**

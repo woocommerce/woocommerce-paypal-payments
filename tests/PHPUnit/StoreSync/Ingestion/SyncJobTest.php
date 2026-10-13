@@ -7,7 +7,6 @@ use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\TestCase;
 use Psr\Log\LoggerInterface;
-use Exception;
 use WC_Product;
 use WC_Product_Variable;
 use WC_Product_Variation;
@@ -235,9 +234,10 @@ class SyncJobTest extends TestCase {
 	 * GIVEN a sync job with valid products
 	 * WHEN the API returns a WordPress error (network failure)
 	 * THEN no products are marked as processed, so they are retried on the next run
-	 * AND a RuntimeException is thrown for Action Scheduler retry
+	 * AND no exception is thrown, so Action Scheduler does not count the run as failed
+	 * AND the ingestion-completed action reports status "api_error" with every product failed
 	 */
-	public function test_execute_throws_exception_when_wp_error_occurs(): void {
+	public function test_execute_reports_api_error_without_throwing_when_wp_error_occurs(): void {
 		$this->create_products_and_stub_wc_get_product( $this->product_ids );
 
 		// Products are left unmarked so Action Scheduler retries them.
@@ -260,21 +260,32 @@ class SyncJobTest extends TestCase {
 			$this->product_filter
 		);
 
-		$this->expectException( Exception::class );
-		$this->expectExceptionMessage( 'Agentic sync failed: Connection timeout' );
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
 
 		$sync_job->execute();
+
+		$this->assertSame( 'api_error', $captured_action['status'] );
+		$this->assertSame( 3, $captured_action['pushed'] );
+		$this->assertSame( 0, $captured_action['synced'] );
+		$this->assertSame( 3, $captured_action['failed'] );
+		$this->assertSame( 'Connection timeout', $captured_action['error_message'] );
 	}
 
 	/**
 	 * GIVEN a sync job with valid products
 	 * WHEN the API returns an HTTP error status code
 	 * THEN no products are marked as processed, so they are retried on the next run
-	 * AND a RuntimeException is thrown for Action Scheduler retry
+	 * AND no exception is thrown, so Action Scheduler does not count the run as failed
+	 * AND the ingestion-completed action reports status "api_error" with every product failed
 	 *
 	 * @dataProvider http_error_provider
 	 */
-	public function test_execute_throws_exception_when_api_returns_http_error(
+	public function test_execute_reports_api_error_without_throwing_when_api_returns_http_error(
 		int $status_code,
 		string $response_body,
 		string $expected_error
@@ -294,10 +305,20 @@ class SyncJobTest extends TestCase {
 			$this->product_filter
 		);
 
-		$this->expectException( Exception::class );
-		$this->expectExceptionMessage( "Agentic sync failed: {$expected_error}" );
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
 
 		$sync_job->execute();
+
+		$this->assertSame( 'api_error', $captured_action['status'] );
+		$this->assertSame( 3, $captured_action['pushed'] );
+		$this->assertSame( 0, $captured_action['synced'] );
+		$this->assertSame( 3, $captured_action['failed'] );
+		$this->assertSame( $expected_error, $captured_action['error_message'] );
 	}
 
 	/**
