@@ -140,6 +140,7 @@ class ApproveOrderEndpointPayNowCartTest extends WcAjaxEndpointTestCase {
 	/**
 	 * Simulates the next front-end page load, where WooCommerce empties the cart
 	 * of a paid order that is awaiting payment in the session.
+	 * For an unpaid order it must leave the cart as it is.
 	 */
 	private function loadNextFrontendPage(): void {
 		do_action( 'template_redirect' );
@@ -149,20 +150,16 @@ class ApproveOrderEndpointPayNowCartTest extends WcAjaxEndpointTestCase {
 	 * GIVEN a cart with one product and an approved PayPal order
 	 * AND the capture succeeds
 	 * WHEN the buyer approves the order with Pay Now
-	 * THEN the cart still holds the product in the approval response
-	 * AND WooCommerce empties the cart on the next front-end page load
+	 * THEN the WC order is paid
+	 * AND the cart is empty right after the approval request, without a further page load
 	 */
-	public function test_successful_capture_empties_cart_on_next_page_load(): void {
+	public function test_successful_capture_empties_cart_in_the_approval_request(): void {
 		$this->addVirtualProductToCart( 10.0 );
 		$endpoint = $this->endpointWhereCaptureSucceeds();
 
 		$result = $this->approveWithPayNow( $endpoint );
 
 		$this->assertContains( $result['wc_order']->get_status(), array( 'processing', 'completed' ) );
-		$this->assertCount( 1, WC()->cart->get_cart() );
-
-		$this->loadNextFrontendPage();
-
 		$this->assertTrue( WC()->cart->is_empty() );
 	}
 
@@ -172,7 +169,7 @@ class ApproveOrderEndpointPayNowCartTest extends WcAjaxEndpointTestCase {
 	 * WHEN the buyer approves the order with Pay Now
 	 * THEN the response sends the buyer to the PayPal approval URL, not to order-received
 	 * AND the WC order stays pending
-	 * AND the cart is kept, also on the next front-end page load
+	 * AND the cart is kept right after the request and on the next front-end page load
 	 */
 	public function test_payer_action_required_redirects_to_paypal_and_keeps_cart(): void {
 		$this->addVirtualProductToCart( 10.0 );
@@ -184,6 +181,7 @@ class ApproveOrderEndpointPayNowCartTest extends WcAjaxEndpointTestCase {
 		$this->assertStringContainsString( 'checkoutnow?token=' . self::PAYPAL_ORDER_ID, $redirect );
 		$this->assertStringNotContainsString( 'order-received', $redirect );
 		$this->assertSame( 'pending', $result['wc_order']->get_status() );
+		$this->assertCount( 1, WC()->cart->get_cart() );
 
 		$this->loadNextFrontendPage();
 
