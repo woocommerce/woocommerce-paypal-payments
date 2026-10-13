@@ -8,6 +8,8 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use function Brain\Monkey\Functions\when;
@@ -32,7 +34,49 @@ class PayNowOrderHandlerTest extends TestCase
 		$this->gateway          = Mockery::mock( PayPalGateway::class );
 		$this->paypal_order     = Mockery::mock( Order::class );
 
-		$this->sut = new PayNowOrderHandler( $this->wc_order_creator, $this->gateway );
+		$this->sut = $this->create_sut( true, false );
+	}
+
+	private function create_sut( bool $pay_now_enabled, bool $is_checkout ): PayNowOrderHandler
+	{
+		$context = Mockery::mock( Context::class );
+		$context->shouldReceive( 'is_checkout' )->andReturn( $is_checkout );
+
+		$settings_provider = Mockery::mock( SettingsProvider::class );
+		$settings_provider->shouldReceive( 'enable_pay_now' )->andReturn( $pay_now_enabled );
+
+		return new PayNowOrderHandler( $this->wc_order_creator, $this->gateway, $settings_provider, $context );
+	}
+
+	/**
+	 * GIVEN an approval request, the Pay Now setting and the current page
+	 * WHEN the handler is asked whether the approval completes the purchase
+	 * THEN it applies only if the client asks for a WC order, Pay Now is on and the page is not checkout
+	 *
+	 * @dataProvider applies_provider
+	 */
+	public function test_applies_only_when_all_conditions_are_met(
+		array $request_data,
+		bool $pay_now_enabled,
+		bool $is_checkout,
+		bool $expected
+	): void {
+		$sut = $this->create_sut( $pay_now_enabled, $is_checkout );
+
+		$this->assertSame( $expected, $sut->applies( $request_data ) );
+	}
+
+	public function applies_provider(): array
+	{
+		$asked = array( 'should_create_wc_order' => true );
+
+		return array(
+			'all three conditions are met' => array( $asked, true, false, true ),
+			'client does not ask for a WC order' => array( array( 'should_create_wc_order' => false ), true, false, false ),
+			'request has no should_create_wc_order key' => array( array( 'order_id' => 'ORDER-1' ), true, false, false ),
+			'Pay Now is disabled' => array( $asked, false, false, false ),
+			'current page is the checkout' => array( $asked, true, true, false ),
+		);
 	}
 
 	/**
