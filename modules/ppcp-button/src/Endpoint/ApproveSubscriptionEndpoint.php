@@ -162,11 +162,11 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 
 			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
 			if ( ! $this->final_review_enabled && ! $this->context->is_checkout() && $should_create_wc_order ) {
-				$wc_order = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart );
-				$this->gateway->process_payment( $wc_order->get_id() );
-				$order_received_url = $wc_order->get_checkout_order_received_url();
+				$wc_order       = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart );
+				$payment_result = $this->gateway->process_payment( $wc_order->get_id() );
 
-				wp_send_json_success( array( 'order_received_url' => $order_received_url ) );
+				// Not always order-received: a retry or a failure redirects elsewhere.
+				wp_send_json_success( array( 'order_received_url' => $payment_result['redirect'] ) );
 			}
 
 			wp_send_json_success();
