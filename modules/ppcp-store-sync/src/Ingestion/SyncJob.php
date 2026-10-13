@@ -51,7 +51,7 @@ class SyncJob {
 	 * 1. Transforms products into the API payload format
 	 * 2. Sends the data to the agentic commerce API
 	 * 3. Handles successful responses by marking products as synced
-	 * 4. Handles validation errors by marking only affected products with error details
+	 * 4. Handles validation errors by logging the error of each affected product
 	 * 5. Handles API/network errors by logging and re-throwing exceptions for retry
 	 *
 	 * @throws RuntimeException When a retryable error occurs during sync.
@@ -272,9 +272,6 @@ class SyncJob {
 
 	/**
 	 * Mark products based on validation results.
-	 *
-	 * Products that failed validation get error annotations.
-	 * Products that passed (or weren't mentioned) get marked as successfully synced.
 	 *
 	 * @param array $validation_errors Mapping of product-id to validation error.
 	 */
