@@ -58,9 +58,6 @@ class SessionHandler {
 	 */
 	private $checkout_form = array();
 
-	/**
-	 * The PayPal order the buyer was sent back to PayPal to approve again.
-	 */
 	private string $payer_action_order_id = '';
 
 	public function __construct( ?LoggerInterface $logger = null ) {
