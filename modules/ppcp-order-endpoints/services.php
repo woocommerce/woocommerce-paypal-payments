@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\PayNowOrderHandler;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -169,6 +170,12 @@ return array(
 			$container->get( 'button.session.factory.card-data' ),
 			$container->get( 'api.factory.shipping' ),
 			$container->get( 'api.factory.payer' )
+		);
+	},
+	'order-endpoints.helper.pay-now-order-handler'         => static function ( ContainerInterface $container ): PayNowOrderHandler {
+		return new PayNowOrderHandler(
+			$container->get( 'order-endpoints.helper.wc-order-creator' ),
+			$container->get( 'wcgateway.paypal-gateway' )
 		);
 	},
 );
