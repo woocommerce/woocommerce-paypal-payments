@@ -3,7 +3,6 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
-use RuntimeException;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use JsonException;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
@@ -40,10 +39,8 @@ class SyncJob
      * 1. Transforms products into the API payload format
      * 2. Sends the data to the agentic commerce API
      * 3. Handles successful responses by marking products as synced
-     * 4. Handles validation errors by marking only affected products with error details
-     * 5. Handles API/network errors by logging and re-throwing exceptions for retry
-     *
-     * @throws RuntimeException When a retryable error occurs during sync.
+     * 4. Handles validation errors by logging the error of each affected product
+     * 5. Handles API/network errors by logging them
      */
     public function execute(): void
     {
@@ -64,8 +61,8 @@ class SyncJob
         $response = wp_remote_post($this->api_endpoint, array('timeout' => 30, 'headers' => array('Content-Type' => 'application/json'), 'body' => (string) wp_json_encode($body)));
         $this->logger->debug('[Sync] Started...', $this->build_log_context($body));
         if (is_wp_error($response)) {
-            // Log the error message and throw an Exception.
             $this->handle_api_error($this->product_ids, $response->get_error_message());
+            return;
         }
         $status_code = wp_remote_retrieve_response_code($response);
         $response_body = wp_remote_retrieve_body($response);
@@ -73,7 +70,6 @@ class SyncJob
             $this->handle_successful_response($response_body, $products);
             return;
         }
-        // Log the error message and throw an Exception.
         $this->handle_api_error($this->product_ids, "HTTP {$status_code}: {$response_body}");
     }
     private function drop_incomplete_products(array $products): array
@@ -172,9 +168,6 @@ class SyncJob
     /**
      * Mark products based on validation results.
      *
-     * Products that failed validation get error annotations.
-     * Products that passed (or weren't mentioned) get marked as successfully synced.
-     *
      * @param array $validation_errors Mapping of product-id to validation error.
      */
     private function mark_products_by_validation_result(array $validation_errors): void
@@ -185,22 +178,18 @@ class SyncJob
         }
     }
     /**
-     * Handle API or network errors by logging and throwing exception for retry.
-     *
-     * This method handles actual API failures (not validation errors) that should
-     * trigger retry logic. The error is logged and an exception is thrown to signal
-     * Action Scheduler to retry; products are left unmarked so they are retried.
+     * Logs an API or network error without throwing: Action Scheduler must not
+     * count it as a failed run. The products stay unmarked, so the next run sends
+     * them again.
      *
      * @param array  $product_ids   Product IDs that failed to sync.
      * @param string $error_message The error message.
-     * @throws RuntimeException When an error occurs during sync.
      */
     private function handle_api_error(array $product_ids, string $error_message): void
     {
         $this->logger->warning(sprintf('[Sync] API Error - %s', $error_message), $this->build_log_context(array('product_count' => count($product_ids), 'product_ids' => $product_ids)));
         $pushed = count($product_ids);
         $this->fire_completed_action('api_error', $pushed, 0, $pushed, $error_message);
-        throw new RuntimeException(sprintf('Agentic sync failed: %s', $error_message));
     }
     /**
      * Fires the ingestion-completed action so other modules/plugins can monitor sync activity.
