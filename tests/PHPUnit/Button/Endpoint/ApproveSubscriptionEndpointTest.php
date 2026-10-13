@@ -7,17 +7,15 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Psr\Log\LoggerInterface;
-use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
-use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\PayNowOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -33,8 +31,7 @@ class ApproveSubscriptionEndpointTest extends TestCase
 	private RequestData $request_data;
 	private OrderEndpoint $order_endpoint;
 	private SessionHandler $session_handler;
-	private WooCommerceOrderCreator $wc_order_creator;
-	private PayPalGateway $gateway;
+	private PayNowOrderHandler $pay_now_order_handler;
 	private Context $context;
 	private BillingSubscriptions $billing_subscriptions;
 	private LoggerInterface $logger;
@@ -48,8 +45,7 @@ class ApproveSubscriptionEndpointTest extends TestCase
 		$this->request_data          = Mockery::mock( RequestData::class );
 		$this->order_endpoint        = Mockery::mock( OrderEndpoint::class );
 		$this->session_handler       = Mockery::mock( SessionHandler::class );
-		$this->wc_order_creator      = Mockery::mock( WooCommerceOrderCreator::class );
-		$this->gateway               = Mockery::mock( PayPalGateway::class );
+		$this->pay_now_order_handler = Mockery::mock( PayNowOrderHandler::class );
 		$this->context               = Mockery::mock( Context::class );
 		$this->billing_subscriptions = Mockery::mock( BillingSubscriptions::class );
 		$this->logger                = Mockery::mock( LoggerInterface::class );
@@ -60,8 +56,7 @@ class ApproveSubscriptionEndpointTest extends TestCase
 			$this->order_endpoint,
 			$this->session_handler,
 			false,
-			$this->wc_order_creator,
-			$this->gateway,
+			$this->pay_now_order_handler,
 			$this->context,
 			$this->billing_subscriptions,
 			$this->logger,
@@ -94,7 +89,7 @@ class ApproveSubscriptionEndpointTest extends TestCase
 		$this->subscription_helper->shouldReceive( 'paypal_subscription_id' )->andReturn( 'PLAN-1' );
 		$this->order_endpoint->shouldReceive( 'order' )->with( 'ORDER-OTHER' )->andReturn( $order );
 		$this->session_handler->shouldReceive( 'replace_order' )->never();
-		$this->gateway->shouldReceive( 'process_payment' )->never();
+		$this->pay_now_order_handler->shouldReceive( 'pay' )->never();
 		$this->logger->shouldReceive( 'error' )->once();
 
 		$this->mock_wc_session( $session_id );
@@ -129,7 +124,7 @@ class ApproveSubscriptionEndpointTest extends TestCase
 		$this->subscription_helper->shouldReceive( 'paypal_subscription_id' )->andReturn( 'PLAN-1' );
 		$this->order_endpoint->shouldReceive( 'order' )->with( 'ORDER-OTHER-SESSION' )->andReturn( $order );
 		$this->session_handler->shouldReceive( 'replace_order' )->never();
-		$this->gateway->shouldReceive( 'process_payment' )->never();
+		$this->pay_now_order_handler->shouldReceive( 'pay' )->never();
 		$this->logger->shouldReceive( 'error' )->once();
 
 		$this->mock_wc_session( $session_id );
@@ -235,86 +230,38 @@ class ApproveSubscriptionEndpointTest extends TestCase
 
 	/**
 	 * GIVEN a Pay Now subscription approval outside the checkout page that asks for a WC order
-	 * AND the gateway's process_payment() returns a redirect URL
+	 * AND the Pay Now handler returns a URL for the buyer
 	 * WHEN the approval request is handled
-	 * THEN the response carries exactly the redirect the gateway returned
-	 *      (order-received, PayPal approval or checkout URL)
-	 *
-	 * @dataProvider gateway_redirect_provider
+	 * THEN the response carries exactly the URL the handler returned
 	 */
-	public function test_pay_now_responds_with_the_redirect_returned_by_the_gateway( string $redirect ): void
+	public function test_pay_now_responds_with_the_url_returned_by_the_handler(): void
 	{
-		$responses = $this->handle_pay_now_request( $redirect, true );
+		$redirect  = 'https://shop.example/checkout/order-received/55/?key=wc_order_abc';
+		$responses = $this->handle_pay_now_request( $redirect );
 
 		$this->assertSame( array( 'order_received_url' => $redirect ), $responses[0] );
 	}
 
-	public function gateway_redirect_provider(): array
-	{
-		return array(
-			'order-received URL after a successful payment' => array( 'https://shop.example/checkout/order-received/55/?key=wc_order_abc' ),
-			'PayPal approval URL when payment needs another approval' => array( 'https://www.paypal.com/checkoutnow?token=ORDER-1' ),
-			'checkout URL when the payment fails' => array( 'https://shop.example/checkout/' ),
-		);
-	}
-
 	/**
-	 * GIVEN a Pay Now subscription approval outside the checkout page that asks for a WC order
-	 * AND the gateway's process_payment() returns success
-	 * WHEN the approval request is handled
-	 * THEN the cart is emptied only if the WC order is paid
-	 *
-	 * @dataProvider order_payment_state_provider
-	 */
-	public function test_pay_now_empties_cart_only_when_order_is_paid( bool $is_paid ): void
-	{
-		$cart = $this->cart();
-		$cart->shouldReceive( 'empty_cart' )->times( $is_paid ? 1 : 0 );
-
-		$this->handle_pay_now_request( 'https://shop.example/checkout/order-received/55/', $is_paid, $cart );
-	}
-
-	public function order_payment_state_provider(): array
-	{
-		return array(
-			'paid order empties the cart' => array( true ),
-			'unpaid order (pending after a retry or failed) keeps the cart' => array( false ),
-		);
-	}
-
-	/**
-	 * Runs a Pay Now subscription approval whose WC order has the given paid state.
+	 * Runs a Pay Now subscription approval for which the handler returns the given URL.
 	 *
 	 * @return array The payloads sent with wp_send_json_success().
 	 */
-	private function handle_pay_now_request( string $redirect, bool $is_paid, ?\Mockery\MockInterface $cart = null ): array
+	private function handle_pay_now_request( string $redirect ): array
 	{
-		if ( $cart === null ) {
-			$cart = $this->cart();
-			$cart->shouldReceive( 'empty_cart' );
-		}
-
 		$order = Mockery::mock( Order::class );
 		$order->shouldReceive( 'purchase_units' )->andReturn( array() );
-
-		$wc_order = Mockery::mock( WC_Order::class );
-		$wc_order->shouldReceive( 'get_id' )->andReturn( 55 );
-
-		$paid_state = Mockery::mock( WC_Order::class );
-		$paid_state->shouldReceive( 'is_paid' )->andReturn( $is_paid );
-		when( 'wc_get_order' )->justReturn( $paid_state );
 
 		$this->request_data->shouldReceive( 'read_request' )
 			->andReturn( array( 'order_id' => 'ORDER-1', 'should_create_wc_order' => true ) );
 		$this->order_endpoint->shouldReceive( 'order' )->with( 'ORDER-1' )->andReturn( $order );
 		$this->session_handler->shouldReceive( 'replace_order' );
 		$this->context->shouldReceive( 'is_checkout' )->andReturn( false );
-		$this->wc_order_creator->shouldReceive( 'create_from_paypal_order' )->andReturn( $wc_order );
-		$this->gateway->shouldReceive( 'process_payment' )
-			->with( 55 )
-			->andReturn( array( 'result' => 'success', 'redirect' => $redirect ) );
+		$this->pay_now_order_handler->shouldReceive( 'pay' )
+			->with( $order )
+			->andReturn( $redirect );
 
-		$this->mock_wc_session( 'shopper-session', $cart );
+		$this->mock_wc_session( 'shopper-session' );
 
 		$responses = array();
 		when( 'wp_send_json_success' )->alias(
