@@ -88,7 +88,7 @@ class PayNowOrderHandlerTest extends TestCase
 	 */
 	public function test_pay_returns_the_redirect_of_the_gateway( string $redirect ): void
 	{
-		$cart = $this->prepare_payment( null, true, $redirect );
+		$cart = $this->prepare_payment( null, 'processing', $redirect );
 		$cart->shouldReceive( 'empty_cart' );
 
 		$this->assertSame( $redirect, $this->sut->pay( $this->paypal_order ) );
@@ -105,26 +105,30 @@ class PayNowOrderHandlerTest extends TestCase
 
 	/**
 	 * GIVEN a WC order for which the gateway reports success
-	 * WHEN the order is paid or not paid after the payment
-	 * THEN the cart is emptied only if the order is paid
+	 * WHEN the order has a given status after the payment
+	 * THEN the cart is emptied unless the order is pending, failed or canceled
 	 *
-	 * @dataProvider order_payment_state_provider
+	 * @dataProvider order_status_provider
 	 */
-	public function test_pay_empties_cart_only_when_order_is_paid( bool $is_paid ): void
+	public function test_pay_empties_cart_depending_on_order_status( string $status, bool $cart_is_emptied ): void
 	{
-		$cart = $this->prepare_payment( null, $is_paid, 'https://shop.example/checkout/order-received/55/' );
-		$cart->shouldReceive( 'empty_cart' )->times( $is_paid ? 1 : 0 );
+		$cart = $this->prepare_payment( null, $status, 'https://shop.example/checkout/order-received/55/' );
+		$cart->shouldReceive( 'empty_cart' )->times( $cart_is_emptied ? 1 : 0 );
 
 		$this->sut->pay( $this->paypal_order );
 
 		$this->addToAssertionCount( 1 );
 	}
 
-	public function order_payment_state_provider(): array
+	public function order_status_provider(): array
 	{
 		return array(
-			'paid order empties the cart' => array( true ),
-			'unpaid order (pending after a retry or a failure) keeps the cart' => array( false ),
+			'processing order empties the cart' => array( 'processing', true ),
+			'completed order empties the cart' => array( 'completed', true ),
+			'on-hold order (authorize only) empties the cart' => array( 'on-hold', true ),
+			'pending order (retry) keeps the cart' => array( 'pending', false ),
+			'failed order keeps the cart' => array( 'failed', false ),
+			'canceled order keeps the cart' => array( 'cancelled', false ),
 		);
 	}
 
@@ -137,7 +141,7 @@ class PayNowOrderHandlerTest extends TestCase
 	 */
 	public function test_pay_passes_the_paypal_data_to_the_order_creator( ?array $paypal_data ): void
 	{
-		$cart = $this->prepare_payment( $paypal_data, true, 'https://shop.example/checkout/' );
+		$cart = $this->prepare_payment( $paypal_data, 'processing','https://shop.example/checkout/' );
 		$cart->shouldReceive( 'empty_cart' );
 
 		$this->sut->pay( $this->paypal_order, $paypal_data );
@@ -159,7 +163,7 @@ class PayNowOrderHandlerTest extends TestCase
 	 *
 	 * @return \Mockery\MockInterface The WC cart double.
 	 */
-	private function prepare_payment( ?array $paypal_data, bool $is_paid, string $redirect ): \Mockery\MockInterface
+	private function prepare_payment( ?array $paypal_data, string $status, string $redirect ): \Mockery\MockInterface
 	{
 		$cart = Mockery::mock();
 		$wc   = Mockery::mock();
@@ -171,7 +175,9 @@ class PayNowOrderHandlerTest extends TestCase
 		$wc_order->shouldReceive( 'get_id' )->andReturn( 55 );
 
 		$reloaded_order = Mockery::mock( WC_Order::class );
-		$reloaded_order->shouldReceive( 'is_paid' )->andReturn( $is_paid );
+		$reloaded_order->shouldReceive( 'has_status' )->andReturnUsing(
+			static fn( $statuses ): bool => in_array( $status, (array) $statuses, true )
+		);
 		when( 'wc_get_order' )->justReturn( $reloaded_order );
 
 		$this->wc_order_creator->shouldReceive( 'create_from_paypal_order' )
