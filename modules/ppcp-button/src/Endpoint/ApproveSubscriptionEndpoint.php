@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -164,6 +165,13 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 			if ( $should_create_wc_order && ! $this->final_review_enabled && ! $this->context->is_checkout() ) {
 				$wc_order       = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart );
 				$payment_result = $this->gateway->process_payment( $wc_order->get_id() );
+
+				// The buyer may never reach order-received, which would empty the cart.
+				// Not the payment result: a retry also returns success, for an unpaid order.
+				$paid_order = wc_get_order( $wc_order->get_id() );
+				if ( $paid_order instanceof WC_Order && $paid_order->is_paid() ) {
+					WC()->cart->empty_cart();
+				}
 
 				// Not always order-received: a retry or a failure redirects elsewhere.
 				wp_send_json_success( array( 'order_received_url' => $payment_result['redirect'] ) );

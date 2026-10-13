@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -273,6 +274,13 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			if ( $should_create_wc_order && ! $this->final_review_enabled && ! $this->context->is_checkout() ) {
 				$wc_order       = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart, $data );
 				$payment_result = $this->gateway->process_payment( $wc_order->get_id() );
+
+				// The buyer may never reach order-received, which would empty the cart.
+				// Not the payment result: a retry also returns success, for an unpaid order.
+				$paid_order = wc_get_order( $wc_order->get_id() );
+				if ( $paid_order instanceof WC_Order && $paid_order->is_paid() ) {
+					WC()->cart->empty_cart();
+				}
 
 				// Not always order-received: a retry or a failure redirects elsewhere.
 				wp_send_json_success( array( 'order_received_url' => $payment_result['redirect'] ) );
