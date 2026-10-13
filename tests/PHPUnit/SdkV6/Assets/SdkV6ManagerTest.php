@@ -613,6 +613,21 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a store whose WordPress locale is a formal variant (de_DE_formal)
+     * WHEN the SDK bootstrap data is generated
+     * THEN the locale is normalised to the SDK-supported de-DE
+     */
+    public function testScriptDataNormalisesWordPressLocaleVariantToSupportedSdkLocale(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        when('get_locale')->justReturn('de_DE_formal');
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame('de-DE', $data['locale']);
+    }
+
+    /**
      * GIVEN a checkout block page with Advanced Card Fields enabled for the merchant
      * WHEN the SDK bootstrap data is generated
      * THEN card_fields.enabled is true, unless Fastlane renders on the same page

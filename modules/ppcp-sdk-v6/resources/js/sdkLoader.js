@@ -5,6 +5,7 @@
  */
 
 import { postJson } from './utils/api';
+import { createSdkInstance } from './utils/createSdkInstance';
 import { loadScript } from './utils/scriptLoaders';
 import { methodSdkComponents } from './methods/methodRegistry';
 import { startTokenRefresh } from './tokenRefresh';
@@ -162,14 +163,17 @@ async function createInstance( config, context ) {
 		clientMetadataId: clientMetadataId(),
 	};
 
-	const sdkInstance = await window.paypal.createInstance( instanceOptions );
+	const sdkInstance = await createSdkInstance(
+		window.paypal,
+		instanceOptions
+	);
 
 	return {
 		sdkInstance,
 		tokenData,
 		renewInstance: async () => {
 			const nextTokenData = await postJson( config.ajax.client_token );
-			const nextInstance = await window.paypal.createInstance( {
+			const nextInstance = await createSdkInstance( window.paypal, {
 				...instanceOptions,
 				clientToken: nextTokenData.client_token,
 			} );

@@ -5,6 +5,7 @@
  * @package
  */
 
+import { createSdkInstance } from '../utils/createSdkInstance';
 import { loadScript } from '../utils/scriptLoaders';
 
 const INSTANCE_KEY = '__ppcpV6EditorButtonsPromise';
@@ -52,7 +53,7 @@ async function createButtons(
 		throw new Error( 'PayPal SDK v6 global not found after script load.' );
 	}
 
-	await targetWindow.paypal.createInstance( {
+	await createSdkInstance( targetWindow.paypal, {
 		clientId,
 		components: [ 'paypal-payments' ],
 		pageType,

@@ -49,6 +49,26 @@ describe( 'loadEditorMessages()', () => {
 		} );
 	} );
 
+	test( 'retries without the locale when the SDK rejects it', async () => {
+		const createInstance = jest
+			.fn()
+			.mockRejectedValueOnce(
+				Object.assign( new Error(), {
+					code: 'ERR_DEV_UNSUPPORTED_LOCALE',
+				} )
+			)
+			.mockResolvedValueOnce( { createPayPalMessages: jest.fn() } );
+
+		await loadEditorMessages(
+			fakeWindow( { createInstance } ),
+			baseOptions( { locale: 'tr_TR' } )
+		);
+
+		expect( createInstance.mock.calls[ 1 ][ 0 ] ).not.toHaveProperty(
+			'locale'
+		);
+	} );
+
 	test( 'rejects when the SDK global is missing after the script loads', async () => {
 		const targetWindow = fakeWindow();
 

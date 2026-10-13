@@ -228,6 +228,23 @@ describe( 'loadSdkV6', () => {
 		);
 	} );
 
+	test( 'retries without the locale when the SDK rejects it', async () => {
+		window.paypal.createInstance
+			.mockReset()
+			.mockRejectedValueOnce(
+				Object.assign( new Error(), {
+					code: 'ERR_DEV_UNSUPPORTED_LOCALE',
+				} )
+			)
+			.mockResolvedValueOnce( {} );
+
+		await loadSdkV6( baseConfig( { locale: 'tr_TR' } ), 'checkout' );
+
+		expect(
+			window.paypal.createInstance.mock.calls[ 1 ][ 0 ]
+		).not.toHaveProperty( 'locale' );
+	} );
+
 	test( 'shares one instance across concurrent callers: one createInstance call and one client-token fetch', async () => {
 		const config = baseConfig();
 
