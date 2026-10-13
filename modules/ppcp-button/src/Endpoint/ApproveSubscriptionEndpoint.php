@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use WC_Order;
 use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -20,9 +19,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
-use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\PayNowOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
@@ -71,20 +69,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 	 */
 	protected $final_review_enabled;
 
-	/**
-	 * The WooCommerce order creator.
-	 *
-	 * @var WooCommerceOrderCreator
-	 */
-	protected $wc_order_creator;
-
-	/**
-	 * The WC gateway.
-	 *
-	 * @var PayPalGateway
-	 */
-	protected $gateway;
-
+	private PayNowOrderHandler $pay_now_order_handler;
 	private BillingSubscriptions $billing_subscriptions;
 	private LoggerInterface $logger;
 	private SubscriptionHelper $subscription_helper;
@@ -94,8 +79,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
 		bool $final_review_enabled,
-		WooCommerceOrderCreator $wc_order_creator,
-		PayPalGateway $gateway,
+		PayNowOrderHandler $pay_now_order_handler,
 		Context $context,
 		BillingSubscriptions $billing_subscriptions,
 		LoggerInterface $logger,
@@ -105,8 +89,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 		$this->order_endpoint        = $order_endpoint;
 		$this->session_handler       = $session_handler;
 		$this->final_review_enabled  = $final_review_enabled;
-		$this->wc_order_creator      = $wc_order_creator;
-		$this->gateway               = $gateway;
+		$this->pay_now_order_handler = $pay_now_order_handler;
 		$this->context               = $context;
 		$this->billing_subscriptions = $billing_subscriptions;
 		$this->logger                = $logger;
@@ -163,18 +146,8 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 
 			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
 			if ( $should_create_wc_order && ! $this->final_review_enabled && ! $this->context->is_checkout() ) {
-				$wc_order       = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart );
-				$payment_result = $this->gateway->process_payment( $wc_order->get_id() );
-
-				// The buyer may never reach order-received, which would empty the cart.
-				// Not the payment result: a retry also returns success, for an unpaid order.
-				$paid_order = wc_get_order( $wc_order->get_id() );
-				if ( $paid_order instanceof WC_Order && $paid_order->is_paid() ) {
-					WC()->cart->empty_cart();
-				}
-
-				// Not always order-received: a retry or a failure redirects elsewhere.
-				wp_send_json_success( array( 'order_received_url' => $payment_result['redirect'] ) );
+				$redirect_url = $this->pay_now_order_handler->pay( $order );
+				wp_send_json_success( array( 'order_received_url' => $redirect_url ) );
 			}
 
 			wp_send_json_success();
