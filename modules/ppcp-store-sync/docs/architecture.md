@@ -42,6 +42,19 @@ Consequences that surprise people. A product that was excluded is marked exactly
 
 The threshold is computed live from the catalog lifespan, never stored, so changing the lifespan filter takes effect immediately.
 
+## What a sync run marks
+
+PayPal validates each product in a batch separately. When some products fail, PayPal ingests the others and answers HTTP 422. The message identifies each failed product as `data/products/{index}`.
+
+| Response                        | Products marked                                                          | Status                         |
+|---------------------------------|--------------------------------------------------------------------------|--------------------------------|
+| HTTP 200 to 422                 | All products in the batch. The plugin logs the error of a failed product | `success`, `validation_errors` |
+| Network error, any other status | None. The next run sends them again                                      | `api_error`                    |
+
+A product that PayPal rejected stays out of the catalog until it is edited or its marker becomes stale.
+
+[`SyncJob`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/SyncJob.php) does not throw an exception for an API failure. Action Scheduler stops a recurring action that fails repeatedly, so the plugin handles expected failures itself.
+
 ## How a cart request is served
 
 Every endpoint follows the same path, defined in [`AgenticRestEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Endpoint/AgenticRestEndpoint.php):
