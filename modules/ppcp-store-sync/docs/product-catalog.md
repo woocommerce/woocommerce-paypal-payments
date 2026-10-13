@@ -10,7 +10,7 @@ The store pushes batches of products to PayPal on a schedule, so agents know wha
 | Products per batch | 50             | `woocommerce_paypal_payments_store_sync_batch_size`                |
 | Stale threshold    | Roughly 5 days | `woocommerce_paypal_payments_store_sync_expired_product_timestamp` |
 
-1. The interval is only read when the recurring job is first scheduled, so changing it later has no effect until the job is unscheduled.
+1. The interval is only read when the recurring job is first scheduled, so changing it later has no effect until the job is unscheduled. The first run happens one interval after the job is scheduled.
 2. A batch size of `0` or less produces an empty batch, which pauses the feed without unscheduling it.
 
 ## Which products appear
