@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 /**
  * Test double simulating a WC 10.9+ order item class, which declares set_order()
@@ -398,7 +399,8 @@ class WooCommerceOrderCreatorTest extends TestCase {
 
 		$wc_customer_holder           = new \stdClass();
 		$wc_customer_holder->customer = null;
-		expect( 'WC' )->once()->andReturn( $wc_customer_holder );
+		$wc_customer_holder->session  = null;
+		when( 'WC' )->justReturn( $wc_customer_holder );
 
 		expect( 'apply_filters' )
 			->once()
@@ -433,6 +435,39 @@ class WooCommerceOrderCreatorTest extends TestCase {
 		$result = $sut->create_from_paypal_order( $order, $cart_data );
 
 		$this->assertSame( $wc_order, $result );
+	}
+
+	/**
+	 * GIVEN a shopper with an active WooCommerce session
+	 * WHEN a WC order is created from a PayPal order
+	 * THEN the new order becomes the session's order awaiting payment
+	 *      so WooCommerce core empties the cart once the order is paid
+	 */
+	public function test_created_order_becomes_the_session_order_awaiting_payment(): void {
+		$session_data = array();
+		$session      = Mockery::mock( \WC_Session_Handler::class );
+		$session->shouldReceive( 'set' )->andReturnUsing(
+			static function ( $key, $value ) use ( &$session_data ): void {
+				$session_data[ $key ] = $value;
+			}
+		);
+
+		$result = $this->create_order_from_empty_cart( $session, 42 );
+
+		$this->assertSame( 42, $result->get_id() );
+		$this->assertSame( 42, $session_data['order_awaiting_payment'] ?? null );
+	}
+
+	/**
+	 * GIVEN no WooCommerce session exists, e.g. outside a front-end request
+	 * WHEN a WC order is created from a PayPal order
+	 * THEN the order is still created and returned
+	 * AND no error occurs
+	 */
+	public function test_order_is_created_when_no_wc_session_exists(): void {
+		$result = $this->create_order_from_empty_cart( null, 42 );
+
+		$this->assertSame( 42, $result->get_id() );
 	}
 
 	/**
@@ -635,6 +670,44 @@ class WooCommerceOrderCreatorTest extends TestCase {
 			Mockery::mock( ShippingFactory::class ),
 			Mockery::mock( PayerFactory::class )
 		);
+	}
+
+	/**
+	 * Runs create_from_paypal_order() for an empty cart that needs no shipping,
+	 * with WC() exposing the given session.
+	 */
+	private function create_order_from_empty_cart( $wc_session, int $wc_order_id ): WC_Order {
+		$wc_order = Mockery::mock( WC_Order::class )->shouldIgnoreMissing();
+		$wc_order->shouldReceive( 'get_id' )->andReturn( $wc_order_id );
+
+		when( 'wc_create_order' )->justReturn( $wc_order );
+
+		$current_user     = new \stdClass();
+		$current_user->ID = 0;
+		when( 'wp_get_current_user' )->justReturn( $current_user );
+
+		$wc_holder           = new \stdClass();
+		$wc_holder->customer = null;
+		$wc_holder->session  = $wc_session;
+		when( 'WC' )->justReturn( $wc_holder );
+
+		$order = Mockery::mock( Order::class );
+		$order->shouldReceive( 'payer' )->andReturn( null );
+		$order->shouldReceive( 'purchase_units' )->andReturn( array() );
+
+		$session_handler = Mockery::mock( SessionHandler::class );
+		$session_handler->shouldReceive( 'funding_source' )->andReturn( null );
+
+		$sut = new WooCommerceOrderCreator(
+			Mockery::mock( FundingSourceRenderer::class ),
+			$session_handler,
+			Mockery::mock( SubscriptionHelper::class ),
+			Mockery::mock( CartDataFactory::class ),
+			Mockery::mock( ShippingFactory::class ),
+			Mockery::mock( PayerFactory::class )
+		);
+
+		return $sut->create_from_paypal_order( $order, new CartData( array(), array(), false, 0, 'cart-hash' ) );
 	}
 
 	/**
