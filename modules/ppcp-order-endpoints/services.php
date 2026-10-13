@@ -79,10 +79,8 @@ return array(
 		$settings_model       = $container->get( 'settings.data.settings' );
 		$dcc_applies          = $container->get( 'api.helpers.dccapplies' );
 		$order_helper         = $container->get( 'api.order-helper' );
-		$final_review_enabled = $container->get( 'blocks.settings.final_review_enabled' );
 		$pay_now_handler      = $container->get( 'order-endpoints.helper.pay-now-order-handler' );
 		$logger               = $container->get( 'woocommerce.logger.woocommerce' );
-		$context              = $container->get( 'button.helper.context' );
 
 		return new ApproveOrderEndpoint(
 			$request_data,
@@ -93,10 +91,8 @@ return array(
 			$settings_model,
 			$dcc_applies,
 			$order_helper,
-			$final_review_enabled,
 			$pay_now_handler,
-			$logger,
-			$context
+			$logger
 		);
 	},
 	'order-endpoints.endpoint.update-shipping'             => static function ( ContainerInterface $container ): UpdateShippingEndpoint {
