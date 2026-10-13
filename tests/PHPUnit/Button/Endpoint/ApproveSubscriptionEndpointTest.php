@@ -244,32 +244,7 @@ class ApproveSubscriptionEndpointTest extends TestCase
 	 */
 	public function test_pay_now_responds_with_the_redirect_returned_by_the_gateway( string $redirect ): void
 	{
-		$order = Mockery::mock( Order::class );
-		$order->shouldReceive( 'purchase_units' )->andReturn( array() );
-
-		$wc_order = Mockery::mock( WC_Order::class );
-		$wc_order->shouldReceive( 'get_id' )->andReturn( 55 );
-
-		$this->request_data->shouldReceive( 'read_request' )
-			->andReturn( array( 'order_id' => 'ORDER-1', 'should_create_wc_order' => true ) );
-		$this->order_endpoint->shouldReceive( 'order' )->with( 'ORDER-1' )->andReturn( $order );
-		$this->session_handler->shouldReceive( 'replace_order' );
-		$this->context->shouldReceive( 'is_checkout' )->andReturn( false );
-		$this->wc_order_creator->shouldReceive( 'create_from_paypal_order' )->andReturn( $wc_order );
-		$this->gateway->shouldReceive( 'process_payment' )
-			->with( 55 )
-			->andReturn( array( 'result' => 'success', 'redirect' => $redirect ) );
-
-		$this->mock_wc_session( 'shopper-session' );
-
-		$responses = array();
-		when( 'wp_send_json_success' )->alias(
-			static function ( $data = null ) use ( &$responses ): void {
-				$responses[] = $data;
-			}
-		);
-
-		$this->sut->handle_request();
+		$responses = $this->handle_pay_now_request( $redirect, true );
 
 		$this->assertSame( array( 'order_received_url' => $redirect ), $responses[0] );
 	}
@@ -281,6 +256,84 @@ class ApproveSubscriptionEndpointTest extends TestCase
 			'PayPal approval URL when payment needs another approval' => array( 'https://www.paypal.com/checkoutnow?token=ORDER-1' ),
 			'checkout URL when the payment fails' => array( 'https://shop.example/checkout/' ),
 		);
+	}
+
+	/**
+	 * GIVEN a Pay Now subscription approval outside the checkout page that asks for a WC order
+	 * AND the gateway's process_payment() returns success
+	 * WHEN the approval request is handled
+	 * THEN the cart is emptied only if the WC order is paid
+	 *
+	 * @dataProvider order_payment_state_provider
+	 */
+	public function test_pay_now_empties_cart_only_when_order_is_paid( bool $is_paid ): void
+	{
+		$cart = $this->cart();
+		$cart->shouldReceive( 'empty_cart' )->times( $is_paid ? 1 : 0 );
+
+		$this->handle_pay_now_request( 'https://shop.example/checkout/order-received/55/', $is_paid, $cart );
+	}
+
+	public function order_payment_state_provider(): array
+	{
+		return array(
+			'paid order empties the cart' => array( true ),
+			'unpaid order (pending after a retry or failed) keeps the cart' => array( false ),
+		);
+	}
+
+	/**
+	 * Runs a Pay Now subscription approval whose WC order has the given paid state.
+	 *
+	 * @return array The payloads sent with wp_send_json_success().
+	 */
+	private function handle_pay_now_request( string $redirect, bool $is_paid, ?\Mockery\MockInterface $cart = null ): array
+	{
+		if ( $cart === null ) {
+			$cart = $this->cart();
+			$cart->shouldReceive( 'empty_cart' );
+		}
+
+		$order = Mockery::mock( Order::class );
+		$order->shouldReceive( 'purchase_units' )->andReturn( array() );
+
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 55 );
+
+		$paid_state = Mockery::mock( WC_Order::class );
+		$paid_state->shouldReceive( 'is_paid' )->andReturn( $is_paid );
+		when( 'wc_get_order' )->justReturn( $paid_state );
+
+		$this->request_data->shouldReceive( 'read_request' )
+			->andReturn( array( 'order_id' => 'ORDER-1', 'should_create_wc_order' => true ) );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'ORDER-1' )->andReturn( $order );
+		$this->session_handler->shouldReceive( 'replace_order' );
+		$this->context->shouldReceive( 'is_checkout' )->andReturn( false );
+		$this->wc_order_creator->shouldReceive( 'create_from_paypal_order' )->andReturn( $wc_order );
+		$this->gateway->shouldReceive( 'process_payment' )
+			->with( 55 )
+			->andReturn( array( 'result' => 'success', 'redirect' => $redirect ) );
+
+		$this->mock_wc_session( 'shopper-session', $cart );
+
+		$responses = array();
+		when( 'wp_send_json_success' )->alias(
+			static function ( $data = null ) use ( &$responses ): void {
+				$responses[] = $data;
+			}
+		);
+
+		$this->sut->handle_request();
+
+		return $responses;
+	}
+
+	private function cart(): \Mockery\MockInterface
+	{
+		$cart = Mockery::mock();
+		$cart->shouldReceive( 'get_cart_hash' )->andReturn( 'cart-hash' );
+
+		return $cart;
 	}
 
 	/**
@@ -318,18 +371,15 @@ class ApproveSubscriptionEndpointTest extends TestCase
 	/**
 	 * Mocks WC()->session with the given customer unique id.
 	 */
-	private function mock_wc_session( string $session_id ): \WC_Session_Handler
+	private function mock_wc_session( string $session_id, ?\Mockery\MockInterface $cart = null ): \WC_Session_Handler
 	{
 		$wc_session = Mockery::mock( \WC_Session_Handler::class );
 		$wc_session->shouldReceive( 'get_customer_unique_id' )->andReturn( $session_id );
 		$wc_session->shouldReceive( 'set' );
 
-		$wc_cart = Mockery::mock();
-		$wc_cart->shouldReceive( 'get_cart_hash' )->andReturn( 'cart-hash' );
-
 		$wc          = Mockery::mock();
 		$wc->session = $wc_session;
-		$wc->cart    = $wc_cart;
+		$wc->cart    = $cart ?? $this->cart();
 		when( 'WC' )->justReturn( $wc );
 
 		return $wc_session;

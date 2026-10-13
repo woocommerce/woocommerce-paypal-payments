@@ -254,6 +254,55 @@ class ApproveOrderEndpointTest extends TestCase
 	 */
 	public function test_pay_now_responds_with_the_redirect_returned_by_the_gateway( string $redirect ): void
 	{
+		$cart = Mockery::mock();
+		$cart->shouldReceive( 'empty_cart' );
+
+		$responses = $this->handle_pay_now_request( $redirect, true, $cart );
+
+		$this->assertSame( array( 'order_received_url' => $redirect ), $responses[0] );
+	}
+
+	public function gateway_redirect_provider(): array
+	{
+		return array(
+			'order-received URL after a successful payment' => array( 'https://shop.example/checkout/order-received/55/?key=wc_order_abc' ),
+			'PayPal approval URL when payment needs another approval' => array( 'https://www.paypal.com/checkoutnow?token=ORDER-1' ),
+			'checkout URL when the payment fails' => array( 'https://shop.example/checkout/' ),
+		);
+	}
+
+	/**
+	 * GIVEN a Pay Now approval outside the checkout page that asks for a WC order
+	 * AND the gateway's process_payment() returns success
+	 * WHEN the approval request is handled
+	 * THEN the cart is emptied only if the WC order is paid
+	 *
+	 * @dataProvider order_payment_state_provider
+	 */
+	public function test_pay_now_empties_cart_only_when_order_is_paid( bool $is_paid ): void
+	{
+		$cart = Mockery::mock();
+		$cart->shouldReceive( 'empty_cart' )->times( $is_paid ? 1 : 0 );
+
+		$this->handle_pay_now_request( 'https://shop.example/checkout/order-received/55/', $is_paid, $cart );
+	}
+
+	public function order_payment_state_provider(): array
+	{
+		return array(
+			'paid order empties the cart' => array( true ),
+			'unpaid order (pending after a retry or failed) keeps the cart' => array( false ),
+		);
+	}
+
+	/**
+	 * Runs a Pay Now approval whose WC order has the given paid state.
+	 *
+	 * @param object $cart The WC cart double.
+	 * @return array The payloads sent with wp_send_json_success().
+	 */
+	private function handle_pay_now_request( string $redirect, bool $is_paid, $cart ): array
+	{
 		$order_status = Mockery::mock( OrderStatus::class );
 		$order_status->shouldReceive( 'is' )->andReturn( true );
 
@@ -264,6 +313,10 @@ class ApproveOrderEndpointTest extends TestCase
 
 		$wc_order = Mockery::mock( WC_Order::class );
 		$wc_order->shouldReceive( 'get_id' )->andReturn( 55 );
+
+		$paid_state = Mockery::mock( WC_Order::class );
+		$paid_state->shouldReceive( 'is_paid' )->andReturn( $is_paid );
+		when( 'wc_get_order' )->justReturn( $paid_state );
 
 		$this->request_data->shouldReceive( 'read_request' )
 			->andReturn( array( 'order_id' => 'ORDER-1', 'funding_source' => 'paypal', 'should_create_wc_order' => true ) );
@@ -280,7 +333,7 @@ class ApproveOrderEndpointTest extends TestCase
 		$wc_session->shouldReceive( 'set' );
 		$wc          = Mockery::mock();
 		$wc->session = $wc_session;
-		$wc->cart    = Mockery::mock();
+		$wc->cart    = $cart;
 		when( 'WC' )->justReturn( $wc );
 
 		$responses = array();
@@ -292,15 +345,6 @@ class ApproveOrderEndpointTest extends TestCase
 
 		$this->sut->handle_request();
 
-		$this->assertSame( array( 'order_received_url' => $redirect ), $responses[0] );
-	}
-
-	public function gateway_redirect_provider(): array
-	{
-		return array(
-			'order-received URL after a successful payment' => array( 'https://shop.example/checkout/order-received/55/?key=wc_order_abc' ),
-			'PayPal approval URL when payment needs another approval' => array( 'https://www.paypal.com/checkoutnow?token=ORDER-1' ),
-			'checkout URL when the payment fails' => array( 'https://shop.example/checkout/' ),
-		);
+		return $responses;
 	}
 }
