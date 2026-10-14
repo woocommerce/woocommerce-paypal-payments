@@ -47,7 +47,7 @@ class IsolatedCartSimulatorTest extends SimulateCartTestCase {
 		WC()->cart->calculate_totals();
 
 		// Force a session write so there is something to preserve.
-		WC()->cart->session->set_session();
+		WC()->cart->set_session();
 		self::assertNotEmpty( WC()->session->get( 'cart' ) );
 
 		$sim_product = $this->createSimpleProduct( 99.00 );
