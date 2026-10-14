@@ -203,6 +203,12 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - reCAPTCHA rejections not logged unless plugin logging is enabled #4619
 * Fix - Pay Now ignored for PayPal Subscription products bought from the product page #4630
 * Fix - Store Sync no longer replaces the guest session cookie, which emptied the cart on the next page load #4734
+* Fix - Hide Mini-Cart block buttons for carts that need no payment #4788
+* Fix - Empty the cart after an express Pay Now payment #4786
+* Fix - Complete express PayPal payments after a re-approval #4785
+* Fix - Normalize WordPress locales for the v6 SDK #4784
+* Fix - Report a failed cart subscription approval to the shopper #4771
+* Fix - load the settings app only on the screen that hosts it #4770
 
 = 4.1.3 - 2026-09-09 =
 * Enhancement - PayPal JS SDK v6 is now the default for new store setups, moving PayPal buttons, Apple Pay, Google Pay, Advanced Card Fields, Fastlane, Pay Later messaging and vaulting subscriptions onto the new integration; existing stores remain on SDK v5 with this version #4641
