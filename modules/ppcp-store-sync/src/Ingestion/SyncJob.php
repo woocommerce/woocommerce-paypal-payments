@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
+use RuntimeException;
 use Psr\Log\LoggerInterface;
 use JsonException;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
@@ -44,14 +45,7 @@ class SyncJob {
 	}
 
 	/**
-	 * Execute the sync job.
-	 *
-	 * This method performs the complete sync process:
-	 * 1. Transforms products into the API payload format
-	 * 2. Sends the data to the agentic commerce API
-	 * 3. Handles successful responses by marking products as synced
-	 * 4. Handles validation errors by logging the error of each affected product
-	 * 5. Handles API/network errors by logging them
+	 * @throws RuntimeException When the API reports an error that Action Scheduler must record.
 	 */
 	public function execute(): void {
 		$this->logger->info(
@@ -123,7 +117,13 @@ class SyncJob {
 			return;
 		}
 
-		$this->handle_api_error( $this->product_ids, "HTTP {$status_code}: {$response_body}" );
+		$error_message = "HTTP {$status_code}: {$response_body}";
+		$this->handle_api_error( $this->product_ids, $error_message );
+
+		// Action Scheduler records these as failed runs.
+		if ( 401 === $status_code || $status_code >= 500 ) {
+			throw new RuntimeException( sprintf( 'Agentic sync failed: %s', $error_message ) );
+		}
 	}
 
 	private function drop_incomplete_products( array $products ): array {
@@ -287,9 +287,8 @@ class SyncJob {
 	}
 
 	/**
-	 * Logs an API or network error without throwing: Action Scheduler must not
-	 * count it as a failed run. The products stay unmarked, so the next run sends
-	 * them again.
+	 * Logs an API or network error. The products stay unmarked, so the next run
+	 * sends them again.
 	 *
 	 * @param array  $product_ids   Product IDs that failed to sync.
 	 * @param string $error_message The error message.

@@ -53,7 +53,7 @@ PayPal validates each product in a batch separately. When some products fail, Pa
 
 A product that PayPal rejected stays out of the catalog until it is edited or its marker becomes stale.
 
-[`SyncJob`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/SyncJob.php) does not throw an exception for an API failure. Action Scheduler stops a recurring action that fails repeatedly, so the plugin handles expected failures itself.
+For HTTP 401 and 5xx, [`SyncJob`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-store-sync/src/Ingestion/SyncJob.php) also throws an exception, so Action Scheduler records a failed run. Action Scheduler stops a recurring action that fails repeatedly. The plugin then schedules it again, with the first run one interval later.
 
 ## How a cart request is served
 
