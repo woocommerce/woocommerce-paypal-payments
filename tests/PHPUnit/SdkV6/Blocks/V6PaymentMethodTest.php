@@ -50,6 +50,7 @@ class V6PaymentMethodTest extends TestCase
      * THEN the script is registered with those exact dependencies and version, not an
      *      empty dependency list and not just the plugin version.
      * AND the resolved handle is returned so WooCommerce Blocks loads it
+     * AND its JS translations are loaded for the plugin text domain
      */
     public function test_get_payment_method_script_handles_passes_through_webpack_dependencies_and_version(): void
     {
@@ -69,6 +70,9 @@ class V6PaymentMethodTest extends TestCase
                 'deadbeef',
                 true
             );
+        expect('wp_set_script_translations')
+            ->once()
+            ->with('wc-ppcp-sdk-v6-blocks', 'woocommerce-paypal-payments');
 
         $testee  = $this->createTestee();
         $handles = $testee->get_payment_method_script_handles();

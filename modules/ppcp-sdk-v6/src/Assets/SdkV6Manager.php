@@ -274,6 +274,7 @@ class SdkV6Manager {
 			$asset['version'],
 			true
 		);
+		wp_set_script_translations( 'wc-ppcp-sdk-v6-boot', 'woocommerce-paypal-payments' );
 
 		wp_localize_script(
 			'wc-ppcp-sdk-v6-boot',
