@@ -3,6 +3,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\StoreSync\Ingestion;
 
+use RuntimeException;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\StoreSync\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\StoreSync\Config\IngestionConfiguration;
@@ -84,6 +85,7 @@ class IngestionManager
     /**
      * Process the next batch of products for sync.
      *
+     * @throws RuntimeException When the API reports an error that Action Scheduler must record.
      * @wp-hook ppcp_agentic_sync_batch
      */
     public function process_next_batch(): void
