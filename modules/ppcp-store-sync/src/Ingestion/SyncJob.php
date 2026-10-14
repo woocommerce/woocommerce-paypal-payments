@@ -71,6 +71,9 @@ class SyncJob {
 				$this->build_log_context()
 			);
 
+			// Products without a payload entry must not block the next batches.
+			$this->mark_products_synced( $this->product_ids );
+
 			$this->fire_completed_action( 'empty', 0, 0, 0 );
 
 			return;

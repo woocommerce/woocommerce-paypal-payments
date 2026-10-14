@@ -49,6 +49,7 @@ PayPal validates each product in a batch separately. When some products fail, Pa
 | Response                        | Products marked                                                          | Status                         |
 |---------------------------------|--------------------------------------------------------------------------|--------------------------------|
 | HTTP 2xx, 400 or 422            | All products in the batch. The plugin logs the error of a failed product | `success`, `validation_errors` |
+| No product in the payload       | All products in the batch                                                | `empty`                        |
 | Network error, any other status | None. The next run sends them again                                      | `api_error`                    |
 
 A product that PayPal rejected stays out of the catalog until it is edited or its marker becomes stale.
