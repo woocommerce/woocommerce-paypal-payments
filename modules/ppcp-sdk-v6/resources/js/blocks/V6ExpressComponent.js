@@ -131,7 +131,10 @@ export function V6ExpressComponent( {
 			const order = await getOrder( config, data.orderId );
 
 			if ( order?.purchase_units?.[ 0 ]?.shipping?.address ) {
-				await prefillFromPayPalOrder( order, { needsShipping } );
+				await prefillFromPayPalOrder( order, {
+					needsShipping,
+					reflectInUi: true,
+				} );
 			}
 
 			setPaypalOrder( order );
