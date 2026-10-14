@@ -1,9 +1,8 @@
 <?php
 
-declare( strict_types = 1 );
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\FraudProtection;
 
-return static function (): FraudProtectionModule {
-	return new FraudProtectionModule();
+return static function (): \WooCommerce\PayPalCommerce\FraudProtection\FraudProtectionModule {
+    return new \WooCommerce\PayPalCommerce\FraudProtection\FraudProtectionModule();
 };
