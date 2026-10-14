@@ -23,7 +23,7 @@ class MiniCartSmartButtonsRenderer
     private const WRAPPER_ID = 'ppc-button-minicart-v6';
     /**
      * Renders the button wrapper, or an empty string when Smart Buttons are off for the
-     * mini-cart location or the cart is a free trial.
+     * mini-cart location, the cart needs no payment, or the cart is a free trial.
      *
      * @param array<string, mixed> $attributes The block attributes.
      * @param ContainerInterface   $c          The container.
@@ -32,6 +32,11 @@ class MiniCartSmartButtonsRenderer
     public function render(array $attributes, ContainerInterface $c): string
     {
         if (!\WooCommerce\PayPalCommerce\Blocks\MiniCartBlocks::is_buttons_enabled($c->get('wcgateway.settings.status'))) {
+            return '';
+        }
+        // A $0 cart (e.g. a free product) needs no payment (mirrors the classic mini-cart).
+        $cart = function_exists('WC') ? WC()->cart : null;
+        if ($cart && !$cart->needs_payment()) {
             return '';
         }
         // A free trial is vaulted rather than charged, and only the checkout has a
