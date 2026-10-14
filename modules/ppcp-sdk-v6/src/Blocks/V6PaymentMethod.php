@@ -109,6 +109,7 @@ class V6PaymentMethod extends AbstractPaymentMethodType {
 			$asset['version'],
 			true
 		);
+		wp_set_script_translations( $handle, 'woocommerce-paypal-payments' );
 
 		return array( $handle );
 	}

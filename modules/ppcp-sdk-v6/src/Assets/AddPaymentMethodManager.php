@@ -92,6 +92,7 @@ class AddPaymentMethodManager {
 			$asset['version'],
 			true
 		);
+		wp_set_script_translations( 'wc-ppcp-sdk-v6-add-payment-method', 'woocommerce-paypal-payments' );
 
 		wp_localize_script(
 			'wc-ppcp-sdk-v6-add-payment-method',
