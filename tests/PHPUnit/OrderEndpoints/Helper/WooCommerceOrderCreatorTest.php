@@ -189,6 +189,72 @@ class WooCommerceOrderCreatorTest extends TestCase {
 	}
 
 	/**
+	 * GIVEN a cart whose first item points to a product that no longer exists
+	 * AND a second item that points to a valid product
+	 * WHEN configure_line_items() builds the WC order line items via reflection
+	 * THEN no line item is added for the missing product
+	 * AND the line item for the valid product is still added to the order
+	 */
+	public function test_configure_line_items_skips_missing_product_and_keeps_following_items(): void {
+		$missing_item = array(
+			'product_id'    => 10,
+			'variation_id'  => 0,
+			'quantity'      => 1,
+			'variation'     => array(),
+			'line_subtotal' => '5',
+			'line_total'    => '5',
+		);
+		$valid_item   = array(
+			'product_id'    => 20,
+			'variation_id'  => 0,
+			'quantity'      => 2,
+			'variation'     => array(),
+			'line_subtotal' => '20',
+			'line_total'    => '20',
+		);
+
+		$cart_data = new CartData( array( 'missing' => $missing_item, 'valid' => $valid_item ), array(), false, 0, 'cart-hash' );
+
+		$product = Mockery::mock( WC_Product::class );
+		$product->shouldReceive( 'get_name' )->andReturn( 'Valid product' );
+		$product->shouldReceive( 'get_id' )->andReturn( 20 );
+		$product->shouldReceive( 'get_tax_class' )->andReturn( '' );
+
+		expect( 'wc_get_product' )
+			->twice()
+			->andReturnUsing(
+				static fn( $id ) => 20 === $id ? $product : false
+			);
+
+		$item = Mockery::mock( TestableOrderItemProductWithSetOrder::class )->shouldIgnoreMissing();
+		$item->shouldReceive( 'get_total' )->andReturn( '20' );
+
+		expect( 'apply_filters' )
+			->andReturnUsing(
+				static fn( $filter, $value ) => 'woocommerce_checkout_create_order_line_item_object' === $filter ? $item : $value
+			);
+
+		$wc_tax = Mockery::mock( 'alias:WC_Tax' );
+		$wc_tax->shouldReceive( 'get_rates' )->andReturn( array() );
+		$wc_tax->shouldReceive( 'calc_tax' )->andReturn( array() );
+
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'add_item' )->once()->with( $item );
+
+		$subscription_helper = Mockery::mock( SubscriptionHelper::class );
+		$subscription_helper->shouldReceive( 'plugin_is_active' )->andReturn( false );
+
+		$sut = $this->create_order_creator( $subscription_helper );
+
+		$method = new ReflectionMethod( WooCommerceOrderCreator::class, 'configure_line_items' );
+		$method->setAccessible( true );
+
+		$method->invoke( $sut, $wc_order, $cart_data, null, null );
+
+		$this->addToAssertionCount( 1 );
+	}
+
+	/**
 	 * GIVEN a cart with a single fee, e.g. a negative "discount" fee some plugins add
 	 *       via WC()->cart->add_fee()
 	 * WHEN configure_fees() copies the cart fees onto the WC order via reflection
