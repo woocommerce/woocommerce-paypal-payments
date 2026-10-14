@@ -12,7 +12,7 @@ use WooCommerce\PayPalCommerce\Tests\Integration\Fixtures\PayPalOrderPresets;
 
 /**
  * Cart handling of the express "Pay Now" approval in ppc-approve-order:
- * final review disabled, not on the checkout page, should_create_wc_order set.
+ * Pay Now enabled, not on the checkout page, should_create_wc_order set.
  *
  * @covers \WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint
  */
@@ -45,21 +45,15 @@ class ApproveOrderEndpointPayNowCartTest extends WcAjaxEndpointTestCase {
 	}
 
 	/**
-	 * Boots the plugin with Pay Now enabled (final review off) and PayPal reporting the order as APPROVED.
+	 * Boots the plugin with Pay Now enabled and PayPal reporting the order as APPROVED.
 	 *
 	 * @return array{order_endpoint: \Mockery\MockInterface, container: \Psr\Container\ContainerInterface}
 	 */
 	private function bootstrapWithApprovedOrder(): array {
 		$order_endpoint = Mockery::mock( OrderEndpoint::class );
 
-		$container = $this->bootstrapWithOrderApi(
-			$order_endpoint,
-			array(
-				'blocks.settings.final_review_enabled' => static function (): bool {
-					return false;
-				},
-			)
-		);
+		$this->enablePayNow();
+		$container = $this->bootstrapWithOrderApi( $order_endpoint );
 
 		$approved = $this->paypalOrder(
 			$container,
