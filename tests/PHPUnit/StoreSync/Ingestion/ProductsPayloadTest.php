@@ -97,6 +97,7 @@ class ProductsPayloadTest extends TestCase {
 		$parent_product->shouldReceive( 'get_id' )->andReturn( $parent_id );
 		$parent_product->shouldReceive( 'get_image_id' )->andReturn( 200 );
 		$parent_product->shouldReceive( 'get_description' )->andReturn( 'Parent description' );
+		$parent_product->shouldReceive( 'get_short_description' )->andReturn( '' );
 
 		// Mock variation 1
 		$variation1 = Mockery::mock( WC_Product_Variation::class );
@@ -214,6 +215,85 @@ class ProductsPayloadTest extends TestCase {
 			'sale_price'       => '28.00 USD',
 			'product_type'     => 'Clothing',
 		), $result[1] );
+	}
+
+	/**
+	 * GIVEN a variable product and a variation, each with different descriptions filled in
+	 * WHEN the variation entry is built
+	 * THEN it uses the variation description, else the parent long description, else the parent short description
+	 *
+	 * @dataProvider variation_description_provider
+	 */
+	public function test_variation_entry_description_falls_back_to_parent_text(
+		string $variation_description,
+		string $parent_description,
+		string $parent_short_description,
+		string $expected
+	): void {
+		$parent_id    = 100;
+		$variation_id = 101;
+
+		$parent_product = Mockery::mock( WC_Product_Variable::class . ', ' . WC_Product::class );
+		$parent_product->shouldReceive( 'get_type' )->andReturn( 'variable' );
+		$parent_product->shouldReceive( 'is_type' )->with( 'variable' )->andReturn( true );
+		$parent_product->shouldReceive( 'get_children' )->andReturn( array( $variation_id ) );
+		$parent_product->shouldReceive( 'get_id' )->andReturn( $parent_id );
+		$parent_product->shouldReceive( 'get_image_id' )->andReturn( 0 );
+		$parent_product->shouldReceive( 'get_description' )->andReturn( $parent_description );
+		$parent_product->shouldReceive( 'get_short_description' )->andReturn( $parent_short_description );
+
+		$variation = Mockery::mock( WC_Product_Variation::class );
+		$variation->shouldReceive( 'is_purchasable' )->andReturn( true );
+		$variation->shouldReceive( 'get_id' )->andReturn( $variation_id );
+		$variation->shouldReceive( 'get_name' )->andReturn( 'Test Product - Red' );
+		$variation->shouldReceive( 'get_permalink' )->andReturn( 'https://example.com/product/test?attribute_color=red' );
+		$variation->shouldReceive( 'get_image_id' )->andReturn( 0 );
+		$variation->shouldReceive( 'get_parent_id' )->andReturn( $parent_id );
+		$variation->shouldReceive( 'get_description' )->andReturn( $variation_description );
+		$variation->shouldReceive( 'get_short_description' )->andReturn( '' );
+		$variation->shouldReceive( 'get_price' )->andReturn( '35.00' );
+		$variation->shouldReceive( 'get_stock_status' )->andReturn( 'instock' );
+		$variation->shouldReceive( 'get_sku' )->andReturn( '' );
+		$variation->shouldReceive( 'get_sale_price' )->andReturn( '' );
+		$variation->shouldReceive( 'get_variation_attributes' )->andReturn( array( 'attribute_color' => 'red' ) );
+
+		when( 'wc_get_product' )->alias(
+			static function ( $id ) use ( $parent_id, $variation_id, $parent_product, $variation ) {
+				if ( $id === $parent_id ) {
+					return $parent_product;
+				}
+
+				return $id === $variation_id ? $variation : false;
+			}
+		);
+		when( 'wp_get_attachment_image_url' )->justReturn( false );
+		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		when( 'wc_get_product_category_list' )->justReturn( '' );
+		when( 'wp_strip_all_tags' )->alias( 'strip_tags' );
+
+		$payload = new ProductsPayload(
+			'https://example.com',
+			array( $parent_id ),
+			$this->make_product_manager_stub()
+		);
+		$result  = array_map(
+			static function ( ProductDTO $dto ): array {
+				return $dto->to_array();
+			},
+			$payload->get_products()
+		);
+
+		$this->assertCount( 1, $result );
+		$this->assertSame( $expected, $result[0]['description'] );
+	}
+
+	public function variation_description_provider(): array {
+		return array(
+			'variation description wins'                 => array( 'Variation text', 'Parent long text', 'Parent short text', 'Variation text' ),
+			'blank variation uses parent long text'      => array( '&nbsp;', 'Parent long text', 'Parent short text', 'Parent long text' ),
+			'blank long text uses parent short text'     => array( '', '<p></p>', 'Parent short text', 'Parent short text' ),
+			'text only in parent short description'      => array( '', '', 'Parent short text', 'Parent short text' ),
+		);
 	}
 
 	public function test_skip_non_purchasable_variations(): void {

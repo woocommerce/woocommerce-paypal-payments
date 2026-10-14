@@ -57,6 +57,32 @@ class ProductManagerTest extends TestCase {
 	}
 
 	/**
+	 * GIVEN a product description and a list of fallback descriptions
+	 * WHEN the description is prepared for ingestion
+	 * THEN the first candidate with visible text is used
+	 * AND candidates without visible text are skipped
+	 * AND the result is empty when no candidate has visible text
+	 *
+	 * @dataProvider description_fallback_provider
+	 */
+	public function test_get_product_description_uses_first_candidate_with_visible_text( string $description, array $fallbacks, string $expected ): void {
+		$product = $this->create_product_with_description( $description );
+
+		$this->assertSame( $expected, $this->testee->get_product_description( $product, ...$fallbacks ) );
+	}
+
+	public function description_fallback_provider(): array {
+		return array(
+			'own description wins over fallbacks'      => array( 'Own text', array( 'Fallback text' ), 'Own text' ),
+			'non-breaking space falls through'         => array( '&nbsp;', array( 'Fallback text' ), 'Fallback text' ),
+			'empty paragraph falls through'            => array( '<p></p>', array( 'Fallback text' ), 'Fallback text' ),
+			'first fallback with text wins'            => array( '', array( '', '<p>&nbsp;</p>', 'First text', 'Second text' ), 'First text' ),
+			'markup in the winning fallback is removed' => array( '', array( '<p>Fallback <b>text</b></p>' ), 'Fallback text' ),
+			'all candidates blank gives empty string'  => array( '&nbsp;', array( '<p></p>', '' ), '' ),
+		);
+	}
+
+	/**
 	 * GIVEN a product description with typographic characters
 	 * WHEN the description is prepared for ingestion
 	 * THEN the characters stay unchanged
