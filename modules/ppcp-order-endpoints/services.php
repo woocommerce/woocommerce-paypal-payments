@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\PayNowOrderHandler;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -78,11 +79,8 @@ return array(
 		$settings_model       = $container->get( 'settings.data.settings' );
 		$dcc_applies          = $container->get( 'api.helpers.dccapplies' );
 		$order_helper         = $container->get( 'api.order-helper' );
-		$final_review_enabled = $container->get( 'blocks.settings.final_review_enabled' );
-		$wc_order_creator     = $container->get( 'order-endpoints.helper.wc-order-creator' );
-		$gateway              = $container->get( 'wcgateway.paypal-gateway' );
+		$pay_now_handler      = $container->get( 'order-endpoints.helper.pay-now-order-handler' );
 		$logger               = $container->get( 'woocommerce.logger.woocommerce' );
-		$context              = $container->get( 'button.helper.context' );
 
 		return new ApproveOrderEndpoint(
 			$request_data,
@@ -93,11 +91,8 @@ return array(
 			$settings_model,
 			$dcc_applies,
 			$order_helper,
-			$final_review_enabled,
-			$gateway,
-			$wc_order_creator,
-			$logger,
-			$context
+			$pay_now_handler,
+			$logger
 		);
 	},
 	'order-endpoints.endpoint.update-shipping'             => static function ( ContainerInterface $container ): UpdateShippingEndpoint {
@@ -169,6 +164,14 @@ return array(
 			$container->get( 'button.session.factory.card-data' ),
 			$container->get( 'api.factory.shipping' ),
 			$container->get( 'api.factory.payer' )
+		);
+	},
+	'order-endpoints.helper.pay-now-order-handler'         => static function ( ContainerInterface $container ): PayNowOrderHandler {
+		return new PayNowOrderHandler(
+			$container->get( 'order-endpoints.helper.wc-order-creator' ),
+			$container->get( 'wcgateway.paypal-gateway' ),
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'button.helper.context' )
 		);
 	},
 );
