@@ -222,8 +222,9 @@ class SyncJob {
 		}
 
 		$validation_errors = array();
+		$is_rejected       = $contains_errors && $error_message;
 
-		if ( $contains_errors && $error_message ) {
+		if ( $is_rejected ) {
 			$validation_errors = $this->extract_product_errors( $error_message, $payload_products );
 
 			$this->mark_products_by_validation_result( $validation_errors );
@@ -231,7 +232,13 @@ class SyncJob {
 
 		$pushed = count( $this->product_ids );
 		$failed = count( $validation_errors );
-		$status = $failed > 0 ? 'validation_errors' : 'success';
+
+		// A rejection that names no product applies to the full batch.
+		if ( $is_rejected && 0 === $failed ) {
+			$failed = $pushed;
+		}
+
+		$status = $is_rejected ? 'validation_errors' : 'success';
 
 		$this->fire_completed_action( $status, $pushed, $pushed - $failed, $failed, $error_message );
 	}
