@@ -153,7 +153,11 @@ Source: [`src/Helper/ProductManager.php`](https://github.com/woocommerce/woocomm
  * Fires after a sync run, whether it succeeded or not.
  *
  * $result carries batch_id, status (success, validation_errors, api_error, empty),
- * pushed, synced, failed, and error_message.
+ * pushed, synced, failed, error_message, and failed_items.
+ *
+ * failed_items has one item per error that PayPal reported:
+ * array( 'product_id' => 12, 'variant_id' => 34, 'error' => 'description must pass ...' ).
+ * For a simple product, variant_id is the product ID.
  */
 add_action(
 	'woocommerce_paypal_payments_store_sync_ingestion_completed',

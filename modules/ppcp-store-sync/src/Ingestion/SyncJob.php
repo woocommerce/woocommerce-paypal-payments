@@ -14,6 +14,8 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
  * This class handles the execution of product synchronization operations,
  * including transforming product data, sending requests to the API, and
  * managing success/failure states for products.
+ *
+ * @phpstan-type FailedItem array{product_id: int, variant_id: int, error: string}
  */
 class SyncJob {
 	private const ACTION_NAME_COMPLETED = 'woocommerce_paypal_payments_store_sync_ingestion_completed';
@@ -221,17 +223,17 @@ class SyncJob {
 			return;
 		}
 
-		$validation_errors = array();
-		$is_rejected       = $contains_errors && $error_message;
+		$failed_items = array();
+		$is_rejected  = $contains_errors && $error_message;
 
 		if ( $is_rejected ) {
-			$validation_errors = $this->extract_product_errors( $error_message, $payload_products );
+			$failed_items = $this->extract_product_errors( $error_message, $payload_products );
 
-			$this->mark_products_by_validation_result( $validation_errors );
+			$this->mark_products_by_validation_result( $failed_items );
 		}
 
 		$pushed = count( $this->product_ids );
-		$failed = count( $validation_errors );
+		$failed = count( array_unique( array_column( $failed_items, 'product_id' ) ) );
 
 		// A rejection that names no product applies to the full batch.
 		if ( $is_rejected && 0 === $failed ) {
@@ -240,19 +242,19 @@ class SyncJob {
 
 		$status = $is_rejected ? 'validation_errors' : 'success';
 
-		$this->fire_completed_action( $status, $pushed, $pushed - $failed, $failed, $error_message );
+		$this->fire_completed_action( $status, $pushed, $pushed - $failed, $failed, $error_message, $failed_items );
 	}
 
 	/**
-	 * Extract product IDs that failed validation from error message.
+	 * Finds the payload entries that failed validation.
 	 *
-	 * Parses error messages like "data/products/0/image_link must pass..." to
-	 * identify which products in the batch actually failed validation.
+	 * The index in "data/products/{index}/..." is the position of the entry in the
+	 * payload, not a product ID.
 	 *
 	 * @param string       $error_message    The error message to parse.
 	 * @param ProductDTO[] $payload_products The product entries sent in the request, in payload
 	 *                                       order.
-	 * @return array Array of product IDs (keys) and the relevant validation error (values).
+	 * @return FailedItem[] One item per error. For a simple product, variant_id is the product ID.
 	 */
 	private function extract_product_errors( string $error_message, array $payload_products ): array {
 		$errors = array();
@@ -273,8 +275,12 @@ class SyncJob {
 				continue;
 			}
 
-			$id            = (int) $entry->to_array()['item_group_id'];
-			$errors[ $id ] = trim( $match[2] );
+			$data     = $entry->to_array();
+			$errors[] = array(
+				'product_id' => (int) $data['item_group_id'],
+				'variant_id' => (int) $data['id'],
+				'error'      => trim( $match[2] ),
+			);
 		}
 
 		return $errors;
@@ -283,16 +289,16 @@ class SyncJob {
 	/**
 	 * Mark products based on validation results.
 	 *
-	 * @param array $validation_errors Mapping of product-id to validation error.
+	 * @param FailedItem[] $failed_items The items from extract_product_errors().
 	 */
-	private function mark_products_by_validation_result( array $validation_errors ): void {
+	private function mark_products_by_validation_result( array $failed_items ): void {
 		$this->logger->warning(
 			'[Sync] Validation errors',
-			$this->build_log_context( $validation_errors )
+			$this->build_log_context( $failed_items )
 		);
 
-		foreach ( $validation_errors as $product_id => $error_message ) {
-			$this->mark_product_with_validation_error( $product_id, $error_message );
+		foreach ( $failed_items as $item ) {
+			$this->mark_product_with_validation_error( $item['product_id'], $item['error'] );
 		}
 	}
 
@@ -318,16 +324,22 @@ class SyncJob {
 		$this->fire_completed_action( 'api_error', $pushed, 0, $pushed, $error_message );
 	}
 
-	/**
-	 * Fires the ingestion-completed action so other modules/plugins can monitor sync activity.
-	 *
-	 * @param string $status        One of: success, validation_errors, api_error, empty.
-	 * @param int    $pushed        Number of products sent in the request payload.
-	 * @param int    $synced        Number of products successfully synced (no validation errors).
-	 * @param int    $failed        Number of products that failed (validation or API error).
-	 * @param string $error_message Optional error message for failure cases.
-	 */
-	private function fire_completed_action( string $status, int $pushed, int $synced, int $failed, string $error_message = '' ): void {
+	private function fire_completed_action( string $status, int $pushed, int $synced, int $failed, string $error_message = '', array $failed_items = array() ): void {
+		/**
+		 * Fires after a sync run, whether it succeeded or not.
+		 *
+		 * @param array $result {
+		 *     @type string $batch_id      Unique ID of the run.
+		 *     @type string $status        One of: success, validation_errors, api_error, empty.
+		 *     @type int    $pushed        Number of products in the request.
+		 *     @type int    $synced        Number of products without a validation error.
+		 *     @type int    $failed        Number of products that failed.
+		 *     @type string $error_message Error message of a failed run.
+		 *     @type array  $failed_items  One item per error that PayPal reported: product_id,
+		 *                                 variant_id and error. For a simple product, variant_id
+		 *                                 is the product ID.
+		 * }
+		 */
 		do_action(
 			self::ACTION_NAME_COMPLETED,
 			array(
@@ -337,6 +349,7 @@ class SyncJob {
 				'synced'        => $synced,
 				'failed'        => $failed,
 				'error_message' => $error_message,
+				'failed_items'  => $failed_items,
 			)
 		);
 	}
