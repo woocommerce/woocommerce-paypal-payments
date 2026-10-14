@@ -29,6 +29,19 @@ class MiniCartSmartButtonsRendererTest extends TestCase
         when('do_action')->justReturn(null);
 
         $this->settings_status = Mockery::mock(SettingsStatus::class);
+
+        $this->stub_cart(null);
+    }
+
+    /**
+     * @param \WC_Cart|null $cart The cart exposed through WC()->cart; null when WooCommerce has no cart.
+     */
+    private function stub_cart($cart): void
+    {
+        $woocommerce = new \stdClass();
+        $woocommerce->cart = $cart;
+
+        when('WC')->justReturn($woocommerce);
     }
 
     private function create_container(bool $is_free_trial_cart = false): ContainerInterface
@@ -100,6 +113,30 @@ class MiniCartSmartButtonsRendererTest extends TestCase
 
         $renderer = new MiniCartSmartButtonsRenderer();
         $container = $this->create_container(true);
+
+        $html = $renderer->render(array(), $container);
+
+        $this->assertSame('', $html);
+    }
+
+    /**
+     * GIVEN the mini-cart Smart Buttons placement is enabled for the merchant
+     * AND the cart total is zero, so it does not need payment (e.g. a free product)
+     * WHEN the block is rendered
+     * THEN an empty string is returned, because there is nothing to pay for
+     */
+    public function testRendersEmptyStringWhenCartDoesNotNeedPayment(): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('mini-cart')
+            ->andReturn(true);
+
+        $cart = Mockery::mock(\WC_Cart::class);
+        $cart->shouldReceive('needs_payment')->andReturn(false);
+        $this->stub_cart($cart);
+
+        $renderer = new MiniCartSmartButtonsRenderer();
+        $container = $this->create_container();
 
         $html = $renderer->render(array(), $container);
 

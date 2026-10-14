@@ -40,6 +40,7 @@ import { watchProductAmount } from './messages/productAmount';
 import { initProductButtonGate } from './utils/productButtonGate';
 import { setErrorLabels } from './utils/errorHandler';
 import { isFreeTrialCart } from './utils/freeTrial';
+import { onBlockCartTotalChange } from './utils/blockCartTotal';
 import {
 	placeExpressButtons,
 	setExpressButtonsFailed,
@@ -134,6 +135,8 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	const messagesFollowCartTotal = 'product' !== config.page_context;
 
 	let amount = config.amount;
+	// Kept apart from amount, which is the product price on a product page.
+	let cartTotal = null;
 	let refreshPromise = Promise.resolve();
 	let eligibilityPromise = null;
 	const sessionPromises = {};
@@ -255,7 +258,17 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	 */
 	async function renderTarget( target ) {
 		const wrapper = document.querySelector( target.wrapperSelector );
-		if ( ! wrapper || wrapper.childElementCount > 0 ) {
+		if ( ! wrapper ) {
+			return;
+		}
+
+		// The block mini-cart keeps its wrapper when the cart drops to $0 in place.
+		if ( target.context === 'mini-cart' && parseFloat( cartTotal ) <= 0 ) {
+			wrapper.replaceChildren();
+			return;
+		}
+
+		if ( wrapper.childElementCount > 0 ) {
 			return;
 		}
 
@@ -365,7 +378,8 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		// Read before the new total lands, to compare against it below.
 		const wasFreeTrial = isFreeTrialCart( config, amount );
 
-		amount = ( await fetchCartTotal( config ) ) || amount;
+		cartTotal = ( await fetchCartTotal( config ) ) || cartTotal;
+		amount = cartTotal || amount;
 		if ( messagesFollowCartTotal ) {
 			updateMessagesAmount( amount );
 		}
@@ -490,6 +504,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		initProductButtonGate( config );
 		placeExpressButtons( config );
 		onSdkInstanceChange( renderWithNewSessions );
+		onBlockCartTotalChange( refreshEligibilityDebounced );
 	}
 
 	if ( document.readyState === 'loading' ) {
