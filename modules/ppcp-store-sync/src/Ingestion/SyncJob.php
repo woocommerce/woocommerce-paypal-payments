@@ -114,7 +114,10 @@ class SyncJob {
 		$status_code   = wp_remote_retrieve_response_code( $response );
 		$response_body = wp_remote_retrieve_body( $response );
 
-		if ( $status_code >= 200 && $status_code <= 422 ) {
+		$is_success          = $status_code >= 200 && $status_code < 300;
+		$is_validation_error = in_array( $status_code, array( 400, 422 ), true );
+
+		if ( $is_success || $is_validation_error ) {
 			$this->handle_successful_response( $response_body, $products );
 
 			return;
