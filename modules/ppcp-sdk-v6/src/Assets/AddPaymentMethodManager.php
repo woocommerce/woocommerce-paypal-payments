@@ -66,6 +66,7 @@ class AddPaymentMethodManager
         }
         $asset = $this->asset_getter->get_asset_data('boot-add-payment-method.js', $this->version);
         wp_register_script('wc-ppcp-sdk-v6-add-payment-method', $script_url, $asset['dependencies'], $asset['version'], \true);
+        wp_set_script_translations('wc-ppcp-sdk-v6-add-payment-method', 'woocommerce-paypal-payments');
         wp_localize_script('wc-ppcp-sdk-v6-add-payment-method', 'wc_ppcp_sdk_v6_save', $this->script_data());
         wp_enqueue_script('wc-ppcp-sdk-v6-add-payment-method');
         // v5's smart-button stylesheet (which carries this rule) is suppressed

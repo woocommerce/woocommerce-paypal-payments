@@ -210,6 +210,7 @@ class SdkV6Manager
         }
         $asset = $this->asset_getter->get_asset_data('boot.js', $this->version);
         wp_register_script('wc-ppcp-sdk-v6-boot', $script_url, $asset['dependencies'], $asset['version'], \true);
+        wp_set_script_translations('wc-ppcp-sdk-v6-boot', 'woocommerce-paypal-payments');
         wp_localize_script('wc-ppcp-sdk-v6-boot', 'wc_ppcp_sdk_v6', $this->script_data());
         wp_enqueue_script('wc-ppcp-sdk-v6-boot');
         // Lays out the express buttons inside the wrappers render_wrapper()
