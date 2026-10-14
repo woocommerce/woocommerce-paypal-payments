@@ -462,6 +462,7 @@ class WcGatewayTest extends TestCase
 		$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
 		$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->andReturn( 1 );
 		$this->sessionHandler->shouldNotReceive( 'destroy_session_data' );
+		$this->sessionHandler->shouldReceive( 'replace_payer_action_order_id' )->once()->with( 'PAYPAL-ORDER-ID' );
 		$this->sessionOrder->shouldReceive( 'id' )->andReturn( 'PAYPAL-ORDER-ID' );
 
 		$testee = $this->createGateway();

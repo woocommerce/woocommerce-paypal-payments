@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Assets\SettingsPageAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\VoidButtonAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\PayerActionReturnForwarder;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ShippingCallbackEndpoint;
@@ -294,6 +295,16 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				 * @var ReturnUrlEndpoint $endpoint
 				 */
 				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'template_redirect',
+			static function () use ( $c ) {
+				$forwarder = $c->get( 'wcgateway.payer-action-return-forwarder' );
+				assert( $forwarder instanceof PayerActionReturnForwarder );
+
+				$forwarder->maybe_forward();
 			}
 		);
 
