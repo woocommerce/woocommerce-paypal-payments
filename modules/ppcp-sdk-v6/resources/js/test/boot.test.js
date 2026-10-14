@@ -94,6 +94,12 @@ jest.mock( '../utils/viewedTotal', () => ( {
 	watchViewedTotal: ( ...args ) => mockWatchViewedTotal( ...args ),
 } ) );
 
+const mockOnBlockCartTotalChange = jest.fn();
+jest.mock( '../utils/blockCartTotal', () => ( {
+	onBlockCartTotalChange: ( ...args ) =>
+		mockOnBlockCartTotalChange( ...args ),
+} ) );
+
 const mockInitProductButtonGate = jest.fn();
 jest.mock( '../utils/productButtonGate', () => ( {
 	initProductButtonGate: ( ...args ) => mockInitProductButtonGate( ...args ),
@@ -430,6 +436,27 @@ describe( 'boot', () => {
 				MINI_CART_WRAPPER_SELECTOR.slice( 1 )
 			);
 		} );
+	} );
+
+	test( 'empties the mini-cart wrapper when a block cart change drops the total to zero', async () => {
+		let onCartChange;
+		mockOnBlockCartTotalChange.mockImplementation( ( callback ) => {
+			onCartChange = callback;
+		} );
+		mockRenderButtons.mockImplementation( ( { wrapper } ) => {
+			wrapper.appendChild( document.createElement( 'paypal-button' ) );
+		} );
+		mockFetchCartTotal.mockResolvedValue( '0.00' );
+		buildDom();
+		boot( baseConfig() );
+		await flush();
+		const miniCart = document.querySelector( MINI_CART_WRAPPER_SELECTOR );
+		expect( miniCart.childElementCount ).toBe( 1 );
+
+		onCartChange();
+		await jest.advanceTimersByTimeAsync( 300 );
+
+		expect( miniCart.childElementCount ).toBe( 0 );
 	} );
 
 	describe( 'DOM-replacing update events', () => {
