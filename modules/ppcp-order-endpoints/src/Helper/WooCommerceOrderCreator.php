@@ -152,7 +152,7 @@ class WooCommerceOrderCreator {
 
 			$product = wc_get_product( $variation_id ?: $product_id );
 			if ( ! $product ) {
-				return;
+				continue;
 			}
 
 			// Session cart items have no product object, but the core hooks below expect it.
