@@ -538,6 +538,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\UpdateShippingEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Endpoint/UpdateShippingEndpoint.php',
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\CartProductsHelper' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Helper/CartProductsHelper.php',
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\EarlyOrderHandler' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Helper/EarlyOrderHandler.php',
+        'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\PayNowOrderHandler' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Helper/PayNowOrderHandler.php',
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\WooCommerceOrderCreator' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/Helper/WooCommerceOrderCreator.php',
         'WooCommerce\\PayPalCommerce\\OrderEndpoints\\OrderEndpointsModule' => __DIR__ . '/../..' . '/modules/ppcp-order-endpoints/src/OrderEndpointsModule.php',
         'WooCommerce\\PayPalCommerce\\OrderTracking\\Assets\\OrderEditPageAssets' => __DIR__ . '/../..' . '/modules/ppcp-order-tracking/src/Assets/OrderEditPageAssets.php',

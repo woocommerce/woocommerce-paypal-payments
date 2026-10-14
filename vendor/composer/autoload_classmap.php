@@ -321,6 +321,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Endpoint\\UpdateShippingEndpoint' => $baseDir . '/modules/ppcp-order-endpoints/src/Endpoint/UpdateShippingEndpoint.php',
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\CartProductsHelper' => $baseDir . '/modules/ppcp-order-endpoints/src/Helper/CartProductsHelper.php',
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\EarlyOrderHandler' => $baseDir . '/modules/ppcp-order-endpoints/src/Helper/EarlyOrderHandler.php',
+    'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\PayNowOrderHandler' => $baseDir . '/modules/ppcp-order-endpoints/src/Helper/PayNowOrderHandler.php',
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\Helper\\WooCommerceOrderCreator' => $baseDir . '/modules/ppcp-order-endpoints/src/Helper/WooCommerceOrderCreator.php',
     'WooCommerce\\PayPalCommerce\\OrderEndpoints\\OrderEndpointsModule' => $baseDir . '/modules/ppcp-order-endpoints/src/OrderEndpointsModule.php',
     'WooCommerce\\PayPalCommerce\\OrderTracking\\Assets\\OrderEditPageAssets' => $baseDir . '/modules/ppcp-order-tracking/src/Assets/OrderEditPageAssets.php',
