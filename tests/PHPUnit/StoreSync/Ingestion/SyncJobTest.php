@@ -1122,11 +1122,12 @@ class SyncJobTest extends TestCase {
 	 * WHEN the API rejects the request with a message that names no product
 	 * THEN every product is marked processed without a validation error
 	 * AND the ingestion-completed action reports status "validation_errors", not "success"
+	 * AND the whole batch counts as failed, so nothing counts as synced
 	 * AND the failed items list is empty
 	 *
 	 * @dataProvider unattributed_rejection_provider
 	 */
-	public function test_execute_reports_validation_errors_when_rejection_names_no_product( int $status_code ): void {
+	public function test_execute_reports_validation_errors_when_rejection_names_no_product( int $status_code, string $message ): void {
 		$product_one = $this->create_product_stub( 1, 'Product 1', '10' );
 		$product_two = $this->create_product_stub( 2, 'Product 2', '20' );
 
@@ -1170,17 +1171,24 @@ class SyncJobTest extends TestCase {
 		$sync_job->execute();
 
 		$this->assertSame( 'validation_errors', $captured_action['status'] );
+		$this->assertSame( 2, $captured_action['pushed'] );
+		$this->assertSame( 0, $captured_action['synced'] );
+		$this->assertSame( 2, $captured_action['failed'] );
 		$this->assertSame( array(), $captured_action['failed_items'] );
 	}
 
 	/**
-	 * Provides HTTP statuses that can carry a rejection without a product reference.
+	 * Provides HTTP statuses and messages of a rejection without a product reference.
 	 */
 	public function unattributed_rejection_provider(): array {
+		$uri_message   = 'data/merchant_url must match format "uri"';
+		$array_message = 'Products array not provided or is not a proper array';
+
 		return array(
-			'bad request (400)'                => array( 400 ),
-			'unprocessable entity (422)'       => array( 422 ),
-			'success status with failure flag' => array( 200 ),
+			'bad request (400)'                => array( 400, $uri_message ),
+			'unprocessable entity (422)'       => array( 422, $uri_message ),
+			'success status with failure flag' => array( 200, $uri_message ),
+			'missing products array (422)'     => array( 422, $array_message ),
 		);
 	}
 
