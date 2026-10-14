@@ -610,6 +610,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\WcGateway\\Checkout\\DisableGateways' => $baseDir . '/modules/ppcp-wc-gateway/src/Checkout/DisableGateways.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\CaptureCardPayment' => $baseDir . '/modules/ppcp-wc-gateway/src/Endpoint/CaptureCardPayment.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\CapturePayPalPayment' => $baseDir . '/modules/ppcp-wc-gateway/src/Endpoint/CapturePayPalPayment.php',
+    'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\PayerActionReturnForwarder' => $baseDir . '/modules/ppcp-wc-gateway/src/Endpoint/PayerActionReturnForwarder.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\RefreshFeatureStatusEndpoint' => $baseDir . '/modules/ppcp-wc-gateway/src/Endpoint/RefreshFeatureStatusEndpoint.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\ReturnUrlEndpoint' => $baseDir . '/modules/ppcp-wc-gateway/src/Endpoint/ReturnUrlEndpoint.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\ShippingCallbackEndpoint' => $baseDir . '/modules/ppcp-wc-gateway/src/Endpoint/ShippingCallbackEndpoint.php',
