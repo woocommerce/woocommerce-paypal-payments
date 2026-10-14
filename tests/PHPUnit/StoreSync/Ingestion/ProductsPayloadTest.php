@@ -292,6 +292,8 @@ class ProductsPayloadTest extends TestCase {
 			'variation description wins'                 => array( 'Variation text', 'Parent long text', 'Parent short text', 'Variation text' ),
 			'blank variation uses parent long text'      => array( '&nbsp;', 'Parent long text', 'Parent short text', 'Parent long text' ),
 			'blank long text uses parent short text'     => array( '', '<p></p>', 'Parent short text', 'Parent short text' ),
+			'paragraph with space uses parent long text' => array( '<p>&nbsp;</p>', 'Parent long text', 'Parent short text', 'Parent long text' ),
+			'space-only long text uses parent short text' => array( '', '<p>&nbsp;</p>', 'Parent short text', 'Parent short text' ),
 			'text only in parent short description'      => array( '', '', 'Parent short text', 'Parent short text' ),
 		);
 	}

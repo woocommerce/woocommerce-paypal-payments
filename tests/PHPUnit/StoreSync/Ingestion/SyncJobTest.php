@@ -62,7 +62,7 @@ class SyncJobTest extends TestCase {
 		when( 'wp_generate_uuid4' )->justReturn( 'test-batch-id-1234' );
 		when( 'current_time' )->justReturn( '2024-01-01 12:00:00' );
 		when( 'wc_get_product_category_list' )->justReturn( 'Category1, Category2' );
-		when( 'wp_strip_all_tags' )->returnArg();
+		when( 'wp_strip_all_tags' )->alias( 'strip_tags' );
 		when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wp_json_encode' )->alias( fn( $data ) => json_encode( $data ) );
@@ -117,6 +117,63 @@ class SyncJobTest extends TestCase {
 		} );
 
 		return $products;
+	}
+
+	/**
+	 * Creates a variable product with one purchasable variation per given description,
+	 * and configures wc_get_product to resolve all of them.
+	 *
+	 * @param int      $parent_id              Parent product ID.
+	 * @param string   $parent_description     Parent long description.
+	 * @param string   $parent_short           Parent short description.
+	 * @param string[] $variation_descriptions Own descriptions of the variations.
+	 * @return WC_Product Parent product.
+	 */
+	private function create_variable_product_and_stub_wc_get_product(
+		int $parent_id,
+		string $parent_description,
+		string $parent_short,
+		array $variation_descriptions
+	): WC_Product {
+		$variations    = array();
+		$variation_ids = array();
+
+		foreach ( $variation_descriptions as $index => $description ) {
+			$variation_id    = $parent_id + 1 + $index;
+			$variation_ids[] = $variation_id;
+
+			$variation = Mockery::mock( WC_Product_Variation::class );
+			$variation->allows( 'is_purchasable' )->andReturn( true );
+			$variation->allows( 'get_id' )->andReturn( $variation_id );
+			$variation->allows( 'get_name' )->andReturn( "Variant {$variation_id}" );
+			$variation->allows( 'get_permalink' )->andReturn( "https://example.com/v{$variation_id}" );
+			$variation->allows( 'get_image_id' )->andReturn( 0 );
+			$variation->allows( 'get_description' )->andReturn( $description );
+			$variation->allows( 'get_price' )->andReturn( '10.00' );
+			$variation->allows( 'get_stock_status' )->andReturn( 'instock' );
+			$variation->allows( 'get_sku' )->andReturn( "SKU-{$variation_id}" );
+			$variation->allows( 'get_sale_price' )->andReturn( '' );
+			$variation->allows( 'get_variation_attributes' )->andReturn( array() );
+
+			$variations[ $variation_id ] = $variation;
+		}
+
+		$parent = Mockery::mock( WC_Product_Variable::class . ', ' . WC_Product::class );
+		$parent->allows( 'get_type' )->andReturn( 'variable' );
+		$parent->allows( 'is_type' )->with( 'variable' )->andReturn( true );
+		$parent->allows( 'get_children' )->andReturn( $variation_ids );
+		$parent->allows( 'get_id' )->andReturn( $parent_id );
+		$parent->allows( 'get_image_id' )->andReturn( 300 );
+		$parent->allows( 'get_description' )->andReturn( $parent_description );
+		$parent->allows( 'get_short_description' )->andReturn( $parent_short );
+
+		when( 'wc_get_product' )->alias(
+			static function ( $id ) use ( $parent_id, $parent, $variations ) {
+				return $parent_id === $id ? $parent : ( $variations[ $id ] ?? false );
+			}
+		);
+
+		return $parent;
 	}
 
 	/**
@@ -624,6 +681,88 @@ class SyncJobTest extends TestCase {
 	}
 
 	/**
+	 * GIVEN a variable product whose variations have no description of their own
+	 * AND whose parent has a description with text
+	 * WHEN execute is called
+	 * THEN the API request is sent with the parent text as description of every variation entry
+	 * AND the parent product is marked processed
+	 */
+	public function test_execute_sends_parent_description_when_variations_have_no_description(): void {
+		$parent = $this->create_variable_product_and_stub_wc_get_product( 100, '<p>Parent text</p>', '', array( '', '&nbsp;' ) );
+
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $parent );
+
+		$captured_request = null;
+		when( 'wp_remote_post' )->alias( function ( $url, $args ) use ( &$captured_request ) {
+			$captured_request = $args;
+
+			return array();
+		} );
+		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+		when( 'wp_remote_retrieve_body' )->justReturn( '{"success": true}' );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			array( 100 ),
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$sync_job->execute();
+
+		$body = json_decode( $captured_request['body'], true );
+
+		$this->assertSame(
+			array( 'Parent text', 'Parent text' ),
+			array_column( $body['products'], 'description' )
+		);
+	}
+
+	/**
+	 * GIVEN a variable product where the variation, the parent long description and the parent
+	 * short description all have no visible text
+	 * WHEN execute is called
+	 * THEN the entries are dropped and the parent is marked processed with "Incomplete payload"
+	 * AND no API request is sent
+	 * AND the ingestion-completed action reports an "empty" batch
+	 */
+	public function test_execute_parks_variable_product_when_every_description_is_blank(): void {
+		$parent = $this->create_variable_product_and_stub_wc_get_product( 100, '<p>&nbsp;</p>', '&nbsp;', array( '' ) );
+
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $parent, 'Incomplete payload' );
+
+		expect( 'wp_remote_post' )->never();
+
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			array( 100 ),
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$sync_job->execute();
+
+		$this->assertSame( 'empty', $captured_action['status'] );
+		$this->assertSame( 0, $captured_action['pushed'] );
+	}
+
+	/**
 	 * GIVEN a batch of variable products that have no purchasable variations, so no payload
 	 * entry exists for any of them
 	 * WHEN execute is called
@@ -1000,7 +1139,7 @@ class SyncJobTest extends TestCase {
 			json_encode(
 				array(
 					'success' => false,
-					'message' => 'data/merchant_url must match format "uri"',
+					'message' => $message,
 				)
 			)
 		);
