@@ -86,8 +86,7 @@ class V6PaymentMethod extends AbstractPaymentMethodType {
 	}
 
 	public function is_active() {
-		return $this->manager->should_load_on_current_page()
-			&& $this->manager->is_block_context();
+		return $this->manager->is_block_method_active();
 	}
 
 	public function get_payment_method_script_handles() {
