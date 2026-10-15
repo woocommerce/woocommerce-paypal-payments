@@ -42,6 +42,12 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 		$this->mockPaymentTokensEndpoint = \Mockery::mock( PaymentTokensEndpoint::class );
 	}
 
+	public function tearDown(): void {
+		delete_user_meta( $this->customer_id, '_ppcp_target_customer_id' );
+
+		parent::tearDown();
+	}
+
 	/**
 	 * Sets up a test container with common mocks
 	 *
@@ -73,6 +79,7 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 	 */
 	protected function setupPaymentToken( int $customer_id, string $gateway_id = PayPalGateway::ID ): WC_Payment_Token {
 		$paymentToken = $this->createAPaymentTokenForTheCustomer( $customer_id, $gateway_id );
+		update_user_meta( $customer_id, '_ppcp_target_customer_id', 'TEST-TARGET-CUSTOMER' );
 
 		$this->mockPaymentTokensEndpoint->shouldReceive( 'payment_tokens_for_customer' )
 		                                ->andReturn( [

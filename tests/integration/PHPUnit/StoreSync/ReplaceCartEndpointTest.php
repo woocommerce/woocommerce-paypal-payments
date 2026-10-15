@@ -5,6 +5,8 @@ namespace WooCommerce\PayPalCommerce\Tests\Integration\StoreSync;
 
 use Mockery;
 use Psr\Log\NullLogger;
+use WC_Cache_Helper;
+use WC_Tax;
 use WP_REST_Request;
 use WP_REST_Response;
 use WooCommerce\PayPalCommerce\StoreSync\Endpoint\ReplaceCartEndpoint;
@@ -22,6 +24,11 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 	private ReplaceCartEndpoint $endpoint;
 
 	private AgenticSessionHandler $session_handler;
+
+	private int $tax_rate_id = 0;
+
+	/** @var array<string, mixed> */
+	private array $original_options = array();
 
 	public function setUp(): void {
 		parent::setUp();
@@ -43,10 +50,47 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 			$order_manager,
 			$c->get( 'agentic.store.data' )
 		);
+
+		$this->original_options = array();
+		foreach ( array( 'woocommerce_calc_taxes', 'woocommerce_prices_include_tax', 'woocommerce_tax_based_on' ) as $name ) {
+			$this->original_options[ $name ] = get_option( $name );
+		}
+
+		// 10.00 incl. 7.25% tax is 9.324 ex-tax: the rounded unit price loses a fraction of a cent.
+		update_option( 'woocommerce_calc_taxes', 'yes' );
+		update_option( 'woocommerce_prices_include_tax', 'yes' );
+		update_option( 'woocommerce_tax_based_on', 'shipping' );
+
+		$this->tax_rate_id = WC_Tax::_insert_tax_rate(
+			array(
+				'tax_rate_country'  => '',
+				'tax_rate_state'    => '',
+				'tax_rate'          => '7.2500',
+				'tax_rate_name'     => 'PCP Test Tax',
+				'tax_rate_priority' => '1',
+				'tax_rate_compound' => 0,
+				'tax_rate_shipping' => 0,
+				'tax_rate_order'    => '1',
+				'tax_rate_class'    => '',
+			)
+		);
+		WC_Cache_Helper::get_transient_version( 'taxes', true );
+	}
+
+	public function tearDown(): void {
+		WC_Tax::_delete_tax_rate( $this->tax_rate_id );
+		WC_Cache_Helper::get_transient_version( 'taxes', true );
+
+		foreach ( $this->original_options as $name => $value ) {
+			update_option( $name, $value );
+		}
+
+		parent::tearDown();
 	}
 
 	/**
-	 * GIVEN a cart session was created with a known ec_token
+	 * GIVEN prices include tax and a 7.25% tax rate applies
+	 * AND a cart session was created with a known ec_token
 	 * WHEN replace_cart() is called with a valid replacement payload
 	 * THEN the response status is 200
 	 * AND payment_method.token equals the ec_token from the original session (not the request body)
@@ -57,6 +101,7 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 	 * AND available_shipping_options has at least one entry with exactly one selected option
 	 * AND customer and shipping_address keys exist in the response
 	 * AND the sum of item price × quantity equals the subtotal (in cents)
+	 * AND subtotal + shipping + tax - discount equals the total (in cents)
 	 */
 	public function test_replace_cart_preserves_ec_token_in_response(): void {
 		$ec_token = 'test-preserved-session-ec-token';
@@ -144,5 +189,13 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 		}
 		$subtotal_cents = (int) round( (float) ( $data['totals']['subtotal']['value'] ?? 0 ) * 100 );
 		$this->assertSame( $subtotal_cents, $items_subtotal_cents, 'Sum of item price × quantity must equal totals.subtotal' );
+
+		$to_cents = static fn( string $key ): int => (int) round( (float) ( $data['totals'][ $key ]['value'] ?? 0 ) * 100 );
+
+		$this->assertSame(
+			$to_cents( 'total' ),
+			$to_cents( 'subtotal' ) + $to_cents( 'shipping' ) + $to_cents( 'tax' ) - $to_cents( 'discount' ),
+			'subtotal + shipping + tax - discount must equal totals.total'
+		);
 	}
 }

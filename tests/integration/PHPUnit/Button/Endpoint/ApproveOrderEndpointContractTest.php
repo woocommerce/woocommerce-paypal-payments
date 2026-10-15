@@ -27,7 +27,7 @@ class ApproveOrderEndpointContractTest extends WcAjaxEndpointTestCase {
 	 * order (no payment source, so the card/3DS branch is skipped) and the
 	 * follow-up calls the order processor performs on the happy path.
 	 *
-	 * final_review_enabled is forced off so the should_create_wc_order branch
+	 * The Pay Now setting is enabled so the should_create_wc_order branch
 	 * is deterministic regardless of store settings.
 	 *
 	 * @param string|null $custom_id The purchase unit custom_id of the fetched order,
@@ -37,14 +37,8 @@ class ApproveOrderEndpointContractTest extends WcAjaxEndpointTestCase {
 	private function endpointWithApprovedOrder( ?string $custom_id = null ) {
 		$order_endpoint = Mockery::mock( OrderEndpoint::class );
 
-		$container = $this->bootstrapWithOrderApi(
-			$order_endpoint,
-			array(
-				'blocks.settings.final_review_enabled' => static function (): bool {
-					return false;
-				},
-			)
-		);
+		$this->enablePayNow();
+		$container = $this->bootstrapWithOrderApi( $order_endpoint );
 
 		$order_factory = $container->get( 'api.factory.order' );
 		$approved      = $order_factory->from_paypal_response(

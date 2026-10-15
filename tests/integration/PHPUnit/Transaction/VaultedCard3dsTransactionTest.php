@@ -215,8 +215,8 @@ class VaultedCard3dsTransactionTest extends IntegrationMockedTestCase {
 
 	/**
 	 * GIVEN an order with a matching stored resume nonce
-	 * AND the order's payment_method is not the injected gateway's id
-	 *     and is not registered as a WC payment gateway in this test environment
+	 * AND the order's gateway plugin was deactivated between the 3DS redirect and the buyer's return
+	 *     so the order's payment_method id no longer resolves to any WC payment gateway
 	 * WHEN maybe_resume_card_3ds runs
 	 * THEN it returns early without invoking payment processing
 	 * AND the order status is unchanged and the stored nonce is still present
@@ -224,7 +224,7 @@ class VaultedCard3dsTransactionTest extends IntegrationMockedTestCase {
 	public function test_resume_returns_when_gateway_not_found(): void {
 		$order = $this->getConfiguredOrder(
 			$this->customer_id,
-			'ppcp-credit-card-gateway',
+			'deactivated-gateway',
 			array( 'simple' ),
 			array(),
 			false
