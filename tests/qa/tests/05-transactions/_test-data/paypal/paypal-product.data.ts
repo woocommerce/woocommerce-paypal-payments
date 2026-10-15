@@ -1,9 +1,25 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, ShopOrder, products } from '../../../../resources';
+import {
+	payments,
+	orders,
+	ShopOrder,
+	products,
+	customers,
+	guests,
+} from '../../../../resources';
+
+const customer = customers.usa;
+const guest = guests.usa;
 
 const { payPal } = payments;
+
+// Variable product with the variation chosen on the product page or sent to the cart
+const variableProduct = {
+	...products.variationNotSelected100,
+	variationToSelect: { color: 'Gray', size: 'M' },
+};
 
 export const payPalProduct: ShopOrder[] = [
 	{
@@ -19,5 +35,35 @@ export const payPalProduct: ShopOrder[] = [
 				},
 			}
 		],
+	},
+	{
+		// TODO: replace PCP-0000 with the Xray key once the test case is created.
+		title: 'PCP-0000 | Transaction - Product - PayPal - Simple product',
+		...orders.default,
+		payment: payPal,
+		customer: guest,
+	},
+];
+
+export const payPalProductPayNowOff: ShopOrder[] = [
+	{
+		// TODO: replace PCP-0000 with the Xray key once the test case is created.
+		title: 'PCP-0000 | Transaction - Product - PayPal - Pay Now off - Simple product',
+		...orders.default,
+		payment: payPal,
+		customer: guest,
+		isPayNowEnabled: false,
+	},
+];
+
+export const payPalClassicProductPayNowOff: ShopOrder[] = [
+	{
+		// TODO: replace PCP-0000 with the Xray key once the test case is created.
+		title: 'PCP-0000 | Transaction - Product - PayPal - Pay Now off - Classic checkout - Variable product',
+		...orders.default,
+		payment: payPal,
+		customer,
+		products: [ variableProduct ],
+		isPayNowEnabled: false,
 	},
 ];

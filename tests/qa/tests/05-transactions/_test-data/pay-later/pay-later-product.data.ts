@@ -1,7 +1,17 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, ShopOrder, products } from '../../../../resources';
+import {
+	payments,
+	orders,
+	ShopOrder,
+	products,
+	customers,
+	guests,
+} from '../../../../resources';
+
+const customer = customers.usa;
+const guest = guests.usa;
 
 const { payLater } = payments;
 
@@ -19,5 +29,23 @@ export const payLaterProduct: ShopOrder[] = [
 				},
 			}
 		],
+	},
+	{
+		// TODO: replace PCP-0000 with the Xray key once the test case is created.
+		title: 'PCP-0000 | Transaction - Product - Pay Later - Simple product',
+		...orders.default,
+		payment: payLater,
+		customer,
+	},
+];
+
+export const payLaterProductPayNowOff: ShopOrder[] = [
+	{
+		// TODO: replace PCP-0000 with the Xray key once the test case is created.
+		title: 'PCP-0000 | Transaction - Product - Pay Later - Pay Now off - Simple product',
+		...orders.default,
+		payment: payLater,
+		customer: guest,
+		isPayNowEnabled: false,
 	},
 ];
