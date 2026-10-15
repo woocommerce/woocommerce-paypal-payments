@@ -413,6 +413,39 @@ class SdkV6ManagerTest extends TestCase
         ];
     }
 
+    /**
+     * GIVEN a page and the set of smart button locations the merchant enabled
+     * WHEN the SDK bootstrap data is generated
+     * THEN buttons_enabled is true only when the page's own location has smart buttons on
+     * AND it is false when only another location, such as the mini-cart, has them on
+     * AND it is false on a page with no page context
+     *
+     * @dataProvider buttons_enabled_provider
+     */
+    public function testScriptDataButtonsEnabledFollowsThePagesOwnLocation(string $page_context, array $enabled_locations, bool $expected): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->andReturnUsing(static function (string $location) use ($enabled_locations): bool {
+                return in_array($location, $enabled_locations, true);
+            });
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame($expected, $data['buttons_enabled']);
+    }
+
+    public function buttons_enabled_provider(): array
+    {
+        return [
+            'checkout page with checkout buttons on'              => ['checkout', ['checkout'], true],
+            'checkout page with only mini cart buttons on'        => ['checkout', ['mini-cart'], false],
+            'checkout page with checkout buttons off'             => ['checkout', [], false],
+            'page without context even with mini cart buttons on' => ['', ['mini-cart', 'checkout', 'cart'], false],
+        ];
+    }
+
     public function free_trial_checkout_provider(): array
     {
         return [
