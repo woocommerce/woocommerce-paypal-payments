@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 
 use function as_next_scheduled_action;
 use function as_schedule_recurring_action;
+use function as_unschedule_all_actions;
 
 /**
  * Manages the ingestion process for agentic commerce.
@@ -74,19 +75,25 @@ class IngestionManager {
 	}
 
 	/**
-	 * Schedule the recurring sync action.
+	 * The first run waits one interval: Action Scheduler stops a recurring action
+	 * that fails repeatedly, and init() re-creates it on the next request.
+	 * An immediate first run would then retry without delay.
 	 */
 	private function schedule_recurring_sync(): void {
 		if ( as_next_scheduled_action( 'ppcp_agentic_sync_batch' ) ) {
 			return;
 		}
 
+		$interval = $this->configuration->get_sync_interval_in_seconds();
+		$unique   = true;
+
 		as_schedule_recurring_action(
-			time(),
-			$this->configuration->get_sync_interval_in_seconds(),
+			time() + $interval,
+			$interval,
 			'ppcp_agentic_sync_batch',
 			array(),
-			'ppcp_agentic_sync'
+			'ppcp_agentic_sync',
+			$unique
 		);
 	}
 
@@ -100,13 +107,13 @@ class IngestionManager {
 			return;
 		}
 
-		as_unschedule_action( 'ppcp_agentic_sync_batch', array(), 'ppcp_agentic_sync' );
+		as_unschedule_all_actions( 'ppcp_agentic_sync_batch', array(), 'ppcp_agentic_sync' );
 	}
 
 	/**
 	 * Process the next batch of products for sync.
 	 *
-	 * @throws RuntimeException When an error occurs during sync, handled by Action Scheduler.
+	 * @throws RuntimeException When the API reports an error that Action Scheduler must record.
 	 * @wp-hook ppcp_agentic_sync_batch
 	 */
 	public function process_next_batch(): void {

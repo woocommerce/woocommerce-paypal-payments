@@ -105,7 +105,11 @@ class ProductsPayload {
 					$variation,
 					wp_get_attachment_image_url( (int) $variable_product->get_image_id(), 'full' ) ?: ''
 				),
-				$this->product_manager->get_product_description( $variation, $variable_product->get_description() ),
+				$this->product_manager->get_product_description(
+					$variation,
+					$variable_product->get_description(),
+					$variable_product->get_short_description()
+				),
 				$this->product_manager->format_price( $variation->get_price() ),
 				$this->product_manager->get_product_availability( $variation ),
 				$variation->get_sku() ?: null,
