@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\StoreSync\Merchant\MerchantMetadataProvider;
 use function as_next_scheduled_action;
 use function as_schedule_recurring_action;
+use function as_unschedule_all_actions;
 /**
  * Manages the ingestion process for agentic commerce.
  * This class handles scheduling sync jobs and marking products for sync.
@@ -56,14 +57,18 @@ class IngestionManager
         add_action('woocommerce_paypal_payments_store_sync_invalidate_eligibility', array($this->product_filter, 'invalidate_all'));
     }
     /**
-     * Schedule the recurring sync action.
+     * The first run waits one interval: Action Scheduler stops a recurring action
+     * that fails repeatedly, and init() re-creates it on the next request.
+     * An immediate first run would then retry without delay.
      */
     private function schedule_recurring_sync(): void
     {
         if (as_next_scheduled_action('ppcp_agentic_sync_batch')) {
             return;
         }
-        as_schedule_recurring_action(time(), $this->configuration->get_sync_interval_in_seconds(), 'ppcp_agentic_sync_batch', array(), 'ppcp_agentic_sync');
+        $interval = $this->configuration->get_sync_interval_in_seconds();
+        $unique = \true;
+        as_schedule_recurring_action(time() + $interval, $interval, 'ppcp_agentic_sync_batch', array(), 'ppcp_agentic_sync', $unique);
     }
     /**
      * Unschedules the recurring action when the store is unregistered.
@@ -75,12 +80,12 @@ class IngestionManager
         if (!as_next_scheduled_action('ppcp_agentic_sync_batch')) {
             return;
         }
-        as_unschedule_action('ppcp_agentic_sync_batch', array(), 'ppcp_agentic_sync');
+        as_unschedule_all_actions('ppcp_agentic_sync_batch', array(), 'ppcp_agentic_sync');
     }
     /**
      * Process the next batch of products for sync.
      *
-     * @throws RuntimeException When an error occurs during sync, handled by Action Scheduler.
+     * @throws RuntimeException When the API reports an error that Action Scheduler must record.
      * @wp-hook ppcp_agentic_sync_batch
      */
     public function process_next_batch(): void
