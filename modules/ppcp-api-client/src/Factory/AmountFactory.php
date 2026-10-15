@@ -262,7 +262,7 @@ class AmountFactory
      *
      * @return int[] The reconciled tax and discount totals, in that order.
      */
-    private function reconcile_with_total(int $total_minor, int $items_minor, int $shipping_minor, int $taxes_minor, int $discount_minor): array
+    public static function reconcile_with_total(int $total_minor, int $items_minor, int $shipping_minor, int $taxes_minor, int $discount_minor): array
     {
         $components_minor = $items_minor + $shipping_minor + $taxes_minor - $discount_minor;
         $adjusted_taxes = $taxes_minor + ($total_minor - $components_minor);
