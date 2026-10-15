@@ -6,13 +6,22 @@
 
 const CART_STORE = 'wc/store/cart';
 
+// The Interactivity API Mini-Cart never loads CART_STORE; it fires this instead.
+const IAPI_SYNC_EVENT = 'wc-blocks_store_sync_required';
+
 /**
- * Calls back when the wc/store/cart total changes. The store holds default
- * totals until the cart loads, so the first loaded total is the baseline.
+ * Calls back when the block cart changes. CART_STORE holds default totals
+ * until the cart loads, so its first loaded total is the baseline.
  *
  * @param {Function} callback - Called on each change.
  */
 export function onBlockCartTotalChange( callback ) {
+	window.addEventListener( IAPI_SYNC_EVENT, ( event ) => {
+		if ( event.detail?.type === 'from_iAPI' ) {
+			callback();
+		}
+	} );
+
 	const data = window.wp?.data;
 	if ( ! data ) {
 		return;

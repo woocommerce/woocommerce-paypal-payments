@@ -36,19 +36,25 @@ function installWpData( initial = {} ) {
 
 describe( 'onBlockCartTotalChange()', () => {
 	let callback;
+	let addListenerSpy;
+
+	const dispatchSync = ( detail ) =>
+		window.dispatchEvent(
+			new CustomEvent( 'wc-blocks_store_sync_required', { detail } )
+		);
 
 	beforeEach( () => {
 		callback = jest.fn();
+		addListenerSpy = jest.spyOn( window, 'addEventListener' );
 	} );
 
 	afterEach( () => {
+		// Window listeners outlive the test.
+		addListenerSpy.mock.calls.forEach( ( [ type, listener ] ) =>
+			window.removeEventListener( type, listener )
+		);
+		addListenerSpy.mockRestore();
 		delete window.wp;
-	} );
-
-	test( 'does nothing when wp.data is not available', () => {
-		delete window.wp;
-
-		expect( () => onBlockCartTotalChange( callback ) ).not.toThrow();
 	} );
 
 	test( 'reports a total change after the cart has loaded', () => {
@@ -92,5 +98,27 @@ describe( 'onBlockCartTotalChange()', () => {
 		store.update( { totalPrice: '0' } );
 
 		expect( callback ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	describe( 'Interactivity API sync event', () => {
+		test( 'reports a from_iAPI sync event when wp.data is not available', () => {
+			delete window.wp;
+			onBlockCartTotalChange( callback );
+
+			dispatchSync( { type: 'from_iAPI' } );
+
+			expect( callback ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test.each( [
+			[ 'another type', { type: 'from_@wordpress/data' } ],
+			[ 'no detail', undefined ],
+		] )( 'ignores a sync event with %s', ( _label, detail ) => {
+			onBlockCartTotalChange( callback );
+
+			dispatchSync( detail );
+
+			expect( callback ).not.toHaveBeenCalled();
+		} );
 	} );
 } );
