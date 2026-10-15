@@ -315,7 +315,8 @@ if ( config && config.page_context && config.continuation ) {
 		} );
 	};
 
-	for ( const fundingSource of FUNDING_SOURCES ) {
+	// Off when the block is active only for other methods or Pay Later messages.
+	for ( const fundingSource of config.buttons_enabled ? FUNDING_SOURCES : [] ) {
 		registerExpress( {
 			name: `ppcp-gateway-${ fundingSource }`,
 			gatewayId: PAYPAL_GATEWAY_ID,

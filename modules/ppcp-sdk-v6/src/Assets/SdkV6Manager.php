@@ -1252,6 +1252,7 @@ class SdkV6Manager {
 		$data = array(
 			'sdk_url'             => $base_url . '/web-sdk/v6/core',
 			'page_context'        => $page_context,
+			'buttons_enabled'     => $page_context && $this->settings_status->is_smart_button_enabled_for_location( $page_context ),
 			'currency'            => get_woocommerce_currency(),
 			'amount'              => $this->transaction_amount(),
 			'buyer_country'       => $buyer_country,
