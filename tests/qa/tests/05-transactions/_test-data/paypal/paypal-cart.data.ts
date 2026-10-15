@@ -23,8 +23,7 @@ const { payPal } = payments;
 
 export const payPalCart: ShopOrder[] = [
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Cart - PayPal - Default order',
+		title: 'PCP-2841 | Transaction - Cart - PayPal - Default order',
 		...orders.default,
 		payment: payPal,
 		customer: guest,

@@ -31,8 +31,7 @@ export const payLaterProduct: ShopOrder[] = [
 		],
 	},
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Product - Pay Later - Simple product',
+		title: 'PCP-2894 | Transaction - Product - Pay Later - Simple product',
 		...orders.default,
 		payment: payLater,
 		customer,
@@ -41,8 +40,7 @@ export const payLaterProduct: ShopOrder[] = [
 
 export const payLaterProductPayNowOff: ShopOrder[] = [
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Product - Pay Later - Pay Now off - Simple product',
+		title: 'PCP-6921 | Transaction - Product - Pay Later - Pay Now off - Simple product',
 		...orders.default,
 		payment: payLater,
 		customer: guest,

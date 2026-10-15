@@ -16,8 +16,7 @@ const { payLater } = payments;
 
 export const payLaterMiniCart: ShopOrder[] = [
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Mini cart - Pay Later - Default order',
+		title: 'PCP-1193 | Transaction - Mini cart - Pay Later - Default order',
 		...orders.default,
 		payment: payLater,
 		customer,

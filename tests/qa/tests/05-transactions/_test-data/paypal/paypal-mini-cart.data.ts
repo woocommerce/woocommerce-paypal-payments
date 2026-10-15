@@ -16,8 +16,7 @@ const { payPal } = payments;
 
 export const payPalMiniCart: ShopOrder[] = [
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Mini cart - PayPal - Default order',
+		title: 'PCP-5771 | Transaction - Mini cart - PayPal - Default order',
 		...orders.default,
 		payment: payPal,
 		customer: guest,
@@ -26,8 +25,7 @@ export const payPalMiniCart: ShopOrder[] = [
 
 export const payPalMiniCartPayNowOff: ShopOrder[] = [
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Mini cart - PayPal - Pay Now off - Checkout',
+		title: 'PCP-5773 | Transaction - Mini cart - PayPal - Pay Now off - Checkout',
 		...orders.default,
 		payment: payPal,
 		customer: guest,
@@ -37,8 +35,7 @@ export const payPalMiniCartPayNowOff: ShopOrder[] = [
 
 export const payPalClassicMiniCartPayNowOff: ShopOrder[] = [
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Mini cart - PayPal - Pay Now off - Classic checkout',
+		title: 'PCP-5772 | Transaction - Mini cart - PayPal - Pay Now off - Classic checkout',
 		...orders.default,
 		payment: payPal,
 		customer,

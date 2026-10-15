@@ -37,8 +37,7 @@ export const payPalProduct: ShopOrder[] = [
 		],
 	},
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Product - PayPal - Simple product',
+		title: 'PCP-2892 | Transaction - Product - PayPal - Simple product',
 		...orders.default,
 		payment: payPal,
 		customer: guest,
@@ -47,8 +46,7 @@ export const payPalProduct: ShopOrder[] = [
 
 export const payPalProductPayNowOff: ShopOrder[] = [
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Product - PayPal - Pay Now off - Simple product',
+		title: 'PCP-6023 | Transaction - Product - PayPal - Pay Now off - Simple product',
 		...orders.default,
 		payment: payPal,
 		customer: guest,
@@ -58,8 +56,7 @@ export const payPalProductPayNowOff: ShopOrder[] = [
 
 export const payPalClassicProductPayNowOff: ShopOrder[] = [
 	{
-		// TODO: replace PCP-0000 with the Xray key once the test case is created.
-		title: 'PCP-0000 | Transaction - Product - PayPal - Pay Now off - Classic checkout - Variable product',
+		title: 'PCP-2893 | Transaction - Product - PayPal - Pay Now off - Classic checkout - Variable product',
 		...orders.default,
 		payment: payPal,
 		customer,
