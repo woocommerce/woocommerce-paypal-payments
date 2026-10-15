@@ -287,10 +287,11 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN a merchant with smart buttons enabled for every location
      * WHEN determining which locations should render on the current page
-     * THEN the cart, checkout and mini-cart wallet buttons are suppressed whenever the cart
+     * THEN the cart and checkout wallet buttons are suppressed whenever the cart
      *      does not need payment (e.g. a $0 order from a full-value coupon)
-     * AND the product and pay-now locations render regardless of the cart's payment status,
-     *     since pay-now is driven by an existing WC order rather than the cart
+     * AND the product, pay-now and mini-cart locations render regardless of the cart's payment
+     *     status, since pay-now is driven by an existing WC order rather than the cart, and the
+     *     mini-cart checks the cart when its wrapper prints
      *
      * AND determine_render_places() does not call Context::init_context() itself — that
      *     initialization now happens once in SdkV6Module's 'wp' callback, before both the
@@ -325,9 +326,9 @@ class SdkV6ManagerTest extends TestCase
                 true,
                 ['product' => true, 'cart' => true, 'checkout' => true, 'pay-now' => true, 'mini-cart' => true],
             ],
-            'zero-total cart not needing payment suppresses cart, checkout and mini-cart' => [
+            'zero-total cart not needing payment suppresses cart and checkout only' => [
                 false,
-                ['product' => true, 'cart' => false, 'checkout' => false, 'pay-now' => true, 'mini-cart' => false],
+                ['product' => true, 'cart' => false, 'checkout' => false, 'pay-now' => true, 'mini-cart' => true],
             ],
             'no cart present is treated as needing payment' => [
                 null,
@@ -343,8 +344,10 @@ class SdkV6ManagerTest extends TestCase
      * THEN the checkout still renders, because it must offer the PayPal
      *      save-without-purchase button for the vaulted token backing the future
      *      recurring payment
-     * AND the cart and mini-cart stay suppressed regardless of the free-trial flag,
-     *     since neither has a form to submit that vaulted token from
+     * AND the cart stays suppressed regardless of the free-trial flag, since it has no
+     *     form to submit that vaulted token from
+     * AND the mini-cart follows its setting alone, since its wrapper checks the cart
+     *     when it prints
      * AND a $0 cart that is NOT a free trial (e.g. a full-value coupon) keeps the
      *     checkout suppressed too, same as before the fix
      *
@@ -364,7 +367,50 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame($expected_checkout, $result['checkout']);
         $this->assertSame($needs_payment, $result['cart']);
-        $this->assertSame($needs_payment, $result['mini-cart']);
+        $this->assertTrue($result['mini-cart']);
+    }
+
+    /**
+     * GIVEN the cart was empty (needing no payment) when the render places were determined
+     * WHEN the cart changes and the mini-cart button wrapper is rendered afterwards
+     * THEN the wrapper prints when the cart needs payment at render time
+     * AND nothing prints when the cart still needs no payment, e.g. a $0 cart
+     *
+     * @dataProvider mini_cart_wrapper_provider
+     */
+    public function testRenderMiniCartWrapperFollowsCartStateAtRenderTime(bool $needs_payment_at_render, string $expected_output): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $needs_payment = false;
+        $cart          = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturnUsing(static function () use (&$needs_payment): bool {
+            return $needs_payment;
+        });
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $testee = $this->createTestee();
+        $places = $testee->determine_render_places();
+
+        $needs_payment = $needs_payment_at_render;
+        $testee->render_mini_cart_wrapper();
+
+        $this->assertTrue($places['mini-cart']);
+        $this->expectOutputString($expected_output);
+    }
+
+    public function mini_cart_wrapper_provider(): array
+    {
+        return [
+            'cart that needs payment at render time prints the wrapper' => [
+                true,
+                '<p class="woocommerce-mini-cart__buttons buttons"><span id="' . SdkV6Manager::MINI_CART_WRAPPER_ID . '"></span></p>',
+            ],
+            'zero-total cart at render time prints nothing' => [
+                false,
+                '',
+            ],
+        ];
     }
 
     public function free_trial_checkout_provider(): array
