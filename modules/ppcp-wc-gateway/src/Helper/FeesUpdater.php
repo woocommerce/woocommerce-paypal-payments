@@ -13,7 +13,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
-use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**

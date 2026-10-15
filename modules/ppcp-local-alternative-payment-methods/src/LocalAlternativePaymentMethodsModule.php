@@ -269,9 +269,13 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
 
 		add_action(
 			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
-			function ( WC_Order $wc_order, string $order_id ) use ( $c ) {
+			function ( WC_Order $wc_order, $order_id ) use ( $c ) {
 				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
 				if ( ! $this->is_local_apm( $wc_order->get_payment_method(), $payment_methods ) ) {
+					return;
+				}
+
+				if ( ! is_string( $order_id ) || '' === $order_id ) {
 					return;
 				}
 
