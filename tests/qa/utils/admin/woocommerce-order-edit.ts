@@ -133,7 +133,9 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 
 		// For example: Payment via PayPal
 		await expect(
-			this.paymentVia( payment?.gateway?.titleInModal ),
+			this.paymentVia(
+				payment?.gateway?.titleInOrder ?? payment?.gateway?.titleInModal
+			),
 			`Assert payment via text is visible`
 		).toBeVisible();
 

@@ -81,7 +81,7 @@ const fastlane: Pcp.Gateway = {
 	title: 'Fastlane',
 	titleInPcpSettings: 'Fastlane by PayPal',
 	titleInModal: 'Debit & Credit Cards',
-	titleInWcSettings: 'Fastlane Debit & Credit Cards',
+	titleInWcSettings: 'Debit & Credit Cards (via Fastlane by PayPal)',
 	hasSettingsButton: true,
 	dependsOn: 'acdc',
 	enabled: false,
