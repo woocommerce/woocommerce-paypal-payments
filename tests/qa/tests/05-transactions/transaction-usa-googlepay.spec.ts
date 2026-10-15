@@ -16,62 +16,64 @@ import {
 import { GooglePayPopup } from '../../utils/frontend/google-pay-popup';
 import { customers, negative12FeePlugin } from '../../resources';
 
-// Google Pay tests fail in CI because of account verification
-if( ! process.env.CI ) {
-	test.use( {
-		// Strip Basic Auth from the visitor context — when present it breaks
-		// Playwright's popup-event tracking for cross-origin window.open() calls.
-		httpCredentials: undefined,
-		screenshot: 'off',
-		trace: 'off',
-		video: 'off',
-		launchOptions: {
-			args: [
-				'--disable-web-security',
-				'--disable-blink-features=AutomationControlled',
-				'--disable-features=UserAgentClientHint',
-			],
-		},
+test.skip(
+	!! process.env.CI,
+	'Google Pay fails in CI because of Google account verification'
+);
+
+test.use( {
+	// Strip Basic Auth from the visitor context — when present it breaks
+	// Playwright's popup-event tracking for cross-origin window.open() calls.
+	httpCredentials: undefined,
+	screenshot: 'off',
+	trace: 'off',
+	video: 'off',
+	launchOptions: {
+		args: [
+			'--disable-web-security',
+			'--disable-blink-features=AutomationControlled',
+			'--disable-features=UserAgentClientHint',
+		],
+	},
+} );
+
+test.beforeAll( async ( { utils } ) => {
+	await utils.configureStore( {
+		enableClassicPages: false,
+		customer: customers.usa,
+	} );
+} );
+
+test.beforeEach( async ( { visitorPage } ) => {
+	await GooglePayPopup.applyBrowserPatches( visitorPage.context() );
+} );
+
+for ( const testOrder of googlePayCheckout ) {
+	transactionsOnCheckout( testOrder );
+}
+
+for ( const testOrder of googlePayProduct ) {
+	transactionsOnProduct( testOrder );
+}
+
+for ( const testOrder of googlePayPayByLink ) {
+	transactionsOnPayByLink( testOrder );
+}
+
+/**
+ * Negative fee snippet
+ */
+
+test.describe( () => {
+	test.beforeAll( async ( { requestUtils } ) => {
+		await requestUtils.activatePlugin( negative12FeePlugin.slug );
 	} );
 
-	test.beforeAll( async ( { utils } ) => {
-		await utils.configureStore( {
-			enableClassicPages: false,
-			customer: customers.usa,
-		} );
-	} );
-
-	test.beforeEach( async ( { visitorPage } ) => {
-		await GooglePayPopup.applyBrowserPatches( visitorPage.context() );
-	} );
-
-	for ( const testOrder of googlePayCheckout ) {
+	for ( const testOrder of googlePayCheckoutNegativeFee ) {
 		transactionsOnCheckout( testOrder );
 	}
-
-	for ( const testOrder of googlePayProduct ) {
-		transactionsOnProduct( testOrder );
-	}
-
-	for ( const testOrder of googlePayPayByLink ) {
-		transactionsOnPayByLink( testOrder );
-	}
-
-	/**
-	 * Negative fee snippet
-	 */
-
-	test.describe( () => {
-		test.beforeAll( async ( { requestUtils } ) => {
-			await requestUtils.activatePlugin( negative12FeePlugin.slug );
-		} );
-
-		for ( const testOrder of googlePayCheckoutNegativeFee ) {
-			transactionsOnCheckout( testOrder );
-		}
-		
-		test.afterAll( async ( { requestUtils } ) => {
-			await requestUtils.deactivatePlugin( negative12FeePlugin.slug );
-		} );
+	
+	test.afterAll( async ( { requestUtils } ) => {
+		await requestUtils.deactivatePlugin( negative12FeePlugin.slug );
 	} );
-}
+} );
