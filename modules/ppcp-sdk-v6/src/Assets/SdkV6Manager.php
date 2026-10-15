@@ -333,13 +333,14 @@ class SdkV6Manager {
 		$product_enabled = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
 
 		// pay-now is driven by the existing WC order rather than the cart, so
-		// the zero-total guard does not apply to it.
+		// the zero-total guard does not apply to it. The mini-cart checks it at
+		// render time instead (see render_mini_cart_wrapper()).
 		return array(
 			'product'   => $product_enabled && ! $this->is_free_trial_product(),
 			'cart'      => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
 			'checkout'  => ( $needs_payment || $free_trial_checkout ) && $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ),
 			'pay-now'   => $this->settings_status->is_smart_button_enabled_for_location( 'pay-now' ),
-			'mini-cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
+			'mini-cart' => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 		);
 	}
 
@@ -411,8 +412,16 @@ class SdkV6Manager {
 
 	/**
 	 * Renders the mini-cart button wrapper.
+	 *
+	 * The zero-total check runs here, not when the hook is registered: the
+	 * mini-cart fragment of an AJAX add-to-cart renders after the cart changes,
+	 * but the hook is registered before, while the cart can still be empty.
 	 */
 	public function render_mini_cart_wrapper(): void {
+		if ( ! $this->cart_needs_payment() ) {
+			return;
+		}
+
 		echo '<p class="woocommerce-mini-cart__buttons buttons">';
 		echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
 		echo '</p>';
