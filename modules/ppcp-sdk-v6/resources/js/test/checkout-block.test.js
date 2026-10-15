@@ -734,6 +734,41 @@ describe( 'checkout-block', () => {
 		} );
 
 		test.each( [
+			{
+				name: 'resolves to false for a guest on the block cart with a free-trial cart',
+				pageContext: 'cart-block',
+				user: { is_logged: false },
+				expected: false,
+			},
+			{
+				name: 'resolves to true for a logged-in user on the block cart with a free-trial cart',
+				pageContext: 'cart-block',
+				user: { is_logged: true },
+				expected: true,
+			},
+			{
+				name: 'resolves to true for a guest on the block checkout with a free-trial cart',
+				pageContext: 'checkout-block',
+				user: { is_logged: false },
+				expected: true,
+			},
+		] )( '$name', async ( { pageContext, user, expected } ) => {
+			loadCheckoutBlock(
+				baseConfig( {
+					page_context: pageContext,
+					user,
+					cart_needs_vaulting: true,
+				} )
+			);
+
+			const { canMakePayment } = expressCallFor( 'ppcp-gateway-paypal' );
+
+			await expect( canMakePayment( { cartTotals } ) ).resolves.toBe(
+				expected
+			);
+		} );
+
+		test.each( [
 			[ { paypal: true }, true ],
 			[ { paypal: false }, false ],
 		] )(

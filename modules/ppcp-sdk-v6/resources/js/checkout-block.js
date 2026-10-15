@@ -284,6 +284,15 @@ if ( config && config.page_context && config.continuation ) {
 				// page-load flag, so a coupon that zeroes or un-zeroes the cart
 				// after render is honoured.
 				if ( isFreeTrialCart( config, amount ) ) {
+					// Saving from the cart yields no billing details, so a guest
+					// has to go through the checkout (mirrors the v5 block cart).
+					if (
+						config.page_context === 'cart-block' &&
+						! config.user?.is_logged
+					) {
+						return false;
+					}
+
 					return fundingSource === FundingSources.PAYPAL;
 				}
 

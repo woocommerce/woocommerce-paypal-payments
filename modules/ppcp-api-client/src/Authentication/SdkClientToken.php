@@ -21,12 +21,14 @@ class SdkClientToken {
 
 	use RequestTrait;
 
-	public const CACHE_KEY = 'sdk-client-token-key';
+	public const CACHE_KEY = 'sdk-client-token-data';
 
 	/**
 	 * The rate-limiter scope key for the SDK client token.
 	 */
 	public const RATE_LIMIT_SCOPE = 'sdk-client-token';
+
+	private const ROTATE_AFTER_SECONDS = 60;
 
 	private string $host;
 
@@ -64,14 +66,61 @@ class SdkClientToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function sdk_client_token(): string {
+		return $this->sdk_client_token_data()['token'];
+	}
+
+	/**
+	 * Returns the client token and the seconds it stays valid.
+	 *
+	 * When the "-fresh" marker is gone, one request gets a new token while the
+	 * others keep the current one.
+	 *
+	 * @return array{token: string, expires_in: int}
+	 *
+	 * @throws PayPalApiException If the request fails.
+	 * @throws RuntimeException If something unexpected happens.
+	 */
+	public function sdk_client_token_data(): array {
 		$domain    = (string) wp_parse_url( home_url(), PHP_URL_HOST );
 		$domain    = (string) preg_replace( '/^www\./', '', $domain );
 		$cache_key = self::CACHE_KEY . '-' . $domain;
 
-		if ( $this->cache->has( $cache_key ) ) {
-			return $this->cache->get( $cache_key );
+		$cached = $this->cache->get( $cache_key );
+		if ( ! is_array( $cached ) || ! isset( $cached['token'], $cached['expires_at'] ) ) {
+			return $this->token_data( $this->request_token( $domain, $cache_key ) );
 		}
 
+		if ( false !== $this->cache->get( $cache_key . '-fresh' ) ) {
+			return $this->token_data( $cached );
+		}
+
+		$this->cache->set( $cache_key . '-fresh', 1, self::ROTATE_AFTER_SECONDS );
+
+		try {
+			return $this->token_data( $this->request_token( $domain, $cache_key ) );
+		} catch ( PayPalApiException | RuntimeException $exception ) {
+			return $this->token_data( $cached );
+		}
+	}
+
+	/**
+	 * @param array{token: mixed, expires_at: mixed} $token
+	 * @return array{token: string, expires_in: int}
+	 */
+	private function token_data( array $token ): array {
+		return array(
+			'token'      => (string) $token['token'],
+			'expires_in' => max( 0, (int) $token['expires_at'] - time() ),
+		);
+	}
+
+	/**
+	 * @return array{token: string, expires_at: int}
+	 *
+	 * @throws PayPalApiException If the request fails.
+	 * @throws RuntimeException If something unexpected happens.
+	 */
+	private function request_token( string $domain, string $cache_key ): array {
 		if ( $this->client_credentials->is_empty() ) {
 			throw new RuntimeException( 'Cannot request a PayPal client token without a client ID and secret.' );
 		}
@@ -81,7 +130,11 @@ class SdkClientToken {
 			throw new RuntimeException( sprintf( 'PayPal token requests are paused for %d more seconds after a previous failure.', $wait ) );
 		}
 
-		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=client_token&intent=sdk_init&domains[]=' . rawurlencode( $domain );
+		$url = sprintf(
+			'%s?grant_type=client_credentials&response_type=client_token&intent=sdk_init&domains[]=%s',
+			trailingslashit( $this->host ) . 'v1/oauth2/token',
+			rawurlencode( $domain )
+		);
 
 		$args = array(
 			'method'  => 'POST',
@@ -104,24 +157,28 @@ class SdkClientToken {
 			throw new RuntimeException( $response->get_error_message() );
 		}
 
-		$json        = json_decode( $response['body'] );
+		$json        = json_decode( $response['body'], false );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $status_code ) {
 			$this->rate_limiter->register_failure( self::RATE_LIMIT_SCOPE, $status_code, $response );
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		$access_token = $json->access_token;
-		$expires_in   = (int) $json->expires_in;
+		$expires_in = (int) $json->expires_in;
+		$token      = array(
+			'token'      => (string) $json->access_token,
+			'expires_at' => time() + $expires_in,
+		);
 
 		// Stop serving the token shortly before it expires, so the SDK can still use it.
 		if ( $expires_in > 150 ) {
 			$expires_in -= 30;
 		}
 
-		$this->cache->set( $cache_key, $access_token, $expires_in );
+		$this->cache->set( $cache_key, $token, $expires_in );
+		$this->cache->set( $cache_key . '-fresh', 1, self::ROTATE_AFTER_SECONDS );
 		$this->rate_limiter->clear( self::RATE_LIMIT_SCOPE );
 
-		return $access_token;
+		return $token;
 	}
 }

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\SdkLocale;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -84,7 +85,7 @@ class MiniCartBlocks {
 				'sdkUrl'   => $base_url . '/web-sdk/v6/core',
 				'clientId' => (string) $c->get( 'button.client_id' ),
 				'currency' => get_woocommerce_currency(),
-				'locale'   => str_replace( '_', '-', get_locale() ),
+				'locale'   => SdkLocale::from_wp_locale( get_locale() ),
 			),
 			'buttonStyle' => array_merge(
 				$style_mapper->styles_for_context( 'mini-cart' ),

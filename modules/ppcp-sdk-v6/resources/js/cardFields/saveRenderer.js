@@ -10,9 +10,10 @@
  * @package
  */
 
-import { mountField } from './mountField';
+import { mountField, unmountField } from './mountField';
 import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange, setSdkBusy } from '../tokenRefresh';
 import { postJson } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
 import { navigation } from '../utils/navigation';
@@ -112,6 +113,7 @@ export function initCardSaveFields( config ) {
 		// second setup token and a second vaulted card. Stays true on the
 		// success path because the page navigates away.
 		submitting = true;
+		setSdkBusy( true );
 
 		try {
 			const cardSession = await ensureCardSession();
@@ -135,7 +137,20 @@ export function initCardSaveFields( config ) {
 		} catch ( error ) {
 			submitting = false;
 			handleError( error );
+		} finally {
+			setSdkBusy( false );
 		}
+	}
+
+	function remountCardFields() {
+		cardSessionPromise = null;
+
+		const inputs = getInputs();
+		for ( const fieldType of FIELD_TYPES ) {
+			unmountField( inputs[ fieldType ] );
+		}
+
+		ensureCardSession().catch( handleError );
 	}
 
 	const placeOrderButton = document.querySelector( '#place_order' );
@@ -144,4 +159,5 @@ export function initCardSaveFields( config ) {
 	// Mount the fields up front so styling and the session are ready before
 	// the buyer submits.
 	ensureCardSession().catch( handleError );
+	onSdkInstanceChange( remountCardFields );
 }

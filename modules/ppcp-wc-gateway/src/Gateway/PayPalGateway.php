@@ -676,6 +676,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				// in its current status instead of failing it prematurely - only
 				// note the reason and send the customer back to complete it.
 				$wc_order->add_order_note( $retry_message );
+				$this->session_handler->replace_payer_action_order_id( $session_order->id() );
 
 				return array(
 					'result'   => 'success',

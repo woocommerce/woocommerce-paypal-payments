@@ -613,6 +613,21 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a store whose WordPress locale is a formal variant (de_DE_formal)
+     * WHEN the SDK bootstrap data is generated
+     * THEN the locale is normalised to the SDK-supported de-DE
+     */
+    public function testScriptDataNormalisesWordPressLocaleVariantToSupportedSdkLocale(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        when('get_locale')->justReturn('de_DE_formal');
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame('de-DE', $data['locale']);
+    }
+
+    /**
      * GIVEN a checkout block page with Advanced Card Fields enabled for the merchant
      * WHEN the SDK bootstrap data is generated
      * THEN card_fields.enabled is true, unless Fastlane renders on the same page
@@ -1512,6 +1527,7 @@ class SdkV6ManagerTest extends TestCase
      * WHEN the bootstrap script is enqueued
      * THEN it is registered with the dependencies and version webpack recorded for the
      *      compiled bundle, not an empty dependency list and not just the plugin version.
+     * AND its JS translations are loaded for the plugin text domain.
      */
     public function testEnqueueRegistersScriptWithAssetDataDependenciesAndVersion(): void
     {
@@ -1560,6 +1576,9 @@ class SdkV6ManagerTest extends TestCase
                 'deadbeef',
                 true
             );
+        expect('wp_set_script_translations')
+            ->once()
+            ->with('wc-ppcp-sdk-v6-boot', 'woocommerce-paypal-payments');
         expect('wp_localize_script')->once();
         expect('wp_enqueue_script')->once()->with('wc-ppcp-sdk-v6-boot');
         expect('wp_enqueue_style')

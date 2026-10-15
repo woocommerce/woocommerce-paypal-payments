@@ -6,6 +6,9 @@ import { PaymentMethods } from '../Helper/CheckoutMethodState';
 import CartHelper from '../Helper/CartHelper';
 import FormHelper from '../Helper/FormHelper';
 import ResumeFlowHelper from '../Helper/ResumeFlowHelper';
+import {
+	approvalRedirectUrl as resolveApprovalRedirectUrl,
+} from '../Helper/Subscriptions';
 
 class SingleProductActionHandler {
 	constructor( config, cartUpdater, formElement, errorHandler ) {
@@ -65,34 +68,16 @@ class SingleProductActionHandler {
 	/**
 	 * Where to send the shopper once the subscription has been approved.
 	 *
-	 * The approve endpoint returns an order received URL only when it created
-	 * and paid the order itself, which it does when Pay Now is enabled.
-	 * Otherwise the shopper confirms the payment on the checkout page.
-	 *
-	 * A failed response has no URL either, so it is told apart from that second
-	 * case rather than quietly sending the shopper to checkout as though the
-	 * subscription were waiting for them there.
-	 *
 	 * @param {Object} response - The approve endpoint response.
 	 * @return {string} The URL to navigate to.
 	 * @throws {Error} When the endpoint reported a failure.
 	 */
 	approvalRedirectUrl( response ) {
-		if ( ! response.success ) {
-			const message = response.data?.message;
-
-			this.errorHandler.clear();
-
-			if ( message ) {
-				this.errorHandler.message( message );
-			} else {
-				this.errorHandler.genericError();
-			}
-
-			throw Error( message );
-		}
-
-		return response.data?.order_received_url || this.config.redirect;
+		return resolveApprovalRedirectUrl(
+			response,
+			this.errorHandler,
+			this.config.redirect
+		);
 	}
 
 	/**

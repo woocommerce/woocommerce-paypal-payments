@@ -1,6 +1,19 @@
 const mockLoadSdkV6 = jest.fn();
+const mockSetSdkBusy = jest.fn();
+let mockInstanceListeners = [];
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+jest.mock( '../tokenRefresh', () => ( {
+	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
+	onSdkInstanceChange: ( callback ) => {
+		mockInstanceListeners.push( callback );
+		return () => {
+			mockInstanceListeners = mockInstanceListeners.filter(
+				( listener ) => listener !== callback
+			);
+		};
+	},
 } ) );
 
 const mockCreateCardOrder = jest.fn();
@@ -113,6 +126,8 @@ async function waitForCheckoutFailReady() {
 }
 
 beforeEach( () => {
+	mockInstanceListeners = [];
+	mockSetSdkBusy.mockClear();
 	paymentSetupCb = null;
 	onPaymentSetup = jest.fn( ( cb ) => {
 		paymentSetupCb = cb;
@@ -895,6 +910,170 @@ describe( 'V6CardFieldsComponent', () => {
 					);
 				}
 			);
+		} );
+	} );
+} );
+
+describe( 'V6CardFieldsComponent after an SDK instance change', () => {
+	let newSession;
+
+	function makeNewSession() {
+		newSession = {
+			createCardFieldsComponent: jest.fn( () =>
+				document.createElement( 'div' )
+			),
+			submit: jest.fn(),
+			on: jest.fn(),
+		};
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => newSession,
+			createCardFieldsSavePaymentSession: () => newSession,
+		} );
+	}
+
+	async function changeInstance() {
+		await act( async () => {
+			mockInstanceListeners.forEach( ( listener ) => listener( {} ) );
+		} );
+		await waitFor( () =>
+			expect( mockCardFieldContainer ).toHaveBeenLastCalledWith(
+				expect.objectContaining( { session: newSession } )
+			)
+		);
+	}
+
+	test( 'renders the fields from a new session of the new instance', async () => {
+		renderComponent();
+		await waitForSessionReady();
+		makeNewSession();
+
+		await changeInstance();
+
+		const sessions = mockCardFieldContainer.mock.calls
+			.slice( -3 )
+			.map( ( call ) => call[ 0 ].session );
+		expect( sessions ).toEqual( [ newSession, newSession, newSession ] );
+	} );
+
+	test( 'submits through the new session on onPaymentSetup', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		renderComponent();
+		await waitForSessionReady();
+		makeNewSession();
+		newSession.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+		await changeInstance();
+
+		let result;
+		await act( async () => {
+			result = await paymentSetupCb();
+		} );
+
+		expect( newSession.submit ).toHaveBeenCalledWith( 'ORDER1' );
+		expect( session.submit ).not.toHaveBeenCalled();
+		expect( result ).toEqual( { type: 'success' } );
+	} );
+
+	test( 'no longer shows the floating labels as active', async () => {
+		const marker = appendFloatingLabelMarker();
+		renderComponent();
+		await waitForSessionReady();
+		await waitFor( () => expect( session.on ).toHaveBeenCalled() );
+		const emptyField = {
+			isEmpty: true,
+			isFocused: false,
+			isPotentiallyValid: true,
+			isValid: false,
+		};
+		act( () => {
+			session.on.mock.calls[ 0 ][ 1 ]( {
+				data: {
+					number: { ...emptyField, isFocused: true },
+					expiry: emptyField,
+					cvv: emptyField,
+				},
+			} );
+		} );
+		const lastNumberCall = () =>
+			mockCardFieldContainer.mock.calls
+				.filter( ( call ) => call[ 0 ].type === 'number' )
+				.pop()[ 0 ];
+		expect( lastNumberCall().isActive ).toBe( true );
+		makeNewSession();
+
+		await changeInstance();
+
+		await waitFor( () =>
+			expect( lastNumberCall().isActive ).toBe( false )
+		);
+		marker.remove();
+	} );
+
+	test( 'has no effect after the component unmounts', async () => {
+		const { unmount } = renderComponent();
+		await waitForSessionReady();
+		unmount();
+		makeNewSession();
+		mockLoadSdkV6.mockClear();
+
+		await act( async () => {
+			mockInstanceListeners.forEach( ( listener ) => listener( {} ) );
+		} );
+
+		expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+		expect( mockInstanceListeners ).toHaveLength( 0 );
+	} );
+
+	describe( 'SDK busy flag during a submit', () => {
+		let resolveSubmit;
+
+		async function startSubmit() {
+			mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+			session.submit.mockReturnValueOnce(
+				new Promise( ( resolve ) => {
+					resolveSubmit = resolve;
+				} )
+			);
+			renderComponent();
+			await waitForSessionReady();
+
+			let pending;
+			await act( async () => {
+				pending = paymentSetupCb();
+				await Promise.resolve();
+			} );
+			return { pending };
+		}
+
+		test.each( [
+			[ 'succeeds', { state: 'succeeded' } ],
+			[ 'fails', { state: 'failed' } ],
+			[ 'is canceled', { state: 'canceled' } ],
+		] )( 'is held until a submit that %s ends', async ( _label, outcome ) => {
+			const { pending } = await startSubmit();
+			await waitFor( () =>
+				expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( true )
+			);
+
+			await act( async () => {
+				resolveSubmit( outcome );
+				await pending;
+			} );
+
+			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( false );
+		} );
+
+		test( 'is released when the submit throws', async () => {
+			const { pending } = await startSubmit();
+			await waitFor( () =>
+				expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( true )
+			);
+
+			await act( async () => {
+				resolveSubmit( Promise.reject( new Error( 'boom' ) ) );
+				await pending;
+			} );
+
+			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( false );
 		} );
 	} );
 } );

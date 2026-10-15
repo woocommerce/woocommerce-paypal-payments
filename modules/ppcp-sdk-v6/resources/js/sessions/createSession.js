@@ -13,6 +13,7 @@ import { refreshCartUi } from '../utils/cartUi';
 import { handleError, handleWarning } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
 import { MERCHANT_PRESENTED_METHODS } from '../methods/methodRegistry';
+import { releasingSdkBusy } from '../tokenRefresh';
 
 const SESSION_FACTORIES = {
 	[ FundingSources.PAYPAL ]: 'createPayPalOneTimePaymentSession',
@@ -147,5 +148,7 @@ export function createSession(
 			handleShippingOptionsChange( data, config );
 	}
 
-	return sdkInstance[ SESSION_FACTORIES[ method ] ]( sessionConfig );
+	return sdkInstance[ SESSION_FACTORIES[ method ] ](
+		releasingSdkBusy( sessionConfig )
+	);
 }
