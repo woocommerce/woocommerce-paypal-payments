@@ -150,10 +150,17 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	pcpOnboarding,
 	wooCommerceApi,
 } ) => {
+	// WooCommerce stores US with a state; a bare 'US' keeps the previous test's country,
+	// and the store type step only shows for countries that allow casual selling.
 	await wooCommerceApi.updateGeneralSettings( {
-		woocommerce_default_country: 'US',
+		woocommerce_default_country: 'US:CA',
 		woocommerce_currency: 'USD',
 	} );
+	const country = await wooCommerceApi.wcRequest(
+		'get',
+		'settings/general/woocommerce_default_country'
+	);
+	expect( country?.value, 'Assert store country is US' ).toBe( 'US:CA' );
 	await pcpOnboarding.visit();
 	await pcpOnboarding.waitForLoadingMaskRemoved();
 	await pcpOnboarding.gotoInitialOnboardingPage();
