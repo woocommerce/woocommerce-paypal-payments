@@ -123,6 +123,20 @@ export class PayPalUiClassic extends PayPalUi {
 			.locator(
 				'paypal-button, venmo-button, paypal-pay-later-button, .paypal-button, [data-funding-source]'
 			);
+	// Scoped to the mini cart, so product page buttons don't match
+	miniCartFundingSourceButton = ( name: string ) =>
+		sdkVersion() === 'v5'
+			? this.page
+					.locator( '#ppc-button-minicart' )
+					.frameLocator( 'iframe[name^="__zoid__paypal_buttons__"]' )
+					.locator( `[data-funding-source="${ name }"]` )
+			: this.page
+					.locator( '#ppc-button-minicart-v6' )
+					.locator(
+						name === 'paylater'
+							? 'paypal-pay-later-button'
+							: 'paypal-button'
+					);
 
 	/** v5 (legacy): outer zoid iframe wrapping the BCDC button. */
 	bcdcIframeV5 = () =>
@@ -206,6 +220,50 @@ export class PayPalUiClassic extends PayPalUi {
 		this.payPalButtonsContainer().locator( '.paypal-buttons, paypal-button' );
 
 	// Actions
+
+	/**
+	 * Pays with PayPal or Pay Later from the mini cart (already opened)
+	 *
+	 * @param data
+	 * @param data.payment
+	 * @param data.isPayNowEnabled false: buyer returns to checkout to review and place the order
+	 */
+	makeMiniCartPayment = async ( data: {
+		payment: Pcp.Payment;
+		isPayNowEnabled?: boolean;
+	} ) => {
+		const { payment, isPayNowEnabled = true } = data;
+		const { gateway, payPalAccount } = payment;
+
+		const button = this.miniCartFundingSourceButton( gateway.shortcut );
+		await expect(
+			button,
+			`Assert ${ gateway.title } button is visible in mini cart`
+		).toBeVisible();
+
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20_000,
+		} );
+		await button.click();
+		const popupPage = await popupPromise;
+		await popupPage.waitForLoadState();
+		const popup = new PayPalPopup( popupPage );
+
+		if ( gateway.shortcut === 'paylater' ) {
+			await popup.completePayLaterPayment( payPalAccount );
+		} else {
+			await popup.completePayPalPayment( payPalAccount );
+		}
+
+		if ( ! isPayNowEnabled ) {
+			await this.assertReturnedToReview( gateway.title );
+			return;
+		}
+		await expect(
+			this.page,
+			'Assert redirected to order received page after mini cart payment'
+		).toHaveURL( /order-received/, { timeout: 30_000 } );
+	};
 
 	/**
 	 * Clicks PayPal gateway and PayPal button to open popup

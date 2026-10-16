@@ -79,12 +79,16 @@ export class Checkout extends CheckoutBase {
 
 	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {
 		const { payment, coupons, shipping, customer } = data;
-		await this.assertUrl();
+		// PCP appends ?ppcp-continuation-redirect=<timestamp> on return from PayPal
+		const checkoutPath = this.buildUrl().replace( /^\./, '' ); // './checkout/' -> '/checkout/'
+		await this.page.waitForURL( ( url ) =>
+			url.pathname.endsWith( checkoutPath )
+		);
 		await expect(
 			this.page.getByText(
-				`You are currently paying with ${ payment.gatewayName }.`
+				`You are currently paying with ${ payment.gateway.title }.`
 			),
-			`Assert "You are currently paying with ${ payment.gatewayName }." message is visible`
+			`Assert "You are currently paying with ${ payment.gateway.title }." message is visible`
 		).toBeVisible();
 
 		// Add coupons if needed
@@ -95,8 +99,13 @@ export class Checkout extends CheckoutBase {
 		// Fill billing details
 		await this.fillCheckoutForm( customer );
 
-		// Select shipping or initial shipment (for subscriptions) option:
-		await this.selectShippingMethod( shipping.settings.title );
+		// Select shipping or initial shipment (for subscriptions) option.
+		// A single shipping rate has no radio.
+		for ( const radio of await this.shippingMethodRadio(
+			shipping.settings.title
+		).all() ) {
+			await radio.click();
+		}
 
 		// Make payment with tested method
 		await this.placeOrder();

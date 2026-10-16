@@ -28,6 +28,7 @@ export type ShopOrder = WooCommerce.ShopOrder & {
 	merchant?: Pcp.Merchant;
 	products?: ShopProduct[];
 	isPayNowEnabled?: boolean; // Is Pay Now Experience option enabled in PCP Settings > Payment Methods
+	isCheckoutFormEmpty?: boolean; // Pay with an express button before filling the checkout form (guest only)
 };
 
 export type ShopRefund = ShopOrder & {
@@ -98,6 +99,7 @@ export namespace Pcp {
 			titleInWcSettings?: string; // gateway title on WooCommerce > Settings > Payments tab
 			titleInPcpSettings?: string; // gateway title in PCP Settings > Payment Methods
 			titleInModal?: string; // title shown in the PCP Settings > Payment Methods modal
+			titleInOrder?: string; // payment method title on the WooCommerce order, when it differs from titleInModal
 			hasSettingsButton?: boolean; // gateway has Settings icon on PCP Settings > Payment Methods tab
 			dependsOn?: GatewayShortcut; // gateway can be enabled if leading gateway is enabled on PCP Settings > Payment Methods tab
 		};

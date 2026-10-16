@@ -61,6 +61,27 @@ export const assertSdkVersion = async ( requestUtils ) => {
 	).toEqual( sdkVersion() );
 };
 
+/**
+ * Checks that WooCommerce REST API accepts the key from .env.
+ * An unknown key is not rejected by WooCommerce, the request runs as a guest and gets 401.
+ *
+ * @param wooCommerceApi
+ */
+const isWooCommerceApiKeyValid = async (
+	wooCommerceApi: WooCommerceApi
+): Promise< boolean > => {
+	if ( ! process.env.WC_API_KEY || ! process.env.WC_API_SECRET ) {
+		return false;
+	}
+	try {
+		await wooCommerceApi.wcRequest( 'get', 'settings/general' );
+		return true;
+	} catch {
+		console.log( 'WooCommerce API key from .env is not valid, creating a new one' );
+		return false;
+	}
+};
+
 export const setupWooCommerce = async () => {
 	setup(
 		`Setup PCP SDK Version Flag (${ sdkVersion() })`,
@@ -187,8 +208,13 @@ export const setupWooCommerce = async () => {
 		}
 	);
 
-	setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
-		if ( ! ( await wooCommerceUtils.apiKeysExist() ) ) {
+	setup(
+		'Setup WooCommerce API keys',
+		async ( { wooCommerceUtils, wooCommerceApi } ) => {
+			// Keys on the site may not match .env (e.g. after switching env), so check that the .env key works
+			if ( await isWooCommerceApiKeyValid( wooCommerceApi ) ) {
+				return;
+			}
 			const apiKeys = await wooCommerceUtils.createApiKeys();
 			if ( ! process.env.CI ) {
 				await updateDotenv( './.env', apiKeys );
@@ -197,7 +223,7 @@ export const setupWooCommerce = async () => {
 				process.env[ key ] = value;
 			}
 		}
-	} );
+	);
 
 	setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 		const emailIds = [

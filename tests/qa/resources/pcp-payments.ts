@@ -70,14 +70,21 @@ const acdc3ds: Pcp.Payment = {
 	card: cards.visa3ds,
 };
 
+// Order payment title differs per Fastlane flow (AxoGateway / AxoManager.js)
 const fastlaneGary: Pcp.Payment = {
-	gateway: gateways.fastlane,
+	gateway: {
+		...gateways.fastlane,
+		titleInOrder: 'Fastlane Debit & Credit Cards',
+	},
 	fastlaneFlow: 'gary',
 	card: cards.visa,
 };
 
 const fastlaneRyan: Pcp.Payment = {
-	gateway: gateways.fastlane,
+	gateway: {
+		...gateways.fastlane,
+		titleInOrder: 'Debit & Credit Cards (via Fastlane by PayPal)',
+	},
 	fastlaneFlow: 'ryan',
 	fastlaneOtp: '111111',
 	card: cards.visaFastlane,
