@@ -10,6 +10,7 @@ use WP_REST_Response;
 use WooCommerce\PayPalCommerce\StoreSync\Endpoint\CreateCartEndpoint;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\ClearsStoreSyncProductCache;
 use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreatesUsShippingZone;
 
 /**
@@ -17,6 +18,7 @@ use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreatesUsShippingZone;
  */
 class CreateCartEndpointTest extends IntegrationMockedTestCase {
 
+	use ClearsStoreSyncProductCache;
 	use CreatesUsShippingZone;
 
 	private CreateCartEndpoint $endpoint;
@@ -24,6 +26,7 @@ class CreateCartEndpointTest extends IntegrationMockedTestCase {
 	public function setUp(): void {
 		parent::setUp();
 
+		$this->clear_store_sync_product_cache();
 		$this->create_us_shipping_zone();
 
 		$c = $this->getContainer();

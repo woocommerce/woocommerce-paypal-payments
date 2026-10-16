@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\ClearsStoreSyncProductCache;
 use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreatesUsShippingZone;
 
 /**
@@ -22,6 +23,7 @@ use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreatesUsShippingZone;
  */
 class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 
+	use ClearsStoreSyncProductCache;
 	use CreatesUsShippingZone;
 
 	private ReplaceCartEndpoint $endpoint;
@@ -36,6 +38,7 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 	public function setUp(): void {
 		parent::setUp();
 
+		$this->clear_store_sync_product_cache();
 		$this->create_us_shipping_zone();
 
 		$c = $this->getContainer();

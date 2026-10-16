@@ -15,11 +15,14 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\ClearsStoreSyncProductCache;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Endpoint\CheckoutEndpoint
  */
 class CheckoutEndpointTest extends IntegrationMockedTestCase {
+
+	use ClearsStoreSyncProductCache;
 
 	private CheckoutEndpoint $endpoint;
 
@@ -27,6 +30,8 @@ class CheckoutEndpointTest extends IntegrationMockedTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
+
+		$this->clear_store_sync_product_cache();
 
 		$c = $this->getContainer();
 
