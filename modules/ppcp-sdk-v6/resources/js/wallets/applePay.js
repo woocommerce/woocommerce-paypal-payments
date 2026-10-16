@@ -322,6 +322,12 @@ export async function renderApplePay( {
 
 			// A rejected checkout form submit keeps the shopper on the page.
 			setSdkBusy( false );
+			if ( hasJQuery() ) {
+				jQuery( document.body ).one( 'checkout_error', () => {
+					setPaying( false );
+					spinner?.unblock();
+				} );
+			}
 		} catch ( error ) {
 			// Apple's sheet wording is the same whichever branch failed.
 			logEvent(
