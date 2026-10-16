@@ -52,6 +52,8 @@ class Recaptcha {
 
 	private float $last_v3_score = 0;
 
+	private bool $checkout_block_rendered = false;
+
 	public function __construct(
 		RecaptchaIntegration $integration,
 		array $payment_methods,
@@ -147,6 +149,36 @@ class Recaptcha {
 			)
 		);
 	}
+
+	/**
+	 * Enqueues the assets when the Checkout Block renders.
+	 *
+	 * Merchants can put the Checkout Block on any page, but `is_checkout()`
+	 * only recognizes the WooCommerce checkout page.
+	 *
+	 * @param mixed $parsed_block The block data from the `render_block_data` filter.
+	 */
+	public function handle_block_render( $parsed_block ): void {
+		if ( ! is_array( $parsed_block ) ) {
+			return;
+		}
+
+		$block_name = $parsed_block['blockName'] ?? '';
+		if ( 'woocommerce/checkout' !== $block_name ) {
+			return;
+		}
+
+		$this->checkout_block_rendered = true;
+
+		// On the WooCommerce checkout page, the assets are already enqueued.
+		$is_already_enqueued = wp_script_is( 'ppcp-recaptcha-handler' );
+		if ( $is_already_enqueued ) {
+			return;
+		}
+
+		$this->enqueue_scripts();
+	}
+
 	public function render_v2_container(): string {
 		if ( ! $this->should_use_recaptcha() ) {
 			return '';
@@ -176,11 +208,31 @@ class Recaptcha {
 			return 'cart';
 		}
 
+		if ( $this->is_block_checkout_page() ) {
+			return 'checkout-block-express';
+		}
+
 		if ( is_checkout() ) {
-			return has_block( 'woocommerce/checkout' ) ? 'checkout-block-express' : 'checkout';
+			return 'checkout';
 		}
 
 		return null;
+	}
+
+	private function is_block_checkout_page(): bool {
+		if ( $this->checkout_block_rendered ) {
+			return true;
+		}
+
+		return is_checkout() && has_block( 'woocommerce/checkout' );
+	}
+
+	/**
+	 * Unlike `is_checkout()`, also true for a Checkout Block on a page
+	 * that is not the WooCommerce checkout page.
+	 */
+	private function is_any_checkout_page(): bool {
+		return is_checkout() || $this->checkout_block_rendered;
 	}
 
 	/**
@@ -217,7 +269,7 @@ class Recaptcha {
 	 * page — surfaces whose availability is independent of the smart-button location.
 	 */
 	private function has_protected_gateway_on_current_page(): bool {
-		if ( ! is_checkout() && ! is_add_payment_method_page() ) {
+		if ( ! $this->is_any_checkout_page() && ! is_add_payment_method_page() ) {
 			return false;
 		}
 
