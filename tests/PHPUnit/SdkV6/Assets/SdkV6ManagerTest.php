@@ -2706,15 +2706,13 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN the SDK bootstrap data is generated
      * WHEN reading the labels payload
-     * THEN it carries exactly the documented keys — the shipping-unserviceable key
-     *      shown when a wallet sheet's address cannot be served, and the itemization
-     *      keys the Apple Pay sheet uses to break down the total — since a missing
-     *      or renamed key is what would break those consumers, not the wording
+     * THEN it carries exactly the expected keys, since a missing or renamed
+     *      key breaks the frontend consumers, not the wording
      * AND every label is a non-empty string, since the exact copy is not the
      *     contract: the frontend renders whatever text arrives, and this project
      *     revises user-facing copy independently of this test
      */
-    public function testScriptDataIncludesShippingAndItemizationLabels(): void
+    public function testScriptDataLabelsHaveTheExpectedKeys(): void
     {
         $this->context->shouldReceive('context')->andReturn('checkout-block');
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
@@ -2740,7 +2738,17 @@ class SdkV6ManagerTest extends TestCase
         $data   = $testee->script_data();
 
         $this->assertSame(
-            ['generic_error', 'card_declined', 'shipping_unserviceable', 'subtotal', 'shipping', 'tax', 'discount'],
+            [
+                'generic_error',
+                'card_declined',
+                'shipping_unserviceable',
+                'fields_empty',
+                'fields_not_valid',
+                'subtotal',
+                'shipping',
+                'tax',
+                'discount',
+            ],
             array_keys($data['labels'])
         );
 
