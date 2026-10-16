@@ -434,6 +434,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\Blocks\\ProductBlocks' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/ProductBlocks.php',
         'WooCommerce\\PayPalCommerce\\Blocks\\ProductPayLaterMessagesRenderer' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/ProductPayLaterMessagesRenderer.php',
         'WooCommerce\\PayPalCommerce\\Blocks\\ProductSmartButtonsRenderer' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/ProductSmartButtonsRenderer.php',
+        'WooCommerce\\PayPalCommerce\\Blocks\\SdkV6EditorPreview' => __DIR__ . '/../..' . '/modules/ppcp-blocks/src/SdkV6EditorPreview.php',
         'WooCommerce\\PayPalCommerce\\Button\\Assets\\ButtonInterface' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Assets/ButtonInterface.php',
         'WooCommerce\\PayPalCommerce\\Button\\Assets\\DisabledSmartButton' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Assets/DisabledSmartButton.php',
         'WooCommerce\\PayPalCommerce\\Button\\Assets\\SmartButton' => __DIR__ . '/../..' . '/modules/ppcp-button/src/Assets/SmartButton.php',

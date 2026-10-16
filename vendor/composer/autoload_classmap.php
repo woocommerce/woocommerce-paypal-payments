@@ -217,6 +217,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\Blocks\\ProductBlocks' => $baseDir . '/modules/ppcp-blocks/src/ProductBlocks.php',
     'WooCommerce\\PayPalCommerce\\Blocks\\ProductPayLaterMessagesRenderer' => $baseDir . '/modules/ppcp-blocks/src/ProductPayLaterMessagesRenderer.php',
     'WooCommerce\\PayPalCommerce\\Blocks\\ProductSmartButtonsRenderer' => $baseDir . '/modules/ppcp-blocks/src/ProductSmartButtonsRenderer.php',
+    'WooCommerce\\PayPalCommerce\\Blocks\\SdkV6EditorPreview' => $baseDir . '/modules/ppcp-blocks/src/SdkV6EditorPreview.php',
     'WooCommerce\\PayPalCommerce\\Button\\Assets\\ButtonInterface' => $baseDir . '/modules/ppcp-button/src/Assets/ButtonInterface.php',
     'WooCommerce\\PayPalCommerce\\Button\\Assets\\DisabledSmartButton' => $baseDir . '/modules/ppcp-button/src/Assets/DisabledSmartButton.php',
     'WooCommerce\\PayPalCommerce\\Button\\Assets\\SmartButton' => $baseDir . '/modules/ppcp-button/src/Assets/SmartButton.php',
