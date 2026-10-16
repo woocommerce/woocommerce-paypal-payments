@@ -79,6 +79,8 @@ class WooCommerceOrderCreatorTest extends TestCase {
 	 *      does not (WC < 10.9, where set_order() does not exist yet)
 	 * AND the "woocommerce_checkout_create_order_line_item" action fires with the
 	 *      item, cart item key, cart item data and the order
+	 * AND both hooks receive the loaded product in the cart item's "data" entry,
+	 *      like in WooCommerce Core
 	 * AND the filtered item is the one added to the order
 	 *
 	 * @dataProvider set_order_support_provider
@@ -132,13 +134,15 @@ class WooCommerceOrderCreatorTest extends TestCase {
 		$wc_tax->shouldReceive( 'get_rates' )->once()->with( '' )->andReturn( array() );
 		$wc_tax->shouldReceive( 'calc_tax' )->once()->with( '20', array(), true )->andReturn( array() );
 
+		$hook_cart_item = $cart_item + array( 'data' => $product );
+
 		expect( 'apply_filters' )
 			->once()
 			->with(
 				'woocommerce_checkout_create_order_line_item_object',
 				Mockery::type( WC_Order_Item_Product::class ),
 				$cart_item_key,
-				$cart_item,
+				$hook_cart_item,
 				$wc_order
 			)
 			->andReturn( $item );
@@ -148,7 +152,7 @@ class WooCommerceOrderCreatorTest extends TestCase {
 			->with(
 				'woocommerce_paypal_payments_shipping_callback_cart_line_item_total',
 				$cart_item['line_subtotal'],
-				$cart_item
+				$hook_cart_item
 			)
 			->andReturn( $cart_item['line_subtotal'] );
 
@@ -158,7 +162,7 @@ class WooCommerceOrderCreatorTest extends TestCase {
 				'woocommerce_checkout_create_order_line_item',
 				$item,
 				$cart_item_key,
-				$cart_item,
+				$hook_cart_item,
 				$wc_order
 			);
 
@@ -182,6 +186,72 @@ class WooCommerceOrderCreatorTest extends TestCase {
 			'WC < 10.9 item has no set_order() falls back to set_order_id()' => array( false ),
 			'WC 10.9+ item declares set_order() and it is used'              => array( true ),
 		);
+	}
+
+	/**
+	 * GIVEN a cart whose first item points to a product that no longer exists
+	 * AND a second item that points to a valid product
+	 * WHEN configure_line_items() builds the WC order line items via reflection
+	 * THEN no line item is added for the missing product
+	 * AND the line item for the valid product is still added to the order
+	 */
+	public function test_configure_line_items_skips_missing_product_and_keeps_following_items(): void {
+		$missing_item = array(
+			'product_id'    => 10,
+			'variation_id'  => 0,
+			'quantity'      => 1,
+			'variation'     => array(),
+			'line_subtotal' => '5',
+			'line_total'    => '5',
+		);
+		$valid_item   = array(
+			'product_id'    => 20,
+			'variation_id'  => 0,
+			'quantity'      => 2,
+			'variation'     => array(),
+			'line_subtotal' => '20',
+			'line_total'    => '20',
+		);
+
+		$cart_data = new CartData( array( 'missing' => $missing_item, 'valid' => $valid_item ), array(), false, 0, 'cart-hash' );
+
+		$product = Mockery::mock( WC_Product::class );
+		$product->shouldReceive( 'get_name' )->andReturn( 'Valid product' );
+		$product->shouldReceive( 'get_id' )->andReturn( 20 );
+		$product->shouldReceive( 'get_tax_class' )->andReturn( '' );
+
+		expect( 'wc_get_product' )
+			->twice()
+			->andReturnUsing(
+				static fn( $id ) => 20 === $id ? $product : false
+			);
+
+		$item = Mockery::mock( TestableOrderItemProductWithSetOrder::class )->shouldIgnoreMissing();
+		$item->shouldReceive( 'get_total' )->andReturn( '20' );
+
+		expect( 'apply_filters' )
+			->andReturnUsing(
+				static fn( $filter, $value ) => 'woocommerce_checkout_create_order_line_item_object' === $filter ? $item : $value
+			);
+
+		$wc_tax = Mockery::mock( 'alias:WC_Tax' );
+		$wc_tax->shouldReceive( 'get_rates' )->andReturn( array() );
+		$wc_tax->shouldReceive( 'calc_tax' )->andReturn( array() );
+
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'add_item' )->once()->with( $item );
+
+		$subscription_helper = Mockery::mock( SubscriptionHelper::class );
+		$subscription_helper->shouldReceive( 'plugin_is_active' )->andReturn( false );
+
+		$sut = $this->create_order_creator( $subscription_helper );
+
+		$method = new ReflectionMethod( WooCommerceOrderCreator::class, 'configure_line_items' );
+		$method->setAccessible( true );
+
+		$method->invoke( $sut, $wc_order, $cart_data, null, null );
+
+		$this->addToAssertionCount( 1 );
 	}
 
 	/**

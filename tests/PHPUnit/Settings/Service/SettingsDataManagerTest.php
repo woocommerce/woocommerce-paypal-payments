@@ -32,6 +32,13 @@ class SettingsDataManagerTest extends TestCase {
 	 */
 	private bool $payment_methods_saved = false;
 
+	/**
+	 * Logo visibility values written to payment settings, keyed by 'paypal' and 'card'.
+	 *
+	 * @var array<string, bool>
+	 */
+	private array $logo_settings = array();
+
 	public function setUp(): void {
 		parent::setUp();
 
@@ -51,6 +58,16 @@ class SettingsDataManagerTest extends TestCase {
 
 		$this->payment_methods = Mockery::mock( PaymentSettings::class );
 		$this->payment_methods->shouldReceive( 'set_fastlane_display_watermark' )->andReturnNull();
+		$this->payment_methods->shouldReceive( 'set_paypal_show_logo' )->andReturnUsing(
+			function ( bool $value ): void {
+				$this->logo_settings['paypal'] = $value;
+			}
+		);
+		$this->payment_methods->shouldReceive( 'set_show_card_logos' )->andReturnUsing(
+			function ( bool $value ): void {
+				$this->logo_settings['card'] = $value;
+			}
+		);
 		$this->payment_methods->shouldReceive( 'save' )->andReturnUsing(
 			function (): void {
 				$this->payment_methods_saved = true;
@@ -162,6 +179,40 @@ class SettingsDataManagerTest extends TestCase {
 
 		$this->assertTrue( $toggled_states['pay-later'] ?? false );
 		$this->assertTrue( $this->payment_methods_saved );
+	}
+
+	/**
+	 * GIVEN a new merchant completes onboarding
+	 * WHEN apply_payment_methods() applies the "Payment Methods" tab defaults
+	 * THEN the PayPal and card gateway logos are turned on
+	 * AND the payment methods are persisted
+	 */
+	public function test_apply_payment_methods_enables_gateway_logos(): void {
+		$this->payment_methods->shouldReceive( 'toggle_method_state' )->andReturnNull();
+
+		$this->apply_payment_methods( new ConfigurationFlagsDTO() );
+
+		$this->assertSame(
+			array(
+				'paypal' => true,
+				'card'   => true,
+			),
+			$this->logo_settings
+		);
+		$this->assertTrue( $this->payment_methods_saved );
+	}
+
+	/**
+	 * GIVEN a merchant that already completed onboarding reconnects
+	 * WHEN set_defaults_for_new_merchant() runs
+	 * THEN the gateway logo settings are left untouched, keeping the merchant's stored values
+	 */
+	public function test_set_defaults_for_new_merchant_keeps_gateway_logo_choice_on_reconnect(): void {
+		$this->onboarding_profile->shouldReceive( 'is_setup_done' )->andReturn( true );
+
+		$this->sut->set_defaults_for_new_merchant( new ConfigurationFlagsDTO() );
+
+		$this->assertSame( array(), $this->logo_settings );
 	}
 
 	/**

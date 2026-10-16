@@ -7,11 +7,11 @@ use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\TestCase;
 use Psr\Log\LoggerInterface;
-use Exception;
 use WC_Product;
 use WC_Product_Variable;
 use WC_Product_Variation;
 use Mockery;
+use RuntimeException;
 use function Brain\Monkey\Actions\expectDone;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -62,7 +62,7 @@ class SyncJobTest extends TestCase {
 		when( 'wp_generate_uuid4' )->justReturn( 'test-batch-id-1234' );
 		when( 'current_time' )->justReturn( '2024-01-01 12:00:00' );
 		when( 'wc_get_product_category_list' )->justReturn( 'Category1, Category2' );
-		when( 'wp_strip_all_tags' )->returnArg();
+		when( 'wp_strip_all_tags' )->alias( 'strip_tags' );
 		when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wp_json_encode' )->alias( fn( $data ) => json_encode( $data ) );
@@ -117,6 +117,63 @@ class SyncJobTest extends TestCase {
 		} );
 
 		return $products;
+	}
+
+	/**
+	 * Creates a variable product with one purchasable variation per given description,
+	 * and configures wc_get_product to resolve all of them.
+	 *
+	 * @param int      $parent_id              Parent product ID.
+	 * @param string   $parent_description     Parent long description.
+	 * @param string   $parent_short           Parent short description.
+	 * @param string[] $variation_descriptions Own descriptions of the variations.
+	 * @return WC_Product Parent product.
+	 */
+	private function create_variable_product_and_stub_wc_get_product(
+		int $parent_id,
+		string $parent_description,
+		string $parent_short,
+		array $variation_descriptions
+	): WC_Product {
+		$variations    = array();
+		$variation_ids = array();
+
+		foreach ( $variation_descriptions as $index => $description ) {
+			$variation_id    = $parent_id + 1 + $index;
+			$variation_ids[] = $variation_id;
+
+			$variation = Mockery::mock( WC_Product_Variation::class );
+			$variation->allows( 'is_purchasable' )->andReturn( true );
+			$variation->allows( 'get_id' )->andReturn( $variation_id );
+			$variation->allows( 'get_name' )->andReturn( "Variant {$variation_id}" );
+			$variation->allows( 'get_permalink' )->andReturn( "https://example.com/v{$variation_id}" );
+			$variation->allows( 'get_image_id' )->andReturn( 0 );
+			$variation->allows( 'get_description' )->andReturn( $description );
+			$variation->allows( 'get_price' )->andReturn( '10.00' );
+			$variation->allows( 'get_stock_status' )->andReturn( 'instock' );
+			$variation->allows( 'get_sku' )->andReturn( "SKU-{$variation_id}" );
+			$variation->allows( 'get_sale_price' )->andReturn( '' );
+			$variation->allows( 'get_variation_attributes' )->andReturn( array() );
+
+			$variations[ $variation_id ] = $variation;
+		}
+
+		$parent = Mockery::mock( WC_Product_Variable::class . ', ' . WC_Product::class );
+		$parent->allows( 'get_type' )->andReturn( 'variable' );
+		$parent->allows( 'is_type' )->with( 'variable' )->andReturn( true );
+		$parent->allows( 'get_children' )->andReturn( $variation_ids );
+		$parent->allows( 'get_id' )->andReturn( $parent_id );
+		$parent->allows( 'get_image_id' )->andReturn( 300 );
+		$parent->allows( 'get_description' )->andReturn( $parent_description );
+		$parent->allows( 'get_short_description' )->andReturn( $parent_short );
+
+		when( 'wc_get_product' )->alias(
+			static function ( $id ) use ( $parent_id, $parent, $variations ) {
+				return $parent_id === $id ? $parent : ( $variations[ $id ] ?? false );
+			}
+		);
+
+		return $parent;
 	}
 
 	/**
@@ -235,9 +292,10 @@ class SyncJobTest extends TestCase {
 	 * GIVEN a sync job with valid products
 	 * WHEN the API returns a WordPress error (network failure)
 	 * THEN no products are marked as processed, so they are retried on the next run
-	 * AND a RuntimeException is thrown for Action Scheduler retry
+	 * AND no exception is thrown, so Action Scheduler does not count the run as failed
+	 * AND the ingestion-completed action reports status "api_error" with every product failed
 	 */
-	public function test_execute_throws_exception_when_wp_error_occurs(): void {
+	public function test_execute_reports_api_error_without_throwing_when_wp_error_occurs(): void {
 		$this->create_products_and_stub_wc_get_product( $this->product_ids );
 
 		// Products are left unmarked so Action Scheduler retries them.
@@ -260,21 +318,33 @@ class SyncJobTest extends TestCase {
 			$this->product_filter
 		);
 
-		$this->expectException( Exception::class );
-		$this->expectExceptionMessage( 'Agentic sync failed: Connection timeout' );
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
 
 		$sync_job->execute();
+
+		$this->assertSame( 'api_error', $captured_action['status'] );
+		$this->assertSame( 3, $captured_action['pushed'] );
+		$this->assertSame( 0, $captured_action['synced'] );
+		$this->assertSame( 3, $captured_action['failed'] );
+		$this->assertSame( 'Connection timeout', $captured_action['error_message'] );
+		$this->assertSame( array(), $captured_action['failed_items'] );
 	}
 
 	/**
 	 * GIVEN a sync job with valid products
-	 * WHEN the API returns an HTTP error status code
+	 * WHEN the API returns an HTTP error status that does not fail the job
 	 * THEN no products are marked as processed, so they are retried on the next run
-	 * AND a RuntimeException is thrown for Action Scheduler retry
+	 * AND no exception is thrown, so Action Scheduler does not count the run as failed
+	 * AND the ingestion-completed action reports status "api_error" with every product failed
 	 *
 	 * @dataProvider http_error_provider
 	 */
-	public function test_execute_throws_exception_when_api_returns_http_error(
+	public function test_execute_reports_api_error_without_throwing_when_api_returns_http_error(
 		int $status_code,
 		string $response_body,
 		string $expected_error
@@ -294,16 +364,78 @@ class SyncJobTest extends TestCase {
 			$this->product_filter
 		);
 
-		$this->expectException( Exception::class );
-		$this->expectExceptionMessage( "Agentic sync failed: {$expected_error}" );
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
 
 		$sync_job->execute();
+
+		$this->assertSame( 'api_error', $captured_action['status'] );
+		$this->assertSame( 3, $captured_action['pushed'] );
+		$this->assertSame( 0, $captured_action['synced'] );
+		$this->assertSame( 3, $captured_action['failed'] );
+		$this->assertSame( $expected_error, $captured_action['error_message'] );
+		$this->assertSame( array(), $captured_action['failed_items'] );
 	}
 
 	/**
-	 * Provides HTTP error scenarios for testing.
+	 * GIVEN a sync job with valid products
+	 * WHEN the API answers HTTP 401 or a 5xx status
+	 * THEN no products are marked as processed, so they are retried on the next run
+	 * AND a RuntimeException is thrown, so Action Scheduler records the run as failed
+	 * AND the ingestion-completed action reports status "api_error" with every product failed
+	 *
+	 * @dataProvider failing_http_error_provider
 	 */
-	public function http_error_provider(): array {
+	public function test_execute_reports_api_error_and_throws_when_api_returns_failing_http_error(
+		int $status_code,
+		string $response_body,
+		string $expected_error
+	): void {
+		$this->create_products_and_stub_wc_get_product( $this->product_ids );
+		$this->stub_http_error_response( $status_code, $response_body );
+
+		$this->product_filter->shouldNotReceive( 'mark_processed' );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			$this->product_ids,
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
+
+		$thrown = null;
+		try {
+			$sync_job->execute();
+		} catch ( RuntimeException $exception ) {
+			$thrown = $exception;
+		}
+
+		$this->assertInstanceOf( RuntimeException::class, $thrown );
+		$this->assertSame( 'api_error', $captured_action['status'] );
+		$this->assertSame( 3, $captured_action['pushed'] );
+		$this->assertSame( 0, $captured_action['synced'] );
+		$this->assertSame( 3, $captured_action['failed'] );
+		$this->assertSame( $expected_error, $captured_action['error_message'] );
+		$this->assertSame( array(), $captured_action['failed_items'] );
+	}
+
+	/**
+	 * Provides HTTP statuses that make the job fail.
+	 */
+	public function failing_http_error_provider(): array {
 		return array(
 			'internal server error (500)' => array(
 				500,
@@ -314,6 +446,39 @@ class SyncJobTest extends TestCase {
 				503,
 				'Service Temporarily Unavailable',
 				'HTTP 503: Service Temporarily Unavailable',
+			),
+			'unauthorized (401)'          => array(
+				401,
+				'Unauthorized',
+				'HTTP 401: Unauthorized',
+			),
+		);
+	}
+
+	/**
+	 * Provides HTTP error scenarios that do not make the job fail.
+	 */
+	public function http_error_provider(): array {
+		return array(
+			'forbidden (403)'             => array(
+				403,
+				'Forbidden',
+				'HTTP 403: Forbidden',
+			),
+			'not found (404)'             => array(
+				404,
+				'Not Found',
+				'HTTP 404: Not Found',
+			),
+			'payload too large (413)'     => array(
+				413,
+				'Payload Too Large',
+				'HTTP 413: Payload Too Large',
+			),
+			'redirect (301)'              => array(
+				301,
+				'Moved Permanently',
+				'HTTP 301: Moved Permanently',
 			),
 		);
 	}
@@ -512,6 +677,155 @@ class SyncJobTest extends TestCase {
 		$this->assertSame( 0, $captured_action['pushed'] );
 		$this->assertSame( 0, $captured_action['synced'] );
 		$this->assertSame( 0, $captured_action['failed'] );
+		$this->assertSame( array(), $captured_action['failed_items'] );
+	}
+
+	/**
+	 * GIVEN a variable product whose variations have no description of their own
+	 * AND whose parent has a description with text
+	 * WHEN execute is called
+	 * THEN the API request is sent with the parent text as description of every variation entry
+	 * AND the parent product is marked processed
+	 */
+	public function test_execute_sends_parent_description_when_variations_have_no_description(): void {
+		$parent = $this->create_variable_product_and_stub_wc_get_product( 100, '<p>Parent text</p>', '', array( '', '&nbsp;' ) );
+
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $parent );
+
+		$captured_request = null;
+		when( 'wp_remote_post' )->alias( function ( $url, $args ) use ( &$captured_request ) {
+			$captured_request = $args;
+
+			return array();
+		} );
+		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+		when( 'wp_remote_retrieve_body' )->justReturn( '{"success": true}' );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			array( 100 ),
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$sync_job->execute();
+
+		$body = json_decode( $captured_request['body'], true );
+
+		$this->assertSame(
+			array( 'Parent text', 'Parent text' ),
+			array_column( $body['products'], 'description' )
+		);
+	}
+
+	/**
+	 * GIVEN a variable product where the variation, the parent long description and the parent
+	 * short description all have no visible text
+	 * WHEN execute is called
+	 * THEN the entries are dropped and the parent is marked processed with "Incomplete payload"
+	 * AND no API request is sent
+	 * AND the ingestion-completed action reports an "empty" batch
+	 */
+	public function test_execute_parks_variable_product_when_every_description_is_blank(): void {
+		$parent = $this->create_variable_product_and_stub_wc_get_product( 100, '<p>&nbsp;</p>', '&nbsp;', array( '' ) );
+
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $parent, 'Incomplete payload' );
+
+		expect( 'wp_remote_post' )->never();
+
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			array( 100 ),
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$sync_job->execute();
+
+		$this->assertSame( 'empty', $captured_action['status'] );
+		$this->assertSame( 0, $captured_action['pushed'] );
+	}
+
+	/**
+	 * GIVEN a batch of variable products that have no purchasable variations, so no payload
+	 * entry exists for any of them
+	 * WHEN execute is called
+	 * THEN every product of the batch is marked processed, so it does not block the next batches
+	 * AND no API request is sent
+	 * AND the ingestion-completed action reports an "empty" batch
+	 */
+	public function test_execute_marks_all_products_processed_when_batch_has_no_payload_entries(): void {
+		$variable_without_children = Mockery::mock( WC_Product_Variable::class . ', ' . WC_Product::class );
+		$variable_without_children->allows( 'get_type' )->andReturn( 'variable' );
+		$variable_without_children->allows( 'is_type' )->with( 'variable' )->andReturn( true );
+		$variable_without_children->allows( 'get_id' )->andReturn( 100 );
+		$variable_without_children->allows( 'get_children' )->andReturn( array() );
+
+		$variation = Mockery::mock( WC_Product_Variation::class );
+		$variation->allows( 'is_purchasable' )->andReturn( false );
+
+		$variable_with_unavailable_variation = Mockery::mock( WC_Product_Variable::class . ', ' . WC_Product::class );
+		$variable_with_unavailable_variation->allows( 'get_type' )->andReturn( 'variable' );
+		$variable_with_unavailable_variation->allows( 'is_type' )->with( 'variable' )->andReturn( true );
+		$variable_with_unavailable_variation->allows( 'get_id' )->andReturn( 200 );
+		$variable_with_unavailable_variation->allows( 'get_children' )->andReturn( array( 201 ) );
+
+		when( 'wc_get_product' )->alias(
+			static function ( $id ) use ( $variable_without_children, $variable_with_unavailable_variation, $variation ) {
+				return array(
+					100 => $variable_without_children,
+					200 => $variable_with_unavailable_variation,
+					201 => $variation,
+				)[ $id ] ?? false;
+			}
+		);
+
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $variable_without_children );
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $variable_with_unavailable_variation );
+
+		expect( 'wp_remote_post' )->never();
+
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			array( 100, 200 ),
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$sync_job->execute();
+
+		$this->assertSame( 'empty', $captured_action['status'] );
+		$this->assertSame( 0, $captured_action['pushed'] );
+		$this->assertSame( array(), $captured_action['failed_items'] );
 	}
 
 	/**
@@ -521,6 +835,7 @@ class SyncJobTest extends TestCase {
 	 * THEN the error is attributed to the parent product, resolved via item_group_id rather
 	 * than by indexing into the original product-id list
 	 * AND the ingestion-completed action reports one failure with status "validation_errors"
+	 * AND the failed item names the parent as product_id and the failing variation as variant_id
 	 */
 	public function test_execute_attributes_validation_error_to_parent_product_via_item_group_id(): void {
 		$parent_id     = 100;
@@ -534,6 +849,7 @@ class SyncJobTest extends TestCase {
 		$parent_product->shouldReceive( 'get_id' )->andReturn( $parent_id );
 		$parent_product->shouldReceive( 'get_image_id' )->andReturn( 300 );
 		$parent_product->shouldReceive( 'get_description' )->andReturn( 'Parent description' );
+		$parent_product->shouldReceive( 'get_short_description' )->andReturn( '' );
 
 		$variation1 = Mockery::mock( WC_Product_Variation::class );
 		$variation1->shouldReceive( 'is_purchasable' )->andReturn( true );
@@ -618,5 +934,271 @@ class SyncJobTest extends TestCase {
 		$this->assertSame( 1, $captured_action['pushed'] );
 		$this->assertSame( 0, $captured_action['synced'] );
 		$this->assertSame( 1, $captured_action['failed'] );
+		$this->assertSame(
+			array(
+				array(
+					'product_id' => $parent_id,
+					'variant_id' => $variation2_id,
+					'error'      => 'image_link must be a valid URL',
+				),
+			),
+			$captured_action['failed_items']
+		);
+	}
+
+	/**
+	 * GIVEN a single variable product whose two variations expand into two payload entries
+	 * WHEN the API reports a validation error for each of the two entries
+	 * THEN the ingestion-completed action lists two failed items, one per variation
+	 * AND both items name the same parent product
+	 * AND the failure count is 1, because both errors belong to one product
+	 */
+	public function test_execute_counts_one_failed_product_when_two_variations_of_it_fail(): void {
+		$parent_id     = 100;
+		$variation1_id = 101;
+		$variation2_id = 102;
+
+		$parent_product = Mockery::mock( WC_Product_Variable::class . ', ' . WC_Product::class );
+		$parent_product->allows( 'get_type' )->andReturn( 'variable' );
+		$parent_product->allows( 'is_type' )->with( 'variable' )->andReturn( true );
+		$parent_product->allows( 'get_children' )->andReturn( array( $variation1_id, $variation2_id ) );
+		$parent_product->allows( 'get_id' )->andReturn( $parent_id );
+		$parent_product->allows( 'get_image_id' )->andReturn( 300 );
+		$parent_product->allows( 'get_description' )->andReturn( 'Parent description' );
+		$parent_product->allows( 'get_short_description' )->andReturn( '' );
+
+		$variations = array();
+		foreach ( array( $variation1_id, $variation2_id ) as $variation_id ) {
+			$variation = Mockery::mock( WC_Product_Variation::class );
+			$variation->allows( 'is_purchasable' )->andReturn( true );
+			$variation->allows( 'get_id' )->andReturn( $variation_id );
+			$variation->allows( 'get_name' )->andReturn( "Variant {$variation_id}" );
+			$variation->allows( 'get_permalink' )->andReturn( "https://example.com/v{$variation_id}" );
+			$variation->allows( 'get_image_id' )->andReturn( 202 );
+			$variation->allows( 'get_description' )->andReturn( "Variant {$variation_id} description" );
+			$variation->allows( 'get_price' )->andReturn( '10.00' );
+			$variation->allows( 'get_stock_status' )->andReturn( 'instock' );
+			$variation->allows( 'get_sku' )->andReturn( "SKU-{$variation_id}" );
+			$variation->allows( 'get_sale_price' )->andReturn( '' );
+			$variation->allows( 'get_variation_attributes' )->andReturn( array() );
+
+			$variations[ $variation_id ] = $variation;
+		}
+
+		when( 'wc_get_product' )->alias(
+			static function ( $id ) use ( $parent_id, $parent_product, $variations ) {
+				return $parent_id === $id ? $parent_product : ( $variations[ $id ] ?? false );
+			}
+		);
+
+		$this->stub_http_error_response(
+			422,
+			json_encode(
+				array(
+					'success' => false,
+					'error'   => 'VALIDATION_ERROR',
+					'message' => 'Validation failed: data/products/0/title must pass "isNotEmpty" keyword validation, data/products/1/description must pass "isNotEmpty" keyword validation',
+				)
+			)
+		);
+
+		$this->product_filter->allows( 'mark_processed' );
+
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			array( $parent_id ),
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$sync_job->execute();
+
+		$this->assertSame( 'validation_errors', $captured_action['status'] );
+		$this->assertSame( 1, $captured_action['failed'] );
+		$this->assertSame(
+			array(
+				array(
+					'product_id' => $parent_id,
+					'variant_id' => $variation1_id,
+					'error'      => 'title must pass "isNotEmpty" keyword validation',
+				),
+				array(
+					'product_id' => $parent_id,
+					'variant_id' => $variation2_id,
+					'error'      => 'description must pass "isNotEmpty" keyword validation',
+				),
+			),
+			$captured_action['failed_items']
+		);
+	}
+
+	/**
+	 * GIVEN a batch of two products
+	 * WHEN the API answers HTTP 400 or 422 with a validation error naming the second product
+	 * THEN no exception is thrown, so Action Scheduler does not retry the batch
+	 * AND the named product is marked processed with its validation error
+	 * AND the ingestion-completed action reports one failure with status "validation_errors"
+	 * AND the failed item names the product as both product_id and variant_id
+	 *
+	 * @dataProvider validation_status_provider
+	 */
+	public function test_execute_marks_named_product_with_validation_error_on_http_validation_status( int $status_code ): void {
+		$product_one = $this->create_product_stub( 1, 'Product 1', '10' );
+		$product_two = $this->create_product_stub( 2, 'Product 2', '20' );
+
+		when( 'wc_get_product' )->alias( function ( $id ) use ( $product_one, $product_two ) {
+			return array( 1 => $product_one, 2 => $product_two )[ $id ] ?? false;
+		} );
+
+		$this->stub_http_error_response(
+			$status_code,
+			json_encode(
+				array(
+					'success' => false,
+					'error'   => 'VALIDATION_ERROR',
+					'message' => 'Validation failed: data/products/1/description must pass "isNotEmpty" keyword validation',
+				)
+			)
+		);
+
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $product_one );
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $product_two );
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with(
+				$product_two,
+				Mockery::on( static fn( $error ) => is_string( $error ) && false !== strpos( $error, 'isNotEmpty' ) )
+			);
+
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			array( 1, 2 ),
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$sync_job->execute();
+
+		$this->assertSame( 'validation_errors', $captured_action['status'] );
+		$this->assertSame( 2, $captured_action['pushed'] );
+		$this->assertSame( 1, $captured_action['synced'] );
+		$this->assertSame( 1, $captured_action['failed'] );
+		$this->assertSame(
+			array(
+				array(
+					'product_id' => 2,
+					'variant_id' => 2,
+					'error'      => 'description must pass "isNotEmpty" keyword validation',
+				),
+			),
+			$captured_action['failed_items']
+		);
+	}
+
+	/**
+	 * GIVEN a batch of two products
+	 * WHEN the API rejects the request with a message that names no product
+	 * THEN every product is marked processed without a validation error
+	 * AND the ingestion-completed action reports status "validation_errors", not "success"
+	 * AND the whole batch counts as failed, so nothing counts as synced
+	 * AND the failed items list is empty
+	 *
+	 * @dataProvider unattributed_rejection_provider
+	 */
+	public function test_execute_reports_validation_errors_when_rejection_names_no_product( int $status_code, string $message ): void {
+		$product_one = $this->create_product_stub( 1, 'Product 1', '10' );
+		$product_two = $this->create_product_stub( 2, 'Product 2', '20' );
+
+		when( 'wc_get_product' )->alias( function ( $id ) use ( $product_one, $product_two ) {
+			return array( 1 => $product_one, 2 => $product_two )[ $id ] ?? false;
+		} );
+
+		$this->stub_http_error_response(
+			$status_code,
+			json_encode(
+				array(
+					'success' => false,
+					'message' => $message,
+				)
+			)
+		);
+
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $product_one );
+		$this->product_filter->shouldReceive( 'mark_processed' )
+			->once()
+			->with( $product_two );
+
+		$captured_action = null;
+		expectDone( 'woocommerce_paypal_payments_store_sync_ingestion_completed' )
+			->once()
+			->whenHappen( function ( array $payload ) use ( &$captured_action ) {
+				$captured_action = $payload;
+			} );
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			'https://example.com',
+			array( 1, 2 ),
+			$this->logger,
+			$this->product_manager,
+			$this->product_filter
+		);
+
+		$sync_job->execute();
+
+		$this->assertSame( 'validation_errors', $captured_action['status'] );
+		$this->assertSame( 2, $captured_action['pushed'] );
+		$this->assertSame( 0, $captured_action['synced'] );
+		$this->assertSame( 2, $captured_action['failed'] );
+		$this->assertSame( array(), $captured_action['failed_items'] );
+	}
+
+	/**
+	 * Provides HTTP statuses and messages of a rejection without a product reference.
+	 */
+	public function unattributed_rejection_provider(): array {
+		$uri_message   = 'data/merchant_url must match format "uri"';
+		$array_message = 'Products array not provided or is not a proper array';
+
+		return array(
+			'bad request (400)'                => array( 400, $uri_message ),
+			'unprocessable entity (422)'       => array( 422, $uri_message ),
+			'success status with failure flag' => array( 200, $uri_message ),
+			'missing products array (422)'     => array( 422, $array_message ),
+		);
+	}
+
+	/**
+	 * Provides HTTP statuses the API uses to report per-product validation errors.
+	 */
+	public function validation_status_provider(): array {
+		return array(
+			'bad request (400)'          => array( 400 ),
+			'unprocessable entity (422)' => array( 422 ),
+		);
 	}
 }

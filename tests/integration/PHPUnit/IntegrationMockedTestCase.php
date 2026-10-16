@@ -272,7 +272,13 @@ class IntegrationMockedTestCase extends TestCase
             $auth_status = \Mockery::mock(\WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus::class)->shouldIgnoreMissing();
 
             $auth_status->shouldReceive('name')->andReturn($capture_success ? 'CREATED' : 'DENIED');
-            $auth_status->shouldReceive('is')->andReturn($capture_success);
+            $auth_status->shouldReceive('is')->andReturnUsing(
+                static function (string $status) use ($capture_success): bool {
+                    return $capture_success
+                        ? $status === \WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus::CREATED
+                        : $status === \WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus::DENIED;
+                }
+            );
             $authorization->shouldReceive('status')->andReturn($auth_status);
             $payments->shouldReceive('authorizations')->andReturn([$authorization]);
             $payments->shouldReceive('captures')->andReturn([]);

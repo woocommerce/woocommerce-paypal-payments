@@ -501,6 +501,72 @@ describe( 'V6ExpressComponent', () => {
 		expect( mockAssign ).not.toHaveBeenCalled();
 	} );
 
+	test( 'on Pay Now the PayPal addresses are in the Blocks form before the checkout is submitted', async () => {
+		mockGetOrder.mockResolvedValue( {
+			id: 'PPORDER',
+			payer: {
+				name: { given_name: 'Ada', surname: 'Lovelace' },
+				email_address: 'ada@example.com',
+			},
+			purchase_units: [
+				{
+					shipping: {
+						name: { full_name: 'Ada Lovelace' },
+						address: {
+							address_line_1: '1 St',
+							admin_area_1: 'CA',
+							admin_area_2: 'LA',
+							postal_code: '90001',
+							country_code: 'US',
+						},
+					},
+				},
+			],
+		} );
+		const formState = { billing: null, shipping: null };
+		const originalDispatch = global.wp.data.dispatch;
+		global.wp.data.dispatch = ( store ) => ( {
+			...originalDispatch( store ),
+			setBillingAddress: ( address ) => {
+				formState.billing = address;
+			},
+			setShippingAddress: ( address ) => {
+				formState.shipping = address;
+			},
+		} );
+		let formStateAtSubmit = null;
+		const onSubmit = jest.fn( () => {
+			formStateAtSubmit = { ...formState };
+		} );
+
+		renderComponent( {
+			onSubmit,
+			shippingData: { needsShipping: true },
+		} );
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+		} );
+
+		expect( formStateAtSubmit.shipping ).toMatchObject( {
+			first_name: 'Ada',
+			last_name: 'Lovelace',
+			address_1: '1 St',
+			city: 'LA',
+			state: 'CA',
+			postcode: '90001',
+			country: 'US',
+		} );
+		expect( formStateAtSubmit.billing ).toMatchObject( {
+			first_name: 'Ada',
+			last_name: 'Lovelace',
+			address_1: '1 St',
+			postcode: '90001',
+			country: 'US',
+		} );
+	} );
+
 	test( 'on the cart block, Pay Now creates and captures the order server-side instead of submitting the checkout store', async () => {
 		mockGetOrder.mockResolvedValue( { id: 'PPORDER' } );
 		const onSubmit = jest.fn();
