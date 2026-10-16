@@ -39,6 +39,17 @@ jest.mock(
 	{ virtual: true }
 );
 
+jest.mock( '../MiniCartSmartButtonsBlock/v6-button-preview', () => ( {
+	V6ButtonPreview: ( { pageType, sdkV6, style } ) => (
+		<div
+			className="ppcp-v6-button-preview"
+			data-page-type={ pageType }
+			data-client-id={ sdkV6.clientId }
+			data-color-class={ style.colorClass }
+		/>
+	),
+} ) );
+
 jest.mock( '@paypal/react-paypal-js', () => ( {
 	PayPalScriptProvider: jest.fn( ( { children } ) => children ),
 	PayPalButtons: jest.fn( () => null ),
@@ -53,9 +64,25 @@ const {
 
 const defaultConfig = {
 	placementEnabled: true,
+	isSdkV6Active: false,
 	settingsUrl: '/wp-admin/settings',
 	ajax: {
 		cart_script_params: { endpoint: '/wp-json/ppcp/cart-script-params' },
+	},
+};
+
+const v6Config = {
+	isSdkV6Active: true,
+	sdkV6: {
+		sdkUrl: 'https://example.test/v6-sdk.js',
+		clientId: 'client-id',
+		currency: 'USD',
+		locale: 'en_US',
+	},
+	buttonStyle: {
+		colorClass: 'paypal-blue',
+		borderRadius: '8px',
+		height: '35px',
 	},
 };
 
@@ -109,6 +136,62 @@ describe( 'Edit', () => {
 
 		const { PayPalButtons } = require( '@paypal/react-paypal-js' );
 		expect( PayPalButtons ).toHaveBeenCalled();
+	} );
+
+	test( 'shows the timed-out placeholder immediately when the script params request fails', () => {
+		useScriptParams.mockReturnValue( false );
+
+		render( <Edit /> );
+
+		expect(
+			document.querySelector( '.ppcp-preview-placeholder' )
+		).toHaveTextContent( 'timed-out' );
+	} );
+
+	describe( 'SDK v6 preview', () => {
+		test( 'renders the v6 button preview for the product page with the configured sdk and style', () => {
+			global.PcpProductSmartButtonsBlock = {
+				...defaultConfig,
+				...v6Config,
+			};
+
+			render( <Edit /> );
+
+			const preview = document.querySelector( '.ppcp-v6-button-preview' );
+			expect( preview ).toHaveAttribute(
+				'data-page-type',
+				'product-details'
+			);
+			expect( preview ).toHaveAttribute( 'data-client-id', 'client-id' );
+			expect( preview ).toHaveAttribute(
+				'data-color-class',
+				'paypal-blue'
+			);
+			expect( useScriptParams ).not.toHaveBeenCalled();
+		} );
+
+		test.each( [
+			[ 'the v6 SDK flag is off', { isSdkV6Active: false } ],
+			[ 'the v6 sdk config is missing', { sdkV6: null } ],
+			[ 'the button style config is missing', { buttonStyle: null } ],
+		] )( 'falls back to the v5 preview when %s', ( _name, overrides ) => {
+			global.PcpProductSmartButtonsBlock = {
+				...defaultConfig,
+				...v6Config,
+				...overrides,
+			};
+			useScriptParams.mockReturnValue( null );
+
+			render( <Edit /> );
+
+			expect(
+				document.querySelector( '.ppcp-v6-button-preview' )
+			).not.toBeInTheDocument();
+			expect(
+				document.querySelector( '.ppcp-preview-placeholder' )
+			).toBeInTheDocument();
+			expect( useScriptParams ).toHaveBeenCalled();
+		} );
 	} );
 
 	describe( 'preview controller integration', () => {

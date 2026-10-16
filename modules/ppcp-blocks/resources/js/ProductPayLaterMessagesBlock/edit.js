@@ -7,44 +7,13 @@ import { useScriptParams } from '@ppcp-paylater-block/hooks/script-params';
 import { usePreviewTimeout } from '@ppcp-paylater-block/hooks/use-preview-timeout';
 import { usePreviewController } from '@ppcp-paylater-block/hooks/use-preview-controller';
 import { PreviewPlaceholder } from '@ppcp-paylater-block/components/preview-placeholder';
+import { V6MessagePreview } from '@ppcp-paylater-block/components/v6-message-preview';
+
+// A fixed sample amount for the editor preview only; the front end prices the product.
+const PREVIEW_AMOUNT = '50.00';
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
 	const { ppcpId } = attributes;
-
-	const [ loaded, setLoaded ] = useState( false );
-	const timedOut = usePreviewTimeout( loaded );
-	const { containerRef, renderKey } = usePreviewController(
-		loaded,
-		setLoaded
-	);
-
-	const productConfig = PcpProductPayLaterBlock.config.product;
-
-	// v6 renders this as text regardless of settings, so the preview follows.
-	const layout = PcpProductPayLaterBlock.isSdkV6Active
-		? 'text'
-		: productConfig.layout;
-
-	let previewStyle = {};
-	if ( layout === 'flex' ) {
-		previewStyle = {
-			layout,
-			color: productConfig.color,
-			ratio: productConfig.ratio,
-		};
-	} else {
-		previewStyle = {
-			layout,
-			logo: {
-				position: productConfig[ 'logo-position' ],
-				type: productConfig[ 'logo-type' ],
-			},
-			text: {
-				color: productConfig[ 'text-color' ],
-				size: productConfig[ 'text-size' ],
-			},
-		};
-	}
 
 	let classes = [ 'ppcp-paylater-block-preview', 'ppcp-overlay-parent' ];
 	if ( ! PcpProductPayLaterBlock.placementEnabled ) {
@@ -96,34 +65,10 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 		);
 	}
 
-	const scriptParams = useScriptParams(
-		PcpProductPayLaterBlock.ajax.cart_script_params
+	const { sdkV6, messageStyle } = PcpProductPayLaterBlock;
+	const useSdkV6 = Boolean(
+		PcpProductPayLaterBlock.isSdkV6Active && sdkV6 && messageStyle
 	);
-	if ( scriptParams === null ) {
-		return (
-			<div { ...props }>
-				<PreviewPlaceholder timedOut={ timedOut } />
-			</div>
-		);
-	}
-
-	const urlParams = {
-		...scriptParams.url_params,
-		components: 'messages',
-		dataNamespace: 'ppcp-block-editor-product-paylater-message',
-	};
-
-	// The preview reuses the button SDK params, which disable the `paylater` funding
-	// source when the Pay Later *button* is off for this location. Messaging is
-	// independent of the button, so keep paylater enabled here or nothing renders.
-	if ( urlParams[ 'disable-funding' ] ) {
-		urlParams[ 'disable-funding' ] = urlParams[ 'disable-funding' ]
-			.split( ',' )
-			.filter(
-				( source ) => source !== 'paylater' && source !== 'credit'
-			)
-			.join( ',' );
-	}
 
 	return (
 		<>
@@ -154,23 +99,107 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...props }>
-				<div className="ppcp-overlay-child" ref={ containerRef }>
-					<PayPalScriptProvider
-						key={ renderKey }
-						options={ urlParams }
-					>
-						<PayPalMessages
-							style={ previewStyle }
-							onRender={ () => setLoaded( true ) }
-							amount={ 50.0 }
-						/>
-					</PayPalScriptProvider>
-				</div>
-				<div className="ppcp-overlay-child ppcp-unclicable-overlay">
-					{ ' ' }
-					{ /* make the message not clickable */ }
-					{ ! loaded && <PreviewPlaceholder timedOut={ timedOut } /> }
-				</div>
+				{ useSdkV6 ? (
+					<V6MessagePreview
+						sdkV6={ sdkV6 }
+						amount={ PREVIEW_AMOUNT }
+						pageType="product-details"
+						style={ messageStyle }
+					/>
+				) : (
+					<V5MessagePreview />
+				) }
+			</div>
+		</>
+	);
+}
+
+/**
+ * The v5 SDK preview, used while the v6 module is not loaded.
+ *
+ * @return {Object} The preview.
+ */
+function V5MessagePreview() {
+	const [ loaded, setLoaded ] = useState( false );
+	const timedOut = usePreviewTimeout( loaded );
+	const { containerRef, renderKey } = usePreviewController(
+		loaded,
+		setLoaded
+	);
+	const scriptParams = useScriptParams(
+		PcpProductPayLaterBlock.ajax.cart_script_params
+	);
+
+	if ( ! scriptParams ) {
+		// `false` means the params request failed, so there is nothing to wait for.
+		return (
+			<PreviewPlaceholder
+				timedOut={ timedOut || scriptParams === false }
+			/>
+		);
+	}
+
+	const productConfig = PcpProductPayLaterBlock.config.product;
+
+	// v6 renders this as text regardless of settings, so the preview follows.
+	const layout = PcpProductPayLaterBlock.isSdkV6Active
+		? 'text'
+		: productConfig.layout;
+
+	let previewStyle = {};
+	if ( layout === 'flex' ) {
+		previewStyle = {
+			layout,
+			color: productConfig.color,
+			ratio: productConfig.ratio,
+		};
+	} else {
+		previewStyle = {
+			layout,
+			logo: {
+				position: productConfig[ 'logo-position' ],
+				type: productConfig[ 'logo-type' ],
+			},
+			text: {
+				color: productConfig[ 'text-color' ],
+				size: productConfig[ 'text-size' ],
+			},
+		};
+	}
+
+	const urlParams = {
+		...scriptParams.url_params,
+		components: 'messages',
+		dataNamespace: 'ppcp-block-editor-product-paylater-message',
+	};
+
+	// The preview reuses the button SDK params, which disable the `paylater` funding
+	// source when the Pay Later *button* is off for this location. Messaging is
+	// independent of the button, so keep paylater enabled here or nothing renders.
+	if ( urlParams[ 'disable-funding' ] ) {
+		urlParams[ 'disable-funding' ] = urlParams[ 'disable-funding' ]
+			.split( ',' )
+			.filter(
+				( source ) => source !== 'paylater' && source !== 'credit'
+			)
+			.join( ',' );
+	}
+
+	return (
+		<>
+			<div className="ppcp-overlay-child" ref={ containerRef }>
+				<PayPalScriptProvider key={ renderKey } options={ urlParams }>
+					<PayPalMessages
+						style={ previewStyle }
+						onRender={ () => setLoaded( true ) }
+						amount={ Number( PREVIEW_AMOUNT ) }
+					/>
+				</PayPalScriptProvider>
+			</div>
+			<div className="ppcp-overlay-child ppcp-unclicable-overlay">
+				{ ' ' }
+				{ /* make the message not clickable */ }
+				{ ! loaded && <PreviewPlaceholder timedOut={ timedOut } /> }
 			</div>
 		</>
 	);
