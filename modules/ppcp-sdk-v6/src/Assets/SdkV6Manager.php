@@ -333,13 +333,14 @@ class SdkV6Manager {
 		$product_enabled = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
 
 		// pay-now is driven by the existing WC order rather than the cart, so
-		// the zero-total guard does not apply to it.
+		// the zero-total guard does not apply to it. The mini-cart checks it at
+		// render time instead (see render_mini_cart_wrapper()).
 		return array(
 			'product'   => $product_enabled && ! $this->is_free_trial_product(),
 			'cart'      => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
 			'checkout'  => ( $needs_payment || $free_trial_checkout ) && $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ),
 			'pay-now'   => $this->settings_status->is_smart_button_enabled_for_location( 'pay-now' ),
-			'mini-cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
+			'mini-cart' => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 		);
 	}
 
@@ -411,8 +412,16 @@ class SdkV6Manager {
 
 	/**
 	 * Renders the mini-cart button wrapper.
+	 *
+	 * The zero-total check runs here, not when the hook is registered: the
+	 * mini-cart fragment of an AJAX add-to-cart renders after the cart changes,
+	 * but the hook is registered before, while the cart can still be empty.
 	 */
 	public function render_mini_cart_wrapper(): void {
+		if ( ! $this->cart_needs_payment() ) {
+			return;
+		}
+
 		echo '<p class="woocommerce-mini-cart__buttons buttons">';
 		echo '<span id="' . esc_attr( self::MINI_CART_WRAPPER_ID ) . '"></span>';
 		echo '</p>';
@@ -642,28 +651,17 @@ class SdkV6Manager {
 			return true;
 		}
 
-		// Home and shop, where v5 places a Pay Later message and v6 has no
-		// message hook of its own yet. Whether v5 rendered there came down to the
-		// unrelated mini-cart setting: with the mini-cart on, the fallback below
-		// claimed the page and v5 went dark; with it off, v5 stayed and drew the
-		// banner. Claim the page either way, so one stack owns messaging
-		// everywhere rather than v6 and v5 splitting it per page. The message is
-		// withheld until v6 can draw it itself, at which point should_load_messages()
-		// above claims the page first and this branch stops being reached.
-		//
-		// Scoped to the empty page context so the block and page-context
-		// locations keep deciding without consulting messaging, as
-		// testShouldLoadOnCurrentPageInBlockContextsIsUnaffectedByMessagingEligibility
-		// pins.
+		// Home and shop: claim the page when Pay Later messaging is on, so the
+		// mini-cart fallback below does not decide whether v5 owns messaging.
+		// messages_render_hook() has no hook there yet, so nothing draws. Page
+		// contexts decide messaging in should_load_messages().
 		$message_location = $page_location ? '' : $this->context->location();
 		if ( $message_location && $this->settings_status->is_pay_later_messaging_enabled_for_location( $message_location ) ) {
 			return true;
 		}
 
-		// Sitewide, because the mini-cart can appear on any page as either the
-		// classic "Cart" widget or the block Mini-Cart, and is_active_widget()
-		// only detects the classic one. boot.js renders into the mini-cart
-		// wrapper only where that wrapper exists.
+		// Sitewide: the mini-cart can appear on any page, and is_active_widget()
+		// does not detect the block Mini-Cart.
 		return $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
 			|| $this->any_placement_renders( 'mini-cart' );
 	}
@@ -1243,6 +1241,7 @@ class SdkV6Manager {
 		$data = array(
 			'sdk_url'             => $base_url . '/web-sdk/v6/core',
 			'page_context'        => $page_context,
+			'buttons_enabled'     => $page_context && $this->settings_status->is_smart_button_enabled_for_location( $page_context ),
 			'currency'            => get_woocommerce_currency(),
 			'amount'              => $this->transaction_amount(),
 			'buyer_country'       => $buyer_country,

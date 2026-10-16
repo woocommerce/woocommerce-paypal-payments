@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
@@ -24,6 +25,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -287,10 +289,11 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN a merchant with smart buttons enabled for every location
      * WHEN determining which locations should render on the current page
-     * THEN the cart, checkout and mini-cart wallet buttons are suppressed whenever the cart
+     * THEN the cart and checkout wallet buttons are suppressed whenever the cart
      *      does not need payment (e.g. a $0 order from a full-value coupon)
-     * AND the product and pay-now locations render regardless of the cart's payment status,
-     *     since pay-now is driven by an existing WC order rather than the cart
+     * AND the product, pay-now and mini-cart locations render regardless of the cart's payment
+     *     status, since pay-now is driven by an existing WC order rather than the cart, and the
+     *     mini-cart checks the cart when its wrapper prints
      *
      * AND determine_render_places() does not call Context::init_context() itself — that
      *     initialization now happens once in SdkV6Module's 'wp' callback, before both the
@@ -325,9 +328,9 @@ class SdkV6ManagerTest extends TestCase
                 true,
                 ['product' => true, 'cart' => true, 'checkout' => true, 'pay-now' => true, 'mini-cart' => true],
             ],
-            'zero-total cart not needing payment suppresses cart, checkout and mini-cart' => [
+            'zero-total cart not needing payment suppresses cart and checkout only' => [
                 false,
-                ['product' => true, 'cart' => false, 'checkout' => false, 'pay-now' => true, 'mini-cart' => false],
+                ['product' => true, 'cart' => false, 'checkout' => false, 'pay-now' => true, 'mini-cart' => true],
             ],
             'no cart present is treated as needing payment' => [
                 null,
@@ -343,8 +346,10 @@ class SdkV6ManagerTest extends TestCase
      * THEN the checkout still renders, because it must offer the PayPal
      *      save-without-purchase button for the vaulted token backing the future
      *      recurring payment
-     * AND the cart and mini-cart stay suppressed regardless of the free-trial flag,
-     *     since neither has a form to submit that vaulted token from
+     * AND the cart stays suppressed regardless of the free-trial flag, since it has no
+     *     form to submit that vaulted token from
+     * AND the mini-cart follows its setting alone, since its wrapper checks the cart
+     *     when it prints
      * AND a $0 cart that is NOT a free trial (e.g. a full-value coupon) keeps the
      *     checkout suppressed too, same as before the fix
      *
@@ -364,7 +369,116 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame($expected_checkout, $result['checkout']);
         $this->assertSame($needs_payment, $result['cart']);
-        $this->assertSame($needs_payment, $result['mini-cart']);
+        $this->assertTrue($result['mini-cart']);
+    }
+
+    /**
+     * GIVEN the cart was empty (needing no payment) when the render places were determined
+     * WHEN the cart changes and the mini-cart button wrapper is rendered afterwards
+     * THEN the wrapper prints when the cart needs payment at render time
+     * AND nothing prints when the cart still needs no payment, e.g. a $0 cart
+     *
+     * @dataProvider mini_cart_wrapper_provider
+     */
+    public function testRenderMiniCartWrapperFollowsCartStateAtRenderTime(bool $needs_payment_at_render, string $expected_output): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $needs_payment = false;
+        $cart          = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturnUsing(static function () use (&$needs_payment): bool {
+            return $needs_payment;
+        });
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $testee = $this->createTestee();
+        $places = $testee->determine_render_places();
+
+        $needs_payment = $needs_payment_at_render;
+        $testee->render_mini_cart_wrapper();
+
+        $this->assertTrue($places['mini-cart']);
+        $this->expectOutputString($expected_output);
+    }
+
+    public function mini_cart_wrapper_provider(): array
+    {
+        return [
+            'cart that needs payment at render time prints the wrapper' => [
+                true,
+                '<p class="woocommerce-mini-cart__buttons buttons"><span id="' . SdkV6Manager::MINI_CART_WRAPPER_ID . '"></span></p>',
+            ],
+            'zero-total cart at render time prints nothing' => [
+                false,
+                '',
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN the buyer is on the Block Checkout page
+     * AND the checkout buttons, card fields, Fastlane and Checkout Pay Later messaging are all off
+     * AND the Mini Cart buttons are on
+     * WHEN checking whether the block payment method is active
+     * THEN it is active, so the PayPal payment row and the continuation review keep working
+     */
+    public function testBlockPaymentMethodStaysActiveOnCheckoutBlockWhenOnlyMiniCartButtonsAreOn(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout-block');
+        $this->context->shouldReceive('location')->andReturn('checkout-block');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
+        $this->fastlane_config->shouldReceive('should_render')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->andReturnUsing(static fn (string $location): bool => 'mini-cart' === $location);
+
+        $payment_method = new V6PaymentMethod(
+            $this->createTestee(),
+            $this->asset_getter,
+            '1.0.0',
+            Mockery::mock(PayPalGateway::class),
+            Mockery::mock(CreditCardGateway::class),
+            null,
+            null,
+            ''
+        );
+
+        $this->assertTrue($payment_method->is_active());
+    }
+
+    /**
+     * GIVEN a page and the set of smart button locations the merchant enabled
+     * WHEN the SDK bootstrap data is generated
+     * THEN buttons_enabled is true only when the page's own location has smart buttons on
+     * AND it is false when only another location, such as the mini-cart, has them on
+     * AND it is false on a page with no page context
+     *
+     * @dataProvider buttons_enabled_provider
+     */
+    public function testScriptDataButtonsEnabledFollowsThePagesOwnLocation(string $page_context, array $enabled_locations, bool $expected): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->andReturnUsing(static function (string $location) use ($enabled_locations): bool {
+                return in_array($location, $enabled_locations, true);
+            });
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame($expected, $data['buttons_enabled']);
+    }
+
+    public function buttons_enabled_provider(): array
+    {
+        return [
+            'checkout page with checkout buttons on'              => ['checkout', ['checkout'], true],
+            'checkout page with only mini cart buttons on'        => ['checkout', ['mini-cart'], false],
+            'checkout page with checkout buttons off'             => ['checkout', [], false],
+            'cart block page with only mini cart buttons on'      => ['cart-block', ['mini-cart'], false],
+            'page without context even with mini cart buttons on' => ['', ['mini-cart', 'checkout', 'cart'], false],
+        ];
     }
 
     public function free_trial_checkout_provider(): array
