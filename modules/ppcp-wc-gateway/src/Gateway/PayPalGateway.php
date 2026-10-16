@@ -631,6 +631,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				);
 			}
 		} catch ( PayPalApiException $error ) {
+			$wallet_failure = $this->handle_wallet_payer_action( $wc_order, $error );
+			if ( $wallet_failure ) {
+				return $wallet_failure;
+			}
+
 			$retry_keys_messages = array(
 				'INSTRUMENT_DECLINED'   => __( 'Instrument declined.', 'woocommerce-paypal-payments' ),
 				'PAYER_ACTION_REQUIRED' => __( 'Payer action required, possibly overcharge.', 'woocommerce-paypal-payments' ),
