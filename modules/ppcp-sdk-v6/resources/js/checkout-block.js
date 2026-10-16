@@ -315,7 +315,7 @@ if ( config && config.page_context && config.continuation ) {
 		} );
 	};
 
-	// Off when the block is active only for other methods or Pay Later messages.
+	// Off when the block is active for other reasons, such as the Mini Cart.
 	for ( const fundingSource of config.buttons_enabled ? FUNDING_SOURCES : [] ) {
 		registerExpress( {
 			name: `ppcp-gateway-${ fundingSource }`,
