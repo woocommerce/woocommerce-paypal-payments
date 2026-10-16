@@ -96,6 +96,9 @@ class Recaptcha
      */
     public function handle_block_render($parsed_block): void
     {
+        if (!$this->is_front_end_page_view()) {
+            return;
+        }
         if (!is_array($parsed_block)) {
             return;
         }
@@ -159,6 +162,16 @@ class Recaptcha
     private function is_any_checkout_page(): bool
     {
         return is_checkout() || $this->checkout_block_rendered;
+    }
+    /**
+     * True when the request is a front-end page view.
+     * REST, admin, cron and WP-CLI requests never reach `template_redirect`.
+     * WooCommerce handles its `wc-ajax` requests on `template_redirect`,
+     * thus the AJAX check.
+     */
+    private function is_front_end_page_view(): bool
+    {
+        return did_action('template_redirect') > 0 && !wp_doing_ajax();
     }
     /**
      * Whether reCAPTCHA assets/markup are allowed to load for the current
