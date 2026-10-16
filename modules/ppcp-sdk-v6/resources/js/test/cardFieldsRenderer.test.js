@@ -106,7 +106,21 @@ function buildCheckoutDom( selectedGateway = 'ppcp-credit-card-gateway' ) {
 	`;
 }
 
+const labels = {
+	fields_empty: 'Please fill in your card details.',
+	fields_not_valid: 'Please check your card details.',
+};
+
+const filledField = { isEmpty: false, isValid: true, isFocused: false };
+
+const validFieldData = {
+	number: filledField,
+	expiry: filledField,
+	cvv: filledField,
+};
+
 const baseConfig = ( overrides = {} ) => ( {
+	labels,
 	card_fields: {
 		enabled: true,
 		payment_method: 'ppcp-credit-card-gateway',
@@ -120,8 +134,17 @@ const baseConfig = ( overrides = {} ) => ( {
 	...overrides,
 } );
 
-function makeCardSession( { state = 'succeeded', id = 'session' } = {} ) {
+function makeCardSession( {
+	state = 'succeeded',
+	id = 'session',
+	fieldData = validFieldData,
+} = {} ) {
 	return {
+		on: jest.fn( ( event, handler ) => {
+			if ( event === 'change' ) {
+				handler( { data: fieldData } );
+			}
+		} ),
 		createCardFieldsComponent: jest.fn( () => {
 			const element = document.createElement( 'div' );
 			element.dataset.session = id;
@@ -848,6 +871,99 @@ describe( 'initCardFields', () => {
 			'checkout',
 			false
 		);
+	} );
+
+	describe( 'card field state', () => {
+		const emptyField = { isEmpty: true, isValid: false, isFocused: false };
+		const invalidField = { isEmpty: false, isValid: false, isFocused: false };
+
+		async function clickPlaceOrder( cardSession, config = baseConfig() ) {
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () => cardSession,
+				createCardFieldsSavePaymentSession: () => cardSession,
+			} );
+			mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+			mockApproveCardOrder.mockResolvedValue( undefined );
+			mockCreateCardSetupToken.mockResolvedValue( 'SETUP1' );
+
+			await initCardFields( config );
+			await flushPromises();
+
+			document.querySelector( '#place_order' ).click();
+			await flushPromises();
+		}
+
+		beforeEach( () => {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		} );
+
+		test.each( [
+			[ 'no field has reported a state yet', {}, labels.fields_empty ],
+			[
+				'every field is empty',
+				{ number: emptyField, expiry: emptyField, cvv: emptyField },
+				labels.fields_empty,
+			],
+			[
+				'one field is empty and the others are valid',
+				{ ...validFieldData, expiry: emptyField },
+				labels.fields_empty,
+			],
+			[
+				'a filled field is invalid',
+				{ ...validFieldData, cvv: invalidField },
+				labels.fields_not_valid,
+			],
+		] )(
+			'creates no order and shows the message when %s',
+			async ( _label, fieldData, expectedMessage ) => {
+				const cardSession = makeCardSession( { fieldData } );
+
+				await clickPlaceOrder( cardSession );
+
+				expect( mockHandleError ).toHaveBeenCalledWith(
+					expect.objectContaining( { message: expectedMessage } )
+				);
+				expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+				expect( cardSession.submit ).not.toHaveBeenCalled();
+			}
+		);
+
+		test( 'lets a later click through once the buyer has completed the fields', async () => {
+			let reportState;
+			const cardSession = makeCardSession( { fieldData: {} } );
+			cardSession.on.mockImplementation( ( event, handler ) => {
+				if ( event === 'change' ) {
+					reportState = ( data ) => handler( { data } );
+				}
+			} );
+			await clickPlaceOrder( cardSession );
+			expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+
+			reportState( validFieldData );
+			document.querySelector( '#place_order' ).click();
+			await flushPromises();
+
+			expect( mockCreateCardOrder ).toHaveBeenCalled();
+		} );
+
+		test( 'creates no setup token for a free-trial cart with empty fields', async () => {
+			const cardSession = makeCardSession( { fieldData: {} } );
+
+			await clickPlaceOrder(
+				cardSession,
+				baseConfig( {
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				} )
+			);
+
+			expect( mockHandleError ).toHaveBeenCalledWith(
+				expect.objectContaining( { message: labels.fields_empty } )
+			);
+			expect( mockCreateCardSetupToken ).not.toHaveBeenCalled();
+			expect( cardSession.submit ).not.toHaveBeenCalled();
+		} );
 	} );
 
 	test( 'a failed card session submit surfaces the error and does not click place_order again', async () => {
