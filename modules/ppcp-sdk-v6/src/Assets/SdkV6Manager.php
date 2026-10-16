@@ -505,27 +505,6 @@ class SdkV6Manager
         if ($this->is_native_paypal_subscription_page()) {
             return \false;
         }
-        if ($this->should_load_for_page_context()) {
-            return \true;
-        }
-        // Home and shop: claim the page when Pay Later messaging is on, so the
-        // mini-cart fallback below does not decide whether v5 owns messaging.
-        // messages_render_hook() has no hook there yet, so nothing draws. Page
-        // contexts decide messaging in should_load_messages().
-        $message_location = $this->get_page_context() ? '' : $this->context->location();
-        if ($message_location && $this->settings_status->is_pay_later_messaging_enabled_for_location($message_location)) {
-            return \true;
-        }
-        // Sitewide: the mini-cart can appear on any page, and is_active_widget()
-        // does not detect the block Mini-Cart.
-        return $this->settings_status->is_smart_button_enabled_for_location('mini-cart') || $this->any_placement_renders('mini-cart');
-    }
-    /**
-     * The load decision for the page context alone, without the fallbacks for
-     * other locations.
-     */
-    private function should_load_for_page_context(): bool
-    {
         $page_location = $this->get_page_context();
         if ($page_location && $this->settings_status->is_smart_button_enabled_for_location($page_location)) {
             return \true;
@@ -546,15 +525,20 @@ class SdkV6Manager
         if ($page_location && $this->any_placement_renders($page_location)) {
             return \true;
         }
-        return $this->is_fastlane_enabled($page_location);
-    }
-    /**
-     * Unlike the load decision, counts Pay Later messages: in block contexts,
-     * only the block script renders them.
-     */
-    public function is_block_method_active(): bool
-    {
-        return $this->should_load_on_current_page() && $this->is_block_context() && ($this->should_load_for_page_context() || $this->messages_enabled());
+        if ($this->is_fastlane_enabled($page_location)) {
+            return \true;
+        }
+        // Home and shop: claim the page when Pay Later messaging is on, so the
+        // mini-cart fallback below does not decide whether v5 owns messaging.
+        // messages_render_hook() has no hook there yet, so nothing draws. Page
+        // contexts decide messaging in should_load_messages().
+        $message_location = $page_location ? '' : $this->context->location();
+        if ($message_location && $this->settings_status->is_pay_later_messaging_enabled_for_location($message_location)) {
+            return \true;
+        }
+        // Sitewide: the mini-cart can appear on any page, and is_active_widget()
+        // does not detect the block Mini-Cart.
+        return $this->settings_status->is_smart_button_enabled_for_location('mini-cart') || $this->any_placement_renders('mini-cart');
     }
     /**
      * Whether the v6 Advanced Card Fields should render on the given page.
