@@ -59,8 +59,33 @@ function appendFloatingLabelMarker() {
 	return wrapper;
 }
 
+const labels = {
+	fields_empty: 'Please fill in your card details.',
+	fields_not_valid: 'Please check your card details.',
+};
+
+const filledField = { isEmpty: false, isValid: true, isFocused: false };
+const emptyField = { isEmpty: true, isValid: false, isFocused: false };
+const invalidField = { isEmpty: false, isValid: false, isFocused: false };
+
+const validFieldData = {
+	number: filledField,
+	expiry: filledField,
+	cvv: filledField,
+};
+
+// What a session reports through its 'change' event; set before rendering.
+let sessionFieldData;
+
+function sessionOn( event, handler ) {
+	if ( event === 'change' ) {
+		handler( { data: sessionFieldData } );
+	}
+}
+
 function cardConfig( overrides = {} ) {
 	return {
+		labels,
 		page_context: 'checkout-block',
 		card_fields: {
 			enabled: true,
@@ -164,12 +189,13 @@ beforeEach( () => {
 		},
 	};
 
+	sessionFieldData = validFieldData;
 	session = {
 		createCardFieldsComponent: jest.fn( () =>
 			document.createElement( 'div' )
 		),
 		submit: jest.fn(),
-		on: jest.fn(),
+		on: jest.fn( sessionOn ),
 	};
 
 	mockLoadSdkV6.mockReset().mockResolvedValue( {
@@ -420,6 +446,69 @@ describe( 'V6CardFieldsComponent', () => {
 			'checkout-block',
 			false
 		);
+	} );
+
+	describe( 'card field state', () => {
+		async function runPaymentSetup( config = cardConfig() ) {
+			renderComponent( { config } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+			return result;
+		}
+
+		test.each( [
+			[ 'no field has reported a state yet', {}, labels.fields_empty ],
+			[
+				'every field is empty',
+				{ number: emptyField, expiry: emptyField, cvv: emptyField },
+				labels.fields_empty,
+			],
+			[
+				'one field is empty and the others are valid',
+				{ ...validFieldData, number: emptyField },
+				labels.fields_empty,
+			],
+			[
+				'a filled field is invalid',
+				{ ...validFieldData, expiry: invalidField },
+				labels.fields_not_valid,
+			],
+		] )(
+			'reports the message and creates no order when %s',
+			async ( _label, fieldData, expectedMessage ) => {
+				sessionFieldData = fieldData;
+
+				const result = await runPaymentSetup();
+
+				expect( result ).toEqual( {
+					type: 'error',
+					message: expectedMessage,
+				} );
+				expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+				expect( session.submit ).not.toHaveBeenCalled();
+			}
+		);
+
+		test( 'creates no setup token for a free-trial cart with empty fields', async () => {
+			sessionFieldData = {};
+
+			const result = await runPaymentSetup(
+				cardConfig( {
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				} )
+			);
+
+			expect( result ).toEqual( {
+				type: 'error',
+				message: labels.fields_empty,
+			} );
+			expect( mockCreateCardSetupToken ).not.toHaveBeenCalled();
+		} );
 	} );
 
 	test( 'reports the "authentication not completed" message and skips approval when 3D Secure is canceled', async () => {
@@ -819,6 +908,12 @@ describe( 'V6CardFieldsComponent', () => {
 			marker.remove();
 		} );
 
+		function focusHandler() {
+			return session.on.mock.calls.find(
+				( call ) => call[ 0 ] === 'focus'
+			)[ 1 ];
+		}
+
 		function lastCallFor( type ) {
 			const calls = mockCardFieldContainer.mock.calls.filter(
 				( call ) => call[ 0 ].type === type
@@ -887,9 +982,12 @@ describe( 'V6CardFieldsComponent', () => {
 					await waitForSessionReady();
 
 					await waitFor( () =>
-						expect( session.on ).toHaveBeenCalled()
+						expect( session.on ).toHaveBeenCalledWith(
+							'focus',
+							expect.any( Function )
+						)
 					);
-					const handler = session.on.mock.calls[ 0 ][ 1 ];
+					const handler = focusHandler();
 
 					act( () => {
 						handler( {
@@ -923,7 +1021,7 @@ describe( 'V6CardFieldsComponent after an SDK instance change', () => {
 				document.createElement( 'div' )
 			),
 			submit: jest.fn(),
-			on: jest.fn(),
+			on: jest.fn( sessionOn ),
 		};
 		mockLoadSdkV6.mockResolvedValue( {
 			createCardFieldsOneTimePaymentSession: () => newSession,
@@ -977,15 +1075,14 @@ describe( 'V6CardFieldsComponent after an SDK instance change', () => {
 		const marker = appendFloatingLabelMarker();
 		renderComponent();
 		await waitForSessionReady();
-		await waitFor( () => expect( session.on ).toHaveBeenCalled() );
-		const emptyField = {
-			isEmpty: true,
-			isFocused: false,
-			isPotentiallyValid: true,
-			isValid: false,
-		};
+		await waitFor( () =>
+			expect( session.on ).toHaveBeenCalledWith(
+				'focus',
+				expect.any( Function )
+			)
+		);
 		act( () => {
-			session.on.mock.calls[ 0 ][ 1 ]( {
+			session.on.mock.calls.find( ( call ) => call[ 0 ] === 'focus' )[ 1 ]( {
 				data: {
 					number: { ...emptyField, isFocused: true },
 					expiry: emptyField,
