@@ -366,6 +366,92 @@ class RecaptchaTest extends TestCase {
 	}
 
 	/**
+	 * GIVEN reCAPTCHA is allowed on the current page
+	 * WHEN the script settings are localized
+	 * THEN they describe the page type and keys for the handler
+	 * AND they do not contain an 'isBlocks' flag.
+	 */
+	public function test_localized_settings_do_not_contain_is_blocks(): void {
+		when( 'is_product' )->justReturn( true );
+		when( 'is_cart' )->justReturn( false );
+		when( 'is_checkout' )->justReturn( false );
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+		$settings_status->shouldReceive( 'is_smart_button_enabled_for_location' )->andReturn( true );
+
+		when( 'apply_filters' )->returnArg( 2 );
+		when( 'wp_enqueue_script' )->justReturn( true );
+
+		$captured = null;
+		expect( 'wp_localize_script' )->once()->andReturnUsing(
+			function ( string $handle, string $name, array $data ) use ( &$captured ): void {
+				$captured = $data;
+			}
+		);
+
+		$this->make_testee( $settings_status )->enqueue_scripts();
+
+		$this->assertSame( 'v3-site-key', $captured['siteKeyV3'] );
+		$this->assertTrue( $captured['isSingleProduct'] );
+		$this->assertArrayNotHasKey( 'isBlocks', $captured );
+	}
+
+	/**
+	 * Stubs the page so reCAPTCHA is allowed to load, and reports the request state.
+	 */
+	private function stub_allowed_page_and_request( int $template_redirect_count, bool $is_ajax ): SettingsStatus {
+		when( 'is_product' )->justReturn( true );
+		when( 'is_cart' )->justReturn( false );
+		when( 'is_checkout' )->justReturn( false );
+		when( 'apply_filters' )->returnArg( 2 );
+		when( 'wp_script_is' )->justReturn( false );
+		when( 'did_action' )->justReturn( $template_redirect_count );
+		when( 'wp_doing_ajax' )->justReturn( $is_ajax );
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+		$settings_status->shouldReceive( 'is_smart_button_enabled_for_location' )->andReturn( true );
+
+		return $settings_status;
+	}
+
+	/**
+	 * GIVEN the Checkout Block renders outside a front-end page view
+	 * WHEN the block render is handled
+	 * THEN no reCAPTCHA script is enqueued.
+	 *
+	 * @dataProvider non_page_view_provider
+	 */
+	public function test_handle_block_render_skips_outside_front_end_page_view( int $template_redirect_count, bool $is_ajax ): void {
+		$settings_status = $this->stub_allowed_page_and_request( $template_redirect_count, $is_ajax );
+
+		expect( 'wp_enqueue_script' )->never();
+
+		$this->make_testee( $settings_status )->handle_block_render( array( 'blockName' => 'woocommerce/checkout' ) );
+	}
+
+	public function non_page_view_provider(): array {
+		return array(
+			'before template_redirect'      => array( 0, false ),
+			'during an AJAX request'        => array( 1, true ),
+			'AJAX request before redirect'  => array( 0, true ),
+		);
+	}
+
+	/**
+	 * GIVEN a front-end page view (template_redirect ran, not AJAX)
+	 * WHEN the Checkout Block renders
+	 * THEN the reCAPTCHA scripts are enqueued.
+	 */
+	public function test_handle_block_render_enqueues_scripts_during_front_end_page_view(): void {
+		$settings_status = $this->stub_allowed_page_and_request( 1, false );
+
+		expect( 'wp_enqueue_script' )->twice();
+		expect( 'wp_localize_script' )->once();
+
+		$this->make_testee( $settings_status )->handle_block_render( array( 'blockName' => 'woocommerce/checkout' ) );
+	}
+
+	/**
 	 * Stubs the API request/response plumbing so a v3 verify call is rejected
 	 * (score/success below threshold), independent of which logger receives
 	 * the resulting rejection log entry.
