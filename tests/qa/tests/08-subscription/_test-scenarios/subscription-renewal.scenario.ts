@@ -372,3 +372,77 @@ const setSubscriptionTrialLength = (
 		),
 	};
 };
+
+/**
+ * PayPal re-delivers a webhook when the store answers too slowly.
+ * A second delivery of the same renewal event must not create a second renewal order.
+ *
+ * @param testOrder
+ */
+export const testDuplicateRenewalWebhook = ( testOrder: ShopOrder ) => {
+	const { title, payment, products, customer, merchant } = testOrder;
+
+	test.describe( () => {
+		test.beforeAll( async ( { utils } ) => {
+			await utils.restoreCustomer( customer );
+		} );
+
+		test(
+			title,
+			annotateVisitor( customer ),
+			async ( { utils, classicCheckout, orderReceived, pcpApi } ) => {
+				test.setTimeout( 3 * 60_000 );
+				let subscriptionId: number;
+
+				await test.step( `Buy PayPal subscription`, async () => {
+					await utils.fillVisitorsCart( products );
+					await classicCheckout.visit();
+					await classicCheckout.completeCheckoutDetails( testOrder );
+					await classicCheckout.payPalUi.makePayment( {
+						merchant,
+						payment,
+						isPayPalSubscription: payment.isPayPalSubscription,
+					} );
+					await orderReceived.assertNoErrors();
+					subscriptionId = await orderReceived.getSubscriptionNumber();
+				} );
+
+				let renewalCount: number;
+
+				await test.step( `Trigger one renewal`, async () => {
+					await pcpApi.triggerPayPalSubscriptionRenewal( subscriptionId );
+					renewalCount =
+						await pcpApi.getSubscriptionRenewalCount( subscriptionId );
+					expect( renewalCount, 'Assert one renewal order' ).toBe( 1 );
+				} );
+
+				await test.step( `Send the same webhook again`, async () => {
+					const response =
+						await pcpApi.sendPayPalSubscriptionRenewalWebhook(
+							subscriptionId
+						);
+					expect(
+						response.ok(),
+						'Assert repeated webhook is accepted'
+					).toBeTruthy();
+
+					// Give the store time to (wrongly) create a second renewal order
+					await expect
+						.poll(
+							() =>
+								pcpApi.getSubscriptionRenewalCount(
+									subscriptionId
+								),
+							{
+								message:
+									'Assert repeated webhook creates no second renewal order',
+								timeout: 30_000,
+								intervals: [ 30_000 ],
+							}
+						)
+						.toBe( renewalCount );
+				} );
+			}
+		);
+	} );
+};

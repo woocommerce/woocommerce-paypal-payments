@@ -205,6 +205,28 @@ export class PcpApi extends WooCommerceApiBase {
 	};
 
 	/**
+	 * Sends a simulated PayPal PAYMENT.SALE.COMPLETED webhook for a PayPal subscription.
+	 * The same call twice is a re-delivery of the same event, as PayPal does on timeouts.
+	 *
+	 * @param subscriptionId
+	 */
+	sendPayPalSubscriptionRenewalWebhook = async ( subscriptionId: number ) => {
+		const billingId =
+			await this.getPayPalSubscriptionBillingId( subscriptionId );
+
+		return await this.requestUtils.request.post( urls.payPalWebhook, {
+			data: {
+				id: 'NOT-IMPORTANT',
+				event_type: 'PAYMENT.SALE.COMPLETED',
+				resource: {
+					billing_agreement_id: billingId,
+					id: 'NOT-IMPORTANT',
+				},
+			},
+		} );
+	};
+
+	/**
 	 * Triggers PayPal Subscription Renewal process by mocking paypal webhook.
 	 * Sometimes it is required to send double request, so the retry
 	 * mechanism is implemented
@@ -215,28 +237,14 @@ export class PcpApi extends WooCommerceApiBase {
 		const initialRenewalCount =
 			await this.getSubscriptionRenewalCount( subscriptionId );
 
-		const billingId =
-			await this.getPayPalSubscriptionBillingId( subscriptionId );
-
-		const data = {
-			id: 'NOT-IMPORTANT',
-			event_type: 'PAYMENT.SALE.COMPLETED',
-			resource: {
-				billing_agreement_id: billingId,
-				id: 'NOT-IMPORTANT',
-			},
-		};
-
 		let isRenewalTriggered = false;
 		let i = 0;
 
 		while ( ! isRenewalTriggered && i < 2 ) {
 			i++;
 
-			const response = await this.requestUtils.request.post(
-				urls.payPalWebhook,
-				{ data }
-			);
+			const response =
+				await this.sendPayPalSubscriptionRenewalWebhook( subscriptionId );
 
 			expect
 				.soft(

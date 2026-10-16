@@ -88,9 +88,27 @@ const payPalFreeTrialRenewal: ShopOrder[] = [
 	},
 ];
 
+// TODO: create Xray test case
+const payPalDuplicateWebhook: ShopOrder[] = [
+	{
+		title: 'PCP-0000 | PayPal subscription - Renewal webhook delivered twice creates one renewal order',
+		...orders.default,
+		payment: {
+			...payments.payPalSubscription,
+			saveToAccount: false,
+			isPayPalSubscription: true,
+		},
+		merchant,
+		customer,
+		products: [ products.subscriptionPayPal ],
+		currency,
+	},
+];
+
 export const subscriptionRenewal = {
 	vaultingRenewal,
 	vaultingFreeTrialRenewal,
 	payPalRenewal,
 	payPalFreeTrialRenewal,
+	payPalDuplicateWebhook,
 };

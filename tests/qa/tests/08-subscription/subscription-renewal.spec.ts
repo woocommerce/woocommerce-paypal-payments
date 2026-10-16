@@ -5,6 +5,7 @@ import { test } from '../../utils';
 import { disableWebhookVerificationPlugin, products } from '../../resources';
 import { subscriptionRenewal } from './_test-data';
 import {
+	testDuplicateRenewalWebhook,
 	testFreeTrialSubscriptionRenewal,
 	testSubscriptionRenewal,
 } from './_test-scenarios';
@@ -14,6 +15,7 @@ const {
 	vaultingFreeTrialRenewal,
 	payPalRenewal,
 	payPalFreeTrialRenewal,
+	payPalDuplicateWebhook,
 } = subscriptionRenewal;
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
@@ -70,4 +72,11 @@ test.describe( 'PayPal Subscription', () => {
 	for ( const testOrder of payPalFreeTrialRenewal ) {
 		testFreeTrialSubscriptionRenewal( testOrder );
 	}
+
+	// Skipped until the duplicate renewal order bug is fixed
+	test.describe.skip( 'Duplicate renewal webhook', () => {
+		for ( const testOrder of payPalDuplicateWebhook ) {
+			testDuplicateRenewalWebhook( testOrder );
+		}
+	} );
 } );
