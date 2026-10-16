@@ -219,6 +219,7 @@ const paymentEvent = {
 
 let ApplePaySessionMock;
 let mockJQueryTrigger;
+let wooCommerceEvents;
 let shippingController;
 
 beforeEach( () => {
@@ -259,7 +260,12 @@ beforeEach( () => {
 	window.ApplePaySession = ApplePaySessionMock;
 
 	mockJQueryTrigger = jest.fn();
-	global.jQuery = jest.fn( () => ( { trigger: mockJQueryTrigger } ) );
+	wooCommerceEvents = new EventTarget();
+	global.jQuery = jest.fn( () => ( {
+		trigger: mockJQueryTrigger,
+		one: ( name, handler ) =>
+			wooCommerceEvents.addEventListener( name, handler, { once: true } ),
+	} ) );
 } );
 
 afterEach( () => {
@@ -974,6 +980,32 @@ describe( 'onpaymentauthorized', () => {
 		await flushPromises();
 
 		expect( mockSpinnerUnblock ).not.toHaveBeenCalled();
+	} );
+
+	describe( 'when the checkout form submit is rejected after success', () => {
+		test( 'removes the spinner and lets the button open a new sheet after checkout_error', async () => {
+			const { appleSession, wrapper } = await clickAndGetSession();
+			appleSession.onpaymentauthorized( paymentEvent );
+			await flushPromises();
+
+			wooCommerceEvents.dispatchEvent( new Event( 'checkout_error' ) );
+
+			expect( mockSpinnerUnblock ).toHaveBeenCalledTimes( 1 );
+
+			wrapper.querySelector( 'apple-pay-button' ).click();
+			expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test( 'keeps the spinner and ignores further taps without a checkout_error', async () => {
+			const { appleSession, wrapper } = await clickAndGetSession();
+			appleSession.onpaymentauthorized( paymentEvent );
+			await flushPromises();
+
+			wrapper.querySelector( 'apple-pay-button' ).click();
+
+			expect( mockSpinnerUnblock ).not.toHaveBeenCalled();
+			expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 1 );
+		} );
 	} );
 
 	test( 'recovers the page and releases the guard when the payment throws', async () => {
