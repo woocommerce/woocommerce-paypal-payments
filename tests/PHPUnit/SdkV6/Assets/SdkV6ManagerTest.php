@@ -416,28 +416,24 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
-     * GIVEN the buyer is on the Cart block page
+     * GIVEN the buyer is on the Block Checkout page
+     * AND the checkout buttons, card fields, Fastlane and Checkout Pay Later messaging are all off
+     * AND the Mini Cart buttons are on
      * WHEN checking whether the block payment method is active
-     * THEN it is inactive when only the Mini Cart buttons are on, since the Mini Cart
-     *      alone does not need the Cart block integration
-     * AND it is active whenever the Cart buttons are on
-     * AND with the Cart buttons off it is active only while Pay Later messaging is on for the Cart
-     *
-     * @dataProvider cart_block_activity_provider
+     * THEN it is active, so the PayPal payment row and the continuation review keep working
      */
-    public function testBlockPaymentMethodActivityOnCartBlock(bool $cart_buttons_on, bool $mini_cart_buttons_on, bool $expected, bool $cart_messaging_on = false): void
+    public function testBlockPaymentMethodStaysActiveOnCheckoutBlockWhenOnlyMiniCartButtonsAreOn(): void
     {
-        $this->context->shouldReceive('context')->andReturn('cart-block');
-        $this->context->shouldReceive('location')->andReturn('cart-block');
-        $this->messages_eligibility->shouldReceive('is_enabled_for_location')
-            ->with('cart')
-            ->andReturn($cart_messaging_on);
+        $this->context->shouldReceive('context')->andReturn('checkout-block');
+        $this->context->shouldReceive('location')->andReturn('checkout-block');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
+        $this->fastlane_config->shouldReceive('should_render')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
-            ->andReturnUsing(static function (string $location) use ($cart_buttons_on, $mini_cart_buttons_on): bool {
-                return 'cart-block' === $location ? $cart_buttons_on : ('mini-cart' === $location && $mini_cart_buttons_on);
-            });
+            ->andReturnUsing(static fn (string $location): bool => 'mini-cart' === $location);
 
-        $testee = new V6PaymentMethod(
+        $payment_method = new V6PaymentMethod(
             $this->createTestee(),
             $this->asset_getter,
             '1.0.0',
@@ -448,18 +444,7 @@ class SdkV6ManagerTest extends TestCase
             ''
         );
 
-        $this->assertSame($expected, $testee->is_active());
-    }
-
-    public function cart_block_activity_provider(): array
-    {
-        return [
-            'cart buttons off and mini cart buttons on is inactive' => [false, true, false],
-            'cart buttons on and mini cart buttons off is active'   => [true, false, true],
-            'cart buttons on and mini cart buttons on is active'    => [true, true, true],
-            'cart buttons off and cart messaging on is active'      => [false, true, true, true],
-            'cart buttons off and cart messaging off is inactive'   => [false, true, false, false],
-        ];
+        $this->assertTrue($payment_method->is_active());
     }
 
     /**
@@ -491,6 +476,7 @@ class SdkV6ManagerTest extends TestCase
             'checkout page with checkout buttons on'              => ['checkout', ['checkout'], true],
             'checkout page with only mini cart buttons on'        => ['checkout', ['mini-cart'], false],
             'checkout page with checkout buttons off'             => ['checkout', [], false],
+            'cart block page with only mini cart buttons on'      => ['cart-block', ['mini-cart'], false],
             'page without context even with mini cart buttons on' => ['', ['mini-cart', 'checkout', 'cart'], false],
         ];
     }
