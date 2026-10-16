@@ -247,6 +247,28 @@ describe( 'checkout-block', () => {
 		} );
 	} );
 
+	describe( 'when buttons_enabled is false', () => {
+		const registeredExpressNames = () =>
+			mockRegisterExpressPaymentMethod.mock.calls.map(
+				( [ args ] ) => args.name
+			);
+
+		test( 'still registers the wallet express methods and the regular ppcp-gateway method', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					buttons_enabled: false,
+					place_order_enabled: true,
+				} )
+			);
+
+			expect( registeredExpressNames().sort() ).toEqual( [
+				'ppcp-applepay',
+				'ppcp-googlepay',
+			] );
+			expect( regularCallFor( 'ppcp-gateway' ) ).toBeDefined();
+		} );
+	} );
+
 	describe( 'canMakePayment on a subscription cart (cart_needs_vaulting)', () => {
 		const eligibleForEveryMethod = {
 			paypal: true,
