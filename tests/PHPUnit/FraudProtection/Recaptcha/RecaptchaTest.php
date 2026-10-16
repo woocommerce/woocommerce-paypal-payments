@@ -366,6 +366,37 @@ class RecaptchaTest extends TestCase {
 	}
 
 	/**
+	 * GIVEN reCAPTCHA is allowed on the current page
+	 * WHEN the script settings are localized
+	 * THEN they describe the page type and keys for the handler
+	 * AND they do not contain an 'isBlocks' flag.
+	 */
+	public function test_localized_settings_do_not_contain_is_blocks(): void {
+		when( 'is_product' )->justReturn( true );
+		when( 'is_cart' )->justReturn( false );
+		when( 'is_checkout' )->justReturn( false );
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+		$settings_status->shouldReceive( 'is_smart_button_enabled_for_location' )->andReturn( true );
+
+		when( 'apply_filters' )->returnArg( 2 );
+		when( 'wp_enqueue_script' )->justReturn( true );
+
+		$captured = null;
+		expect( 'wp_localize_script' )->once()->andReturnUsing(
+			function ( string $handle, string $name, array $data ) use ( &$captured ): void {
+				$captured = $data;
+			}
+		);
+
+		$this->make_testee( $settings_status )->enqueue_scripts();
+
+		$this->assertSame( 'v3-site-key', $captured['siteKeyV3'] );
+		$this->assertTrue( $captured['isSingleProduct'] );
+		$this->assertArrayNotHasKey( 'isBlocks', $captured );
+	}
+
+	/**
 	 * Stubs the API request/response plumbing so a v3 verify call is rejected
 	 * (score/success below threshold), independent of which logger receives
 	 * the resulting rejection log entry.
