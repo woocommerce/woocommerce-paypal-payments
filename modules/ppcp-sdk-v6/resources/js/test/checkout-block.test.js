@@ -60,6 +60,7 @@ jest.mock( '../messages/cartTotalWatcher', () => ( {
 const baseConfig = ( overrides = {} ) => ( {
 	id: 'ppcp-gateway',
 	page_context: 'checkout',
+	buttons_enabled: true,
 	supported_features: [ 'products', 'subscriptions' ],
 	pay_later_button: { checkout: true },
 	venmo_button: { checkout: true },
