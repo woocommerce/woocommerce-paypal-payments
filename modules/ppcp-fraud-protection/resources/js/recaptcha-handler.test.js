@@ -1,9 +1,8 @@
+import { waitFor } from '@testing-library/react';
 import '@ppcp-test/helpers/silenceConsole';
 
 const HANDLER_PATH ='./recaptcha-handler';
 const TOKEN = 'token-123';
-
-const flush = () => new Promise( ( resolve ) => setTimeout( resolve, 20 ) );
 
 const createWpData = ( { storeExists = true } = {} ) => {
 	const listeners = [];
@@ -26,11 +25,18 @@ const createWpData = ( { storeExists = true } = {} ) => {
 	};
 };
 
-const loadHandler = async () => {
+const loadHandler = () => {
 	jest.isolateModules( () => {
 		require( HANDLER_PATH );
 	} );
-	await flush();
+};
+
+const waitForTokenGenerated = async () => {
+	await waitFor( () =>
+		expect( window.grecaptcha.execute ).toHaveBeenCalled()
+	);
+	await window.grecaptcha.execute.mock.results[ 0 ].value;
+	await Promise.resolve();
 };
 
 describe( 'recaptcha-handler', () => {
@@ -55,20 +61,27 @@ describe( 'recaptcha-handler', () => {
 		const { wpData, setExtensionData } = createWpData();
 		window.wp = { data: wpData };
 
-		await loadHandler();
+		loadHandler();
 
-		expect( setExtensionData ).toHaveBeenCalledWith( 'ppcp_recaptcha', {
-			token: TOKEN,
-			version: 'v3',
-		} );
+		await waitFor( () =>
+			expect( setExtensionData ).toHaveBeenCalledWith( 'ppcp_recaptcha', {
+				token: TOKEN,
+				version: 'v3',
+			} )
+		);
 	} );
 
 	test( 'writes the token to hidden inputs of the classic form when only the form exists', async () => {
 		document.body.innerHTML = '<form class="checkout"></form>';
 
-		await loadHandler();
+		loadHandler();
 
 		const form = document.querySelector( 'form.checkout' );
+		await waitFor( () =>
+			expect(
+				form.querySelector( 'input[name="ppcp_recaptcha_token"]' )
+			).not.toBeNull()
+		);
 		expect(
 			form.querySelector( 'input[name="ppcp_recaptcha_token"]' ).value
 		).toBe( TOKEN );
@@ -78,7 +91,8 @@ describe( 'recaptcha-handler', () => {
 	} );
 
 	test( 'does not throw when neither the store nor the form exists', async () => {
-		await expect( loadHandler() ).resolves.toBeUndefined();
+		loadHandler();
+		await waitForTokenGenerated();
 
 		expect(
 			document.querySelector( 'input[name="ppcp_recaptcha_token"]' )
@@ -91,7 +105,8 @@ describe( 'recaptcha-handler', () => {
 		} );
 		window.wp = { data: wpData };
 
-		await loadHandler();
+		loadHandler();
+		await waitForTokenGenerated();
 		expect( setExtensionData ).not.toHaveBeenCalled();
 
 		registerStore();
