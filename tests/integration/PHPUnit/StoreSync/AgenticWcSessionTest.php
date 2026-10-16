@@ -8,11 +8,14 @@ use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticWcSession;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\ClearsStoreSyncProductCache;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Session\AgenticWcSession
  */
 class AgenticWcSessionTest extends IntegrationMockedTestCase {
+
+	use ClearsStoreSyncProductCache;
 
 	private AgenticSessionHandler $session_handler;
 
@@ -25,6 +28,8 @@ class AgenticWcSessionTest extends IntegrationMockedTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
+
+		$this->clear_store_sync_product_cache();
 
 		$this->session_handler = $this->getContainer()->get( 'agentic.session.handler' );
 	}

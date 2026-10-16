@@ -15,11 +15,16 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\ClearsStoreSyncProductCache;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreatesUsShippingZone;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Endpoint\ReplaceCartEndpoint
  */
 class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
+
+	use ClearsStoreSyncProductCache;
+	use CreatesUsShippingZone;
 
 	private ReplaceCartEndpoint $endpoint;
 
@@ -32,6 +37,9 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
+
+		$this->clear_store_sync_product_cache();
+		$this->create_us_shipping_zone();
 
 		$c = $this->getContainer();
 
@@ -78,6 +86,8 @@ class ReplaceCartEndpointTest extends IntegrationMockedTestCase {
 	}
 
 	public function tearDown(): void {
+		$this->remove_us_shipping_zone();
+
 		WC_Tax::_delete_tax_rate( $this->tax_rate_id );
 		WC_Cache_Helper::get_transient_version( 'taxes', true );
 
