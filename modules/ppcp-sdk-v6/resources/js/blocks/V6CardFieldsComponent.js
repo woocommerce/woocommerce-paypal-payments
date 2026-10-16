@@ -32,6 +32,7 @@ import { V6CardFieldContainer } from './V6CardFieldContainer';
 import { amountFromBilling } from '../utils/amount';
 import { isFreeTrialCart } from '../utils/freeTrial';
 import { hasCheckoutValidationErrors } from './checkoutValidation';
+import { trackFieldState, fieldStateError } from '../cardFields/fieldState';
 import {
 	CARD_DECLINE_MESSAGE,
 	CARD_SAVE_DECLINE_MESSAGE,
@@ -228,6 +229,7 @@ export function V6CardFieldsComponent( {
 	const isFreeTrial = isFreeTrialCart( config, amountFromBilling( billing ) );
 
 	const [ session, setSession ] = useState( null );
+	const getFieldStateRef = useRef( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
 	const [ textStyle, setTextStyle ] = useState( null );
 	const [ floatingLabel, setFloatingLabel ] = useState( false );
@@ -281,6 +283,7 @@ export function V6CardFieldsComponent( {
 				? sdk.createCardFieldsSavePaymentSession()
 				: sdk.createCardFieldsOneTimePaymentSession();
 			if ( active ) {
+				getFieldStateRef.current = trackFieldState( cardSession );
 				setSession( cardSession );
 			}
 		} )().catch( ( error ) => {
@@ -375,6 +378,18 @@ export function V6CardFieldsComponent( {
 				return {
 					type: responseTypes.ERROR,
 					message: CHECKOUT_FIELDS_NOT_VALID_MESSAGE,
+				};
+			}
+
+			// Without a session, the submit below reports that the form is not ready.
+			const getFieldState = getFieldStateRef.current;
+			const fieldError =
+				getFieldState &&
+				fieldStateError( getFieldState(), config.labels );
+			if ( fieldError ) {
+				return {
+					type: responseTypes.ERROR,
+					message: fieldError,
 				};
 			}
 

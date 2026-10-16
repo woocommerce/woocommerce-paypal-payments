@@ -1342,6 +1342,14 @@ class SdkV6Manager {
 					'Cannot ship to the selected address.',
 					'woocommerce-paypal-payments'
 				),
+				'fields_empty'           => __(
+					'Card payment details are missing. Please fill in all required fields.',
+					'woocommerce-paypal-payments'
+				),
+				'fields_not_valid'       => __(
+					'Unfortunately, your credit card details are not valid.',
+					'woocommerce-paypal-payments'
+				),
 				// The Apple Pay sheet itemises the total with these.
 				'subtotal'               => __( 'Subtotal', 'woocommerce-paypal-payments' ),
 				'shipping'               => __( 'Shipping', 'woocommerce-paypal-payments' ),
