@@ -115,8 +115,6 @@ class Recaptcha {
 			return;
 		}
 
-		$is_blocks = has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' );
-
 		wp_enqueue_script(
 			'ppcp-recaptcha',
 			'https://www.google.com/recaptcha/api.js?render=' . esc_attr( $this->integration->get_option( 'site_key_v3' ) ),
@@ -125,15 +123,10 @@ class Recaptcha {
 			true
 		);
 
-		$dependencies = array( 'ppcp-recaptcha' );
-		if ( $is_blocks ) {
-			$dependencies[] = 'wp-data';
-		}
-
 		wp_enqueue_script(
 			'ppcp-recaptcha-handler',
 			$this->asset_getter->get_asset_url( 'recaptcha-handler.js' ),
-			$dependencies,
+			array( 'ppcp-recaptcha' ),
 			$this->asset_version,
 			true
 		);
@@ -145,7 +138,6 @@ class Recaptcha {
 				'siteKeyV3'                   => $this->integration->get_option( 'site_key_v3' ),
 				'siteKeyV2'                   => $this->integration->get_option( 'site_key_v2' ),
 				'theme'                       => $this->integration->get_option( 'v2_theme', 'light' ),
-				'isBlocks'                    => $is_blocks,
 				'isCheckout'                  => is_checkout(),
 				'isCart'                      => is_cart(),
 				'isSingleProduct'             => is_product(),
