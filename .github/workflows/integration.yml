@@ -9,9 +9,10 @@ jobs:
     strategy:
       matrix:
         php-versions: ['7.4']
+        wp-versions: ['7.1.3']
         wc-versions: ['11.2.1']
 
-    name: PHP ${{ matrix.php-versions }} WC ${{ matrix.wc-versions }}
+    name: PHP ${{ matrix.php-versions }} WP ${{ matrix.wp-versions }} WC ${{ matrix.wc-versions }}
     steps:
     - uses: ddev/github-action-setup-ddev@1c7ef18595da42355373cb6d9417a6f44d758b93 # v1.10.1
       with:
@@ -26,6 +27,8 @@ jobs:
 
     - name: Configure DDEV PHP
       run: ddev config --php-version ${{ matrix.php-versions }}
+    - name: Configure DDEV WP
+      run: ddev config --web-environment-add="WP_VERSION=${{ matrix.wp-versions }}"
     - name: Configure DDEV WC
       run: ddev config --web-environment-add="WC_VERSION=${{ matrix.wc-versions }}"
 
