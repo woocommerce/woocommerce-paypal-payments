@@ -62,6 +62,24 @@ class FraudProtectionModule implements ServiceModule, ExtendingModule, Executabl
                 echo $recaptcha->render_v2_container();
             }, $priority);
         }
+        add_filter(
+            'render_block_data',
+            /**
+             * This filter runs before the inner blocks render. Thus, the express
+             * payment block below already gets the v2 container.
+             *
+             * @param array $parsed_block
+             * @return array
+             * @psalm-suppress MissingClosureParamType
+             * @psalm-suppress MissingClosureReturnType
+             */
+            static function ($parsed_block) use ($container) {
+                $recaptcha = $container->get('fraud-protection.recaptcha');
+                assert($recaptcha instanceof Recaptcha);
+                $recaptcha->handle_block_render($parsed_block);
+                return $parsed_block;
+            }
+        );
         foreach (array('render_block_woocommerce/checkout-express-payment-block', 'render_block_woocommerce/proceed-to-checkout-block') as $filter) {
             add_filter(
                 $filter,

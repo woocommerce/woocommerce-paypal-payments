@@ -41,6 +41,7 @@ class Recaptcha
     private PersistentCounter $rejection_counter;
     private SettingsStatus $settings_status;
     private float $last_v3_score = 0;
+    private bool $checkout_block_rendered = \false;
     public function __construct(\WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration $integration, array $payment_methods, AssetGetter $asset_getter, string $asset_version, LoggerInterface $logger, PersistentCounter $rejection_counter, SettingsStatus $settings_status, LoggerInterface $rejection_logger)
     {
         $this->integration = $integration;
@@ -81,14 +82,37 @@ class Recaptcha
         if (!$this->should_use_recaptcha()) {
             return;
         }
-        $is_blocks = has_block('woocommerce/checkout') || has_block('woocommerce/cart');
         wp_enqueue_script('ppcp-recaptcha', 'https://www.google.com/recaptcha/api.js?render=' . esc_attr($this->integration->get_option('site_key_v3')), array(), $this->asset_version, \true);
-        $dependencies = array('ppcp-recaptcha');
-        if ($is_blocks) {
-            $dependencies[] = 'wp-data';
+        wp_enqueue_script('ppcp-recaptcha-handler', $this->asset_getter->get_asset_url('recaptcha-handler.js'), array('ppcp-recaptcha'), $this->asset_version, \true);
+        wp_localize_script('ppcp-recaptcha-handler', 'ppcpRecaptchaSettings', array('siteKeyV3' => $this->integration->get_option('site_key_v3'), 'siteKeyV2' => $this->integration->get_option('site_key_v2'), 'theme' => $this->integration->get_option('v2_theme', 'light'), 'isCheckout' => is_checkout(), 'isCart' => is_cart(), 'isSingleProduct' => is_product(), 'v2ContainerId' => self::V2_CONTAINER_ID, 'errorCodeMissingToken' => self::ERROR_CODE_MISSING_TOKEN, 'errorCodeVerificationFailed' => self::ERROR_CODE_VERIFICATION_FAILED));
+    }
+    /**
+     * Enqueues the assets when the Checkout Block renders.
+     *
+     * Merchants can put the Checkout Block on any page, but `is_checkout()`
+     * only recognizes the WooCommerce checkout page.
+     *
+     * @param mixed $parsed_block The block data from the `render_block_data` filter.
+     */
+    public function handle_block_render($parsed_block): void
+    {
+        if (!$this->is_front_end_page_view()) {
+            return;
         }
-        wp_enqueue_script('ppcp-recaptcha-handler', $this->asset_getter->get_asset_url('recaptcha-handler.js'), $dependencies, $this->asset_version, \true);
-        wp_localize_script('ppcp-recaptcha-handler', 'ppcpRecaptchaSettings', array('siteKeyV3' => $this->integration->get_option('site_key_v3'), 'siteKeyV2' => $this->integration->get_option('site_key_v2'), 'theme' => $this->integration->get_option('v2_theme', 'light'), 'isBlocks' => $is_blocks, 'isCheckout' => is_checkout(), 'isCart' => is_cart(), 'isSingleProduct' => is_product(), 'v2ContainerId' => self::V2_CONTAINER_ID, 'errorCodeMissingToken' => self::ERROR_CODE_MISSING_TOKEN, 'errorCodeVerificationFailed' => self::ERROR_CODE_VERIFICATION_FAILED));
+        if (!is_array($parsed_block)) {
+            return;
+        }
+        $block_name = $parsed_block['blockName'] ?? '';
+        if ('woocommerce/checkout' !== $block_name) {
+            return;
+        }
+        $this->checkout_block_rendered = \true;
+        // On the WooCommerce checkout page, the assets are already enqueued.
+        $is_already_enqueued = wp_script_is('ppcp-recaptcha-handler');
+        if ($is_already_enqueued) {
+            return;
+        }
+        $this->enqueue_scripts();
     }
     public function render_v2_container(): string
     {
@@ -116,10 +140,38 @@ class Recaptcha
         if (is_cart()) {
             return 'cart';
         }
+        if ($this->is_block_checkout_page()) {
+            return 'checkout-block-express';
+        }
         if (is_checkout()) {
-            return has_block('woocommerce/checkout') ? 'checkout-block-express' : 'checkout';
+            return 'checkout';
         }
         return null;
+    }
+    private function is_block_checkout_page(): bool
+    {
+        if ($this->checkout_block_rendered) {
+            return \true;
+        }
+        return is_checkout() && has_block('woocommerce/checkout');
+    }
+    /**
+     * Unlike `is_checkout()`, also true for a Checkout Block on a page
+     * that is not the WooCommerce checkout page.
+     */
+    private function is_any_checkout_page(): bool
+    {
+        return is_checkout() || $this->checkout_block_rendered;
+    }
+    /**
+     * True when the request is a front-end page view.
+     * REST, admin, cron and WP-CLI requests never reach `template_redirect`.
+     * WooCommerce handles its `wc-ajax` requests on `template_redirect`,
+     * thus the AJAX check.
+     */
+    private function is_front_end_page_view(): bool
+    {
+        return did_action('template_redirect') > 0 && !wp_doing_ajax();
     }
     /**
      * Whether reCAPTCHA assets/markup are allowed to load for the current
@@ -148,7 +200,7 @@ class Recaptcha
      */
     private function has_protected_gateway_on_current_page(): bool
     {
-        if (!is_checkout() && !is_add_payment_method_page()) {
+        if (!$this->is_any_checkout_page() && !is_add_payment_method_page()) {
             return \false;
         }
         $available = WC()->payment_gateways->get_available_payment_gateways();
