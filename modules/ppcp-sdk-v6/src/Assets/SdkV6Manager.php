@@ -1067,6 +1067,8 @@ class SdkV6Manager
                 // internal and untranslated, so they must not reach the buyer.
                 'card_declined' => __('The card could not be charged. Please check the details or try a different card.', 'woocommerce-paypal-payments'),
                 'shipping_unserviceable' => __('Cannot ship to the selected address.', 'woocommerce-paypal-payments'),
+                'fields_empty' => __('Card payment details are missing. Please fill in all required fields.', 'woocommerce-paypal-payments'),
+                'fields_not_valid' => __('Unfortunately, your credit card details are not valid.', 'woocommerce-paypal-payments'),
                 // The Apple Pay sheet itemises the total with these.
                 'subtotal' => __('Subtotal', 'woocommerce-paypal-payments'),
                 'shipping' => __('Shipping', 'woocommerce-paypal-payments'),
