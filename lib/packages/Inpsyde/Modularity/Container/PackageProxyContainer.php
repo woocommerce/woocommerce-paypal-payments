@@ -1,18 +1,15 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Package;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerExceptionInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-
 class PackageProxyContainer implements ContainerInterface
 {
     private Package $package;
     private ?ContainerInterface $container = null;
-
     /**
      * @param Package $package
      */
@@ -20,7 +17,6 @@ class PackageProxyContainer implements ContainerInterface
     {
         $this->package = $package;
     }
-
     /**
      * @param string $id
      * @return mixed
@@ -28,10 +24,8 @@ class PackageProxyContainer implements ContainerInterface
     public function get(string $id)
     {
         $this->assertPackageBooted($id);
-
         return $this->container->get($id);
     }
-
     /**
      * @param string $id
      * @return bool
@@ -40,7 +34,6 @@ class PackageProxyContainer implements ContainerInterface
     {
         return $this->tryContainer() && $this->container->has($id);
     }
-
     /**
      * @return bool
      *
@@ -50,19 +43,13 @@ class PackageProxyContainer implements ContainerInterface
     private function tryContainer(): bool
     {
         if ($this->container !== null) {
-            return true;
+            return \true;
         }
-
-        if (
-            $this->package->hasContainer()
-            || $this->package->hasReachedStatus(Package::STATUS_INITIALIZED)
-        ) {
+        if ($this->package->hasContainer() || $this->package->hasReachedStatus(Package::STATUS_INITIALIZED)) {
             $this->container = $this->package->container();
         }
-
         return $this->container !== null;
     }
-
     /**
      * @param string $id
      * @return void
@@ -74,12 +61,10 @@ class PackageProxyContainer implements ContainerInterface
         if ($this->tryContainer()) {
             return;
         }
-
         $name = $this->package->name();
         $status = $this->package->hasFailed() ? 'is errored' : 'is not ready yet';
-
         $error = "Error retrieving service {$id} because package {$name} {$status}.";
-        throw new class (esc_html($error)) extends \Exception implements ContainerExceptionInterface
+        throw new class(esc_html($error)) extends \Exception implements ContainerExceptionInterface
         {
         };
     }
