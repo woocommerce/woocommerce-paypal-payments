@@ -207,6 +207,10 @@ class OrderProcessor
         $this->apply_outbound_order_filters($wc_order);
         $updated_order = $this->order_factory->from_wc_order($wc_order, $order);
         $this->restore_order_from_filters($wc_order);
+        $amount_unchanged = $this->order_amount_unchanged($order, $updated_order);
+        if (!$amount_unchanged) {
+            $this->log_amount_change($wc_order, $order, $updated_order);
+        }
         try {
             $order = $this->order_endpoint->patch_order_with($order, $updated_order);
         } catch (PayPalApiException $exception) {
@@ -220,7 +224,7 @@ class OrderProcessor
              * unchanged it is therefore safe to skip the patch and capture the order
              * as-is. Any other failure (including an actual amount change) is re-thrown.
              */
-            if ($exception->status_code() !== 422 || !$this->order_amount_unchanged($order, $updated_order)) {
+            if ($exception->status_code() !== 422 || !$amount_unchanged) {
                 throw $exception;
             }
             $this->logger->warning(sprintf('Skipping order patch for order #%1$d: PayPal rejected it because the order is locked after confirming a vaulted payment, and the amount is unchanged so capture can proceed. %2$s', $wc_order->get_id(), $exception->getMessage()));
@@ -254,6 +258,21 @@ class OrderProcessor
             }
         }
         return \true;
+    }
+    /**
+     * A higher amount after approval can fail the capture with PAYER_ACTION_REQUIRED.
+     */
+    private function log_amount_change(WC_Order $wc_order, Order $approved_order, Order $updated_order): void
+    {
+        $this->logger->warning(sprintf('PayPal order %1$s: amount changed after approval from %2$s to %3$s (WC order #%4$d).', $approved_order->id(), $this->purchase_unit_amount($approved_order), $this->purchase_unit_amount($updated_order), $wc_order->get_id()));
+    }
+    private function purchase_unit_amount(Order $order): string
+    {
+        $unit = $order->purchase_units()[0] ?? null;
+        if (!$unit instanceof PurchaseUnit) {
+            return '-';
+        }
+        return $unit->amount()->value_str() . ' ' . $unit->amount()->currency_code();
     }
     /**
      * Verifies whether the order can be processed.

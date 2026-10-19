@@ -145,6 +145,10 @@ class GooglePayGateway extends WC_Payment_Gateway
                 return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($order->id()));
             }
         } catch (PayPalApiException $error) {
+            $wallet_failure = $this->handle_wallet_payer_action($wc_order, $error);
+            if ($wallet_failure) {
+                return $wallet_failure;
+            }
             return $this->handle_payment_failure($wc_order, new Exception(Messages::generic_payment_error_message() . ' ' . $error->getMessage(), $error->getCode(), $error));
         } catch (Exception $error) {
             return $this->handle_payment_failure($wc_order, $error);
