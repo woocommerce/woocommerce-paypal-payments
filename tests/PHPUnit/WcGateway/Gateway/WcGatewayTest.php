@@ -456,6 +456,7 @@ class WcGatewayTest extends TestCase
 
 		$this->orderProcessor->expects( 'process' )->andThrow( $exception );
 
+		$wcOrder->allows( 'get_meta' )->andReturn( '' );
 		$wcOrder->shouldNotReceive( 'update_status' );
 		$wcOrder->shouldReceive( 'add_order_note' )->once()->with( Mockery::pattern( '/' . preg_quote( $expectedMessage, '/' ) . '/' ) );
 
@@ -499,6 +500,7 @@ class WcGatewayTest extends TestCase
 
 		$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
 		$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->andReturn( 3 );
+		$wcOrder->allows( 'get_meta' )->andReturn( '' );
 		$this->sessionHandler->shouldReceive( 'destroy_session_data' )->once();
 
 		$testee = $this->createGateway();
@@ -543,6 +545,7 @@ class WcGatewayTest extends TestCase
 		$this->sessionHandler->shouldReceive( 'increment_insufficient_funding_tries' )->once();
 		$this->sessionHandler->shouldReceive( 'insufficient_funding_tries' )->andReturn( 1 );
 		$this->sessionHandler->shouldReceive( 'order' )->andReturn( null );
+		$wcOrder->allows( 'get_meta' )->andReturn( '' );
 		$this->sessionHandler->shouldReceive( 'destroy_session_data' )->once();
 
 		$testee = $this->createGateway();
@@ -562,6 +565,92 @@ class WcGatewayTest extends TestCase
 		$result = $testee->process_payment( $orderId );
 
 		$this->assertEquals( 'failure', $result['result'] );
+	}
+
+	public function dataForWalletSource(): array {
+		return array(
+			'apple pay'  => array( 'apple_pay' ),
+			'google pay' => array( 'google_pay' ),
+		);
+	}
+
+	/**
+	 * GIVEN a wallet order whose capture needs a payer action PayPal cannot show in the wallet
+	 * WHEN the PayPal gateway processes the payment
+	 * THEN the buyer gets a failure with a clear try-again notice
+	 * AND the WooCommerce order is marked as failed
+	 *
+	 * @dataProvider dataForWalletSource
+	 */
+	public function test_process_payment_fails_cleanly_on_payer_action_for_wallet_source( string $source ): void {
+		$response          = new \stdClass();
+		$response->details = array( (object) array( 'issue' => 'PAYER_ACTION_REQUIRED' ) );
+		$this->orderProcessor->expects( 'process' )->andThrow( new PayPalApiException( $response, 422 ) );
+
+		$status  = null;
+		$notices = array();
+		$wcOrder = Mockery::mock( \WC_Order::class );
+		$wcOrder->allows( 'get_meta' )->andReturnUsing(
+			static fn ( $key ) => PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY === $key ? $source : ''
+		);
+		$wcOrder->allows( 'update_status' )->andReturnUsing(
+			static function ( string $new_status ) use ( &$status ): bool {
+				$status = $new_status;
+				return true;
+			}
+		);
+
+		$this->sessionHandler->allows( 'destroy_session_data' );
+		when( 'wc_get_order' )->justReturn( $wcOrder );
+		when( 'wc_add_notice' )->alias(
+			static function ( string $message, string $type ) use ( &$notices ): void {
+				$notices[] = array( $type, $message );
+			}
+		);
+		when( 'wc_get_checkout_url' )->justReturn( 'http://example.com/checkout' );
+		when( 'is_checkout_pay_page' )->justReturn( false );
+
+		$session              = Mockery::mock( \WC_Session::class );
+		$woocommerce          = Mockery::mock( \WooCommerce::class );
+		$woocommerce->session = $session;
+		when( 'WC' )->justReturn( $woocommerce );
+		$session->allows( 'get' )->andReturn( null );
+		$session->allows( 'set' );
+
+		$notice = 'We could not complete the payment. Try again or choose a different payment method.';
+
+		$result = $this->createGateway()->process_payment( 1 );
+
+		$this->assertSame( 'failure', $result['result'] );
+		$this->assertSame( $notice, $result['errorMessage'] );
+		$this->assertSame( array( array( 'error', $notice ) ), $notices );
+		$this->assertSame( 'failed', $status );
+	}
+
+	/**
+	 * GIVEN a PayPal-source order whose capture needs a payer action
+	 * WHEN the PayPal gateway processes the payment
+	 * THEN the buyer is redirected to the PayPal checkout URL to finish the action
+	 */
+	public function test_process_payment_redirects_to_paypal_on_payer_action_for_paypal_source(): void {
+		$response          = new \stdClass();
+		$response->details = array( (object) array( 'issue' => 'PAYER_ACTION_REQUIRED' ) );
+		$this->orderProcessor->expects( 'process' )->andThrow( new PayPalApiException( $response, 422 ) );
+
+		$wcOrder = Mockery::mock( \WC_Order::class );
+		$wcOrder->allows( 'get_meta' )->andReturn( 'paypal' );
+		$wcOrder->allows( 'add_order_note' );
+
+		$this->sessionHandler->allows( 'increment_insufficient_funding_tries' );
+		$this->sessionHandler->allows( 'insufficient_funding_tries' )->andReturn( 1 );
+		$this->sessionHandler->allows( 'replace_payer_action_order_id' );
+		$this->sessionOrder->allows( 'id' )->andReturn( 'PAYPAL-ORDER-ID' );
+		when( 'wc_get_order' )->justReturn( $wcOrder );
+
+		$result = $this->createGateway()->process_payment( 1 );
+
+		$this->assertSame( 'success', $result['result'] );
+		$this->assertSame( 'checkoutnow=PAYPAL-ORDER-ID', $result['redirect'] );
 	}
 
 	public function dataForRetryErrorIssue(): array {
