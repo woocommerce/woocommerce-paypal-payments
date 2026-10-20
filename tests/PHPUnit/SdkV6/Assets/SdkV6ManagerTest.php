@@ -614,6 +614,23 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a configured list of contexts in which the PayPal popup commits the payment
+     * WHEN the SDK bootstrap data is generated
+     * THEN pay_now_contexts carries that list exactly as configured, so the front end can
+     *      decide the popup's commit flag per context
+     */
+    public function testScriptDataIncludesPayNowContextsAsConfigured(): void
+    {
+        $pay_now_contexts = ['checkout', 'pay-now', 'cart', 'product', 'mini-cart'];
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, false, $pay_now_contexts);
+        $data   = $testee->script_data();
+
+        $this->assertSame($pay_now_contexts, $data['pay_now_contexts']);
+    }
+
+    /**
      * GIVEN a checkout block page with Advanced Card Fields enabled for the merchant
      * WHEN the SDK bootstrap data is generated
      * THEN card_fields.enabled is true, unless Fastlane renders on the same page
