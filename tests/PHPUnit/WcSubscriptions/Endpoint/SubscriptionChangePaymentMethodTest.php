@@ -7,7 +7,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint;
 use Mockery;
 use WC_Order;
 use WC_Payment_Token;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;

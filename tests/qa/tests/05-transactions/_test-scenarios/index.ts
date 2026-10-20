@@ -5,3 +5,4 @@ export * from './classic-checkout.scenario';
 export * from './classic-product.scenario';
 export * from './pay-by-link.scenario';
 export * from './product.scenario';
+export * from './capture-authorized.scenario';

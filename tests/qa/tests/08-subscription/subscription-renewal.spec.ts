@@ -55,7 +55,12 @@ test.describe( 'PayPal Subscription', () => {
 		}
 	} );
 
-	test.afterAll( async ( { requestUtils } ) => {
+	test.afterAll( async ( { pcpApi, requestUtils } ) => {
+		await pcpApi.updatePcpSettings( {
+			savePaypalAndVenmo: true,
+			saveCardDetails: true,
+		} );
+
 		if ( ! process.env.CI ) {
 			await requestUtils.deactivatePlugin(
 				disableWebhookVerificationPlugin.slug

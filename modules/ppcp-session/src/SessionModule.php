@@ -9,11 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Session;
 
-use Psr\Log\LoggerInterface;
-use Throwable;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -25,13 +21,6 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  */
 class SessionModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
-
-	/**
-	 * A flag to avoid multiple requests to reload order.
-	 *
-	 * @var bool
-	 */
-	private $reloaded_order = false;
 
 	/**
 	 * {@inheritDoc}
@@ -59,38 +48,15 @@ class SessionModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'ppcp_session_get_order',
-			function ( ?Order $order, SessionHandler $session_handler ) use ( $c ): void {
-				if ( ! isset( WC()->session ) ) {
+			static function ( $order, $session_handler ) use ( $c ): void {
+				if ( ! $session_handler instanceof SessionHandler ) {
 					return;
 				}
 
-				if ( $this->reloaded_order ) {
-					return;
-				}
+				$reloader = $c->get( 'session.order-reloader' );
+				assert( $reloader instanceof SessionOrderReloader );
 
-				if ( ! $order ) {
-					return;
-				}
-
-				if ( $order->status()->is( OrderStatus::APPROVED )
-					|| $order->status()->is( OrderStatus::COMPLETED )
-				) {
-					return;
-				}
-
-				$order_endpoint = $c->get( 'api.endpoint.order' );
-				assert( $order_endpoint instanceof OrderEndpoint );
-
-				$this->reloaded_order = true;
-
-				try {
-					$session_handler->replace_order( $order_endpoint->order( $order->id() ) );
-				} catch ( Throwable $exception ) {
-					$logger = $c->get( 'woocommerce.logger.woocommerce' );
-					assert( $logger instanceof LoggerInterface );
-
-					$logger->warning( 'Failed to reload PayPal order in the session: ' . $exception->getMessage() );
-				}
+				$reloader->maybe_reload( $order instanceof Order ? $order : null, $session_handler );
 			},
 			10,
 			2

@@ -39,7 +39,7 @@ Detailed information about current test project can be found in [docs](./docs/RE
 
 	1.1 Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
 	
-	1.2 Set PayPal API keys and test credentials. See `.env.example`. For Google Pay transaction tests, make sure to also set `GOOGLE_PAY_EMAIL` and `GOOGLE_PAY_PASSWORD`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
+	1.2 Set PayPal API keys and test credentials. See `.env.example`. For Google Pay transaction tests, make sure to also set `GOOGLE_PAY_EMAIL`, `GOOGLE_PAY_PASSWORD`, and `GOOGLE_PAY_TOTP_SECRET`. The Google test account must have 2-Step Verification set up via an authenticator app (not SMS) — `GOOGLE_PAY_TOTP_SECRET` is that authenticator's secret, used to compute the current code locally instead of waiting on an unautomatable phone prompt. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
 
 2. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 
@@ -51,23 +51,29 @@ Detailed information about current test project can be found in [docs](./docs/RE
 
 ### Installation of `playwright-utils` for local development
 
-1. Add `yarn` to `devDependencies` in `package.json`:
+No changes to `package.json` or `package-lock.json` are needed. See the [`playwright-utils` development docs](https://github.com/inpsyde/playwright-utils/blob/main/README.md#development) for details.
 
-	```json
-	"devDependencies": {
-		"yarn": "^1.22.21",
-	```
-
-
-2. Execute steps for local development described [here](https://github.com/inpsyde/playwright-utils/blob/main/README.md#development).
-
-	General one-line `tsc-watch` command is:
+1. Install the test project dependencies:
 
 	```bash
-	npm run e2e:setup:tests && cd ./playwright-utils && yarn devLocal
+	npm run e2e:setup:tests
 	```
 
-3. After development is finished cleanup `package.json` and regenerate the `package-lock.json`. 
+2. Clone `playwright-utils` outside of this repository, for example next to it, and install its dependencies:
+
+	```bash
+	git clone https://github.com/inpsyde/playwright-utils.git
+	cd playwright-utils
+	npm ci
+	```
+
+3. Start the watcher with the path to this repository. Each successful build is copied to `./node_modules/@inpsyde/playwright-utils/`:
+
+	```bash
+	npm run devLocal -- ../woocommerce-paypal-payments
+	```
+
+4. When development is finished, restore the published version by running `npm ci` in this repository.
 
 ## Running tests
 

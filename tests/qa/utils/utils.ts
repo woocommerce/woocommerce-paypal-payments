@@ -174,6 +174,11 @@ export class Utils {
 
 		if ( enableSubscriptionsPlugin === true ) {
 			await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
+			
+			await this.wooCommerceApi.updateSubscriptionsSettings( {
+				woocommerce_subscriptions_enable_simple_subscription: 'yes',
+				woocommerce_subscriptions_enable_variable_subscription: 'yes',
+			} );
 		}
 
 		if ( enableSubscriptionsPlugin === false ) {

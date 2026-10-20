@@ -3,11 +3,16 @@ import {
 	paypalSubscriptionToWcAddresses,
 } from './Helper/Address';
 import { shouldEnableAppSwitch } from './Components/paypal';
+import { cartPayerData } from '@ppcp-button/Helper/CartPayerData';
 
 export const createOrder = async ( data, config, onError, onClose ) => {
 	try {
+		const payer = cartPayerData();
+
 		const requestBody = {
 			nonce: config.scriptData.ajax.create_order.nonce,
+			// Omitted when the shopper has given no email; see cartPayerData().
+			...( payer && { payer } ),
 			bn_code: '',
 			context: config.scriptData.context,
 			payment_method: 'ppcp-gateway',
@@ -273,12 +278,15 @@ export const handleApproveSubscription = async (
 			throw new Error( config.scriptData.labels.error.generic );
 		}
 
-		if ( ! shouldskipFinalConfirmation() ) {
-			location.href = getCheckoutRedirectUrl();
-		} else {
-			setGotoContinuationOnError( true );
-			onSubmit();
-		}
+		// Native PayPal subscriptions always complete directly here, bypassing the
+		// order-review continuation. Unlike a one-time order, the subscription is
+		// already created and approved at this point and there is no capturable order
+		// to review, so routing through the continuation leaves the buyer unable to
+		// finish. This intentionally overrides "Require final confirmation" for native
+		// subscriptions on block checkout, matching the classic checkout (whose
+		// subscription onApprove submits the order without a final-review step).
+		setGotoContinuationOnError( true );
+		onSubmit();
 	} catch ( err ) {
 		console.error( err );
 

@@ -1,10 +1,10 @@
 import { __ } from '@wordpress/i18n';
-import { Button, Modal, ToggleControl } from '@wordpress/components';
+import { Button } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 
 import { CommonHooks } from '@ppcp-settings/data';
 import { useToggleState } from '@ppcp-settings/hooks/useToggleState';
-import { HStack } from '@ppcp-settings/Components/ReusableComponents/Stack';
+import ConfirmationModal from '@ppcp-settings/Components/ReusableComponents/ConfirmationModal';
 import { useNavigation } from '@ppcp-settings/hooks/useNavigation';
 
 const DisconnectButton = () => {
@@ -42,55 +42,39 @@ const DisconnectButton = () => {
 			</Button>
 
 			{ isOpen && (
-				<Modal
+				<ConfirmationModal
 					className="ppcp--modal-disconnect"
-					size="small"
 					title={ confirmationTitle }
-					onRequestClose={ handleCancel }
-				>
-					<p>
-						{ __(
-							'Disconnecting your account will restart the connection wizard. Are you sure you want to disconnect from your PayPal account?',
-							'woocommerce-paypal-payments'
-						) }
-					</p>
-					<ToggleControl
-						__nextHasNoMarginBottom
-						className="ppcp--toggle-danger"
-						checked={ resetFlag }
-						onChange={ setResetFlag }
-						label={ __(
+					description={ __(
+						'Disconnecting your account will restart the connection wizard. Are you sure you want to disconnect from your PayPal account?',
+						'woocommerce-paypal-payments'
+					) }
+					toggle={ {
+						className: 'ppcp--toggle-danger',
+						checked: resetFlag,
+						onChange: setResetFlag,
+						label: __(
 							'Start over',
 							'woocommerce-paypal-payments'
-						) }
-						help={
-							resetFlag
-								? __(
-										'Attention: The plugin is reset to its initial state!',
-										'woocommerce-paypal-payments'
-								  )
-								: __(
-										'Disconnect, but preserve all settings',
-										'woocommerce-paypal-payments'
-								  )
-						}
-					/>
-					<HStack className="ppcp--action-buttons">
-						<Button variant="tertiary" onClick={ handleCancel }>
-							{ __( 'Cancel', 'woocommerce-paypal-payments' ) }
-						</Button>
-						<Button
-							variant="primary"
-							isDestructive={ resetFlag }
-							onClick={ handleConfirm }
-						>
-							{ __(
-								'Disconnect',
-								'woocommerce-paypal-payments'
-							) }
-						</Button>
-					</HStack>
-				</Modal>
+						),
+						help: resetFlag
+							? __(
+									'Attention: The plugin is reset to its initial state!',
+									'woocommerce-paypal-payments'
+							  )
+							: __(
+									'Disconnect, but preserve all settings',
+									'woocommerce-paypal-payments'
+							  ),
+					} }
+					confirmLabel={ __(
+						'Disconnect',
+						'woocommerce-paypal-payments'
+					) }
+					isDestructive={ resetFlag }
+					onConfirm={ handleConfirm }
+					onCancel={ handleCancel }
+				/>
 			) }
 		</>
 	);

@@ -23,8 +23,12 @@ const modulesAssets = {
 	'ppcp-blocks': [
 		'js/checkout-block.js',
 		'js/advanced-card-checkout-block.js',
+		'js/ProductPayLaterMessagesBlock/product-paylater-block.js',
+		'js/ProductSmartButtonsBlock/product-smart-buttons-block.js',
+		'js/MiniCartSmartButtonsBlock/mini-cart-smart-buttons-block.js',
 		'css/gateway.scss',
 		'css/gateway-editor.scss',
+		'css/mini-cart-buttons.scss',
 	],
 	'ppcp-button': [
 		'js/button.js',
@@ -59,10 +63,6 @@ const modulesAssets = {
 		'css/order-edit-page.scss',
 	],
 	'ppcp-paylater-block': [ 'js/paylater-block.js', 'css/edit.scss' ],
-	'ppcp-paylater-configurator': [
-		'js/paylater-configurator.js',
-		'css/paylater-configurator.scss',
-	],
 	'ppcp-paylater-wc-blocks': [
 		'js/CartPayLaterMessagesBlock/cart-paylater-block.js',
 		'js/CartPayLaterMessagesBlock/cart-paylater-block-inserter.js',
@@ -70,7 +70,13 @@ const modulesAssets = {
 	],
 	'ppcp-paypal-subscriptions': [ 'js/paypal-subscription.js' ],
 	'ppcp-save-payment-methods': [ 'js/add-payment-method.js' ],
-	'ppcp-sdk-v6': [ 'js/boot.js' ],
+	'ppcp-sdk-v6': [
+		'js/boot.js',
+		'js/checkout-block.js',
+		'js/boot-add-payment-method.js',
+		'css/gateway.scss',
+		'css/checkout-block.scss',
+	],
 	'ppcp-settings': [ 'js/index.js', 'css/styles.scss' ],
 	'ppcp-wc-gateway': [
 		'js/common.js',
@@ -81,6 +87,7 @@ const modulesAssets = {
 		'css/common.scss',
 	],
 	'ppcp-store-sync': [ 'js/settings.js', 'css/style.scss' ],
+	'ppcp-vault-component': [ 'js/checkout.js' ],
 };
 
 const entries = {};

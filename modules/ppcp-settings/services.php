@@ -276,7 +276,8 @@ return array(
 		return new WebhookSettingsEndpoint(
 			$container->get( 'api.endpoint.webhook' ),
 			$container->get( 'webhook.registrar' ),
-			$container->get( 'webhook.status.simulation' )
+			$container->get( 'webhook.status.simulation' ),
+			$container->get( 'webhook.own-resolver' )
 		);
 	},
 	'settings.rest.pay_later_messaging'                   => static function ( ContainerInterface $container ): PayLaterMessagingEndpoint {
@@ -429,7 +430,11 @@ return array(
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'api.helpers.paymentLevelEligibility' ),
 			$check_override(),
-			$container->get( 'settings.service.agentic-beta-eligibility' )
+			$container->get( 'settings.service.agentic-beta-eligibility' ),
+			// The module registers its services only behind its feature flag, so
+			// presence means v6 is active; has() does not instantiate it. Per-page
+			// ownership is moot: one admin screen configures every page.
+			$container->has( 'sdk-v6.owns-current-page' )
 		);
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
@@ -497,13 +502,15 @@ return array(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.general' ),
 			$container->get( 'axo.checkout-config-notice.raw' ),
-			$container->get( 'axo.incompatible-plugins-notice.raw' )
+			$container->get( 'axo.incompatible-plugins-notice.raw' ),
+			// The module registers its services only behind its feature flag, so
+			// presence means v6 is active; has() does not instantiate it. Per-page
+			// ownership is moot: one admin screen configures every page.
+			$container->has( 'sdk-v6.owns-current-page' )
 		);
 	},
 	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
-		return new PaymentMethodsDependenciesDefinition(
-			$container->get( 'settings.settings-provider' )
-		);
+		return new PaymentMethodsDependenciesDefinition();
 	},
 	'settings.service.pay_later_status'                   => static function ( ContainerInterface $container ): array {
 		$pay_later_endpoint = $container->get( 'settings.rest.pay_later_messaging' );
@@ -604,7 +611,7 @@ return array(
 		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $settings_model->get_stay_updated();
 
 		$recaptcha_settings = get_option( 'woocommerce_ppcp-recaptcha_settings', array() );
-		$is_recaptcha_enabled = isset( $recaptcha_settings['enabled'] ) && 'yes' === $recaptcha_settings['enabled'];
+		$is_recaptcha_enabled = wc_string_to_bool( $recaptcha_settings['enabled'] ?? 'no' );
 
 		/**
 		 * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.
@@ -716,8 +723,7 @@ return array(
 			$container->get( 'settings.service.features_eligibilities' ),
 			$container->get( 'settings.data.general' ),
 			$merchant_capabilities,
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'settings.settings-provider' )
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'settings.service.features_eligibilities'             => static function ( ContainerInterface $container ): FeaturesEligibilityService {

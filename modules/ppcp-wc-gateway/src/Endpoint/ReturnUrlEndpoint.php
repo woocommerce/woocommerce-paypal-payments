@@ -329,6 +329,11 @@ class ReturnUrlEndpoint {
 			return $available_gateways[ $payment_method ];
 		}
 
-		return null;
+		// Returning with an approved order puts the checkout in continuation mode,
+		// where DisableGateways offers PayPal alone - so the gateway that sent the
+		// buyer to PayPal is missing from the list above on the way back.
+		$registered_gateways = WC()->payment_gateways->payment_gateways();
+
+		return $registered_gateways[ $payment_method ] ?? null;
 	}
 }

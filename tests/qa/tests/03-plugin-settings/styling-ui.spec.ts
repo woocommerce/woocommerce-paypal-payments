@@ -5,7 +5,7 @@ import { expect, test } from '../../utils';
 import { merchants, storeConfigDefault, Pcp, products } from '../../resources';
 
 // 'Mini Cart' skipped: minicart buttons unreliable in test env
-const LOCATIONS: Pcp.Admin.Styling.Location[] = [
+const LOCATIONS: Pcp.Admin.Styling.LocationPage[] = [
 	'Cart',
 	'Classic Checkout',
 	'Express Checkout',
@@ -22,7 +22,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
-test( 'PCP-4747 | Settings - US- Styling - Default UI', async ( {
+test( 'PCP-4747 | Settings - US - Styling - Default UI', async ( {
 	utils,
 	pcpStyling,
 	product,
@@ -91,7 +91,7 @@ test( 'PCP-4747 | Settings - US- Styling - Default UI', async ( {
  * @param ctx.simpleProduct.slug
  */
 async function assertPayPalButtonsVisibleOnLiveSite(
-	location: Pcp.Admin.Styling.Location,
+	location: Pcp.Admin.Styling.LocationPage,
 	ctx: {
 		product: {
 			visit: ( slug: string ) => Promise< void >;

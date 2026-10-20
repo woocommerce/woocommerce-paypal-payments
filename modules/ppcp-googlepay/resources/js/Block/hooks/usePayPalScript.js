@@ -4,7 +4,11 @@ import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
 const usePayPalScript = ( namespace, ppcpConfig ) => {
 	const [ isPayPalLoaded, setIsPayPalLoaded ] = useState( false );
 
-	ppcpConfig.url_params.components += ',googlepay';
+	// Absent when the v6 SDK owns the page: the v5 smart button is disabled
+	// there and localizes no script data.
+	if ( ppcpConfig.url_params ) {
+		ppcpConfig.url_params.components += ',googlepay';
+	}
 
 	useEffect( () => {
 		const loadScript = async () => {

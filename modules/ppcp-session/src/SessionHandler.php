@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Session;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 
 /**
  * Class SessionHandler
@@ -17,6 +19,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 class SessionHandler {
 
 	private const SESSION_KEY = 'ppcp';
+
+	private LoggerInterface $logger;
 
 	/**
 	 * The Order.
@@ -54,6 +58,10 @@ class SessionHandler {
 	 */
 	private $checkout_form = array();
 
+	public function __construct( ?LoggerInterface $logger = null ) {
+		$this->logger = $logger ?? new NullLogger();
+	}
+
 	/**
 	 * Returns the order.
 	 *
@@ -74,6 +82,14 @@ class SessionHandler {
 	 */
 	public function replace_order( Order $order ): void {
 		$this->load_session();
+
+		// A different id means the buyer started over: the previous order is
+		// abandoned here and never captured, so record the hand-over.
+		if ( $this->order && $this->order->id() !== $order->id() ) {
+			$this->logger->debug(
+				sprintf( 'Session order %s replaced by %s.', $this->order->id(), $order->id() )
+			);
+		}
 
 		$this->order = $order;
 
@@ -170,6 +186,19 @@ class SessionHandler {
 		$this->load_session();
 
 		++$this->insufficient_funding_tries;
+
+		$this->store_session();
+	}
+
+	/**
+	 * Drops the order and the funding source that approved it, keeping the
+	 * rest of the session data (checkout form, BN code) intact.
+	 */
+	public function forget_order(): void {
+		$this->load_session();
+
+		$this->order          = null;
+		$this->funding_source = null;
 
 		$this->store_session();
 	}

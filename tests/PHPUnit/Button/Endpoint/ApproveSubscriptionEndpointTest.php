@@ -13,13 +13,14 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
-use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint
@@ -191,6 +192,42 @@ class ApproveSubscriptionEndpointTest extends TestCase
 
 		$this->mock_wc_session( $session_id );
 		expect( 'wp_send_json_success' )->once();
+
+		$this->sut->handle_request();
+	}
+
+	/**
+	 * GIVEN a valid subscription whose subscriber has a resolved payer id
+	 * WHEN the order fetched for the same order_id has no resolved payer id yet
+	 * THEN the order is still approved, because an absent payer id on the order cannot
+	 *      be compared and the subscription is already bound to this session
+	 */
+	public function test_order_with_empty_payer_id_is_still_approved(): void
+	{
+		$session_id   = 'shopper-session';
+		$subscription = $this->subscription( $session_id, 'PAYER-A' );
+
+		// The order's payer id is not resolved yet, but the order is bound to this session.
+		$order = $this->order_with_payer( '', 'pcp_customer_' . $session_id );
+
+		$this->request_data->shouldReceive( 'read_request' )
+			->with( ApproveSubscriptionEndpoint::nonce() )
+			->andReturn(
+				array(
+					'order_id'        => 'VALID-ORDER',
+					'subscription_id' => 'SUB-1',
+				)
+			);
+		$this->billing_subscriptions->shouldReceive( 'subscription' )->with( 'SUB-1' )->andReturn( $subscription );
+		$this->subscription_helper->shouldReceive( 'paypal_subscription_variation_from_cart' )->andReturn( '' );
+		$this->subscription_helper->shouldReceive( 'paypal_subscription_id' )->andReturn( 'PLAN-1' );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'VALID-ORDER' )->andReturn( $order );
+		$this->session_handler->shouldReceive( 'replace_order' )->once()->with( $order );
+		$this->context->shouldReceive( 'is_checkout' )->andReturn( true );
+
+		$this->mock_wc_session( $session_id );
+		expect( 'wp_send_json_success' )->once();
+		expect( 'wp_send_json_error' )->never();
 
 		$this->sut->handle_request();
 	}

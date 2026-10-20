@@ -17,10 +17,17 @@ export type PayPalAccount = {
 	password: string;
 };
 
+// WooCommerce product with PCP test-only options
+export type ShopProduct = WooCommerce.CreateProduct & {
+	variationToSelect?: Record< string, string >; // Attribute name => option to select on the product page
+};
+
 export type ShopOrder = WooCommerce.ShopOrder & {
 	title?: string;
 	payment?: Pcp.Payment;
 	merchant?: Pcp.Merchant;
+	products?: ShopProduct[];
+	isPayNowEnabled?: boolean; // Is Pay Now Experience option enabled in PCP Settings > Payment Methods
 };
 
 export type ShopRefund = ShopOrder & {
@@ -108,6 +115,7 @@ export namespace Pcp {
 		isAuthorized?: boolean;
 		saveToAccount?: boolean;
 		isFreeTrialSubscription?: boolean; // cart total is 0 (free trial or 100% coupon) - PayPal renders the saved-token radio instead of the vault component, see FreeTrialSubscriptionHelper::is_free_trial_cart()
+		isPayPalSubscription?: boolean; // native PayPal Subscription (subscriptions_api mode, "Save PayPal and Venmo" off) rather than a vaulted WC Subscriptions renewal - see SdkV6Manager::is_native_paypal_subscription_page()
 	};
 
 	export namespace Api {
@@ -190,14 +198,7 @@ export namespace Pcp {
 			// Per-location styling block (mirrors Admin.Styling.Config)
 			export type LocationPageConfig = {
 				enabled?: boolean;
-				methods?: Extract <
-					GatewayId,
-					| 'ppcp-gateway'
-					| 'pay-later'
-					| 'venmo'
-					| 'ppcp-googlepay'
-					| 'ppcp-applepay'
-				>[];
+				methods?: GatewayId[]; // Button gateways: PayPal, Pay Later, Venmo, Google Pay, Apple Pay
 				label?: ButtonLabel;
 				shape?: ButtonShape;
 				color?: ButtonColor;

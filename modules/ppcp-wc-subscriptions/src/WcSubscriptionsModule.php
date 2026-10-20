@@ -305,27 +305,13 @@ class WcSubscriptionsModule implements ServiceModule, ExecutableModule {
 	 *
 	 * @param SettingsProvider   $settings_provider The settings provider.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
-	 * @return string The subscriptions mode ('vaulting_api', 'subscriptions_api', or 'disable_paypal_subscriptions').
+	 * @return string One of the SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_* constants,
+	 *                or an empty string when WooCommerce Subscriptions is not active.
 	 */
 	private function get_subscriptions_mode(
 		SettingsProvider $settings_provider,
 		SubscriptionHelper $subscription_helper
 	): string {
-		if ( ! $subscription_helper->plugin_is_active() ) {
-			return '';
-		}
-
-		$subscription_mode_disabled = (bool) apply_filters(
-			'woocommerce_paypal_payments_subscription_mode_disabled',
-			false
-		);
-
-		if ( $subscription_mode_disabled ) {
-			return 'disable_paypal_subscriptions';
-		}
-
-		return $settings_provider->save_paypal_and_venmo()
-			? 'vaulting_api'
-			: 'subscriptions_api';
+		return $subscription_helper->resolve_subscription_mode( $settings_provider );
 	}
 }

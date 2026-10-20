@@ -72,23 +72,33 @@ class PaymentMethodsDefinition {
 	private ?array $wc_gateways = null;
 
 	/**
+	 * Whether the v6 SDK is active.
+	 *
+	 * @var bool
+	 */
+	private bool $sdk_v6_active;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param PaymentSettings $settings                        Payment methods data model.
 	 * @param GeneralSettings $general_settings                General plugin settings model.
 	 * @param string          $axo_checkout_config_notice      Axo checkout config conflict notice.
 	 * @param string          $axo_incompatible_plugins_notice Axo incompatible plugins notice.
+	 * @param bool            $sdk_v6_active                   Whether the v6 SDK is active.
 	 */
 	public function __construct(
 		PaymentSettings $settings,
 		GeneralSettings $general_settings,
 		string $axo_checkout_config_notice = '',
-		string $axo_incompatible_plugins_notice = ''
+		string $axo_incompatible_plugins_notice = '',
+		bool $sdk_v6_active = false
 	) {
 		$this->settings                        = $settings;
 		$this->general_settings                = $general_settings;
 		$this->axo_checkout_config_notice      = $axo_checkout_config_notice;
 		$this->axo_incompatible_plugins_notice = $axo_incompatible_plugins_notice;
+		$this->sdk_v6_active                   = $sdk_v6_active;
 	}
 
 	/**
@@ -252,30 +262,37 @@ class PaymentMethodsDefinition {
 		$group    = array();
 		$warnings = $this->get_warning_messages();
 
+		$card_fields = array();
+
+		// The cardholder-name toggle is offered under v5 only. The stored value
+		// stays, so turning v6 off restores the merchant's choice.
+		if ( ! $this->sdk_v6_active ) {
+			$card_fields['cardholderName'] = array(
+				'type'    => 'toggle',
+				'default' => $this->settings->get_cardholder_name(),
+				'label'   => __(
+					'Display cardholder name',
+					'woocommerce-paypal-payments'
+				),
+			);
+		}
+
+		$card_fields['showCardLogos'] = array(
+			'type'    => 'toggle',
+			'default' => $this->settings->get_show_card_logos(),
+			'label'   => __(
+				'Show logos of supported cards',
+				'woocommerce-paypal-payments'
+			),
+		);
+
 		if ( ! $this->general_settings->own_brand_only() ) {
 			$group[] = array(
 				'id'          => CreditCardGateway::ID,
 				'title'       => __( 'Advanced Credit and Debit Card Payments', 'woocommerce-paypal-payments' ),
 				'description' => __( "Present custom credit and debit card fields to your payers so they can pay with credit and debit cards using your site's branding.", 'woocommerce-paypal-payments' ),
 				'icon'        => 'payment-method-advanced-cards',
-				'fields'      => array(
-					'cardholderName' => array(
-						'type'    => 'toggle',
-						'default' => $this->settings->get_cardholder_name(),
-						'label'   => __(
-							'Display cardholder name',
-							'woocommerce-paypal-payments'
-						),
-					),
-					'showCardLogos'  => array(
-						'type'    => 'toggle',
-						'default' => $this->settings->get_show_card_logos(),
-						'label'   => __(
-							'Show logos of supported cards',
-							'woocommerce-paypal-payments'
-						),
-					),
-				),
+				'fields'      => $card_fields,
 			);
 			$group[] = array(
 				'id'              => AxoGateway::ID,

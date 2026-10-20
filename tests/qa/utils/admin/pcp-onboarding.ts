@@ -13,8 +13,6 @@ export class PcpOnboarding extends PcpAdminPage {
 	url = urls.admin.pcp.onboarding;
 
 	// Locators
-	saveAndExitButton = () =>
-		this.navigationPanel().getByRole( 'button', { name: 'Save and exit' } );
 	continueButton = () =>
 		this.navigationPanel().getByRole( 'button', { name: 'Continue' } );
 
@@ -43,10 +41,6 @@ export class PcpOnboarding extends PcpAdminPage {
 		this.page.locator( 'input.ppcp-r__radio-value[value="business"]' );
 	personalAccountRadio = () =>
 		this.page.locator( 'input.ppcp-r__radio-value[value="casual_seller"]' );
-	personalAccountContentDetail = () =>
-		this.selectBoxContentContainer().locator(
-			this.selectBoxContentDetail()
-		);
 
 	virtualCheckbox = () =>
 		this.page.locator( 'input[type="checkbox"][value="virtual"]' );
@@ -54,19 +48,12 @@ export class PcpOnboarding extends PcpAdminPage {
 		this.page.locator( 'input[type="checkbox"][value="physical"]' );
 	subscriptionsCheckbox = () =>
 		this.page.locator( 'input[type="checkbox"][value="subscriptions"]' );
-	subscriptionsContentDetail = () =>
-		this.selectBoxContentContainer().locator(
-			this.selectBoxContentDetail()
-		);
 
 	enableOptionalPaymentMethodsRadio = () =>
 		this.page.locator( 'input.ppcp-r__radio-value[value="true"]' );
 
 	disableOptionalPaymentMethodsRadio = () =>
 		this.page.locator( 'input.ppcp-r__radio-value[value="false"]' );
-
-	connectToPayPalButton = () =>
-		this.page.getByRole( 'button', { name: 'Connect to PayPal' } );
 
 	enableManuallyConnectLabel = () =>
 		this.page.getByText( 'Manually Connect' );

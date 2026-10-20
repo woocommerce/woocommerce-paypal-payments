@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -43,6 +42,19 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): bool {
+		// The Single Product PayPal buttons & Pay Later messaging blocks do not depend on the
+		// WooCommerce Blocks payment-method framework, so they are wired before the guard below.
+		// Deferred to `init`: block types must register there, and it keeps run() free of any
+		// boot-time service resolution.
+		add_action(
+			'init',
+			static function () use ( $c ): void {
+				ProductBlocks::register( $c );
+				MiniCartBlocks::register( $c );
+			},
+			20
+		);
+
 		if (
 			! class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' )
 			|| ! function_exists( 'woocommerce_store_api_register_payment_requirements' )
@@ -88,16 +100,6 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			)
 		);
 
-		add_action(
-			'wc_ajax_' . UpdateShippingEndpoint::ENDPOINT,
-			static function () use ( $c ) {
-				$endpoint = $c->get( 'blocks.endpoint.update-shipping' );
-				assert( $endpoint instanceof UpdateShippingEndpoint );
-
-				$endpoint->handle_request();
-			}
-		);
-
 		// Enqueue frontend scripts.
 		add_action(
 			'wp_enqueue_scripts',
@@ -137,6 +139,21 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					$asset_version
 				);
 				wp_enqueue_style( 'wc-ppcp-blocks-editor' );
+			}
+		);
+
+		add_action(
+			'enqueue_block_assets',
+			static function () use ( $c ) {
+				$asset_getter = $c->get( 'blocks.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
+				wp_enqueue_style(
+					'wc-ppcp-mini-cart-buttons',
+					$asset_getter->get_asset_url( 'mini-cart-buttons.css' ),
+					array(),
+					$c->get( 'ppcp.asset-version' )
+				);
 			}
 		);
 

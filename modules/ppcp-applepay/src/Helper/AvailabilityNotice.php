@@ -36,9 +36,16 @@ class AvailabilityNotice {
 	private bool $is_ppcp_settings_page;
 
 	/**
-	 * Indicates if ApplePay is available to be enabled.
+	 * Resolves whether ApplePay is available to be enabled.
+	 *
+	 * A callable rather than a bool because resolving it performs a
+	 * merchant-integrations API call: as a constructor value it ran for every
+	 * request that built this object, outrunning the settings-page gate in
+	 * should_display() that is meant to govern it.
+	 *
+	 * @var callable():bool
 	 */
-	private bool $is_available;
+	private $is_available;
 
 	/**
 	 * Indicates if this server is supported for ApplePay.
@@ -61,7 +68,7 @@ class AvailabilityNotice {
 	 * @param AppleProductStatus $product_status The product status handler.
 	 * @param bool               $is_wc_gateways_list_page Indicates if we're on the WooCommerce gateways list page.
 	 * @param bool               $is_ppcp_settings_page Indicates if we're on a PPCP Settings page.
-	 * @param bool               $is_available Indicates if ApplePay is available to be enabled.
+	 * @param callable           $is_available Resolves if ApplePay is available to be enabled.
 	 * @param bool               $is_server_supported Indicates if this server is supported for ApplePay.
 	 * @param SettingsProvider   $settings Used to inspect the domain verification status.
 	 * @param ApplePayButton     $button The button.
@@ -70,7 +77,7 @@ class AvailabilityNotice {
 		AppleProductStatus $product_status,
 		bool $is_wc_gateways_list_page,
 		bool $is_ppcp_settings_page,
-		bool $is_available,
+		callable $is_available,
 		bool $is_server_supported,
 		SettingsProvider $settings,
 		ApplePayButton $button
@@ -103,7 +110,7 @@ class AvailabilityNotice {
 			$this->add_not_available_notice();
 		}
 
-		if ( ! $this->is_available ) {
+		if ( ! ( $this->is_available )() ) {
 			return;
 		}
 

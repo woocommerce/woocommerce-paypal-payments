@@ -175,6 +175,20 @@ class ExperienceContextBuilder {
 	}
 
 	/**
+	 * Uses the given landing page, ignoring the merchant setting.
+	 *
+	 * @param string $landing_page An ExperienceContext::LANDING_PAGE_* value.
+	 */
+	public function with_landing_page( string $landing_page ): ExperienceContextBuilder {
+		$builder = clone $this;
+
+		$builder->experience_context = $builder->experience_context
+			->with_landing_page( $landing_page );
+
+		return $builder;
+	}
+
+	/**
 	 * Uses the payment method preference from the settings.
 	 */
 	public function with_current_payment_method_preference(): ExperienceContextBuilder {

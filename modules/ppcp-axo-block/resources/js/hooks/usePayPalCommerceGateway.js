@@ -1,5 +1,6 @@
 import { useState, useEffect } from '@wordpress/element';
 import { log } from '@ppcp-axo/Helper/Debug';
+import { fastlaneSdkV6Config } from '@ppcp-sdk-v6/utils/config';
 
 /**
  * Custom hook to load and manage the PayPal Commerce Gateway configuration.
@@ -16,6 +17,16 @@ const usePayPalCommerceGateway = ( initialConfig ) => {
 		 * Function to load the PayPal Commerce Gateway configuration.
 		 */
 		const loadConfig = () => {
+			// v5's config global is absent on pages the v6 SDK owns, where the
+			// v6 payload takes its place: it carries the locale this module
+			// reads, and Connection/Fastlane.js gets the SDK from v6 anyway.
+			const sdkV6 = fastlaneSdkV6Config();
+			if ( sdkV6 ) {
+				setPpcpConfig( sdkV6 );
+				setIsConfigLoaded( true );
+				return;
+			}
+
 			if ( typeof window.PayPalCommerceGateway !== 'undefined' ) {
 				setPpcpConfig( window.PayPalCommerceGateway );
 				setIsConfigLoaded( true );

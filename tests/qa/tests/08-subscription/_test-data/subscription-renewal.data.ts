@@ -18,7 +18,7 @@ const vaultingRenewal: ShopOrder[] = [
 	{
 		title: 'PCP-2505 | Vaulting subscription - PayPal - Order renewal @Critical @Smoke',
 		...orders.default,
-		payment: payments.payPal,
+		payment: payments.payPalSubscription,
 		merchant,
 		customer,
 		products: [ products.subscription100 ],
@@ -39,7 +39,7 @@ const vaultingFreeTrialRenewal: ShopOrder[] = [
 	{
 		title: 'PCP-4913 | Vaulting subscription - PayPal - Free trial order renewal',
 		...orders.default,
-		payment: { ...payments.payPal, isFreeTrialSubscription: true },
+		payment: { ...payments.payPalSubscription, isFreeTrialSubscription: true },
 		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
@@ -60,7 +60,11 @@ const payPalRenewal: ShopOrder[] = [
 	{
 		title: 'PCP-2048 | PayPal subscription - Order renewal @Critical',
 		...orders.default,
-		payment: payments.payPal,
+		payment: {
+			...payments.payPalSubscription,
+			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
+			isPayPalSubscription: true,
+		},
 		merchant,
 		customer,
 		products: [ products.subscriptionPayPal ],
@@ -72,7 +76,11 @@ const payPalFreeTrialRenewal: ShopOrder[] = [
 	{
 		title: 'PCP-4915 | PayPal subscription - Free trial order renewal',
 		...orders.default,
-		payment: payments.payPal,
+		payment: {
+			...payments.payPalSubscription,
+			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
+			isPayPalSubscription: true,
+		},
 		merchant,
 		customer,
 		products: [ products.subscriptionPayPalFreeTrial ],

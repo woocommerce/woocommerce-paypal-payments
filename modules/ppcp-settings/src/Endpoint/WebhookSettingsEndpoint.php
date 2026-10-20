@@ -14,6 +14,7 @@ use WP_REST_Response;
 use WP_REST_Server;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
+use WooCommerce\PayPalCommerce\Webhooks\OwnWebhookResolver;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use stdClass;
@@ -53,21 +54,31 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	private WebhookSimulation $webhook_simulation;
 
 	/**
-	 * WebhookSettingsEndpoint constructor.
-	 *
-	 * @param WebhookEndpoint   $webhook_endpoint   A list of subscribed webhooks and a webhook
-	 *                                              endpoint URL.
-	 * @param WebhookRegistrar  $webhook_registrar  A service that allows resubscribing webhooks.
-	 * @param WebhookSimulation $webhook_simulation A service that allows webhook simulations.
+	 * Tells this site's own webhook apart from other sites' webhooks on the same app.
+	 */
+	private OwnWebhookResolver $own_webhook_resolver;
+
+	/**
+	 * @param WebhookEndpoint    $webhook_endpoint     A list of subscribed webhooks and a
+	 *                                                 webhook endpoint URL.
+	 * @param WebhookRegistrar   $webhook_registrar    A service that allows resubscribing
+	 *                                                 webhooks.
+	 * @param WebhookSimulation  $webhook_simulation   A service that allows webhook
+	 *                                                 simulations.
+	 * @param OwnWebhookResolver $own_webhook_resolver Tells this site's own webhook apart
+	 *                                                 from other sites' webhooks on the same
+	 *                                                 app.
 	 */
 	public function __construct(
 		WebhookEndpoint $webhook_endpoint,
 		WebhookRegistrar $webhook_registrar,
-		WebhookSimulation $webhook_simulation
+		WebhookSimulation $webhook_simulation,
+		OwnWebhookResolver $own_webhook_resolver
 	) {
-		$this->webhook_endpoint   = $webhook_endpoint;
-		$this->webhook_registrar  = $webhook_registrar;
-		$this->webhook_simulation = $webhook_simulation;
+		$this->webhook_endpoint     = $webhook_endpoint;
+		$this->webhook_registrar    = $webhook_registrar;
+		$this->webhook_simulation   = $webhook_simulation;
+		$this->own_webhook_resolver = $own_webhook_resolver;
 	}
 
 	/**
@@ -194,15 +205,14 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 
 
 	/**
-	 * Retrieves the Webhooks API response object.
+	 * Retrieves this site's own webhook from the PayPal app
+	 * (it can include webhooks of other sites).
 	 *
 	 * @return Webhook|null The webhook data instance, or null.
 	 */
 	private function get_webhook_data(): ?Webhook {
 		try {
-			$api_response = $this->webhook_endpoint->list();
-
-			return $api_response[0] ?? null;
+			return $this->own_webhook_resolver->find_own( $this->webhook_endpoint->list() );
 		} catch ( Throwable $error ) {
 			return null;
 		}

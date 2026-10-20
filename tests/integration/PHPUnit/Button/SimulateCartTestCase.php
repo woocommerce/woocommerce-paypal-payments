@@ -6,7 +6,7 @@ namespace WooCommerce\PayPalCommerce\Tests\Integration\Button;
 use WC_Product_Simple;
 use WC_Product_Variable;
 use WC_Product_Variation;
-use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\IsolatedCartSimulator;
 use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;

@@ -18,6 +18,11 @@ $color-border: #AEAEAE;
 $color-divider: #F0F0F0;
 $color-error-red: #cc1818;
 $color-warning: #e2a030;
+// SCSS variables so modals, which portal outside #ppcp-settings-container, can use them.
+$color-failure-background: #faeded;
+$color-failure-text: #5c0000;
+$color-warning-background: #fdf4e7;
+$color-warning-text: #5c3d00;
 
 $shadow-card: 0 3px 6px 0 rgba(0, 0, 0, 0.15);
 $color-gradient-dark: #001435;
@@ -57,8 +62,10 @@ $card-vertical-gap: 48px;
 	--color-gradient-dark: #{$color-gradient-dark};
 	--color-success-background: #DAFFE0;
 	--color-success-text: #144722;
-	--color-failure-background: #faeded;
-	--color-failure-text: #5c0000;
+	--color-failure-background: #{$color-failure-background};
+	--color-failure-text: #{$color-failure-text};
+	--color-warning-background: #{$color-warning-background};
+	--color-warning-text: #{$color-warning-text};
 
 	--color-preview-background: #FAF8F5;
 	--color-separators: #{$color-gray-200};

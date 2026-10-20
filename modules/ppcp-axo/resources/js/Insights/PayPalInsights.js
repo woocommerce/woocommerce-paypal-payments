@@ -16,19 +16,41 @@ class PayPalInsights {
 		return PayPalInsights.instance;
 	}
 
+	/**
+	 * Whether PayPal's insights script has loaded and installed its global.
+	 *
+	 * Analytics must never break checkout, and the script is loaded async: a
+	 * caller can reach these methods before it arrives, which used to throw a
+	 * ReferenceError out of the AXO bootstrap.
+	 *
+	 * @return {boolean} True when the global is callable.
+	 */
+	static isAvailable() {
+		return typeof window.paypalInsight === 'function';
+	}
+
 	static track( eventName, data ) {
 		PayPalInsights.init();
-		paypalInsight( 'event', eventName, data );
+		if ( ! PayPalInsights.isAvailable() ) {
+			return;
+		}
+		window.paypalInsight( 'event', eventName, data );
 	}
 
 	static config( clientId, data ) {
 		PayPalInsights.init();
-		paypalInsight( 'config', clientId, data );
+		if ( ! PayPalInsights.isAvailable() ) {
+			return;
+		}
+		window.paypalInsight( 'config', clientId, data );
 	}
 
 	static setSessionId( sessionId ) {
 		PayPalInsights.init();
-		paypalInsight( 'set', { session_id: sessionId } );
+		if ( ! PayPalInsights.isAvailable() ) {
+			return;
+		}
+		window.paypalInsight( 'set', { session_id: sessionId } );
 	}
 
 	static trackJsLoad() {

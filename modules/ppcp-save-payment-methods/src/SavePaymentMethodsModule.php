@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\FreeTrialVaultReturnEndpoint;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -292,6 +293,18 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 							return;
 						}
 
+						/**
+						 * Whether to render the v5 add-payment-method assets. The
+						 * v6 SDK module returns false here when it owns the page
+						 * (its own save button + card fields), so the two stacks
+						 * do not both render into the same container.
+						 *
+						 * @param bool $render Whether to enqueue the v5 assets.
+						 */
+						if ( ! apply_filters( 'woocommerce_paypal_payments_render_add_payment_method_assets', true ) ) {
+							return;
+						}
+
 						$asset_getter = $c->get( 'save-payment-methods.asset_getter' );
 						assert( $asset_getter instanceof AssetGetter );
 
@@ -437,6 +450,36 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 
 						$endpoint->handle_request();
 					}
+				);
+
+				add_action(
+					'wc_ajax_' . FreeTrialVaultReturnEndpoint::ENDPOINT,
+					static function () use ( $c ) {
+						$endpoint = $c->get( 'save-payment-methods.endpoint.free-trial-vault-return' );
+						assert( $endpoint instanceof FreeTrialVaultReturnEndpoint );
+
+						$endpoint->handle_request();
+					}
+				);
+
+				// A $0 free-trial subscription paid with the native "Place order"
+				// button has no saved PayPal account yet; the gateway asks here for a
+				// vault-approval redirect so the buyer can approve saving their account
+				// at PayPal, instead of failing with "No saved PayPal account.".
+				add_filter(
+					'woocommerce_paypal_payments_free_trial_vault_redirect_url',
+					static function ( $url, WC_Order $wc_order ) use ( $c ): string {
+						if ( is_string( $url ) && '' !== $url ) {
+							return $url;
+						}
+
+						$redirect = $c->get( 'save-payment-methods.free-trial-vault-redirect' );
+						assert( $redirect instanceof FreeTrialVaultRedirect );
+
+						return $redirect->create_redirect_url( $wc_order );
+					},
+					10,
+					2
 				);
 
 				add_action(

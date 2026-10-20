@@ -3,6 +3,7 @@ import { useDispatch, useSelect } from '@wordpress/data';
 import { log } from '@ppcp-axo/Helper/Debug';
 import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
 import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
+import { fastlaneSdkV6Config } from '@ppcp-sdk-v6/utils/config';
 
 /**
  * Custom hook to load the PayPal script.
@@ -26,6 +27,15 @@ const usePayPalScript = ( namespace, ppcpConfig, isConfigLoaded ) => {
 
 	useEffect( () => {
 		const loadScript = async () => {
+			// The v6 SDK loads its own script and fetches its own client token,
+			// and Connection/Fastlane.js takes the instance from there, so none
+			// of the v5 loading below applies. Reporting it as loaded lets
+			// useFastlaneSdk proceed.
+			if ( fastlaneSdkV6Config() ) {
+				setIsPayPalLoaded( true );
+				return;
+			}
+
 			if ( ! isPayPalLoaded && isConfigLoaded ) {
 				const axoConfig = window.wc_ppcp_axo;
 

@@ -113,4 +113,58 @@ class WooCommercePaymentTokensTest extends TestCase
 		// THEN the failure is treated the same as having no tokens.
 		$this->assertSame([], $result);
 	}
+
+	/**
+	 * Builds a customer token whose payment_source reports the given name, matching the
+	 * shape returned by PaymentTokensEndpoint::payment_tokens_for_customer().
+	 *
+	 * @param string $payment_source_name Name reported by the token's payment source.
+	 */
+	private function tokenWithPaymentSourceName(string $payment_source_name): array
+	{
+		return ['payment_source' => Mockery::mock(['name' => $payment_source_name])];
+	}
+
+	/**
+	 * GIVEN a customer whose stored payment tokens include one with the given payment
+	 *      source name
+	 * WHEN has_paypal_or_venmo_token() is called
+	 * THEN it reports whether a PayPal or Venmo token is present among them
+	 *
+	 * @dataProvider payment_source_name_provider
+	 */
+	public function testHasPaypalOrVenmoTokenDetectsMatchingPaymentSource(string $payment_source_name, bool $expected)
+	{
+		$this->stubUserMeta(['_ppcp_target_customer_id' => 'CUST-1']);
+		$this->payment_tokens_endpoint
+			->shouldReceive('payment_tokens_for_customer')
+			->with('CUST-1')
+			->andReturn([$this->tokenWithPaymentSourceName($payment_source_name)]);
+
+		$result = $this->sut->has_paypal_or_venmo_token(42);
+
+		$this->assertSame($expected, $result);
+	}
+
+	public function payment_source_name_provider(): array
+	{
+		return [
+			'paypal token present' => ['paypal', true],
+			'venmo token present'  => ['venmo', true],
+			'only a card token'    => ['card', false],
+		];
+	}
+
+	public function testHasPaypalOrVenmoTokenReturnsFalseWhenThereIsNoResolvableCustomerId()
+	{
+		// GIVEN a user with no stored PayPal customer id, so no tokens can be looked up.
+		$this->stubUserMeta([]);
+
+		// WHEN checking whether the user has a saved PayPal or Venmo token.
+		$result = $this->sut->has_paypal_or_venmo_token(42);
+
+		// THEN the endpoint is never called and the user is treated as having no such token.
+		$this->payment_tokens_endpoint->shouldNotHaveReceived('payment_tokens_for_customer');
+		$this->assertFalse($result);
+	}
 }

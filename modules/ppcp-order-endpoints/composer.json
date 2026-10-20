@@ -1,0 +1,16 @@
+{
+    "name": "woocommerce/ppcp-order-endpoints",
+    "type": "dhii-mod",
+    "description": "Shared order WC-AJAX endpoints (v5/v6 SDK frontends) for PPCP",
+    "license": "GPL-2.0",
+    "require": {
+        "php": "^7.4 | ^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WooCommerce\\PayPalCommerce\\OrderEndpoints\\": "src"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

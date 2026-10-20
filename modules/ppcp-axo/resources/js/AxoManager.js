@@ -8,6 +8,7 @@ import ButtonStateManager from './ButtonStateManager';
 import PayPalInsights from './Insights/PayPalInsights';
 import { disable, enable } from '@ppcp-button/Helper/ButtonDisabler';
 import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
+import { fastlaneSdkV6Config } from '@ppcp-sdk-v6/utils/config';
 
 /**
  * Internal customer details.
@@ -319,7 +320,14 @@ class AxoManager {
 		this.el.watermarkContainer.hide();
 
 		if ( scenario.defaultSubmitButton ) {
-			this.el.defaultSubmitButton.show();
+			// On v6 pages the SDK owns #place_order for every non-AXO gateway
+			// (it hides it for PayPal express/wallets and shows it otherwise), so
+			// re-showing it here would clobber that hide - jQuery .show() strips the
+			// inline `display:none !important` the v6 code sets. AXO still hides it
+			// in the else branch when the Fastlane gateway itself is selected.
+			if ( ! fastlaneSdkV6Config() ) {
+				this.el.defaultSubmitButton.show();
+			}
 			this.el.billingEmailSubmitButton.hide();
 		} else {
 			this.el.defaultSubmitButton.hide();
@@ -410,6 +418,34 @@ class AxoManager {
 
 		this.ensureBillingFieldsConsistency();
 		this.ensureShippingFieldsConsistency();
+
+		if ( scenario.defaultFormFields || scenario.extraFormFields ) {
+			this.refreshEnhancedSelects();
+		}
+	}
+
+	/**
+	 * Asks WooCommerce to upgrade the country and state dropdowns it skipped.
+	 *
+	 * WooCommerce only enhances selects that are visible, and it does so once on
+	 * page load - by which time this class has already hidden the checkout form.
+	 * The fields would otherwise stay plain selects when the form is revealed,
+	 * unlike the same checkout without Fastlane. Core fires this event for the
+	 * same reason after it reveals the cart's shipping calculator.
+	 *
+	 * Only when something still needs it: every status change re-renders, and
+	 * the event is public, so firing it unconditionally would rebuild dropdowns
+	 * the shopper may be using and hand other listeners needless work. select2
+	 * marks the elements it has taken over, which is what identifies the rest.
+	 */
+	refreshEnhancedSelects() {
+		const plain = this.$(
+			'select.country_select:visible, select.state_select:visible'
+		).not( '.select2-hidden-accessible' );
+
+		if ( plain.length ) {
+			this.$( document.body ).trigger( 'country_to_state_changed' );
+		}
 	}
 
 	identifyScenario( active, validEmail, hasProfile ) {

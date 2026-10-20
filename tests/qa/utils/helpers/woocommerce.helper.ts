@@ -19,9 +19,12 @@ import {
 	disableNoncePlugin,
 	subscriptionsPlugin,
 	disableWcSetupWizard,
+	disableWcOrderMilestoneEgg,
 	disableWebhookVerificationPlugin,
 	negative12FeePlugin,
+	pcpSdkVersionFlag,
 } from '../../resources';
+import { sdkVersion } from './sdk-version.helper';
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 
@@ -31,8 +34,9 @@ const installPluginResolveActiveState = async ( {
 	slug,
 	zipFilePath,
 	isActive = true,
+	forceReinstall = false,
 } ) => {
-	if ( ! ( await requestUtils.isPluginInstalled( slug ) ) ) {
+	if ( forceReinstall || ! ( await requestUtils.isPluginInstalled( slug ) ) ) {
 		await plugins.installPluginFromFile( zipFilePath );
 	}
 	if ( isActive ) {
@@ -42,7 +46,41 @@ const installPluginResolveActiveState = async ( {
 	}
 };
 
+/**
+ * Asserts the site loads correct PayPal JS SDK version
+ *
+ * @param requestUtils The request utils.
+ */
+export const assertSdkVersion = async ( requestUtils ) => {
+	const { version } = await requestUtils.rest( {
+		path: '/pcp-qa/v1/sdk-version',
+	} );
+	expect(
+		version,
+		`Assert the site loads PayPal JS SDK ${ sdkVersion() }`
+	).toEqual( sdkVersion() );
+};
+
 export const setupWooCommerce = async () => {
+	setup(
+		`Setup PCP SDK Version Flag (${ sdkVersion() })`,
+		async ( { requestUtils, plugins } ) => {
+			await installPluginResolveActiveState( {
+				requestUtils,
+				plugins,
+				...pcpSdkVersionFlag,
+				isActive: true,
+				forceReinstall: true,
+			} );
+			// v6 is PCP's default; only v5 is forced via the feature flag.
+			await requestUtils.rest( {
+				method: 'POST',
+				path: '/pcp-qa/v1/sdk-version',
+				data: { version: sdkVersion() },
+			} );
+		}
+	);
+
 	// In CI wp-env is used and following setup is already done by wp-env, so skip it in CI to save time
 	if ( ! process.env.CI ) {
 		setup( 'Setup Permalinks', async ( { requestUtils } ) => {
@@ -78,6 +116,19 @@ export const setupWooCommerce = async () => {
 					requestUtils,
 					plugins,
 					...disableWcSetupWizard,
+				} );
+			}
+		);
+
+		// In CI the same filter is applied by the e2e-snippets mu-plugin, which
+		// wp-env maps in; a real host has no such mapping, so it needs the plugin.
+		setup(
+			'Setup Disable WC Order Milestone Egg plugin (active)',
+			async ( { requestUtils, plugins } ) => {
+				await installPluginResolveActiveState( {
+					requestUtils,
+					plugins,
+					...disableWcOrderMilestoneEgg,
 				} );
 			}
 		);
@@ -260,4 +311,38 @@ export const waitForOrderStatus = async (
 		.toEqual( expectedStatus );
 
 	return order;
+};
+
+/**
+ * Waits until the order carries a PayPal transaction id, and returns it.
+ *
+ * @param wooCommerceApi The WooCommerce API client.
+ * @param orderId        The WooCommerce order id.
+ * @param root0          Options.
+ * @param root0.timeout  How long to wait; short by default, since the status
+ *                       has already arrived by the time this is called.
+ */
+export const waitForTransactionId = async (
+	wooCommerceApi: WooCommerceApi,
+	orderId: number,
+	{ timeout = 30_000 }: { timeout?: number } = {}
+) => {
+	let transactionId: string;
+
+	await expect
+		.poll(
+			async () => {
+				transactionId = ( await wooCommerceApi.getOrder( orderId ) )
+					.transaction_id;
+				return transactionId;
+			},
+			{
+				message: `Assert order #${ orderId } has a PayPal transaction id`,
+				timeout,
+				intervals: [ 1_000, 2_500, 5_000 ],
+			}
+		)
+		.toBeTruthy();
+
+	return transactionId;
 };

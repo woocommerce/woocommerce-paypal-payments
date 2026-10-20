@@ -1210,6 +1210,78 @@ class OrderEndpointTest extends TestCase
         $testee->create([$purchaseUnit], ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE, $payer);
     }
 
+    /**
+     * GIVEN a purchase unit whose shipping node only carries options
+     * WHEN an order is created with a non-GET_FROM_FILE shipping preference
+     * THEN the shipping node left empty by stripping the options is not sent
+     */
+    public function testCreateUnsetsEmptyShippingNodeLeftAfterRemovingOptions()
+    {
+        expect('wp_json_encode')->andReturnUsing('json_encode');
+        $headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+        $headers->shouldReceive('getAll');
+        $rawResponse = [
+            'body' => '{"success":true}',
+            'headers' => $headers,
+        ];
+        $host = 'https://example.com/';
+        $token = Mockery::mock(Token::class);
+        $token->expects('token')->andReturn('bearer');
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer->expects('bearer')->andReturn($token);
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $expectedOrder = Mockery::mock(Order::class);
+        $orderFactory->expects('from_paypal_response')->andReturn($expectedOrder);
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
+
+        $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldNotReceive('warning');
+        $logger->shouldReceive('debug');
+        $subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
+
+        $fraudnet = Mockery::mock(FraudNet::class);
+
+        $testee = new OrderEndpoint(
+            $host,
+            $bearer,
+            $orderFactory,
+            $patchCollectionFactory,
+            $intent,
+            $logger,
+            $subscription_helper,
+            false,
+            $fraudnet
+        );
+
+        $purchaseUnit = Mockery::mock(PurchaseUnit::class, ['contains_physical_goods' => true]);
+        $purchaseUnit
+            ->expects('to_array')
+            ->andReturn([
+                'shipping' => [
+                    'options' => [['id' => 'flat_rate']],
+                ],
+            ]);
+        $purchaseUnit->shouldReceive('shipping')->andReturn($this->shipping);
+
+        $capturedBody = null;
+        expect('wp_remote_get')
+            ->andReturnUsing(function ($url, $args) use ($rawResponse, &$capturedBody) {
+                $capturedBody = json_decode($args['body'], true);
+                return $rawResponse;
+            });
+        expect('is_wp_error')->with($rawResponse)->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
+
+        $payer = Mockery::mock(Payer::class);
+        $payer->expects('email_address')->andReturn('');
+
+        $testee->create([$purchaseUnit], ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS, $payer);
+
+        $this->assertArrayNotHasKey('shipping', $capturedBody['purchase_units'][0]);
+    }
+
     public function testCaptureDeclinedWithFraudResponseCodeThrowsDetailedMessage(): void
     {
         expect('wp_json_encode')->andReturnUsing('json_encode');

@@ -64,7 +64,9 @@ return array(
 			$container->get( 'applepay.apple-product-status' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
 			$container->get( 'wcgateway.is-plugin-settings-page' ),
-			$container->get( 'applepay.available' ) || ( ! $container->get( 'applepay.is_referral' ) ),
+			// Deferred: resolving this performs a merchant-integrations API call,
+			// so it must not run while merely constructing the notice.
+			static fn(): bool => $container->get( 'applepay.available' ) || ( ! $container->get( 'applepay.is_referral' ) ),
 			$container->get( 'applepay.server_supported' ),
 			$container->get( 'settings.settings-provider' ),
 			$container->get( 'applepay.button' )
@@ -169,7 +171,20 @@ return array(
 			$container->get( 'applepay.button' ),
 			$container->get( 'blocks.method' ),
 			$container->get( 'button.helper.context' ),
-			$container->get( 'settings.settings-provider' )
+			$container->get( 'settings.settings-provider' ),
+			/**
+			 * The v6 module is feature-flagged and may not be loaded, hence the has()
+			 * guard. Resolved on each call so it reflects the page being rendered.
+			 */
+			static function () use ( $container ): bool {
+				if ( ! $container->has( 'sdk-v6.owns-current-page' ) ) {
+					return false;
+				}
+
+				$owns_current_page = $container->get( 'sdk-v6.owns-current-page' );
+
+				return $owns_current_page();
+			}
 		);
 	},
 

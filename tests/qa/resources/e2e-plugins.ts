@@ -18,6 +18,12 @@ export const disableWcSetupWizard = {
 	zipFilePath: `${ filePath }/disable-wc-setup-wizard.zip`,
 };
 
+export const disableWcOrderMilestoneEgg = {
+	name: 'Disable WC Order Milestone Egg',
+	slug: 'disable-wc-order-milestone-egg',
+	zipFilePath: `${ filePath }/disable-wc-order-milestone-egg.zip`,
+};
+
 export const disableWebhookVerificationPlugin = {
 	name: 'Disable webhook verification',
 	slug: 'disable-webhook-verification',
@@ -40,4 +46,10 @@ export const negative12FeePlugin = {
 	name: 'Negative 12 Fee',
 	slug: 'negative-12-fee',
 	zipFilePath: `${ filePath }/negative-12-fee.zip`,
+};
+
+export const pcpSdkVersionFlag = {
+	name: 'PCP SDK Version Flag',
+	slug: 'pcp-sdk-version-flag',
+	zipFilePath: `${ filePath }/pcp-sdk-version-flag.zip`,
 };

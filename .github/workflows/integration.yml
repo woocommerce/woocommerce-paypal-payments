@@ -5,6 +5,7 @@ on: workflow_dispatch
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         php-versions: ['7.4']
@@ -16,7 +17,7 @@ jobs:
       with:
         autostart: false
 
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1
 
     - name: Setup Composer Auth
       env:

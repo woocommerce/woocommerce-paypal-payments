@@ -4,6 +4,7 @@
 import { expect, test } from '../../utils';
 import { merchants, storeConfigDefault, products } from '../../resources';
 import { payLaterMessagingData } from './_test-data';
+import { sdkVersion } from '../../utils/helpers/sdk-version.helper';
 
 test.describe( 'PLM Configurator', () => {
 	test.beforeAll( async ( { utils, pcpApi } ) => {
@@ -139,6 +140,11 @@ test.describe( 'PLM Configurator', () => {
 		pcpPayLaterMessaging,
 		payPalUiClassic,
 	} ) => {
+		test.skip(
+			sdkVersion() === 'v6',
+			'Home placement is not offered by the v6 PLM configurator'
+		);
+
 		const { location } = payLaterMessagingData.bannerLocationSettings.Home;
 		const settings =
 			payLaterMessagingData.bannerLocationSettings.Home.settings[ 0 ];
@@ -162,6 +168,11 @@ test.describe( 'PLM Configurator', () => {
 		pcpPayLaterMessaging,
 		shop,
 	} ) => {
+		test.skip(
+			sdkVersion() === 'v6',
+			'Shop placement is not offered by the v6 PLM configurator'
+		);
+
 		const { location } = payLaterMessagingData.bannerLocationSettings.Shop;
 		const settings =
 			payLaterMessagingData.bannerLocationSettings.Shop.settings[ 0 ];

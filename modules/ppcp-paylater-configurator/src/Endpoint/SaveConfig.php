@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use Throwable;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 
