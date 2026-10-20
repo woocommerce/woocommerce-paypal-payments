@@ -270,11 +270,11 @@ class CreateOrderEndpoint implements EndpointInterface
                     $is_card = in_array($payment_method, array(CreditCardGateway::ID, CardButtonGateway::ID), \true) || PayPalGateway::ID === $payment_method && 'card' === $funding_source;
                     if ($is_card) {
                         $this->purchase_unit->set_amount(new Amount(new Money(1.0, $this->purchase_unit->amount()->currency_code()), $this->purchase_unit->amount()->breakdown()));
-                    } elseif ($this->purchase_unit->amount()->value() <= 0) {
-                        // A zero total belongs to the save-without-purchase endpoint,
-                        // so the client rendered before the cart reached zero.
-                        throw new RuntimeException(__('The order total has changed. Please reload the page and try again.', 'woocommerce-paypal-payments'));
                     }
+                }
+                // PayPal rejects a zero total and its raw error would reach the shopper.
+                if ($this->purchase_unit->amount()->value() <= 0) {
+                    throw new RuntimeException(__('The order total has changed. Please reload the page and try again.', 'woocommerce-paypal-payments'));
                 }
             }
             $this->set_bn_code($data);

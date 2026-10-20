@@ -638,6 +638,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\Environment' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/Environment.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\EnvironmentConfig' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/EnvironmentConfig.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\FeesUpdater' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/FeesUpdater.php',
+    'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\FreeProductHandlerTrait' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/FreeProductHandlerTrait.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\InstallmentsProductStatus' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/InstallmentsProductStatus.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\MerchantDetails' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/MerchantDetails.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PWCProductStatus' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/PWCProductStatus.php',

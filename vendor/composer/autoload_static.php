@@ -855,6 +855,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\Environment' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/Environment.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\EnvironmentConfig' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/EnvironmentConfig.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\FeesUpdater' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/FeesUpdater.php',
+        'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\FreeProductHandlerTrait' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/FreeProductHandlerTrait.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\InstallmentsProductStatus' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/InstallmentsProductStatus.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\MerchantDetails' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/MerchantDetails.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PWCProductStatus' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/PWCProductStatus.php',
