@@ -18,11 +18,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
-use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 /**
  * Class ApproveSubscriptionEndpoint
  */
@@ -75,7 +76,7 @@ class ApproveSubscriptionEndpoint implements \WooCommerce\PayPalCommerce\Button\
     private BillingSubscriptions $billing_subscriptions;
     private LoggerInterface $logger;
     private SubscriptionHelper $subscription_helper;
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, OrderEndpoint $order_endpoint, SessionHandler $session_handler, bool $final_review_enabled, WooCommerceOrderCreator $wc_order_creator, PayPalGateway $gateway, Context $context, BillingSubscriptions $billing_subscriptions, LoggerInterface $logger, SubscriptionHelper $subscription_helper)
+    public function __construct(RequestData $request_data, OrderEndpoint $order_endpoint, SessionHandler $session_handler, bool $final_review_enabled, WooCommerceOrderCreator $wc_order_creator, PayPalGateway $gateway, Context $context, BillingSubscriptions $billing_subscriptions, LoggerInterface $logger, SubscriptionHelper $subscription_helper)
     {
         $this->request_data = $request_data;
         $this->order_endpoint = $order_endpoint;
@@ -190,7 +191,21 @@ class ApproveSubscriptionEndpoint implements \WooCommerce\PayPalCommerce\Button\
         $subscriber_payer_id = (string) ($subscription->subscriber->payer_id ?? '');
         $payer = $order->payer();
         $order_payer_id = $payer ? $payer->payer_id() : '';
-        if ('' === $subscriber_payer_id || '' === $order_payer_id || $order_payer_id !== $subscriber_payer_id) {
+        // A native subscription's related order does not reliably expose a resolved
+        // payer id at approval time, so an absent id on either side is treated as
+        // "cannot compare" rather than a failure. Only a present, differing payer (an
+        // order approved by another account) is rejected.
+        //
+        // Security note: this binding is best-effort. The subscription itself is
+        // session-bound by validate_subscription() (status + custom_id ownership +
+        // plan match), but the order is bound to the subscriber only when both payer
+        // ids resolve here — validate_custom_id_ownership() returns early for an order
+        // whose custom_id lacks the CustomIds::CUSTOMER_ID_PREFIX, so such an order
+        // with an unresolved payer is not independently tied to the subscriber.
+        if ('' === $subscriber_payer_id || '' === $order_payer_id) {
+            return;
+        }
+        if ($order_payer_id !== $subscriber_payer_id) {
             throw new RuntimeException(__('Order validation failed.', 'woocommerce-paypal-payments'));
         }
     }

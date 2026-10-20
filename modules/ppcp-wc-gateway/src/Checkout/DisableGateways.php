@@ -64,6 +64,12 @@ class DisableGateways
                 unset($methods[PayPalGateway::ID]);
             }
         }
+        // Hide the PayPal gateway when the subscription cart cannot be processed (e.g. vaulting
+        // disabled for a subscription that requires it, with no PayPal plan or manual renewals),
+        // instead of showing it with a disabled button.
+        if (isset($methods[PayPalGateway::ID]) && !$this->subscription_helper->subscription_cart_processable($this->settings_provider)) {
+            unset($methods[PayPalGateway::ID]);
+        }
         if ($this->card_configuration->use_acdc() && $this->store_country !== 'MX') {
             unset($methods[CardButtonGateway::ID]);
         }

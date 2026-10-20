@@ -10,7 +10,6 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -42,6 +41,14 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule
      */
     public function run(ContainerInterface $c): bool
     {
+        // The Single Product PayPal buttons & Pay Later messaging blocks do not depend on the
+        // WooCommerce Blocks payment-method framework, so they are wired before the guard below.
+        // Deferred to `init`: block types must register there, and it keeps run() free of any
+        // boot-time service resolution.
+        add_action('init', static function () use ($c): void {
+            \WooCommerce\PayPalCommerce\Blocks\ProductBlocks::register($c);
+            \WooCommerce\PayPalCommerce\Blocks\MiniCartBlocks::register($c);
+        }, 20);
         if (!class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType') || !function_exists('woocommerce_store_api_register_payment_requirements')) {
             add_action('admin_notices', function () {
                 printf('<div class="notice notice-error"><p>%1$s</p></div>', wp_kses_post(__('PayPal checkout block initialization failed, possibly old WooCommerce version or disabled WooCommerce Blocks plugin.', 'woocommerce-paypal-payments')));
@@ -60,11 +67,6 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule
             }
             return array();
         }));
-        add_action('wc_ajax_' . UpdateShippingEndpoint::ENDPOINT, static function () use ($c) {
-            $endpoint = $c->get('blocks.endpoint.update-shipping');
-            assert($endpoint instanceof UpdateShippingEndpoint);
-            $endpoint->handle_request();
-        });
         // Enqueue frontend scripts.
         add_action('wp_enqueue_scripts', static function () use ($c) {
             if (!has_block('woocommerce/checkout') && !has_block('woocommerce/cart')) {
@@ -83,6 +85,11 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule
             $asset_version = $c->get('ppcp.asset-version');
             wp_register_style('wc-ppcp-blocks-editor', $asset_getter->get_asset_url('gateway-editor.css'), array(), $asset_version);
             wp_enqueue_style('wc-ppcp-blocks-editor');
+        });
+        add_action('enqueue_block_assets', static function () use ($c) {
+            $asset_getter = $c->get('blocks.asset_getter');
+            assert($asset_getter instanceof AssetGetter);
+            wp_enqueue_style('wc-ppcp-mini-cart-buttons', $asset_getter->get_asset_url('mini-cart-buttons.css'), array(), $c->get('ppcp.asset-version'));
         });
         add_filter('woocommerce_paypal_payments_sdk_components_hook', function (array $components, string $context) {
             if (substr($context, -6) === '-block') {

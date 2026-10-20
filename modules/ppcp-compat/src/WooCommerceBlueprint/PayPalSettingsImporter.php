@@ -54,6 +54,7 @@ class PayPalSettingsImporter implements StepProcessor
             return $result;
         }
         $options = (array) $schema->options;
+        $carries_connection = $this->carries_connection($options);
         $imported_count = 0;
         foreach ($options as $option_name => $option_value) {
             // Validate option name first (before using it in any operations).
@@ -72,7 +73,7 @@ class PayPalSettingsImporter implements StepProcessor
                 continue;
             }
             // Attempt to update the option with proper error handling.
-            if ($this->update_option_safely($option_name, $option_value)) {
+            if ($this->update_option_safely($option_name, $option_value, $carries_connection)) {
                 ++$imported_count;
             } else {
                 $sanitized_name = sanitize_text_field($option_name);
@@ -152,14 +153,18 @@ class PayPalSettingsImporter implements StepProcessor
     /**
      * Safely update an option with proper comparison for existing values.
      *
-     * @param string $option_name  Option name.
-     * @param mixed  $option_value Option value.
+     * @param string $option_name        Option name.
+     * @param mixed  $option_value       Option value.
+     * @param bool   $carries_connection Whether the payload brings its own connection.
      * @return bool
      */
-    private function update_option_safely(string $option_name, $option_value): bool
+    private function update_option_safely(string $option_name, $option_value, bool $carries_connection = \true): bool
     {
         // Convert stdClass objects from JSON decode to arrays.
         $option_value = $this->convert_objects_to_arrays($option_value);
+        if (!$carries_connection) {
+            $option_value = $this->keep_local_connection($option_name, $option_value);
+        }
         // Hydrate DTO-based options so typed objects are preserved in the database.
         $option_value = $this->hydrate_dtos($option_name, $option_value);
         // Get the current value with a sentinel to distinguish between false and non-existent.
@@ -169,6 +174,50 @@ class PayPalSettingsImporter implements StepProcessor
             return \true;
         }
         return update_option($option_name, $option_value);
+    }
+    /**
+     * Whether the payload brings a PayPal connection of its own.
+     *
+     * @param array<string, mixed> $options Options from the imported step.
+     * @return bool
+     */
+    private function carries_connection(array $options): bool
+    {
+        $common = $this->convert_objects_to_arrays($options[\WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\ConnectionDataSanitizer::OPTION_COMMON] ?? null);
+        return is_array($common) && !empty($common['client_id']);
+    }
+    /**
+     * Keeps the target store's own connection when the payload does not bring one.
+     *
+     * A settings-only export carries the connection keys as empty values, and
+     * options are written whole rather than merged, so without this an import
+     * would disconnect a store that was already connected.
+     *
+     * @param string $option_name  Option name.
+     * @param mixed  $option_value Option value.
+     * @return mixed
+     */
+    private function keep_local_connection(string $option_name, $option_value)
+    {
+        if (\WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\ConnectionDataSanitizer::OPTION_COMMON === $option_name) {
+            $keys = array_keys(\WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\ConnectionDataSanitizer::CONNECTION_DEFAULTS);
+        } elseif (\WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\ConnectionDataSanitizer::OPTION_ONBOARDING === $option_name) {
+            $keys = array_keys(\WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\ConnectionDataSanitizer::ONBOARDING_DEFAULTS);
+        } else {
+            return $option_value;
+        }
+        $current = get_option($option_name);
+        if (!is_array($option_value) || !is_array($current)) {
+            return $option_value;
+        }
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $current)) {
+                $option_value[$key] = $current[$key];
+            } else {
+                unset($option_value[$key]);
+            }
+        }
+        return $option_value;
     }
     /**
      * Hydrate DTO-based options so the data models can load them correctly.

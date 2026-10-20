@@ -111,7 +111,8 @@ trait RequestTrait
         $method = $args['method'] ?? '';
         $output = $method . ' ' . $url . "\n";
         if (isset($args['body'])) {
-            if (!in_array($url, array(trailingslashit($this->host) . 'v1/oauth2/token/', trailingslashit($this->host) . 'v1/oauth2/token?grant_type=client_credentials'), \true)) {
+            // Never log OAuth token exchange bodies, regardless of which host issued the request.
+            if (\false === strpos($url, 'v1/oauth2/token')) {
                 $output .= 'Request Body: ' . wc_print_r($args['body'], \true) . "\n";
             }
         }

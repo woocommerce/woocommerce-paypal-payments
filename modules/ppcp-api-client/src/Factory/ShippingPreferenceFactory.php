@@ -48,21 +48,21 @@ class ShippingPreferenceFactory
         if (!$contains_physical_goods) {
             return ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING;
         }
-        $has_shipping = null !== $purchase_unit->shipping();
+        $shipping = $purchase_unit->shipping();
+        $has_shipping_address = $shipping && null !== $shipping->address();
         $needs_shipping = $wc_order && $this->wc_order_needs_shipping($wc_order) || $cart && $cart->needs_shipping();
         $shipping_address_is_fixed = $needs_shipping && in_array($context, array('checkout', 'pay-now'), \true);
         if (!$needs_shipping) {
             return ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING;
         }
         if ($shipping_address_is_fixed) {
-            // Checkout + no address given? Probably something weird happened, like no form validation?
-            if (!$has_shipping) {
+            if (!$has_shipping_address) {
                 return ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING;
             }
             return ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS;
         }
         if ('card' === $funding_source) {
-            if (!$has_shipping) {
+            if (!$has_shipping_address) {
                 return ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING;
             }
             // Looks like GET_FROM_FILE does not work for the vaulted card button.

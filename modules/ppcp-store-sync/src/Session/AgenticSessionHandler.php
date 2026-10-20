@@ -32,7 +32,6 @@ class AgenticSessionHandler
             include_once WC_ABSPATH . 'includes/wc-notice-functions.php';
         }
         $this->session = new \WooCommerce\PayPalCommerce\StoreSync\Session\AgenticWcSession();
-        $this->session->init();
     }
     /**
      * Generate a unique session ID.
@@ -53,7 +52,6 @@ class AgenticSessionHandler
     public function create_cart_session(PayPalCart $cart, string $ec_token): string
     {
         $session_key = $this->generate_session_id();
-        // Create a new empty session with our custom ID.
         $this->session->create_session_with_id($session_key);
         $data = array('cart' => $cart->to_array(), 'ec_token' => $ec_token, 'created' => time());
         $this->session->set(self::SESSION_KEY, $data);
@@ -94,7 +92,6 @@ class AgenticSessionHandler
      */
     public function update_cart_session(string $session_id, PayPalCart $cart, ?string $ec_token = null): bool
     {
-        // Load the session first.
         $existing = $this->load_cart_session($session_id);
         if (!$existing) {
             return \false;
@@ -112,14 +109,11 @@ class AgenticSessionHandler
      */
     public function destroy_cart_session(string $session_id): bool
     {
-        // First verify the session exists by trying to load it.
         if (!$this->session->load_session_by_id($session_id)) {
             return \false;
         }
-        // Clear the agentic commerce data from the session.
         $this->session->set(self::SESSION_KEY, null);
         $this->session->save_data();
-        // Destroy the entire session to clean up completely.
         $this->session->delete_session($session_id);
         return \true;
     }

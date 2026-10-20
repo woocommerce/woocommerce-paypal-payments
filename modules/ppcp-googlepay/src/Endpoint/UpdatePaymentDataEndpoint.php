@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Endpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 /**

@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
+use WooCommerce\PayPalCommerce\Webhooks\OwnWebhookResolver;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 /**
  * Class StatusReportModule
@@ -75,7 +76,7 @@ class StatusReportModule implements ServiceModule, ExecutableModule
             $general_settings = $c->get('settings.data.general');
             // Feature flag convention.
             // phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
-            $items = array(array('label' => esc_html__('Onboarded', 'woocommerce-paypal-payments'), 'exported_label' => 'Onboarded', 'description' => esc_html__('Whether PayPal account is correctly configured or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($this->onboarded($bearer, $is_connected))), array('label' => esc_html__('Branded only', 'woocommerce-paypal-payments'), 'exported_label' => 'Branded only', 'description' => esc_html__('Whether the plugin is in Branded only mode or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($general_settings->own_brand_only())), array('label' => esc_html__('Shop country code', 'woocommerce-paypal-payments'), 'exported_label' => 'Shop country code', 'description' => esc_html__('Country / State value on Settings / General / Store Address.', 'woocommerce-paypal-payments'), 'value' => $c->get('api.shop.country')), array('label' => esc_html__('WooCommerce currency supported', 'woocommerce-paypal-payments'), 'exported_label' => 'WooCommerce currency supported', 'description' => esc_html__('Whether PayPal supports the default store currency or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($c->get('api.shop.is-currency-supported'))), array('label' => esc_html__('Advanced Card Processing available in country', 'woocommerce-paypal-payments'), 'exported_label' => 'Advanced Card Processing available in country', 'description' => esc_html__('Whether Advanced Card Processing is available in country or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($dcc_applies->for_country_currency())), array('label' => esc_html__('Pay Later messaging available in country', 'woocommerce-paypal-payments'), 'exported_label' => 'Pay Later messaging available in country', 'description' => esc_html__('Whether Pay Later is available in country or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($messages_apply->for_country())), array('label' => esc_html__('Webhook status', 'woocommerce-paypal-payments'), 'exported_label' => 'Webhook status', 'description' => esc_html__('Whether we received webhooks successfully.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html(!$last_webhook_storage->is_empty())), array('label' => esc_html__('Webhook delivery host', 'woocommerce-paypal-payments'), 'exported_label' => 'Webhook delivery host', 'description' => esc_html__('Whether PayPal delivers webhooks to this site or to a different host.', 'woocommerce-paypal-payments'), 'value' => $this->webhook_delivery_host_status($this->registered_webhooks($c, $is_connected))), array('label' => esc_html__('PayPal Vault enabled', 'woocommerce-paypal-payments'), 'exported_label' => 'PayPal Vault enabled', 'description' => esc_html__('Whether vaulting option is enabled on Standard Payments settings or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->save_paypal_and_venmo())), array('label' => esc_html__('ACDC Vault enabled', 'woocommerce-paypal-payments'), 'exported_label' => 'ACDC Vault enabled', 'description' => esc_html__('Whether vaulting option is enabled on Advanced Card Processing settings or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->save_card_details())), array('label' => esc_html__('Logging enabled', 'woocommerce-paypal-payments'), 'exported_label' => 'Logging enabled', 'description' => esc_html__('Whether logging of plugin events and errors is enabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->enable_logging())), array('label' => esc_html__('Reference Transactions', 'woocommerce-paypal-payments'), 'exported_label' => 'Reference Transactions', 'description' => esc_html__('Whether Reference Transactions are enabled for the connected account', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($reference_transaction_status->reference_transaction_enabled())), array('label' => esc_html__('Used PayPal Checkout plugin', 'woocommerce-paypal-payments'), 'exported_label' => 'Used PayPal Checkout plugin', 'description' => esc_html__('Whether the PayPal Checkout Gateway plugin was configured previously or not', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($had_ppec_plugin)), array('label' => esc_html__('Subscriptions Mode', 'woocommerce-paypal-payments'), 'exported_label' => 'Subscriptions Mode', 'description' => esc_html__('Whether subscriptions are active and their mode.', 'woocommerce-paypal-payments'), 'value' => $this->subscriptions_mode_text($subscription_helper->plugin_is_active(), (string) $subscription_mode_options[$settings_provider->save_paypal_and_venmo() ? 'vaulting_api' : 'subscriptions_api'], $subscriptions_mode_settings)), array('label' => esc_html__('PayPal Shipping Callback', 'woocommerce-paypal-payments'), 'exported_label' => 'PayPal Shipping Callback', 'description' => esc_html__('Whether the "Require final confirmation on checkout" setting is disabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->enable_pay_now())), array('label' => esc_html__('Apple Pay', 'woocommerce-paypal-payments'), 'exported_label' => 'Apple Pay', 'description' => esc_html__('Whether Apple Pay is enabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->is_method_enabled(ApplePayGateway::ID))), array('label' => esc_html__('Google Pay', 'woocommerce-paypal-payments'), 'exported_label' => 'Google Pay', 'description' => esc_html__('Whether Google Pay is enabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->is_method_enabled(GooglePayGateway::ID))), array('label' => esc_html__('Fastlane', 'woocommerce-paypal-payments'), 'exported_label' => 'Fastlane', 'description' => esc_html__('Whether Fastlane is enabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->is_method_enabled(AxoGateway::ID))));
+            $items = array(array('label' => esc_html__('Onboarded', 'woocommerce-paypal-payments'), 'exported_label' => 'Onboarded', 'description' => esc_html__('Whether PayPal account is correctly configured or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($this->onboarded($bearer, $is_connected))), array('label' => esc_html__('Branded only', 'woocommerce-paypal-payments'), 'exported_label' => 'Branded only', 'description' => esc_html__('Whether the plugin is in Branded only mode or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($general_settings->own_brand_only())), array('label' => esc_html__('Shop country code', 'woocommerce-paypal-payments'), 'exported_label' => 'Shop country code', 'description' => esc_html__('Country / State value on Settings / General / Store Address.', 'woocommerce-paypal-payments'), 'value' => $c->get('api.shop.country')), array('label' => esc_html__('WooCommerce currency supported', 'woocommerce-paypal-payments'), 'exported_label' => 'WooCommerce currency supported', 'description' => esc_html__('Whether PayPal supports the default store currency or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($c->get('api.shop.is-currency-supported'))), array('label' => esc_html__('Advanced Card Processing available in country', 'woocommerce-paypal-payments'), 'exported_label' => 'Advanced Card Processing available in country', 'description' => esc_html__('Whether Advanced Card Processing is available in country or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($dcc_applies->for_country_currency())), array('label' => esc_html__('Pay Later messaging available in country', 'woocommerce-paypal-payments'), 'exported_label' => 'Pay Later messaging available in country', 'description' => esc_html__('Whether Pay Later is available in country or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($messages_apply->for_country())), array('label' => esc_html__('Webhook status', 'woocommerce-paypal-payments'), 'exported_label' => 'Webhook status', 'description' => esc_html__('Whether we received webhooks successfully.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html(!$last_webhook_storage->is_empty())), array('label' => esc_html__('Webhook delivery host', 'woocommerce-paypal-payments'), 'exported_label' => 'Webhook delivery host', 'description' => esc_html__('Whether PayPal delivers webhooks to this site or to a different host.', 'woocommerce-paypal-payments'), 'value' => $this->webhook_delivery_host_status($this->registered_webhooks($c, $is_connected), $c->get('webhook.own-resolver'))), array('label' => esc_html__('PayPal Vault enabled', 'woocommerce-paypal-payments'), 'exported_label' => 'PayPal Vault enabled', 'description' => esc_html__('Whether vaulting option is enabled on Standard Payments settings or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->save_paypal_and_venmo())), array('label' => esc_html__('ACDC Vault enabled', 'woocommerce-paypal-payments'), 'exported_label' => 'ACDC Vault enabled', 'description' => esc_html__('Whether vaulting option is enabled on Advanced Card Processing settings or not.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->save_card_details())), array('label' => esc_html__('Logging enabled', 'woocommerce-paypal-payments'), 'exported_label' => 'Logging enabled', 'description' => esc_html__('Whether logging of plugin events and errors is enabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->enable_logging())), array('label' => esc_html__('Reference Transactions', 'woocommerce-paypal-payments'), 'exported_label' => 'Reference Transactions', 'description' => esc_html__('Whether Reference Transactions are enabled for the connected account', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($reference_transaction_status->reference_transaction_enabled())), array('label' => esc_html__('Used PayPal Checkout plugin', 'woocommerce-paypal-payments'), 'exported_label' => 'Used PayPal Checkout plugin', 'description' => esc_html__('Whether the PayPal Checkout Gateway plugin was configured previously or not', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($had_ppec_plugin)), array('label' => esc_html__('Subscriptions Mode', 'woocommerce-paypal-payments'), 'exported_label' => 'Subscriptions Mode', 'description' => esc_html__('Whether subscriptions are active and their mode.', 'woocommerce-paypal-payments'), 'value' => $this->subscriptions_mode_text($subscription_helper->plugin_is_active(), (string) $subscription_mode_options[$settings_provider->save_paypal_and_venmo() ? 'vaulting_api' : 'subscriptions_api'], $subscriptions_mode_settings)), array('label' => esc_html__('PayPal Shipping Callback', 'woocommerce-paypal-payments'), 'exported_label' => 'PayPal Shipping Callback', 'description' => esc_html__('Whether the "Require final confirmation on checkout" setting is disabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->enable_pay_now())), array('label' => esc_html__('Apple Pay', 'woocommerce-paypal-payments'), 'exported_label' => 'Apple Pay', 'description' => esc_html__('Whether Apple Pay is enabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->is_method_enabled(ApplePayGateway::ID))), array('label' => esc_html__('Google Pay', 'woocommerce-paypal-payments'), 'exported_label' => 'Google Pay', 'description' => esc_html__('Whether Google Pay is enabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->is_method_enabled(GooglePayGateway::ID))), array('label' => esc_html__('Fastlane', 'woocommerce-paypal-payments'), 'exported_label' => 'Fastlane', 'description' => esc_html__('Whether Fastlane is enabled.', 'woocommerce-paypal-payments'), 'value' => $this->bool_to_html($settings_provider->is_method_enabled(AxoGateway::ID))));
             echo wp_kses_post($renderer->render(esc_html__('WooCommerce PayPal Payments', 'woocommerce-paypal-payments'), $items));
         });
         return \true;
@@ -158,50 +159,41 @@ class StatusReportModule implements ServiceModule, ExecutableModule
     /**
      * Reports whether PayPal's registered webhook points at this site.
      *
-     * Compares each registered webhook's host against this site's host. When they
-     * differ, webhook events are being delivered elsewhere - typically a staging or dev
-     * clone connected to the same PayPal account - which the "Webhook status" row above
-     * cannot detect.
+     * Asks the resolver which webhooks deliver to this install's incoming endpoint.
+     * When none of them does, webhook events are going elsewhere.
      *
-     * @param Webhook[] $registered_webhooks The live PayPal-side registered webhooks.
+     * points_here() rather than is_own() on purpose: the question is where PayPal
+     * delivers now, so a webhook we once registered under a former domain must not
+     * excuse a mismatch.
+     *
+     * @param Webhook[]          $registered_webhooks The live PayPal-side registered webhooks.
+     * @param OwnWebhookResolver $resolver            Tells this install's webhook apart from other sites'.
      * @return string
      */
-    private function webhook_delivery_host_status(array $registered_webhooks): string
+    private function webhook_delivery_host_status(array $registered_webhooks, OwnWebhookResolver $resolver): string
     {
-        $site_host = $this->normalized_host(home_url());
-        $foreign_hosts = array();
+        $foreign_targets = array();
         foreach ($registered_webhooks as $webhook) {
             if (!$webhook instanceof Webhook) {
                 continue;
             }
-            $webhook_host = $this->normalized_host($webhook->url());
-            if ('' === $webhook_host) {
-                continue;
-            }
-            if ($webhook_host === $site_host) {
+            if ($resolver->points_here($webhook)) {
                 return $this->bool_to_html(\true);
             }
-            $foreign_hosts[$webhook_host] = $webhook_host;
+            $webhook_identity = $resolver->identity($webhook->url());
+            if ($webhook_identity === '') {
+                continue;
+            }
+            $foreign_targets[$webhook_identity] = $webhook_identity;
         }
-        if (array() === $foreign_hosts) {
+        if ($foreign_targets === array()) {
             return $this->bool_to_html(\false);
         }
         return sprintf('<mark class="error"><span class="dashicons dashicons-warning"></span> %s</mark>', esc_html(sprintf(
-            /* translators: 1: host(s) receiving the webhooks, 2: this site's host. */
+            /* translators: 1: host(s) and path(s) receiving the webhooks, 2: this site's own webhook host and path. */
             __('Delivered to %1$s (this site: %2$s)', 'woocommerce-paypal-payments'),
-            implode(', ', $foreign_hosts),
-            $site_host
+            implode(', ', $foreign_targets),
+            $resolver->own_identity()
         )));
-    }
-    /**
-     * Extracts the lower-cased host from a URL, or an empty string when it cannot be parsed.
-     *
-     * @param string $url The URL to extract the host from.
-     * @return string
-     */
-    private function normalized_host(string $url): string
-    {
-        $host = wp_parse_url($url, \PHP_URL_HOST);
-        return is_string($host) ? strtolower($host) : '';
     }
 }

@@ -11,7 +11,9 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\InvoicePrefixGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
@@ -53,7 +55,7 @@ class PurchaseUnitFactory
     /**
      * The Prefix.
      *
-     * @var string
+     * @var InvoicePrefixGetter
      */
     private $prefix;
     /**
@@ -68,7 +70,7 @@ class PurchaseUnitFactory
      * @var PurchaseUnitSanitizer|null
      */
     private $sanitizer;
-    public function __construct(\WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory $amount_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory $item_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory $shipping_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory $payments_factory, PaymentLevelHelper $payment_level_helper, PaymentLevelEligibility $payment_level_eligibility, SettingsProvider $settings, string $prefix = 'WC-', string $soft_descriptor = '', ?PurchaseUnitSanitizer $sanitizer = null)
+    public function __construct(\WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory $amount_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory $item_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory $shipping_factory, \WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory $payments_factory, PaymentLevelHelper $payment_level_helper, PaymentLevelEligibility $payment_level_eligibility, SettingsProvider $settings, InvoicePrefixGetter $prefix, string $soft_descriptor = '', ?PurchaseUnitSanitizer $sanitizer = null)
     {
         $this->amount_factory = $amount_factory;
         $this->item_factory = $item_factory;
@@ -102,7 +104,7 @@ class PurchaseUnitFactory
         $reference_id = 'default';
         $description = '';
         $custom_id = (string) $order->get_id();
-        $invoice_id = $this->prefix . $order->get_order_number();
+        $invoice_id = $this->prefix->get() . $order->get_order_number();
         $soft_descriptor = $this->sanitize_soft_descriptor($this->soft_descriptor);
         $payment_level = null;
         $payment_method = !empty($payment_method) ? $payment_method : $order->get_payment_method();
@@ -140,7 +142,11 @@ class PurchaseUnitFactory
             $shipping = $this->shipping_factory->from_wc_customer(\WC()->customer, $with_shipping_options);
             $shipping_address = $shipping->address();
             if (!$shipping_address || !$this->can_use_shipping_address($shipping_address)) {
-                $shipping = null;
+                // GET_FROM_FILE: PayPal withholds the street until after approval, so the address
+                // stays unusable for the whole flow. The options must survive it, or the order
+                // carries no shipping method to select. The result is shipping data with options
+                // and no address, which every consumer must tolerate.
+                $shipping = $shipping->options() ? new Shipping($shipping->name(), null, null, null, $shipping->options()) : null;
             }
         }
         $reference_id = 'default';

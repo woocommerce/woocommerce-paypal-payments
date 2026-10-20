@@ -34,6 +34,11 @@ class PayLaterBlockRenderer
             $processor = new \WP_HTML_Tag_Processor($html);
             if ($processor->next_tag('div')) {
                 $layout = $attributes['layout'] ?? 'text';
+                // Coerced, not migrated, so flag-off restores the banner. The flex
+                // branch omits `data-pp-style-logo-type`, which v6 keys on.
+                if (\WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule::v6_owns_current_page($c)) {
+                    $layout = 'text';
+                }
                 if ('flex' === $layout) {
                     $processor->set_attribute('data-pp-style-layout', 'flex');
                     $processor->set_attribute('data-pp-style-color', esc_attr($attributes['flexColor'] ?? ''));

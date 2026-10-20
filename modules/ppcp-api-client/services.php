@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\ResolvingBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ClientCredentials;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
@@ -63,10 +64,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ApiHostResolver;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\InvoicePrefixGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
@@ -97,6 +100,17 @@ return array(
             return (string) $container->get('api.sandbox-host');
         }
         return (string) $container->get('api.production-host');
+    },
+    'api.host-resolver' => static function (ContainerInterface $container): ApiHostResolver {
+        return new ApiHostResolver($container->get('settings.connection-state'));
+    },
+    /**
+     * Scoped the same way as api.host-resolver; see ResolvingBearer's class
+     * docblock for the rationale. The shared api.bearer service below is
+     * intentionally left untouched.
+     */
+    'api.bearer-resolver' => static function (ContainerInterface $container): ResolvingBearer {
+        return new ResolvingBearer($container->get('settings.connection-state'), $container->get('api.paypal-bearer-cache'), $container->get('api.host-resolver'), $container->get('api.key'), $container->get('api.secret'), $container->get('woocommerce.logger.woocommerce'), $container->get('settings.settings-provider'), $container->get('api.token-rate-limiter'));
     },
     'api.paypal-host' => function (ContainerInterface $container): string {
         return PAYPAL_API_URL;
@@ -129,15 +143,8 @@ return array(
     'api.secret' => static function (): string {
         return '';
     },
-    'api.prefix' => static function (): string {
-        return 'WC-';
-    },
-    /**
-     * The prefix for fabricated vault customer IDs.
-     */
-    'api.customer-prefix' => static function (ContainerInterface $container): string {
-        $prefix = $container->get('api.prefix');
-        return $prefix ? $prefix : CustomerRepository::FALLBACK_PREFIX;
+    'api.prefix' => static function (ContainerInterface $container): InvoicePrefixGetter {
+        return new InvoicePrefixGetter($container->get('settings.settings-provider'));
     },
     'api.bearer' => static function (ContainerInterface $container): Bearer {
         $is_connected = $container->get('settings.flag.is-connected');
@@ -179,7 +186,7 @@ return array(
         return new PaymentTokensEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'));
     },
     'api.endpoint.webhook' => static function (ContainerInterface $container): WebhookEndpoint {
-        return new WebhookEndpoint($container->get('api.host'), $container->get('api.bearer'), $container->get('api.factory.webhook'), $container->get('api.factory.webhook-event'), $container->get('woocommerce.logger.woocommerce'));
+        return new WebhookEndpoint($container->get('api.host-resolver'), $container->get('api.bearer-resolver'), $container->get('api.factory.webhook'), $container->get('api.factory.webhook-event'), $container->get('woocommerce.logger.woocommerce'));
     },
     'api.endpoint.partner-referrals' => static function (ContainerInterface $container): PartnerReferrals {
         return new PartnerReferrals($container->get('api.host'), $container->get('api.bearer'), $container->get('woocommerce.logger.woocommerce'));
@@ -252,7 +259,7 @@ return array(
         return new PayeeRepository($merchant_email, $merchant_id);
     },
     'api.repository.customer' => static function (ContainerInterface $container): CustomerRepository {
-        $prefix = $container->get('api.customer-prefix');
+        $prefix = $container->get('api.prefix');
         return new CustomerRepository($prefix);
     },
     'api.repository.order' => static function (ContainerInterface $container): OrderRepository {

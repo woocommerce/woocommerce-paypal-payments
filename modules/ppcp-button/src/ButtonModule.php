@@ -12,18 +12,16 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
-use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
-use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -108,36 +106,9 @@ class ButtonModule implements ServiceModule, ExecutableModule
              */
             $endpoint->handle_request();
         });
-        add_action('wc_ajax_' . ChangeCartEndpoint::ENDPOINT, static function () use ($container) {
-            $endpoint = $container->get('button.endpoint.change-cart');
-            /**
-             * The Change Cart Endpoint.
-             *
-             * @var ChangeCartEndpoint $endpoint
-             */
-            $endpoint->handle_request();
-        });
-        add_action('wc_ajax_' . ApproveOrderEndpoint::ENDPOINT, static function () use ($container) {
-            $endpoint = $container->get('button.endpoint.approve-order');
-            /**
-             * The Approve Order Endpoint.
-             *
-             * @var ApproveOrderEndpoint $endpoint
-             */
-            $endpoint->handle_request();
-        });
         add_action('wc_ajax_' . ApproveSubscriptionEndpoint::ENDPOINT, static function () use ($container) {
             $endpoint = $container->get('button.endpoint.approve-subscription');
             assert($endpoint instanceof ApproveSubscriptionEndpoint);
-            $endpoint->handle_request();
-        });
-        add_action('wc_ajax_' . CreateOrderEndpoint::ENDPOINT, static function () use ($container) {
-            $endpoint = $container->get('button.endpoint.create-order');
-            /**
-             * The Create Order Endpoint.
-             *
-             * @var CreateOrderEndpoint $endpoint
-             */
             $endpoint->handle_request();
         });
         add_action('wc_ajax_' . SaveCheckoutFormEndpoint::ENDPOINT, static function () use ($container) {

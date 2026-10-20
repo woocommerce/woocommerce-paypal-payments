@@ -50,6 +50,16 @@ class GooglepayModule implements ServiceModule, ExecutableModule
             $apm_status->clear();
         });
         add_action('init', static function () use ($c) {
+            /*
+             * Everything below renders notices, assets and buttons, none of
+             * which a cron request can use, while resolving availability costs
+             * a merchant-integrations API call. The payment gateway itself is
+             * registered elsewhere, so skipping this leaves order processing
+             * during cron untouched.
+             */
+            if (wp_doing_cron()) {
+                return;
+            }
             // Check if the module is applicable, correct country, currency, ... etc.
             if (!$c->get('googlepay.eligible')) {
                 return;
@@ -85,8 +95,14 @@ class GooglepayModule implements ServiceModule, ExecutableModule
                  * Checkout page, but no PPCP scripts were loaded. Most likely in continuation mode.
                  * Need to enqueue some Google Pay scripts to populate the billing form with details
                  * provided by Google Pay.
+                 *
+                 * Unless the v6 SDK owns this page. There, "no PPCP scripts" is the
+                 * normal state rather than continuation, and v6 renders Google Pay
+                 * itself: enqueuing here too would run this stack against an empty
+                 * config and let both SDKs claim window.paypal. Migration-phase
+                 * guard, see ppcp-sdk-v6/extensions.php.
                  */
-                if (is_checkout()) {
+                if (is_checkout() && !self::v6_owns_current_page($c)) {
                     $button->enqueue();
                 }
                 if (has_block('woocommerce/checkout') || has_block('woocommerce/cart')) {
@@ -182,7 +198,12 @@ class GooglepayModule implements ServiceModule, ExecutableModule
             }
             return $methods;
         });
-        add_action('wp', static function () {
+        add_action('wp', static function () use ($c) {
+            // v6 prints its own Google Pay container on the pages it owns;
+            // two containers would race for the same button.
+            if (self::v6_owns_current_page($c)) {
+                return;
+            }
             $checkout_hook = (string) apply_filters('woocommerce_paypal_payments_checkout_button_renderer_hook', 'woocommerce_review_order_after_payment');
             add_action($checkout_hook, static function () {
                 echo '<div id="ppc-button-' . esc_attr(\WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway::ID) . '"></div>';
@@ -231,5 +252,22 @@ class GooglepayModule implements ServiceModule, ExecutableModule
             return PropertiesDictionary::map_language($language);
         }, 9999);
         return \true;
+    }
+    /**
+     * Whether the SDK v6 module renders the PayPal stack on the current page.
+     *
+     * That module is feature-flagged and may not be loaded at all, hence the
+     * has() guard.
+     *
+     * @param ContainerInterface $c The container.
+     * @return bool
+     */
+    private static function v6_owns_current_page(ContainerInterface $c): bool
+    {
+        if (!$c->has('sdk-v6.owns-current-page')) {
+            return \false;
+        }
+        $owns_current_page = $c->get('sdk-v6.owns-current-page');
+        return $owns_current_page();
     }
 }

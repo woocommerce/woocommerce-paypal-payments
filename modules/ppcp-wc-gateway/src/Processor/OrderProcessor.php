@@ -175,16 +175,22 @@ class OrderProcessor
     /**
      * Creates a PayPal order for the given WC order.
      *
-     * @param WC_Order $wc_order The WC order.
-     * @param string   $funding_source The funding source (e.g. 'paypal', 'venmo').
+     * @param WC_Order    $wc_order The WC order.
+     * @param string      $funding_source The funding source (e.g. 'paypal', 'venmo').
+     * @param string|null $landing_page An ExperienceContext::LANDING_PAGE_* value to
+     *                                  use instead of the merchant's setting.
      * @return Order
      * @throws RuntimeException If order creation fails.
      */
-    public function create_order(WC_Order $wc_order, string $funding_source = 'paypal'): Order
+    public function create_order(WC_Order $wc_order, string $funding_source = 'paypal', ?string $landing_page = null): Order
     {
         $pu = $this->purchase_unit_factory->from_wc_order($wc_order);
         $shipping_preference = $this->shipping_preference_factory->from_state($pu, 'checkout');
-        $order = $this->order_endpoint->create(array($pu), $shipping_preference, $this->payer_factory->from_wc_order($wc_order), $wc_order->get_payment_method(), array('funding_source' => $funding_source), new PaymentSource($funding_source, (object) array('experience_context' => $this->experience_context_builder->with_default_paypal_config($shipping_preference, ExperienceContext::USER_ACTION_PAY_NOW)->build()->to_array())));
+        $experience_context = $this->experience_context_builder->with_default_paypal_config($shipping_preference, ExperienceContext::USER_ACTION_PAY_NOW);
+        if ($landing_page) {
+            $experience_context = $experience_context->with_landing_page($landing_page);
+        }
+        $order = $this->order_endpoint->create(array($pu), $shipping_preference, $this->payer_factory->from_wc_order($wc_order), $wc_order->get_payment_method(), array('funding_source' => $funding_source), new PaymentSource($funding_source, (object) array('experience_context' => $experience_context->build()->to_array())));
         return $order;
     }
     /**

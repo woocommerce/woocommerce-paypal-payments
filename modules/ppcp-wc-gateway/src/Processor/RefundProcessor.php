@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundCapture;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\InvoicePrefixGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -54,7 +55,7 @@ class RefundProcessor
     /**
      * The prefix.
      *
-     * @var string
+     * @var InvoicePrefixGetter
      */
     private $prefix;
     /**
@@ -66,13 +67,13 @@ class RefundProcessor
     /**
      * RefundProcessor constructor.
      *
-     * @param OrderEndpoint     $order_endpoint The order endpoint.
-     * @param PaymentsEndpoint  $payments_endpoint The payments endpoint.
-     * @param RefundFeesUpdater $refund_fees_updater The refund fees updater.
-     * @param string            $prefix The prefix.
-     * @param LoggerInterface   $logger The logger.
+     * @param OrderEndpoint       $order_endpoint The order endpoint.
+     * @param PaymentsEndpoint    $payments_endpoint The payments endpoint.
+     * @param RefundFeesUpdater   $refund_fees_updater The refund fees updater.
+     * @param InvoicePrefixGetter $prefix The prefix.
+     * @param LoggerInterface     $logger The logger.
      */
-    public function __construct(OrderEndpoint $order_endpoint, PaymentsEndpoint $payments_endpoint, RefundFeesUpdater $refund_fees_updater, string $prefix, LoggerInterface $logger)
+    public function __construct(OrderEndpoint $order_endpoint, PaymentsEndpoint $payments_endpoint, RefundFeesUpdater $refund_fees_updater, InvoicePrefixGetter $prefix, LoggerInterface $logger)
     {
         $this->order_endpoint = $order_endpoint;
         $this->payments_endpoint = $payments_endpoint;
@@ -145,7 +146,7 @@ class RefundProcessor
             throw new RuntimeException('No capture.');
         }
         $capture = $captures[0];
-        $refund = new RefundCapture($capture, $capture->invoice_id() ?: $this->prefix . $wc_order->get_order_number(), $reason, new Amount(new Money($amount, $wc_order->get_currency())));
+        $refund = new RefundCapture($capture, $capture->invoice_id() ?: $this->prefix->get() . $wc_order->get_order_number(), $reason, new Amount(new Money($amount, $wc_order->get_currency())));
         return $this->payments_endpoint->refund($refund);
     }
     /**

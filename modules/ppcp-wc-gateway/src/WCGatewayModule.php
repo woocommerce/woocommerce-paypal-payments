@@ -12,6 +12,7 @@ use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use Throwable;
 use WC_Order;
+use WC_Session;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
@@ -46,6 +47,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\ResumedOrderShippingRestorer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
@@ -90,6 +92,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
         $this->register_block_express_payment_method_handler($c);
         $this->register_columns($c);
         $this->register_checkout_paypal_address_preset($c);
+        $this->register_resumed_order_shipping_restorer($c);
         $this->register_wc_tasks($c);
         $this->register_woo_inbox_notes($c);
         $this->register_void_button($c);
@@ -522,6 +525,29 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
         }, 10, 2);
     }
     /**
+     * Registers the restorer that keeps the shipping line item of a resumed order.
+     *
+     * WooCommerce wipes and rebuilds a resumed order's line items; the rebuild can leave a
+     * non-zero shipping total with no shipping line item behind it. The restorer snapshots
+     * the items before they are wiped and puts them back when that happens.
+     *
+     * @param ContainerInterface $container The container.
+     * @return void
+     */
+    private function register_resumed_order_shipping_restorer(ContainerInterface $container): void
+    {
+        add_action('woocommerce_resume_order', static function ($order_id) use ($container): void {
+            $restorer = $container->get('wcgateway.helper.resumed-order-shipping-restorer');
+            assert($restorer instanceof ResumedOrderShippingRestorer);
+            $restorer->snapshot((int) $order_id);
+        }, 10, 1);
+        add_action('woocommerce_checkout_order_processed', static function ($order_id) use ($container): void {
+            $restorer = $container->get('wcgateway.helper.resumed-order-shipping-restorer');
+            assert($restorer instanceof ResumedOrderShippingRestorer);
+            $restorer->restore((int) $order_id);
+        }, 10, 1);
+    }
+    /**
      * Registers the tasks inside "Things to do next" WC section.
      *
      * @param ContainerInterface $container The container.
@@ -652,7 +678,11 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
      */
     private function register_block_express_payment_method_handler(ContainerInterface $c): void
     {
-        add_action('woocommerce_rest_checkout_process_payment_with_context', function ($context) use ($c): void {
+        // Request-scoped guard for the save listener below: the ID of the WC order this request
+        // routed through PayPal, zero when no such switch happened. Documented in
+        // tests/integration/PHPUnit/WcGateway/BlockExpressPaymentMethodHandlerTest.php.
+        $marked_order_id = 0;
+        add_action('woocommerce_rest_checkout_process_payment_with_context', function ($context) use ($c, &$marked_order_id): void {
             $payment_data = (array) ($context->payment_data ?? array());
             if (empty($payment_data['paypal_order_id'])) {
                 return;
@@ -672,11 +702,15 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
                 $funding_source_renderer = $c->get('wcgateway.funding-source.renderer');
                 $funding_source = $payment_data['funding_source'] ?: ($session_handler->funding_source() ?: 'paypal');
                 $order->set_payment_method_title($funding_source_renderer->render_name($funding_source));
+                $marked_order_id = $order->get_id();
                 $order->save();
             }
         }, 100, 1);
-        add_action('woocommerce_before_order_object_save', function ($order): void {
+        add_action('woocommerce_before_order_object_save', function ($order) use (&$marked_order_id): void {
             if (!$order instanceof WC_Order) {
+                return;
+            }
+            if (!$marked_order_id || $order->get_id() !== $marked_order_id) {
                 return;
             }
             if (!$order->get_meta(PayPalGateway::ORDER_ID_META_KEY)) {
@@ -686,11 +720,29 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
             if ($payment_method && strpos($payment_method, 'ppcp-') === 0) {
                 return;
             }
-            if ($order->get_payment_method() === CreditCardGateway::ID) {
+            if (!$this->shopper_is_paying_with_ppcp()) {
                 return;
             }
             $order->set_payment_method(PayPalGateway::ID);
         }, 10, 1);
+    }
+    /**
+     * Whether the shopper's session still says they are paying with one of our gateways.
+     *
+     * The order meta the caller checks outlives the attempt that wrote it, so on its own
+     * it cannot tell a payment in flight from one the shopper abandoned before choosing
+     * another gateway. Asking the session narrows the override to the first case: a
+     * shopper who has since selected another gateway keeps that choice, and so does every
+     * context with no shopper session at all - the admin order screen, cron, webhooks.
+     */
+    private function shopper_is_paying_with_ppcp(): bool
+    {
+        $session = WC()->session;
+        if (!$session instanceof WC_Session) {
+            return \false;
+        }
+        $chosen = $session->get('chosen_payment_method');
+        return is_string($chosen) && 0 === strpos($chosen, 'ppcp-');
     }
     /**
      * Inserts custom fields into the order-detail view.

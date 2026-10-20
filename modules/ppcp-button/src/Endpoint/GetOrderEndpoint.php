@@ -15,17 +15,18 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 /**
  * Class GetOrderEndpoint
  */
 class GetOrderEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface
 {
     public const ENDPOINT = 'ppc-get-order';
-    private \WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data;
+    private RequestData $request_data;
     private OrderEndpoint $api_endpoint;
     private LoggerInterface $logger;
     private CartDataTransientStorage $cart_data_storage;
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, OrderEndpoint $order_endpoint, LoggerInterface $logger, CartDataTransientStorage $cart_data_storage)
+    public function __construct(RequestData $request_data, OrderEndpoint $order_endpoint, LoggerInterface $logger, CartDataTransientStorage $cart_data_storage)
     {
         $this->request_data = $request_data;
         $this->api_endpoint = $order_endpoint;

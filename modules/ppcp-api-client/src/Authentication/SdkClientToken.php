@@ -19,12 +19,15 @@ use WP_Error;
 class SdkClientToken
 {
     use RequestTrait;
-    const CACHE_KEY = 'sdk-client-token-key';
+    public const CACHE_KEY = 'sdk-client-token-key';
     /**
      * The rate-limiter scope key for the SDK client token.
      */
-    const RATE_LIMIT_SCOPE = 'sdk-client-token';
+    public const RATE_LIMIT_SCOPE = 'sdk-client-token';
     private string $host;
+    /**
+     * @phpstan-ignore property.onlyWritten (Read by RequestTrait.)
+     */
     private LoggerInterface $logger;
     private \WooCommerce\PayPalCommerce\ApiClient\Authentication\ClientCredentials $client_credentials;
     private Cache $cache;
@@ -80,6 +83,10 @@ class SdkClientToken
         }
         $access_token = $json->access_token;
         $expires_in = (int) $json->expires_in;
+        // Stop serving the token shortly before it expires, so the SDK can still use it.
+        if ($expires_in > 150) {
+            $expires_in -= 30;
+        }
         $this->cache->set($cache_key, $access_token, $expires_in);
         $this->rate_limiter->clear(self::RATE_LIMIT_SCOPE);
         return $access_token;

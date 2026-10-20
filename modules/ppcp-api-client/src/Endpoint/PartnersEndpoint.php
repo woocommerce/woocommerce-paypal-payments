@@ -76,6 +76,16 @@ class PartnersEndpoint
     public const SELLER_STATUS_CACHE_TTL = 600;
     // 10 minutes.
     /**
+     * How long to stop retrying after a failed seller status request, in seconds.
+     *
+     * Deliberately longer than the success cache: while WP-Cron runs on a period
+     * of its own (15 minutes by default), a back-off shorter than that interval
+     * lets every single cron run through to the merchant-integrations endpoint,
+     * so a persistently failing account is polled indefinitely.
+     */
+    public const SELLER_STATUS_FAILURE_BACKOFF = 3600;
+    // 1 hour.
+    /**
      * Cache key for the seller status response.
      */
     public const SELLER_STATUS_CACHE_KEY = 'seller_status';
@@ -125,11 +135,10 @@ class PartnersEndpoint
         /*
          * Back off if a recent failure was registered, to avoid hammering the
          * merchant-integrations endpoint on persistent errors (e.g. a 403). The
-         * window matches the success cache TTL, and is anchored to the last real
-         * API failure since add_failure() is only written in
-         * fetch_seller_status_from_api() on a non-200 response.
+         * window is anchored to the last real API failure registered in
+         * fetch_seller_status_from_api().
          */
-        if ($this->failure_registry->has_failure_in_timeframe(FailureRegistry::SELLER_STATUS_KEY, self::SELLER_STATUS_CACHE_TTL)) {
+        if ($this->failure_registry->has_failure_in_timeframe(FailureRegistry::SELLER_STATUS_KEY, self::SELLER_STATUS_FAILURE_BACKOFF)) {
             return $this->handle_seller_status_failure(new RuntimeException('Seller status recently failed; backing off the merchant-integrations endpoint.'));
         }
         try {
@@ -181,6 +190,9 @@ class PartnersEndpoint
         if (is_wp_error($response)) {
             $error = new RuntimeException(__('Could not fetch sellers status.', 'woocommerce-paypal-payments'));
             $this->logger->log('warning', $error->getMessage(), array('args' => $args, 'response' => $response));
+            // A transport error (DNS, timeout, TLS) is as worth backing off from
+            // as a rejected response, and is retried on every request otherwise.
+            $this->failure_registry->add_failure(FailureRegistry::SELLER_STATUS_KEY);
             throw $error;
         }
         $json = json_decode(wp_remote_retrieve_body($response));

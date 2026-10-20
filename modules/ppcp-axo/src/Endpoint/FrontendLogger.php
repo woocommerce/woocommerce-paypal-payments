@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Axo\Endpoint;
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
-use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 /**
  * Class FrontendLoggerEndpoint

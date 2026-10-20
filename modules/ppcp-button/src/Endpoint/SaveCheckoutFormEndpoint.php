@@ -12,6 +12,7 @@ use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 /**
  * Class SaveCheckoutFormEndpoint
  */
@@ -43,7 +44,7 @@ class SaveCheckoutFormEndpoint implements \WooCommerce\PayPalCommerce\Button\End
      * @param CheckoutFormSaver $checkout_form_saver The checkout form saver.
      * @param LoggerInterface   $logger The logger.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, CheckoutFormSaver $checkout_form_saver, LoggerInterface $logger)
+    public function __construct(RequestData $request_data, CheckoutFormSaver $checkout_form_saver, LoggerInterface $logger)
     {
         $this->request_data = $request_data;
         $this->checkout_form_saver = $checkout_form_saver;

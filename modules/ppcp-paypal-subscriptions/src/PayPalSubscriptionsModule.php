@@ -9,7 +9,6 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayPalSubscriptions;
 
 use Exception;
-use WC_Order;
 use WC_Product;
 use WC_Product_Subscription_Variation;
 use WC_Subscription;
@@ -402,14 +401,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule
              * @psalm-suppress MissingClosureParamType
              */
             function (string $post_type, $post_or_order_object) use ($c) {
-                if (!function_exists('wcs_get_subscription')) {
-                    return;
-                }
-                $order = $post_or_order_object instanceof WP_Post ? wc_get_order($post_or_order_object->ID) : $post_or_order_object;
-                if (!$order instanceof WC_Order) {
-                    return;
-                }
-                $subscription = wcs_get_subscription($order->get_id());
+                $subscription = $post_or_order_object instanceof WP_Post ? wc_get_order($post_or_order_object->ID) : $post_or_order_object;
                 if (!$subscription instanceof WC_Subscription) {
                     return;
                 }
@@ -637,20 +629,15 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule
      * Gets the PayPal Subscriptions mode.
      *
      * @param ContainerInterface $container The service container.
-     * @return string The subscriptions mode: 'vaulting_api', 'subscriptions_api', 'disable_paypal_subscriptions', or empty string if WC Subscriptions is not active.
+     * @return string One of the SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_* constants,
+     *                or an empty string when WooCommerce Subscriptions is not active.
      */
     private function get_subscriptions_mode(ContainerInterface $container): string
     {
         $subscription_helper = $container->get('wc-subscriptions.helper');
         assert($subscription_helper instanceof SubscriptionHelper);
-        if (!$subscription_helper->plugin_is_active()) {
-            return '';
-        }
         $settings_provider = $container->get('settings.settings-provider');
         assert($settings_provider instanceof SettingsProvider);
-        $vaulting = $settings_provider->save_paypal_and_venmo();
-        $subscription_mode_value = $vaulting ? 'vaulting_api' : 'subscriptions_api';
-        $subscription_mode_disabled = (bool) apply_filters('woocommerce_paypal_payments_subscription_mode_disabled', \false);
-        return $subscription_mode_disabled ? 'disable_paypal_subscriptions' : $subscription_mode_value;
+        return $subscription_helper->resolve_subscription_mode($settings_provider);
     }
 }

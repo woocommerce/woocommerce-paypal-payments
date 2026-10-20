@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\FreeTrialVaultReturnEndpoint;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsApplies;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -48,12 +49,18 @@ return array(
         return new CreateSetupToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'));
     },
     'save-payment-methods.endpoint.create-payment-token' => static function (ContainerInterface $container): CreatePaymentToken {
-        return new CreatePaymentToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'));
+        return new CreatePaymentToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wc-subscriptions.free-trial-subscription-helper'));
     },
     'save-payment-methods.endpoint.create-payment-token-for-guest' => static function (ContainerInterface $container): CreatePaymentTokenForGuest {
         return new CreatePaymentTokenForGuest($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'));
     },
     'save-payment-methods.service.payment-method-tokens-checker' => static function (ContainerInterface $container): PaymentMethodTokensChecker {
         return new PaymentMethodTokensChecker($container->get('api.endpoint.payment-tokens'));
+    },
+    'save-payment-methods.free-trial-vault-redirect' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\SavePaymentMethods\FreeTrialVaultRedirect {
+        return new \WooCommerce\PayPalCommerce\SavePaymentMethods\FreeTrialVaultRedirect($container->get('api.endpoint.payment-method-tokens'), $container->get('woocommerce.logger.woocommerce'));
+    },
+    'save-payment-methods.endpoint.free-trial-vault-return' => static function (ContainerInterface $container): FreeTrialVaultReturnEndpoint {
+        return new FreeTrialVaultReturnEndpoint($container->get('api.endpoint.payment-method-tokens'), $container->get('woocommerce.logger.woocommerce'));
     },
 );

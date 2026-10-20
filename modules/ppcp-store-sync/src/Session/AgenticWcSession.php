@@ -13,6 +13,9 @@ namespace WooCommerce\PayPalCommerce\StoreSync\Session;
 use WC_Session_Handler;
 /**
  * Custom session handler for Agentic Commerce.
+ *
+ * Sessions are addressed by cart ID instead of by cookie, so every cookie-driven
+ * part of the parent handler stays inactive.
  */
 class AgenticWcSession extends WC_Session_Handler
 {
@@ -29,10 +32,10 @@ class AgenticWcSession extends WC_Session_Handler
         if (!$value) {
             return \false;
         }
-        // Protected properties - accessible in subclass without reflection.
         $this->_customer_id = $session_id;
         $this->_data = maybe_unserialize($value);
         $this->_has_cookie = \true;
+        $this->set_session_expiration();
         return \true;
     }
     /**
@@ -45,14 +48,20 @@ class AgenticWcSession extends WC_Session_Handler
         $this->_customer_id = $session_id;
         $this->_data = array();
         $this->_has_cookie = \true;
+        $this->set_session_expiration();
     }
     /**
-     * Initialize session cookie.
-     *
-     * We override this to do nothing since we load sessions manually via load_session_by_id().
+     * Never reads a session cookie: sessions are loaded by ID, on demand.
      */
     public function init_session_cookie(): void
     {
         // No-op - sessions are loaded on-demand.
+    }
+    /**
+     * Never registers the global WC session hooks, which would save this cart
+     * session on shutdown and write its ID into the shopper's session cookie.
+     */
+    public function init(): void
+    {
     }
 }

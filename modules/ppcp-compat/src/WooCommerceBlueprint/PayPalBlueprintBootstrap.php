@@ -14,11 +14,17 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 class PayPalBlueprintBootstrap
 {
     /**
-     * PayPal Settings Exporter instance.
+     * PayPal Settings Exporter instance, without connection details.
      *
      * @var PayPalSettingsExporter
      */
     private \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter $exporter;
+    /**
+     * PayPal Settings Exporter instance, including connection details.
+     *
+     * @var PayPalSettingsExporter
+     */
+    private \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter $exporter_with_connection;
     /**
      * PayPal Settings Importer instance.
      *
@@ -28,12 +34,14 @@ class PayPalBlueprintBootstrap
     /**
      * Constructor.
      *
-     * @param PayPalSettingsExporter $exporter PayPal settings exporter.
-     * @param PayPalSettingsImporter $importer PayPal settings importer.
+     * @param PayPalSettingsExporter $exporter                 Default exporter, without connection details.
+     * @param PayPalSettingsExporter $exporter_with_connection Opt-in exporter, including connection details.
+     * @param PayPalSettingsImporter $importer                 PayPal settings importer.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter $exporter, \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsImporter $importer)
+    public function __construct(\WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter $exporter, \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter $exporter_with_connection, \WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsImporter $importer)
     {
         $this->exporter = $exporter;
+        $this->exporter_with_connection = $exporter_with_connection;
         $this->importer = $importer;
     }
     /**
@@ -64,6 +72,7 @@ class PayPalBlueprintBootstrap
     public function register_exporters(array $exporters): array
     {
         $exporters[] = $this->exporter;
+        $exporters[] = $this->exporter_with_connection;
         return $exporters;
     }
     /**

@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenVenmo;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
@@ -163,7 +164,6 @@ class PayPalGateway extends \WC_Payment_Gateway
      * @param LoggerInterface          $logger The logger.
      * @param string                   $api_shop_country The api shop country.
      * @param callable(string):string  $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
-     * @param string                   $place_order_button_text The text for the standard "Place order" button.
      * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
      * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens.
      * @param AssetGetter              $asset_getter
@@ -172,7 +172,7 @@ class PayPalGateway extends \WC_Payment_Gateway
      * @param OrderEndpoint            $order_endpoint The order endpoint.
      * @param Context                  $context The context helper.
      */
-    public function __construct(FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, SettingsProvider $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, Environment $environment, LoggerInterface $logger, string $api_shop_country, callable $paypal_checkout_url_factory, string $place_order_button_text, PaymentTokensEndpoint $payment_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled, CapturePayPalPayment $capture_paypal_payment, OrderEndpoint $order_endpoint, Context $context)
+    public function __construct(FundingSourceRenderer $funding_source_renderer, OrderProcessor $order_processor, SettingsProvider $config, SessionHandler $session_handler, RefundProcessor $refund_processor, bool $is_connected, \WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider $transaction_url_provider, SubscriptionHelper $subscription_helper, Environment $environment, LoggerInterface $logger, string $api_shop_country, callable $paypal_checkout_url_factory, PaymentTokensEndpoint $payment_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, AssetGetter $asset_getter, bool $admin_settings_enabled, CapturePayPalPayment $capture_paypal_payment, OrderEndpoint $order_endpoint, Context $context)
     {
         $this->id = self::ID;
         $this->funding_source_renderer = $funding_source_renderer;
@@ -187,7 +187,6 @@ class PayPalGateway extends \WC_Payment_Gateway
         $this->logger = $logger;
         $this->api_shop_country = $api_shop_country;
         $this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
-        $this->order_button_text = $place_order_button_text;
         $this->payment_tokens_endpoint = $payment_tokens_endpoint;
         $this->wc_payment_tokens = $wc_payment_tokens;
         $this->icon = apply_filters('woocommerce_paypal_payments_paypal_gateway_icon', $asset_getter->get_static_asset_url('images/paypal.svg'));
@@ -401,6 +400,16 @@ class PayPalGateway extends \WC_Payment_Gateway
                 $wc_order->payment_complete();
                 return $this->handle_payment_success($wc_order);
             }
+            // Trust the local token the save-payment flow just stored: PayPal's
+            // payment-tokens list is eventually consistent and can omit a freshly
+            // vaulted account, wrongly failing the order with the error below.
+            $wc_tokens = WC_Payment_Tokens::get_customer_tokens($wc_order->get_customer_id(), self::ID);
+            foreach ($wc_tokens as $wc_token) {
+                if ($wc_token instanceof PaymentTokenPayPal || $wc_token instanceof PaymentTokenVenmo) {
+                    $wc_order->payment_complete();
+                    return $this->handle_payment_success($wc_order);
+                }
+            }
             $customer_id = get_user_meta($wc_order->get_customer_id(), '_ppcp_target_customer_id', \true);
             if ($customer_id) {
                 try {
@@ -419,6 +428,20 @@ class PayPalGateway extends \WC_Payment_Gateway
                         return $this->handle_payment_success($wc_order);
                     }
                 }
+            }
+            /**
+             * Filters the PayPal vault-approval redirect URL for a first-time
+             * free-trial buyer who has no saved account yet (the native "Place order"
+             * path). A non-empty URL redirects the buyer to PayPal to approve saving
+             * their account; the return endpoint then stores the token and completes
+             * this order. An empty string keeps the "No saved PayPal account." failure.
+             *
+             * @param string   $redirect_url The redirect URL (empty by default).
+             * @param WC_Order $wc_order     The pending WC order.
+             */
+            $vault_redirect_url = apply_filters('woocommerce_paypal_payments_free_trial_vault_redirect_url', '', $wc_order);
+            if (is_string($vault_redirect_url) && '' !== $vault_redirect_url) {
+                return array('result' => 'success', 'redirect' => $vault_redirect_url);
             }
             return $this->handle_payment_failure($wc_order, new Exception('No saved PayPal account.'));
         }

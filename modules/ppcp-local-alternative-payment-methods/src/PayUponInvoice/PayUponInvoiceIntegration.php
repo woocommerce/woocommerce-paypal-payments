@@ -158,7 +158,7 @@ class PayUponInvoiceIntegration
                     $checkout_fields = WC()->checkout()->get_checkout_fields();
                     $checkout_phone_required = $checkout_fields['billing']['billing_phone']['required'] ?? \false;
                     if (!array_key_exists('billing_phone', $checkout_fields['billing']) || $checkout_phone_required === \false) {
-                        woocommerce_form_field('billing_phone', array(
+                        woocommerce_form_field(\WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::PHONE_FIELD_ID, array(
                             // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
                             'label' => __('Phone', 'woocommerce'),
                             'type' => 'tel',
@@ -208,9 +208,7 @@ class PayUponInvoiceIntegration
                 if ($birth_date && is_string($birth_date) && !$this->checkout_helper->validate_birth_date($birth_date) || $birth_date === '') {
                     $errors->add('validation', __('Invalid birth date.', 'woocommerce-paypal-payments'));
                 }
-                // phpcs:ignore WordPress.Security.NonceVerification.Missing
-                $national_number = wc_clean(wp_unslash($_POST['billing_phone'] ?? ''));
-                $national_number = is_string($national_number) ? $national_number : '';
+                $national_number = $this->checkout_helper->submitted_phone(\WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway::PHONE_FIELD_ID, 'billing_phone');
                 if (!$national_number) {
                     $errors->add('validation', __('Phone field cannot be empty.', 'woocommerce-paypal-payments'));
                 }

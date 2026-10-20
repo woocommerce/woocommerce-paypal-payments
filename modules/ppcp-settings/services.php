@@ -200,7 +200,7 @@ return array(
         return new LoginLinkRestEndpoint($container->get('settings.service.connection-url-generator'), $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.rest.webhooks' => static function (ContainerInterface $container): WebhookSettingsEndpoint {
-        return new WebhookSettingsEndpoint($container->get('api.endpoint.webhook'), $container->get('webhook.registrar'), $container->get('webhook.status.simulation'));
+        return new WebhookSettingsEndpoint($container->get('api.endpoint.webhook'), $container->get('webhook.registrar'), $container->get('webhook.status.simulation'), $container->get('webhook.own-resolver'));
     },
     'settings.rest.pay_later_messaging' => static function (ContainerInterface $container): PayLaterMessagingEndpoint {
         return new PayLaterMessagingEndpoint($container->get('settings.data.paylater-messaging-settings'), $container->get('paylater-configurator.endpoint.save-config'));
@@ -252,7 +252,22 @@ return array(
     'settings.service.script-data-handler' => static function (ContainerInterface $container): ScriptDataHandler {
         $check_override = $container->get('settings.migration.bcdc-override-check');
         assert(is_callable($check_override));
-        return new ScriptDataHandler($container->get('settings.asset_getter'), $container->get('paylater-configurator.is-available'), $container->get('wcgateway.store-country'), $container->get('api.partner_merchant_id'), $container->get('wcgateway.wp-paypal-locales-map'), $container->get('api.helper.partner-attribution'), $container->get('settings.settings-provider'), $container->get('api.helpers.paymentLevelEligibility'), $check_override(), $container->get('settings.service.agentic-beta-eligibility'));
+        return new ScriptDataHandler(
+            $container->get('settings.asset_getter'),
+            $container->get('paylater-configurator.is-available'),
+            $container->get('wcgateway.store-country'),
+            $container->get('api.partner_merchant_id'),
+            $container->get('wcgateway.wp-paypal-locales-map'),
+            $container->get('api.helper.partner-attribution'),
+            $container->get('settings.settings-provider'),
+            $container->get('api.helpers.paymentLevelEligibility'),
+            $check_override(),
+            $container->get('settings.service.agentic-beta-eligibility'),
+            // The module registers its services only behind its feature flag, so
+            // presence means v6 is active; has() does not instantiate it. Per-page
+            // ownership is moot: one admin screen configures every page.
+            $container->has('sdk-v6.owns-current-page')
+        );
     },
     'settings.service.data-migration' => static fn(ContainerInterface $c): MigrationManager => new MigrationManager($c->get('settings.service.data-migration.general-settings'), $c->get('settings.service.data-migration.settings-tab'), $c->get('settings.service.data-migration.styling'), $c->get('settings.service.data-migration.payment-settings'), $c->get('settings.service.data-migration.fastlane'), $c->get('settings.data.onboarding'), $c->get('woocommerce.logger.woocommerce')),
     'settings.service.data-migration.settings-tab' => static fn(ContainerInterface $c): SettingsTabMigration => new SettingsTabMigration((array) get_option('woocommerce-ppcp-settings', array()), $c->get('settings.data.settings')),
@@ -272,10 +287,19 @@ return array(
         return new TodosDefinition($container->get('settings.service.todos_eligibilities'), $container->get('settings.data.general'), $container->get('settings.data.todos'));
     },
     'settings.data.definition.methods' => static function (ContainerInterface $container): PaymentMethodsDefinition {
-        return new PaymentMethodsDefinition($container->get('settings.data.payment'), $container->get('settings.data.general'), $container->get('axo.checkout-config-notice.raw'), $container->get('axo.incompatible-plugins-notice.raw'));
+        return new PaymentMethodsDefinition(
+            $container->get('settings.data.payment'),
+            $container->get('settings.data.general'),
+            $container->get('axo.checkout-config-notice.raw'),
+            $container->get('axo.incompatible-plugins-notice.raw'),
+            // The module registers its services only behind its feature flag, so
+            // presence means v6 is active; has() does not instantiate it. Per-page
+            // ownership is moot: one admin screen configures every page.
+            $container->has('sdk-v6.owns-current-page')
+        );
     },
     'settings.data.definition.method_dependencies' => static function (ContainerInterface $container): PaymentMethodsDependenciesDefinition {
-        return new PaymentMethodsDependenciesDefinition($container->get('settings.settings-provider'));
+        return new PaymentMethodsDependenciesDefinition();
     },
     'settings.service.pay_later_status' => static function (ContainerInterface $container): array {
         $pay_later_endpoint = $container->get('settings.rest.pay_later_messaging');
@@ -327,7 +351,7 @@ return array(
         );
         $is_working_capital_eligible = $container->get('settings.data.general')->get_merchant_country() === 'US' && $settings_model->get_stay_updated();
         $recaptcha_settings = get_option('woocommerce_ppcp-recaptcha_settings', array());
-        $is_recaptcha_enabled = isset($recaptcha_settings['enabled']) && 'yes' === $recaptcha_settings['enabled'];
+        $is_recaptcha_enabled = wc_string_to_bool($recaptcha_settings['enabled'] ?? 'no');
         /**
          * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.
          * Each parameter determines whether a specific feature should be shown in the Things To Do list.
@@ -428,7 +452,7 @@ return array(
             // Pay with Crypto eligibility.
             FeaturesDefinition::FEATURE_PAY_UPON_INVOICE => $capabilities[FeaturesDefinition::FEATURE_PAY_UPON_INVOICE],
         );
-        return new FeaturesDefinition($container->get('settings.service.features_eligibilities'), $container->get('settings.data.general'), $merchant_capabilities, $container->get('woocommerce.logger.woocommerce'), $container->get('settings.settings-provider'));
+        return new FeaturesDefinition($container->get('settings.service.features_eligibilities'), $container->get('settings.data.general'), $merchant_capabilities, $container->get('woocommerce.logger.woocommerce'));
     },
     'settings.service.features_eligibilities' => static function (ContainerInterface $container): FeaturesEligibilityService {
         $messages_apply = $container->get('button.helper.messages-apply');

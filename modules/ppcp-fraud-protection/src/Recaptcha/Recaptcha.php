@@ -32,19 +32,16 @@ class Recaptcha
     private AssetGetter $asset_getter;
     private string $asset_version;
     private LoggerInterface $logger;
+    /**
+     * Logs the rejected attempts, independently of the plugin-wide logging setting.
+     *
+     * @var LoggerInterface
+     */
+    private LoggerInterface $rejection_logger;
     private PersistentCounter $rejection_counter;
     private SettingsStatus $settings_status;
     private float $last_v3_score = 0;
-    /**
-     * @param RecaptchaIntegration $integration
-     * @param string[]             $payment_methods The methods that require captcha.
-     * @param AssetGetter          $asset_getter
-     * @param string               $asset_version
-     * @param LoggerInterface      $logger
-     * @param PersistentCounter    $rejection_counter
-     * @param SettingsStatus       $settings_status
-     */
-    public function __construct(\WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration $integration, array $payment_methods, AssetGetter $asset_getter, string $asset_version, LoggerInterface $logger, PersistentCounter $rejection_counter, SettingsStatus $settings_status)
+    public function __construct(\WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration $integration, array $payment_methods, AssetGetter $asset_getter, string $asset_version, LoggerInterface $logger, PersistentCounter $rejection_counter, SettingsStatus $settings_status, LoggerInterface $rejection_logger)
     {
         $this->integration = $integration;
         $this->payment_methods = $payment_methods;
@@ -53,6 +50,7 @@ class Recaptcha
         $this->logger = $logger;
         $this->rejection_counter = $rejection_counter;
         $this->settings_status = $settings_status;
+        $this->rejection_logger = $rejection_logger;
     }
     protected function should_use_recaptcha(): bool
     {
@@ -429,6 +427,6 @@ class Recaptcha
         unset($request_data['ppcp_recaptcha_version']);
         unset($request_data['g-recaptcha-response']);
         $cart = $this->cart_contents();
-        $this->logger->debug("Rejected by v3 reCAPTCHA at {$endpoint_name} with score {$this->last_v3_score}, IP: {$ip}, User Agent: {$user_agent}.", array('source' => self::REJECTION_LOGGER_SOURCE, 'request' => $request_data, 'cart' => $cart));
+        $this->rejection_logger->debug("Rejected by v3 reCAPTCHA at {$endpoint_name} with score {$this->last_v3_score}, IP: {$ip}, User Agent: {$user_agent}.", array('request' => $request_data, 'cart' => $cart));
     }
 }

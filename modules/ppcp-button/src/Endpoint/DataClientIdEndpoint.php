@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
+use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 /**
  * Class DataClientIdEndpoint
  */
@@ -45,7 +46,7 @@ class DataClientIdEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoin
      * @param IdentityToken   $identity_token The Identity Token.
      * @param LoggerInterface $logger The logger.
      */
-    public function __construct(\WooCommerce\PayPalCommerce\Button\Endpoint\RequestData $request_data, IdentityToken $identity_token, LoggerInterface $logger)
+    public function __construct(RequestData $request_data, IdentityToken $identity_token, LoggerInterface $logger)
     {
         $this->request_data = $request_data;
         $this->identity_token = $identity_token;

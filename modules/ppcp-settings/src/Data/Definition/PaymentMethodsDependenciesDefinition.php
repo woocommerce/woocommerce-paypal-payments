@@ -21,17 +21,11 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\OXXOGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 /**
  * Defines dependency relationships between payment methods and settings.
  */
 class PaymentMethodsDependenciesDefinition
 {
-    protected SettingsProvider $settings_provider;
-    public function __construct(SettingsProvider $settings_provider)
-    {
-        $this->settings_provider = $settings_provider;
-    }
     /**
      * Get payment method to payment method dependencies
      *
@@ -55,11 +49,7 @@ class PaymentMethodsDependenciesDefinition
      */
     public function get_setting_dependencies(): array
     {
-        $dependencies = array();
-        if (!$this->settings_provider->pay_later_with_vaulting_enabled()) {
-            $dependencies['pay-later'] = array('savePaypalAndVenmo' => \false);
-        }
-        return apply_filters('woocommerce_paypal_payments_setting_dependencies', $dependencies);
+        return apply_filters('woocommerce_paypal_payments_setting_dependencies', array());
     }
     /**
      * Get payment method value dependencies for a specific method
