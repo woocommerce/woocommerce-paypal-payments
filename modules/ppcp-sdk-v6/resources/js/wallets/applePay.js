@@ -22,7 +22,7 @@ import { revealMethodGateway } from '../methods/gatewayPlacement';
 import { renderIsObsolete } from '../methods/renderOverrides';
 import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
-import { applePayFailure, attachShippingHandlers } from './applePayShipping';
+import { attachShippingHandlers } from './applePayShipping';
 import { recordDomainValidation } from './applePayValidation';
 import { buttonHeight, buttonStyle } from '../methods/buttonStyle';
 import {
@@ -112,7 +112,9 @@ export async function renderApplePay( {
 	const sheetContacts = overrides.sheetContacts ?? { get: () => ( {} ) };
 	const requiresShipping =
 		overrides.requiresShipping ?? methodShippingRequired( config, context );
-	const shipping = createShippingController( { config } );
+	// The token is bound to the total the sheet displayed, and PayPal rejects
+	// an order for any other amount, even a lower one.
+	const shipping = createShippingController( { config, exactTotal: true } );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
 	const setPaying = ( value ) => {
@@ -329,17 +331,15 @@ export async function renderApplePay( {
 				} );
 			}
 		} catch ( error ) {
-			// Apple's sheet wording is the same whichever branch failed.
 			logEvent(
 				config,
 				'apple-pay-authorization-failed',
 				describeError( error )
 			);
 
-			// Apple still has the sheet up, so it can tell the shopper why.
-			appleSession.completePayment(
-				applePayFailure( error, window.ApplePaySession.STATUS_FAILURE )
-			);
+			// Apple cannot change the total after authorization, so a retry in
+			// this sheet would fail again. handleError() shows the message.
+			appleSession.abort();
 
 			setPaying( false );
 			spinner?.unblock();

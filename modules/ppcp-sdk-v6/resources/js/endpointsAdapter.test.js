@@ -1142,6 +1142,39 @@ describe( 'quoteCartShipping', () => {
 		} );
 	} );
 
+	test( 'posts exact_total as 1 when an exact total is required', async () => {
+		postJson.mockResolvedValueOnce( { total: '110.00' } );
+		const address = { country: 'US', state: 'CA' };
+
+		await quoteCartShipping( config, {
+			address,
+			expectedTotal: '110.00',
+			exactTotal: true,
+		} );
+
+		expect( postJson ).toHaveBeenCalledWith( config.ajax.wallet_shipping, {
+			address,
+			rate_id: '',
+			expected_total: '110.00',
+			exact_total: 1,
+		} );
+	} );
+
+	test.each( [
+		[ 'exactTotal is false', false ],
+		[ 'exactTotal is not passed', undefined ],
+	] )( 'omits exact_total entirely when %s', async ( label, exactTotal ) => {
+		postJson.mockResolvedValueOnce( { total: '110.00' } );
+		const address = { country: 'US', state: 'CA' };
+
+		await quoteCartShipping( config, { address, exactTotal } );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.wallet_shipping,
+			expect.not.objectContaining( { exact_total: expect.anything() } )
+		);
+	} );
+
 	test.each( [
 		[ 'expectedTotal is null', null ],
 		[ 'expectedTotal is not passed', undefined ],

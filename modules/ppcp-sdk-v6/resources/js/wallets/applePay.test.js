@@ -80,11 +80,9 @@ jest.mock( '../methods/methodShipping', () => ( {
 } ) );
 
 const mockAttachShippingHandlers = jest.fn();
-const mockApplePayFailure = jest.fn();
 jest.mock( './applePayShipping', () => ( {
 	attachShippingHandlers: ( ...args ) =>
 		mockAttachShippingHandlers( ...args ),
-	applePayFailure: ( ...args ) => mockApplePayFailure( ...args ),
 } ) );
 
 const mockSpinnerBlock = jest.fn();
@@ -238,9 +236,6 @@ beforeEach( () => {
 	} );
 	mockPayWithWallet.mockResolvedValue( undefined );
 	mockWalletShippingRequired.mockReturnValue( false );
-	mockApplePayFailure.mockImplementation( ( error, status ) => ( {
-		status,
-	} ) );
 	shippingController = {
 		quote: jest.fn(),
 		current: jest.fn(),
@@ -935,6 +930,16 @@ describe( 'onpaymentauthorized', () => {
 		expect( callOrder ).toEqual( [ 'commit', 'payWithSession' ] );
 	} );
 
+	test( 'creates its shipping controller to demand an exact total at commit', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+
+		await clickAndGetSession();
+
+		expect( mockCreateShippingController ).toHaveBeenCalledWith(
+			expect.objectContaining( { exactTotal: true } )
+		);
+	} );
+
 	test( 'never commits a shipping address when this context requires no shipping', async () => {
 		mockWalletShippingRequired.mockReturnValue( false );
 		const { appleSession } = await clickAndGetSession();
@@ -957,9 +962,24 @@ describe( 'onpaymentauthorized', () => {
 		await flushPromises();
 
 		expect( mockPayWithWallet ).not.toHaveBeenCalled();
-		expect( appleSession.completePayment ).toHaveBeenCalledWith( {
-			status: 'STATUS_FAILURE',
-		} );
+		expect( appleSession.abort ).toHaveBeenCalledTimes( 1 );
+		expect( appleSession.completePayment ).not.toHaveBeenCalled();
+	} );
+
+	test( 'closes the sheet and shows the shopper-facing message on the page when the commit is refused with one', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		const refusal = new Error( 'This address cannot be shipped to.' );
+		refusal.isUserFacing = true;
+		shippingController.commit.mockRejectedValueOnce( refusal );
+		const { appleSession } = await clickAndGetSession();
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( mockPayWithWallet ).not.toHaveBeenCalled();
+		expect( appleSession.abort ).toHaveBeenCalledTimes( 1 );
+		expect( appleSession.completePayment ).not.toHaveBeenCalled();
+		expect( mockHandleError ).toHaveBeenCalledWith( refusal );
 	} );
 
 	test( 'pays with the configured gateway id when Apple Pay is its own row', async () => {
@@ -1015,9 +1035,8 @@ describe( 'onpaymentauthorized', () => {
 		appleSession.onpaymentauthorized( paymentEvent );
 		await flushPromises();
 
-		expect( appleSession.completePayment ).toHaveBeenCalledWith( {
-			status: 'STATUS_FAILURE',
-		} );
+		expect( appleSession.abort ).toHaveBeenCalledTimes( 1 );
+		expect( appleSession.completePayment ).not.toHaveBeenCalled();
 		expect( mockSpinnerUnblock ).toHaveBeenCalledTimes( 1 );
 		expect( mockJQueryTrigger ).toHaveBeenCalledWith(
 			'wc_fragment_refresh'
