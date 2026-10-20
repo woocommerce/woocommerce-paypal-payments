@@ -177,6 +177,26 @@ class OrderRefundFeesUpdateTest extends ModularTestCase
 		];
 	}
 
+	/**
+	 * GIVEN a PayPal order whose only refund is still PENDING
+	 * WHEN the refund fees are updated
+	 * THEN the stored totals include the pending refund
+	 */
+	public function testPendingRefundIsCountedInTheRefundFeeTotals(): void
+	{
+		$pending_refund = $this->create_refund(
+			'PEND1',
+			RefundStatus::PENDING,
+			new Money(30.00, 'USD'),
+			new Money(1.20, 'USD'),
+			new Money(28.80, 'USD')
+		);
+
+		[$stored] = $this->run_update([$pending_refund]);
+
+		$this->assertTotal(30.0, 1.2, 28.8, $stored);
+	}
+
 	private function build_paypal_order(array $refunds): Order
 	{
 		$payments = $this->getMockBuilder(\stdClass::class)
