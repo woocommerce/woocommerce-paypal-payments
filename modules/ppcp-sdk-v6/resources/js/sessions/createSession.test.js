@@ -238,6 +238,22 @@ describe( 'createSession', () => {
 				expect( sdk.capture.config ).not.toHaveProperty( 'commit' );
 			}
 		);
+
+		test.each( [ 'paypal', 'paylater' ] )(
+			'%s gets no commit key when pay_now_contexts is absent',
+			( method ) => {
+				const sdk = fakeSdk();
+
+				createSession(
+					sdk,
+					method,
+					payNowConfig( { pay_now_contexts: undefined } ),
+					'checkout'
+				);
+
+				expect( sdk.capture.config ).not.toHaveProperty( 'commit' );
+			}
+		);
 	} );
 
 	describe( 'card', () => {
