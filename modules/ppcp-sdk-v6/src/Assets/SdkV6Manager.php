@@ -44,6 +44,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FreeProductHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
@@ -51,6 +52,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 class SdkV6Manager {
 	use FreeTrialHandlerTrait;
+	use FreeProductHandlerTrait;
 
 	public const WRAPPER_ID             = 'ppc-button-ppcp-gateway-v6';
 	public const MINI_CART_WRAPPER_ID   = 'ppc-button-minicart-v6';
@@ -336,7 +338,7 @@ class SdkV6Manager {
 		// the zero-total guard does not apply to it. The mini-cart checks it at
 		// render time instead (see render_mini_cart_wrapper()).
 		return array(
-			'product'   => $product_enabled && ! $this->is_free_trial_product(),
+			'product'   => $product_enabled && ! $this->is_free_trial_product() && ! $this->is_unpayable_free_product(),
 			'cart'      => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
 			'checkout'  => ( $needs_payment || $free_trial_checkout ) && $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ),
 			'pay-now'   => $this->settings_status->is_smart_button_enabled_for_location( 'pay-now' ),

@@ -98,6 +98,8 @@ class SdkV6ManagerTest extends TestCase
 		$this->context->shouldReceive('location')->andReturn('')->byDefault();
 
 		when('is_admin')->justReturn(false);
+		// No viewed product unless a test names one.
+		when('wc_get_product')->justReturn(false);
 
 		$this->google_pay_config = Mockery::mock(GooglePayConfig::class);
 		$this->google_pay_config->shouldReceive('should_render')->andReturn(false)->byDefault();
@@ -2951,6 +2953,60 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertFalse($result['product']);
         $this->assertTrue($result['checkout']);
+    }
+
+    /**
+     * GIVEN the smart button is enabled for every location and the viewed product is
+     *       priced, free, or a variable product whose cheapest variation is free
+     * WHEN determining which locations should render
+     * THEN the product location is suppressed only when the product is free and has
+     *      no possible shipping cost, since PayPal rejects a zero-total order
+     * AND a free product that still needs paid shipping keeps its button
+     * AND the cart, checkout, mini-cart and pay-now locations are unaffected
+     *
+     * @dataProvider unpayable_free_product_provider
+     */
+    public function testDetermineRenderPlacesProductSuppressedOnlyForFreeProductWithoutShippingCost(
+        bool $is_variable,
+        float $price,
+        bool $needs_shipping,
+        bool $shipping_enabled,
+        bool $expected_product
+    ): void {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $product = Mockery::mock(\WC_Product::class);
+        $product->shouldReceive('is_type')->andReturn($is_variable);
+        $product->shouldReceive('needs_shipping')->andReturn($needs_shipping);
+        when('wc_get_product')->justReturn($product);
+        when('wc_get_price_including_tax')->justReturn($price);
+        when('wc_shipping_enabled')->justReturn($shipping_enabled);
+
+        $this->assertSame(
+            [
+                'product'   => $expected_product,
+                'cart'      => true,
+                'checkout'  => true,
+                'pay-now'   => true,
+                'mini-cart' => true,
+            ],
+            $this->createTestee()->determine_render_places()
+        );
+    }
+
+    public function unpayable_free_product_provider(): array
+    {
+        return [
+            'free product needing no shipping is suppressed' => [false, 0.0, false, true, false],
+            'free product needing shipping with shipping enabled keeps the button' => [false, 0.0, true, true, true],
+            'free product needing shipping with shipping disabled is suppressed' => [false, 0.0, true, false, false],
+            'priced product keeps the button' => [false, 10.0, false, true, true],
+            'variable product priced at zero keeps the button' => [true, 0.0, false, true, true],
+        ];
     }
 
     /**
