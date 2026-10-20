@@ -1364,6 +1364,8 @@ class SdkV6ManagerTest extends TestCase
         $product = $this->create_product_stub(false, false);
         when('wc_get_product')->justReturn($product);
         when('wc_get_price_including_tax')->justReturn(29.99);
+        when('wc_shipping_enabled')->justReturn(true);
+        when('wc_get_shipping_method_count')->justReturn(1);
 
         $cart = Mockery::mock();
         $cart->shouldReceive('is_empty')->andReturn(false);
@@ -2500,9 +2502,9 @@ class SdkV6ManagerTest extends TestCase
      *      and the pay-for-order page pays an order already priced from itself, so neither page
      *      can let a wallet sheet collect a destination or total the order can't use; the block
      *      cart/checkout contexts enable it unconditionally, since the block components already
-     *      gate on their own live cart state; the product page is decided solely by the viewed
-     *      product being physical and non-downloadable; and every remaining context (cart) falls
-     *      back to whether the cart needs shipping at all
+     *      gate on their own live cart state; the product page needs the store to ship at all
+     *      and the viewed product to be physical and non-downloadable; and every remaining
+     *      context (cart) falls back to whether the cart needs shipping at all
      * AND the mini-cart entry is always present alongside the current page's own entry,
      *     since the mini-cart can render on any page independently of it
      *
@@ -2513,7 +2515,9 @@ class SdkV6ManagerTest extends TestCase
         string $page_context,
         bool $cart_needs_shipping,
         string $product_state,
-        array $expected_in_context
+        array $expected_in_context,
+        bool $shipping_enabled = true,
+        int $shipping_method_count = 1
     ): void {
         $this->context->shouldReceive('context')->andReturn($page_context);
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
@@ -2555,6 +2559,8 @@ class SdkV6ManagerTest extends TestCase
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
         when('wc_get_product')->justReturn($product);
+        when('wc_shipping_enabled')->justReturn($shipping_enabled);
+        when('wc_get_shipping_method_count')->justReturn($shipping_method_count);
 
         $testee = $this->createTestee([], true, 'US', $final_review_enabled);
         $data   = $testee->script_data();
@@ -2612,6 +2618,16 @@ class SdkV6ManagerTest extends TestCase
             'product page with no resolvable product disables shipping only for the product context' => [
                 false, 'product', true, 'none',
                 ['product' => false, 'mini-cart' => true],
+            ],
+            'product page with a physical product disables shipping when the store has shipping disabled' => [
+                false, 'product', true, 'physical',
+                ['product' => false, 'mini-cart' => true],
+                false, 1,
+            ],
+            'product page with a physical product disables shipping when the store has no shipping methods' => [
+                false, 'product', true, 'physical',
+                ['product' => false, 'mini-cart' => true],
+                true, 0,
             ],
             'cart-block context enables shipping without consulting the cart' => [
                 false, 'cart-block', false, 'none',

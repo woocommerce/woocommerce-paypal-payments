@@ -1595,7 +1595,8 @@ class SdkV6Manager {
 	 *
 	 * The product page judges the product rather than the cart, because the product
 	 * is what gets bought there: it is added to the cart on click, so the cart's
-	 * current contents describe a basket that is about to be replaced.
+	 * current contents describe a basket that is about to be replaced. The store
+	 * must still ship at all, or the sheet would ask for an address it cannot price.
 	 *
 	 * @param string $context The context to judge.
 	 * @return bool
@@ -1621,6 +1622,11 @@ class SdkV6Manager {
 		}
 
 		if ( 'product' === $context ) {
+			// The store-wide gates of WC_Cart::needs_shipping().
+			if ( ! wc_shipping_enabled() || 0 === wc_get_shipping_method_count( true ) ) {
+				return false;
+			}
+
 			$product = wc_get_product();
 
 			return $product instanceof WC_Product
