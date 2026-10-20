@@ -6,7 +6,9 @@ use Mockery;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerPayableBreakdown;
 use WooCommerce\PayPalCommerce\ModularTestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
@@ -134,4 +136,123 @@ class OrderRefundFeesUpdateTest extends ModularTestCase
 		$this->refundFeesUpdater->update($wc_order);
 	}
 
+	/**
+	 * GIVEN a PayPal order with a dispute-hold refund that never refunded anything and a later COMPLETED refund
+	 * WHEN the refund fees are updated
+	 * THEN the stored totals only include the COMPLETED refund
+	 * AND only the COMPLETED refund gets a "PayPal refund ID" order note
+	 *
+	 * @dataProvider unrefunded_status_provider
+	 */
+	public function testUnrefundedEntryIsLeftOutOfTheRefundFeeTotals(string $hold_status): void
+	{
+		$hold = $this->create_refund(
+			'HOLD1',
+			$hold_status,
+			new Money(100.00, 'USD'),
+			new Money(0.00, 'USD'),
+			new Money(100.00, 'USD')
+		);
+		$completed_refund = $this->create_refund(
+			'REAL1',
+			RefundStatus::COMPLETED,
+			new Money(30.00, 'USD'),
+			new Money(1.20, 'USD'),
+			new Money(28.80, 'USD')
+		);
+
+		[$stored, $notes] = $this->run_update([$hold, $completed_refund]);
+
+		$this->assertTotal(30.0, 1.2, 28.8, $stored);
+		$this->assertCount(1, $notes);
+		$this->assertStringContainsString('REAL1', $notes[0]);
+		$this->assertStringNotContainsString('HOLD1', implode(' ', $notes));
+	}
+
+	public function unrefunded_status_provider(): array
+	{
+		return [
+			'failed dispute hold'    => [RefundStatus::FAILED],
+			'cancelled dispute hold' => [RefundStatus::CANCELLED],
+		];
+	}
+
+	private function build_paypal_order(array $refunds): Order
+	{
+		$payments = $this->getMockBuilder(\stdClass::class)
+			->addMethods(['refunds'])
+			->getMock();
+		$payments->method('refunds')->willReturn($refunds);
+
+		$purchase_unit = $this->getMockBuilder(\stdClass::class)
+			->addMethods(['payments'])
+			->getMock();
+		$purchase_unit->method('payments')->willReturn($payments);
+
+		$paypal_order = Mockery::mock(Order::class);
+		$paypal_order->allows('purchase_units')->andReturn([$purchase_unit]);
+
+		return $paypal_order;
+	}
+
+	private function run_update(array $refunds): array
+	{
+		$this->order_endpoint->method('order')->willReturn($this->build_paypal_order($refunds));
+
+		$stored = null;
+		$notes = [];
+		$wc_order = Mockery::mock(WC_Order::class)->shouldIgnoreMissing();
+		$wc_order->allows('get_meta')->with(PayPalGateway::ORDER_ID_META_KEY)->andReturn('test_order_id');
+		$wc_order->allows('get_id')->andReturn(123);
+		$wc_order->allows('update_meta_data')
+			->with(PayPalGateway::REFUND_FEES_META_KEY, Mockery::on(static function ($meta) use (&$stored): bool {
+				$stored = $meta;
+				return true;
+			}));
+		$wc_order->allows('add_order_note')
+			->andReturnUsing(static function ($note) use (&$notes): int {
+				$notes[] = $note;
+				return 1;
+			});
+
+		$this->refundFeesUpdater->update($wc_order);
+
+		return [$stored, $notes];
+	}
+
+	private function assertTotal(float $gross, float $fee, float $net, $stored): void
+	{
+		$this->assertIsArray($stored);
+		$this->assertEqualsWithDelta($gross, $stored['gross_amount']['value'], 0.001);
+		$this->assertEqualsWithDelta($fee, $stored['paypal_fee']['value'], 0.001);
+		$this->assertEqualsWithDelta($net, $stored['net_amount']['value'], 0.001);
+		$this->assertSame('USD', $stored['gross_amount']['currency_code']);
+		$this->assertSame('USD', $stored['paypal_fee']['currency_code']);
+		$this->assertSame('USD', $stored['net_amount']['currency_code']);
+	}
+
+	private function create_refund(string $id, string $status, Money $gross, Money $fee, Money $net): Refund
+	{
+		$fee_in_receivable_currency = null;
+		$net_in_receivable_currency = null;
+		$total_refunded_amount = null;
+		$platform_fees = [];
+
+		$refund = Mockery::mock(Refund::class);
+		$refund->allows('id')->andReturn($id);
+		$refund->allows('status')->andReturn(new RefundStatus($status));
+		$refund->allows('seller_payable_breakdown')->andReturn(
+			new SellerPayableBreakdown(
+				$gross,
+				$fee,
+				$fee_in_receivable_currency,
+				$net,
+				$net_in_receivable_currency,
+				$total_refunded_amount,
+				$platform_fees
+			)
+		);
+
+		return $refund;
+	}
 }
