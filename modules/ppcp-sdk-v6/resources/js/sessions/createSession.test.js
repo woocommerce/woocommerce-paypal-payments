@@ -204,6 +204,31 @@ describe( 'createSession', () => {
 		} );
 	} );
 
+	describe( 'commit', () => {
+		const payNowConfig = ( overrides = {} ) => ( {
+			shipping: {},
+			pay_now_contexts: [ 'checkout', 'pay-now' ],
+			...overrides,
+		} );
+
+		test.each( [
+			[ 'paypal', 'checkout', true ],
+			[ 'paypal', 'pay-now', true ],
+			[ 'paypal', 'cart', false ],
+			[ 'paylater', 'checkout', true ],
+			[ 'paylater', 'cart', false ],
+		] )(
+			'%s in the %s context gets commit: %s',
+			( method, context, expected ) => {
+				const sdk = fakeSdk();
+
+				createSession( sdk, method, payNowConfig(), context );
+
+				expect( sdk.capture.config.commit ).toBe( expected );
+			}
+		);
+	} );
+
 	describe( 'card', () => {
 		test( 'is created through createPayPalGuestOneTimePaymentSession', () => {
 			const sdk = fakeSdk();
