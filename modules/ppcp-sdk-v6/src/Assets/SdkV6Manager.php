@@ -1257,6 +1257,7 @@ class SdkV6Manager {
 			'locale'              => str_replace( '_', '-', get_locale() ),
 			'vaulting_enabled'    => $this->vaulting_enabled,
 			'final_review'        => $this->final_review_enabled,
+			'pay_now_contexts'    => $this->pay_now_contexts,
 			'is_free_trial_cart'  => $this->free_trial_helper->is_free_trial_cart(),
 			'cart_needs_vaulting' => $this->free_trial_helper->cart_requires_vaulting(),
 			'has_subscriptions'   => $this->subscription_helper->cart_contains_subscription(),
