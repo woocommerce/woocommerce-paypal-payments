@@ -37,6 +37,8 @@ export const SUPPORTED_METHODS = Object.keys( SESSION_FACTORIES );
 // callbacks never fire; wallets collect shipping in their own sheet instead.
 const SHIPPING_POPUP_METHODS = [ FundingSources.PAYPAL ];
 
+const COMMIT_METHODS = [ FundingSources.PAYPAL, FundingSources.PAYLATER ];
+
 // Contexts where the buyer enters shipping on the page: checkout has the form,
 // pay-now pays an order that is already addressed.
 const CONTEXTS_WITH_PAGE_SHIPPING = [ 'checkout', 'pay-now' ];
@@ -104,6 +106,14 @@ export function createSession(
 					handleError( error );
 				}
 			};
+	}
+
+	// Left unset, the SDK commits and the popup button reads "Pay".
+	if (
+		COMMIT_METHODS.includes( method ) &&
+		Array.isArray( config.pay_now_contexts )
+	) {
+		sessionConfig.commit = config.pay_now_contexts.includes( context );
 	}
 
 	// Card-only: the other factories' tolerance for unknown option keys is
