@@ -6,6 +6,7 @@ use Mockery;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundStatus;
 use WooCommerce\PayPalCommerce\ModularTestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
@@ -22,6 +23,12 @@ class OrderRefundFeesUpdateTest extends ModularTestCase
 
 	public function setUp(): void
 	{
+		parent::setUp();
+
+		when('get_comments')->justReturn([]);
+		when('remove_filter')->justReturn(true);
+		when('add_filter')->justReturn(true);
+
 		$this->order_endpoint = $this->createMock(OrderEndpoint::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->refundFeesUpdater = new RefundFeesUpdater($this->order_endpoint, $this->logger);
@@ -54,8 +61,6 @@ class OrderRefundFeesUpdateTest extends ModularTestCase
 			'paypal_fee'   => ['value' => 7.0, 'currency_code' => 'USD'],
 			'net_amount'   => ['value' => 3.0, 'currency_code' => 'USD'],
 		];
-
-		when('get_comments')->justReturn([]);
 
 		$wc_order = Mockery::mock(WC_Order::class);
 		$wc_order->expects('get_meta')
@@ -98,9 +103,10 @@ class OrderRefundFeesUpdateTest extends ModularTestCase
 		$breakdown->method('net_amount')->willReturn($moneyNet);
 
 		$refund = $this->getMockBuilder(\stdClass::class)
-			->addMethods(['id', 'seller_payable_breakdown'])
+			->addMethods(['id', 'status', 'seller_payable_breakdown'])
 			->getMock();
 		$refund->method('id')->willReturn($refund_id);
+		$refund->method('status')->willReturn(new RefundStatus(RefundStatus::COMPLETED));
 		$refund->method('seller_payable_breakdown')->willReturn($breakdown);
 
 		$payments = $this->getMockBuilder(\stdClass::class)
@@ -127,4 +133,5 @@ class OrderRefundFeesUpdateTest extends ModularTestCase
 
 		$this->refundFeesUpdater->update($wc_order);
 	}
+
 }
