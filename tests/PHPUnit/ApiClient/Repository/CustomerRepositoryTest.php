@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
+use Mockery;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\InvoicePrefixGetter;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 
@@ -15,7 +17,7 @@ class CustomerRepositoryTest extends TestCase
 	 */
 	public function testMostRecentlyAssignedIdTakesPrecedenceOverLegacyId()
 	{
-		$repository = new CustomerRepository('ppcp_prefix_');
+		$repository = $this->create_repository('ppcp_prefix_');
 
 		expect('get_user_meta')
 			->once()
@@ -38,7 +40,7 @@ class CustomerRepositoryTest extends TestCase
 	 */
 	public function testFindsIdWrittenBackByBillingAgreementConversion()
 	{
-		$repository = new CustomerRepository('ppcp_prefix_');
+		$repository = $this->create_repository('ppcp_prefix_');
 
 		expect('get_user_meta')
 			->once()
@@ -55,7 +57,7 @@ class CustomerRepositoryTest extends TestCase
 	 */
 	public function testFallsBackToLegacyIdWhenMostRecentlyAssignedIdIsMissing()
 	{
-		$repository = new CustomerRepository('ppcp_prefix_');
+		$repository = $this->create_repository('ppcp_prefix_');
 
 		expect('get_user_meta')
 			->once()
@@ -72,7 +74,7 @@ class CustomerRepositoryTest extends TestCase
 
 	public function testReturnsEmptyStringWhenNeverVaulted()
 	{
-		$repository = new CustomerRepository('ppcp_prefix_');
+		$repository = $this->create_repository('ppcp_prefix_');
 
 		// get_user_meta returns '' for both keys when the user was never vaulted.
 		expect('get_user_meta')
@@ -90,7 +92,7 @@ class CustomerRepositoryTest extends TestCase
 
 	public function testReturnsEmptyStringForGuestUser()
 	{
-		$repository = new CustomerRepository('ppcp_prefix_');
+		$repository = $this->create_repository('ppcp_prefix_');
 
 		expect('get_user_meta')->never();
 
@@ -104,7 +106,7 @@ class CustomerRepositoryTest extends TestCase
 	 */
 	public function test_stored_customer_id_takes_precedence_over_generated_one()
 	{
-		$repository = new CustomerRepository('ppcp_prefix_');
+		$repository = $this->create_repository('ppcp_prefix_');
 
 		expect('get_user_meta')
 			->once()
@@ -117,5 +119,37 @@ class CustomerRepositoryTest extends TestCase
 			->andReturn('PAYPAL-123');
 
 		$this->assertSame('PAYPAL-123', $repository->customer_id_for_user(5));
+	}
+
+	/**
+	 * GIVEN a user without any stored customer ID
+	 * WHEN a customer ID is fabricated for that user
+	 * THEN the user ID is prepended with the configured invoice prefix, or left bare when the prefix is empty
+	 *
+	 * @dataProvider fabricated_customer_id_provider
+	 */
+	public function test_fabricates_customer_id_from_prefix_and_user_id(string $prefix, string $expected): void
+	{
+		$repository = $this->create_repository($prefix);
+
+		expect('get_user_meta')->andReturn('');
+
+		$this->assertSame($expected, $repository->customer_id_for_user(5));
+	}
+
+	public function fabricated_customer_id_provider(): array
+	{
+		return [
+			'configured prefix is prepended' => ['Store_', 'Store_5'],
+			'empty prefix yields bare user ID' => ['', '5'],
+		];
+	}
+
+	private function create_repository(string $prefix): CustomerRepository
+	{
+		$prefix_getter = Mockery::mock(InvoicePrefixGetter::class);
+		$prefix_getter->shouldReceive('get')->andReturn($prefix);
+
+		return new CustomerRepository($prefix_getter);
 	}
 }

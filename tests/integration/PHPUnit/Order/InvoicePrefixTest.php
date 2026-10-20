@@ -16,7 +16,6 @@ use LogicException;
  * written to the real settings option reaches PurchaseUnitFactory through the live
  * 'api.factory.purchase-unit' service, with no "WC-" default substituted along the way.
  *
- * @covers \WooCommerce\PayPalCommerce\WcGateway\extensions.php
  * @covers \WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory
  */
 class InvoicePrefixTest extends TestCase

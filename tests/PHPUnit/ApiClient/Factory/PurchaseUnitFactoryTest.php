@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ShippingOption;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\InvoicePrefixGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -1154,6 +1155,9 @@ class PurchaseUnitFactoryTest extends TestCase
 		?SettingsProvider $settings = null,
 		string $prefix = 'WC-'
 	): PurchaseUnitFactory {
+		$prefix_getter = Mockery::mock(InvoicePrefixGetter::class);
+		$prefix_getter->shouldReceive('get')->andReturn($prefix);
+
 		return new PurchaseUnitFactory(
 			$amount_factory,
 			$item_factory,
@@ -1162,7 +1166,7 @@ class PurchaseUnitFactoryTest extends TestCase
 			$payment_level_helper ?? Mockery::mock(PaymentLevelHelper::class),
 			$payment_level_eligibility ?? $this->create_payment_level_eligibility_mock(),
 			$settings ?? Mockery::mock(SettingsProvider::class),
-			$prefix
+			$prefix_getter
 		);
 	}
 }

@@ -70,6 +70,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\InvoicePrefixGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
@@ -155,15 +156,8 @@ return array(
 	'api.secret'                                     => static function (): string {
 		return '';
 	},
-	'api.prefix'                                     => static function (): string {
-		return 'WC-';
-	},
-	/**
-	 * The prefix for fabricated vault customer IDs.
-	 */
-	'api.customer-prefix'                            => static function ( ContainerInterface $container ): string {
-		$prefix = $container->get( 'api.prefix' );
-		return $prefix ? $prefix : CustomerRepository::FALLBACK_PREFIX;
+	'api.prefix'                                     => static function ( ContainerInterface $container ): InvoicePrefixGetter {
+		return new InvoicePrefixGetter( $container->get( 'settings.settings-provider' ) );
 	},
 	'api.bearer'                                     => static function ( ContainerInterface $container ): Bearer {
 		$is_connected = $container->get( 'settings.flag.is-connected' );
@@ -410,7 +404,7 @@ return array(
 		return new PayeeRepository( $merchant_email, $merchant_id );
 	},
 	'api.repository.customer'                        => static function ( ContainerInterface $container ): CustomerRepository {
-		$prefix = $container->get( 'api.customer-prefix' );
+		$prefix = $container->get( 'api.prefix' );
 		return new CustomerRepository( $prefix );
 	},
 	'api.repository.order'                           => static function ( ContainerInterface $container ): OrderRepository {
