@@ -243,24 +243,8 @@ class GooglePayButton implements ButtonInterface {
 	 * @throws NotFoundException If the settings are not found.
 	 */
 	public function script_data(): array {
-		$use_shipping_form = $this->should_use_shipping();
-
-		// On the product page, only show the shipping form for physical products.
-		$context = $this->context->context();
-		if ( $use_shipping_form && 'product' === $context ) {
-			$product = wc_get_product();
-
-			if ( ! $product || $product->is_downloadable() || $product->is_virtual() ) {
-				$use_shipping_form = false;
-			}
-		}
-
-		if ( ! is_null( WC()->cart ) && ! WC()->cart->needs_shipping() ) {
-			$use_shipping_form = false;
-		}
-
 		$shipping = array(
-			'enabled'    => $use_shipping_form,
+			'enabled'    => $this->should_use_shipping(),
 			'configured' => wc_shipping_enabled() && wc_get_shipping_method_count( false, true ) > 0,
 		);
 
@@ -327,7 +311,8 @@ class GooglePayButton implements ButtonInterface {
 
 		$context = $this->context->context();
 
-		// On the product page, only show shipping if a physical product.
+		// The product, not the cart: a buyer usually arrives with an empty cart, and
+		// the product is only added on click.
 		if ( 'product' === $context ) {
 			$product = wc_get_product();
 
