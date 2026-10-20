@@ -664,6 +664,16 @@ describe( 'a click on the rendered button', () => {
 		expect( callOrder ).toEqual( [ 'commit', 'payWithSession' ] );
 	} );
 
+	test( 'creates its shipping controller without demanding an exact total', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+
+		await render( { context: 'cart' } );
+
+		expect( mockCreateShippingController ).toHaveBeenCalledWith(
+			expect.not.objectContaining( { exactTotal: true } )
+		);
+	} );
+
 	test( 'never commits a shipping address when this context requires no shipping', async () => {
 		mockWalletShippingRequired.mockReturnValue( false );
 		await render( { context: 'product' } );

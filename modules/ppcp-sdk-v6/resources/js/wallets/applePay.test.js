@@ -935,6 +935,16 @@ describe( 'onpaymentauthorized', () => {
 		expect( callOrder ).toEqual( [ 'commit', 'payWithSession' ] );
 	} );
 
+	test( 'creates its shipping controller to demand an exact total at commit', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+
+		await clickAndGetSession();
+
+		expect( mockCreateShippingController ).toHaveBeenCalledWith(
+			expect.objectContaining( { exactTotal: true } )
+		);
+	} );
+
 	test( 'never commits a shipping address when this context requires no shipping', async () => {
 		mockWalletShippingRequired.mockReturnValue( false );
 		const { appleSession } = await clickAndGetSession();
