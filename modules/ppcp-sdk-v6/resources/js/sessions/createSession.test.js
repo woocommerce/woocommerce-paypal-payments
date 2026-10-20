@@ -227,6 +227,17 @@ describe( 'createSession', () => {
 				expect( sdk.capture.config.commit ).toBe( expected );
 			}
 		);
+
+		test.each( [ 'venmo', 'googlepay', 'applepay', 'card' ] )(
+			'%s gets no commit key even when its context is a pay-now context',
+			( method ) => {
+				const sdk = fakeSdk();
+
+				createSession( sdk, method, payNowConfig(), 'checkout' );
+
+				expect( sdk.capture.config ).not.toHaveProperty( 'commit' );
+			}
+		);
 	} );
 
 	describe( 'card', () => {
