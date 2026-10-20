@@ -573,11 +573,18 @@ function selectShippingMethodInForm( rateId ) {
  * @param {?string} [args.expectedTotal]    - The total the sheet displayed. The
  *                                            server refuses a higher one rather
  *                                            than charge it.
+ * @param {boolean} [args.exactTotal]       - Refuse a lower total as well.
  * @return {Promise<Object>} The quote.
  */
 export async function quoteCartShipping(
 	config,
-	{ address, rateId = null, billingAddress = null, expectedTotal = null }
+	{
+		address,
+		rateId = null,
+		billingAddress = null,
+		expectedTotal = null,
+		exactTotal = false,
+	}
 ) {
 	const body = {
 		address,
@@ -590,6 +597,10 @@ export async function quoteCartShipping(
 
 	if ( expectedTotal ) {
 		body.expected_total = expectedTotal;
+	}
+
+	if ( exactTotal ) {
+		body.exact_total = 1;
 	}
 
 	return postJson( config.ajax.wallet_shipping, body );

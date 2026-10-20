@@ -112,7 +112,9 @@ export async function renderApplePay( {
 	const sheetContacts = overrides.sheetContacts ?? { get: () => ( {} ) };
 	const requiresShipping =
 		overrides.requiresShipping ?? methodShippingRequired( config, context );
-	const shipping = createShippingController( { config } );
+	// The token is bound to the total the sheet displayed, and PayPal rejects
+	// an order for any other amount, even a lower one.
+	const shipping = createShippingController( { config, exactTotal: true } );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
 	const setPaying = ( value ) => {
