@@ -134,6 +134,13 @@ class SdkV6Manager {
 	private DisabledFundingSources $disabled_funding_sources;
 
 	/**
+	 * Contexts whose PayPal orders complete in the popup.
+	 *
+	 * @var string[]
+	 */
+	private array $pay_now_contexts;
+
+	/**
 	 * Every method this module places, in the order their rows are printed.
 	 *
 	 * @var MethodPlacement[]
@@ -195,7 +202,8 @@ class SdkV6Manager {
 		ApplePayConfig $apple_pay_config,
 		FastlaneConfig $fastlane_config,
 		CardFieldStyles $card_field_styles,
-		DisabledFundingSources $disabled_funding_sources
+		DisabledFundingSources $disabled_funding_sources,
+		array $pay_now_contexts
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -221,6 +229,7 @@ class SdkV6Manager {
 		$this->fastlane_config             = $fastlane_config;
 		$this->card_field_styles           = $card_field_styles;
 		$this->disabled_funding_sources    = $disabled_funding_sources;
+		$this->pay_now_contexts            = $pay_now_contexts;
 
 		$this->placements = array(
 			new MethodPlacement(
