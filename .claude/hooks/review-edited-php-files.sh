@@ -3,7 +3,8 @@
 # Stop hook.
 #
 # When the agent's turn settles, ask it to dispatch code cleanliness check for each PHP
-# file it changed this session whose CONTENT changed since its last review.
+# file it changed this session whose CONTENT changed since its last review, and pass
+# along the PHPCS report for those files.
 # Because the agent reviews the cumulative `git diff HEAD`, one review of the
 # final state beats many mid-edit reviews.
 #
@@ -42,6 +43,7 @@ content_hash() {
 }
 
 list=""
+files=()
 for marker in "$dir"/touched-*; do
 	[ -e "$marker" ] || continue
 	# The glob also matches the ".reviewed" sidecars we write below; skip them.
@@ -56,10 +58,22 @@ for marker in "$dir"/touched-*; do
 	fi
 	printf '%s' "$cur" > "$seen" 2>/dev/null
 	list="${list}"$'\n'"- ${file}"
+	files+=("${file#"$CLAUDE_PROJECT_DIR"/}")
 done
 
 [ -n "$list" ] || exit 0
 
 reason="Before finishing this turn, review your PHP changes. Dispatch the \`review-php-code-cleanliness\` agent once for each file below (in parallel is fine), each with the prompt \`review CHANGES in <file>\`, then apply any fixes it reports. Files needing review:${list}"
+
+# PHPCS runs inside DDEV, from the project root. When DDEV is not running, the
+# output has no report lines and the PHPCS part is skipped.
+if command -v ddev >/dev/null 2>&1 && [ -n "$CLAUDE_PROJECT_DIR" ]; then
+	report=$(cd "$CLAUDE_PROJECT_DIR" && ddev exec vendor/bin/phpcs -q --report=emacs "${files[@]}" 2>/dev/null \
+		| grep -E '^[^:]+:[0-9]+:[0-9]+: (error|warning) - ' \
+		| sed 's|^/var/www/html/||')
+	if [ -n "$report" ]; then
+		reason="${reason}"$'\n\n'"PHPCS reports the issues below. Fix the ones in code you changed this session; leave pre-existing issues alone:"$'\n'"${report}"
+	fi
+fi
 
 jq -n --arg r "$reason" '{decision: "block", reason: $r}'
