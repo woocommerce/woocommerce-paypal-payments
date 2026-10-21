@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 You collect the branch context and hand it to the `is-branch-ready-for-pr` agent. You do not review the code yourself.
 
-Current branch: !`git rev-parse --abbrev-ref HEAD`
+Current branch (already resolved): !`git rev-parse --abbrev-ref HEAD`
 
 ## Arguments
 

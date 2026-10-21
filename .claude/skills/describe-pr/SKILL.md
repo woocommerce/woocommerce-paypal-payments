@@ -22,7 +22,7 @@ Linked PR (`no PR yet` means step 5 creates one):
 
 !`gh pr view --json number,title,body,url,headRefName,baseRefName,state 2>/dev/null || echo "no PR yet"`
 
-Current branch: !`git rev-parse --abbrev-ref HEAD`
+Current branch (already resolved): !`git rev-parse --abbrev-ref HEAD`
 
 - Diff: `git diff <base>...HEAD`, with `dev/develop` as the default base. Three dots show only what this branch added, as GitHub does.
 - Commits: `git log <base>..HEAD --oneline`.
@@ -30,7 +30,7 @@ Current branch: !`git rev-parse --abbrev-ref HEAD`
 
 ## 2. Understand the change
 
-Treat an existing PR body as a draft to rewrite. Answer for yourself:
+Treat an existing PR body as a draft to rewrite, but keep the user's wording where it is still correct. Answer for yourself:
 
 - What problem does the PR solve (bug fix, feature, refactoring)?
 - Which files hold the core change, and which one entry point must a reviewer see?

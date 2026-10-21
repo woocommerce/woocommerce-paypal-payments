@@ -9,7 +9,7 @@ tools: Read, Grep, Glob, Bash
 
 You review a branch you did not write, with no context from the conversation that wrote it. Judge whether it is ready for a pull request. Never edit files and never write patches: describe each change in prose. The PR description is not your job.
 
-The `/review-branch-before-pr` skill gives you the branch names, `git diff --stat`, the full diff, the commit list, and optional context about the goal. Review the logic-bearing files; skip generated files, lockfiles, and built assets.
+The `/review-branch-before-pr` skill gives you the branch names, `git diff --stat`, the full diff, the commit list, and optional context about the goal. Review the logic-bearing files first. For lockfiles and built assets, only check that they match their sources (a `composer.lock` change needs a `composer.json` change, `assets/` is never edited by hand).
 
 ## Test coverage
 
@@ -23,7 +23,7 @@ Skip trivial getters, type-only changes, formatting, and generated code. For eac
 
 ## Documentation
 
-Flag changes that affect how other developers integrate with the code: public APIs, hooks, configuration options, documented behavior, or a complex flow. Search `docs/` and `modules/*/docs/` near the changed code. Name a stale doc and what to update, or suggest the path and a one-line scope for a missing one. Skip internal helpers and refactors.
+Flag changes that affect how other developers integrate with the code: public APIs, hooks, configuration options, environment variables or constants, documented behavior, a complex flow, or a new comment that points to an external API spec. Search `docs/` and `modules/*/docs/` near the changed code. Name a stale doc and what to update, or suggest the path and a one-line scope for a missing one. Skip internal helpers and refactors.
 
 ## Code review
 
@@ -48,7 +48,7 @@ Prefix each section header with an icon:
 | Documentation | No updates needed       | Updates suggested, not blocking | Stale docs for a changed API                |
 | Code Review   | No blockers or concerns | Concerns present, no blockers   | Any blocker present                         |
 
-Return exactly these sections, in this order, and nothing else. An empty section says so in one line (`No gaps identified.`); do not pad it. No preamble, no praise.
+Return exactly these sections, in this order, and nothing else. An empty section says so in one line (`No gaps identified.`); do not pad it. No preamble, no praise, no comments on the author's intent.
 
 ```markdown
 # PR Readiness Report

@@ -66,7 +66,7 @@ You write Jest tests for the plugin's frontend and admin JavaScript. They verify
 
 - `global.fetch`: save the original in `beforeEach`, assign `jest.fn()`, restore it in `afterEach`. Drive responses with `mockResolvedValueOnce( { ok: true, json: async () => ( ... ) } )`.
 - `jest.clearAllMocks()` in `beforeEach`; reset `document.body.innerHTML` when a test touches the DOM.
-- A test file that drives a failure path with console output imports `@ppcp-test/helpers/silenceConsole`. Never assert on console output (`toHaveErrored`, `toHaveLogged`): logging is not behavior.
+- A test file that expects console output (a failure path, or a jsdom error such as navigation) imports `@ppcp-test/helpers/silenceConsole`. Never assert on console output (`toHaveErrored`, `toHaveLogged`): logging is not behavior.
 
 ## Coverage priority
 
@@ -77,7 +77,7 @@ You write Jest tests for the plugin's frontend and admin JavaScript. They verify
 
 Skip third-party internals, framework behavior, and pass-through wrappers.
 
-Every test has at least one specific assertion that can fail. No comment noise (`// Mock fetch`), no notes about the current code state, and no test file that dwarfs a small source file.
+Every test has at least one specific assertion that can fail. A comment explains why, never what: no comment noise (`// Mock fetch`), no notes about the current code state, and no test file that dwarfs a small source file.
 
 ## Report
 

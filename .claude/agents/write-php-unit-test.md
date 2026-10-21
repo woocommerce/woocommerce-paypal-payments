@@ -42,7 +42,8 @@ Write one when the caller asks, or when the behavior depends on real WordPress o
 - Test through public APIs. Never test private methods or implementation details that a valid refactor would change.
 - Name tests `test_what_when_expected_result()`. Test names and provider keys read as business sentences.
 - Group cases that differ only by input into one `@dataProvider` with descriptive string keys.
-- Assert the resulting state with specific assertions (`assertSame`, `assertEquals`). Every test has at least one assertion that can fail.
+- Each test checks one behavior.
+- Assert the resulting state with specific assertions (`assertSame`, `assertEquals`), never `assertTrue` on a comparison. Every test has at least one assertion that can fail.
 - Stub by default. Mock only when the call itself is the result you assert. Every `shouldReceive()` must be a side effect the behavior requires; use `allows()` or `shouldIgnoreMissing()` for the rest:
 
 | Dependency                                                                   | Use         |

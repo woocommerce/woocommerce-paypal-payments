@@ -16,7 +16,7 @@ Example: `Restore the "Proceed to PayPal" button label on block checkout (6288)`
 
 ## Changelog line
 
-The first line of the body, above `# Description`, is always the changelog line:
+The first line of the body, above `# Description`, is always the changelog line, in the `readme.txt` format:
 
 ```
 *Changelog:* `Type - the entry #PR`
@@ -53,7 +53,7 @@ Every section is optional; leaving it out is the default. Most PRs need two or t
 
 - Use `The problem` or `The goal`, never both.
 - For refactors, features, test additions, and chores, keep only the headings that carry meaning. A test-addition PR often needs only `# Description` and `🧪 Tests`.
-- **How to verify:** leave it out by default: QA tests the change. Add it only when a reviewer needs a product check they cannot guess, as at most 3 steps (setting to change, page to open, what they see). Never a CLI command (`npm`, `composer`, `phpunit`, `ddev`, ...) anywhere in the description.
+- **How to verify:** leave it out by default: QA tests the change. Add it only when a reviewer needs a product check they cannot guess, as at most 3 steps (setting to change, page to open, what they see), with no setup boilerplate and no expected pass/fail results. Never a CLI command (`npm`, `composer`, `phpunit`, `ddev`, ...) anywhere in the description.
 - **Visual proof:** never drafted. Offer it only for a visible UI change; if the user opts in, append this placeholder for them to fill in; never invent media:
 
 ````template
@@ -72,7 +72,7 @@ Every section is optional; leaving it out is the default. Most PRs need two or t
 
 ## Style
 
-- Plain, direct, active English. Paragraphs of 1-3 sentences. No filler ("it is worth noting", "in order to"), no AI words ("delve", "scrutinize"), no em dashes.
+- Plain, direct, active English. When plain words and technical precision conflict, choose plain words. Paragraphs of 1-3 sentences. No filler ("it is worth noting", "in order to"), no AI words ("delve", "scrutinize"), no em dashes.
 - Backticks for paths, classes, methods, hooks, config keys, and JS globals. Bold at most once per section.
 - Bullets for 3 or more parallel items.
 - No soft wrapping: each paragraph and bullet is one line. GitHub shows every line break.
