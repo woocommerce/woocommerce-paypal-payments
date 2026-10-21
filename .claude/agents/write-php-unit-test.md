@@ -152,6 +152,13 @@ Skip third-party internals, framework behavior, trivial getters and setters, hoo
 ## Report
 
 1. Files created or changed.
-2. Behaviors covered, one line each.
+2. One line per test method, with its status and the behavior it checks. A data provider adds its case count. "Changed" means a different GIVEN/WHEN/THEN or assertion; a rename or setup refactor is not listed.
+
+   ```
+   New:     test_rejects_empty_payment_token: an empty token is rejected before the API call (3 cases)
+   Changed: test_capture_retries_once: now expects a second capture after PAYER_ACTION_REQUIRED (behavior change)
+   Removed: test_logs_warning_on_failure: asserted logging only
+   ```
+
 3. That the tests were not run.
 4. Non-obvious decisions (e.g. "testable subclass, because `get_option` is protected").

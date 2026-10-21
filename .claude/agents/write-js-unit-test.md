@@ -82,6 +82,13 @@ Every test has at least one specific assertion that can fail. A comment explains
 ## Report
 
 1. Files created or changed.
-2. Behaviors covered, one line each.
+2. One line per test, with its status and the behavior it checks. A `test.each` adds its case count. "Changed" means a different expected outcome; a rename or setup refactor is not listed.
+
+   ```
+   New:     returns false when the cart contains a subscription product (4 cases)
+   Changed: shows the error notice after a rejected fetch: now expects the generic message (behavior change)
+   Removed: logs the response: asserted console output only
+   ```
+
 3. That the tests were not run.
 4. Non-obvious decisions (e.g. "mocked CheckoutMethodState, because it reads a global set by PHP").
