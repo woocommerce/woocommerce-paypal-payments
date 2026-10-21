@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\SetupTokenBinding;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 /**
  * Class CreateSetupToken
@@ -33,16 +34,19 @@ class CreateSetupToken implements EndpointInterface
      * @var PaymentMethodTokensEndpoint
      */
     private $payment_method_tokens_endpoint;
+    private SetupTokenBinding $setup_token_binding;
     /**
      * CreateSetupToken constructor.
      *
      * @param RequestData                 $request_data The request data helper.
      * @param PaymentMethodTokensEndpoint $payment_method_tokens_endpoint Payment Method Tokens endpoint.
+     * @param SetupTokenBinding           $setup_token_binding Binds setup tokens to their creator.
      */
-    public function __construct(RequestData $request_data, PaymentMethodTokensEndpoint $payment_method_tokens_endpoint)
+    public function __construct(RequestData $request_data, PaymentMethodTokensEndpoint $payment_method_tokens_endpoint, SetupTokenBinding $setup_token_binding)
     {
         $this->request_data = $request_data;
         $this->payment_method_tokens_endpoint = $payment_method_tokens_endpoint;
+        $this->setup_token_binding = $setup_token_binding;
     }
     /**
      * Returns the nonce.
@@ -74,6 +78,9 @@ class CreateSetupToken implements EndpointInterface
             }
             $customer_id = get_user_meta(get_current_user_id(), '_ppcp_target_customer_id', \true);
             $result = $this->payment_method_tokens_endpoint->setup_tokens($payment_source, (string) $customer_id);
+            if (isset($result->id)) {
+                $this->setup_token_binding->bind((string) $result->id);
+            }
             wp_send_json_success($result);
         } catch (NonceValidationException $error) {
             wp_send_json_error(array('message' => $error->getMessage()), 400);

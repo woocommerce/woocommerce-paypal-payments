@@ -187,7 +187,7 @@ class AuthenticationManager
      */
     public function remember_oauth_connection_details(string $shared_id, string $auth_code, bool $use_sandbox): void
     {
-        $this->logger->info('Storing one-time OAuth credentials...', array('shared_id' => $shared_id, 'auth_code' => $auth_code, 'use_sandbox' => $use_sandbox));
+        $this->logger->info('Storing one-time OAuth credentials...', array('shared_id' => $shared_id, 'use_sandbox' => $use_sandbox));
         $oauth_connection = new OAuthConnectionDTO($use_sandbox, $shared_id, $auth_code);
         update_option(self::OAUTH_OPTION_NAME, $oauth_connection, \false);
     }
@@ -384,7 +384,7 @@ class AuthenticationManager
      */
     private function update_connection_details(MerchantConnectionDTO $connection): void
     {
-        $this->logger->info('Updating connection details', (array) $connection);
+        $this->logger->info('Updating connection details', array('is_sandbox' => $connection->is_sandbox, 'client_id' => $connection->client_id, 'merchant_id' => $connection->merchant_id, 'merchant_email' => $connection->merchant_email, 'merchant_country' => $connection->merchant_country, 'seller_type' => $connection->seller_type));
         $this->common_settings->set_merchant_data($connection);
         $this->common_settings->save();
         if ($this->common_settings->is_merchant_connected()) {

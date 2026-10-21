@@ -40,6 +40,7 @@ trait ProcessPaymentTrait
         }
         $this->session_handler->destroy_session_data();
         WC()->session->set('ppcp_subscription_id', '');
+        WC()->session->set('ppcp_vault_component_order', '');
         WC()->session->set('ppcp_delete_wc_order_on_payment_failure', \false);
         wc_add_notice($error->getMessage(), 'error');
         return array('result' => 'failure', 'redirect' => wc_get_checkout_url(), 'errorMessage' => $error->getMessage());
@@ -72,6 +73,7 @@ trait ProcessPaymentTrait
         }
         $this->session_handler->destroy_session_data();
         WC()->session->set('ppcp_subscription_id', '');
+        WC()->session->set('ppcp_vault_component_order', '');
         return array('result' => 'success', 'redirect' => $url);
     }
     /**

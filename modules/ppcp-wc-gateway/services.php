@@ -298,7 +298,7 @@ return array(
     'wcgateway.endpoint.return-url' => static function (ContainerInterface $container): ReturnUrlEndpoint {
         $gateway = $container->get('wcgateway.paypal-gateway');
         $endpoint = $container->get('api.endpoint.order');
-        return new ReturnUrlEndpoint($gateway, $endpoint, $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'));
+        return new ReturnUrlEndpoint($gateway, $endpoint, $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.helper.return-url-secret'));
     },
     'wcgateway.payer-action-return-forwarder' => static function (ContainerInterface $container): PayerActionReturnForwarder {
         return new PayerActionReturnForwarder($container->get('session.handler'), $container->get('http.redirector'));

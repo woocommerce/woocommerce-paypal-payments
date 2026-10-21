@@ -50,5 +50,5 @@ return array('vault-component.eligibility.check' => static function (ContainerIn
     assert($logger instanceof LoggerInterface);
     return new \WooCommerce\PayPalCommerce\VaultComponent\VaultComponentData($client_token, $logger);
 }, 'vault-component.endpoint.create-order' => static function (ContainerInterface $container): CreateVaultOrderEndpoint {
-    return new CreateVaultOrderEndpoint($container->get('button.request-data'), $container->get('api.endpoint.order'), $container->get('api.factory.purchase-unit'), $container->get('api.factory.shipping-preference'), $container->get('woocommerce.logger.woocommerce'));
+    return new CreateVaultOrderEndpoint($container->get('button.request-data'), $container->get('api.endpoint.order'), $container->get('api.factory.purchase-unit'), $container->get('api.factory.shipping-preference'), $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'));
 });

@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\PaymentTokenPayPal;
 class CreateVaultOrderEndpoint implements EndpointInterface
@@ -21,13 +22,15 @@ class CreateVaultOrderEndpoint implements EndpointInterface
     private OrderEndpoint $order_endpoint;
     private PurchaseUnitFactory $purchase_unit_factory;
     private ShippingPreferenceFactory $shipping_preference_factory;
+    private SessionHandler $session_handler;
     private LoggerInterface $logger;
-    public function __construct(RequestData $request_data, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, LoggerInterface $logger)
+    public function __construct(RequestData $request_data, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, SessionHandler $session_handler, LoggerInterface $logger)
     {
         $this->request_data = $request_data;
         $this->order_endpoint = $order_endpoint;
         $this->purchase_unit_factory = $purchase_unit_factory;
         $this->shipping_preference_factory = $shipping_preference_factory;
+        $this->session_handler = $session_handler;
         $this->logger = $logger;
     }
     public static function nonce(): string
@@ -84,6 +87,10 @@ class CreateVaultOrderEndpoint implements EndpointInterface
             } finally {
                 remove_filter('ppcp_create_order_request_body_data', array($this, 'strip_request_body'), 99);
             }
+            $this->session_handler->replace_order($order);
+            // Flag the Vault Component flow so the gateway captures this order, not the saved
+            // token (dedicated key: the Smart Button flow also sets a session order).
+            WC()->session->set('ppcp_vault_component_order', $order->id());
             wp_send_json_success(array('id' => $order->id()));
         } catch (\Exception $exception) {
             $this->logger->error('Vault Component: Failed to create order. ' . $exception->getMessage());

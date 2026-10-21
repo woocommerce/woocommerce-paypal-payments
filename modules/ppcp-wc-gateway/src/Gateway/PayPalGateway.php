@@ -330,8 +330,6 @@ class PayPalGateway extends \WC_Payment_Gateway
         }
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $paypal_payment_token_id = wc_clean(wp_unslash($_POST['wc-ppcp-gateway-payment-token'] ?? ''));
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        $vault_approved_order_id = wc_clean(wp_unslash($_POST['paypal_order_id'] ?? ''));
         /**
          * WC Subscriptions zeroes the order total during a change-payment request, so
          * attempting a real capture here would send a $0 create-order request to PayPal
@@ -341,8 +339,9 @@ class PayPalGateway extends \WC_Payment_Gateway
         if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id && $this->is_customer_changing_subscription_payment($this->subscription_helper, $wc_order)) {
             return $this->add_payment_token_to_order($wc_order, (int) $paypal_payment_token_id, $this->get_return_url($wc_order), $this->session_handler);
         }
-        // Skip saved token handling when an approved order exists.
-        if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id && !$vault_approved_order_id) {
+        // Skip saved-token handling only for the Vault Component's server-created order; a
+        // dedicated flag avoids catching the Smart Button flow, which also sets a session order.
+        if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id && !WC()->session->get('ppcp_vault_component_order')) {
             $tokens = WC_Payment_Tokens::get_customer_tokens(get_current_user_id());
             foreach ($tokens as $token) {
                 if ($token->get_id() === (int) $paypal_payment_token_id) {
