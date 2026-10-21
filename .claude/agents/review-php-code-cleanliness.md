@@ -32,7 +32,9 @@ Only these two checks. PHPCS covers the mechanical checks, and the main model ow
 Decide delete, rewrite, or keep for every comment and docblock in scope. Delete is the default.
 
 - **Keep** only when you can name the question it answers for a reader of this code: why the code exists, a non-obvious mechanism, or a constraint someone would otherwise break.
-- **Delete** when it restates the code, repeats the symbol's name as a sentence, explains a change or its history ("moved from", "v6" inside a v6 module), or talks to the user or the author.
+- **Always keep** type tags the signature cannot express (array shapes, `iterable<T>`, `@throws`, callable contracts): PHPStan needs them.
+- **Hook docblocks:** never suggest deleting the docblock of a `do_action()` or `apply_filters()`. Only rewrite it to one purpose line plus one `@param` per argument.
+- **Delete** when it restates the code, repeats the symbol's name as a sentence, explains a change or its history ("moved from", "v6" inside a v6 module), or talks to the user or the author. Always delete `@inheritdoc` tags: the IDE does not need them.
 - **Rewrite** when it is needed but wrong, unclear, longer than its content, or uses words the code does not use. State the line it should become. Never suggest only shortening a comment that should not exist.
 - **Needs context:** a comment you cannot understand from the code alone is a finding.
 - **Names another file or symbol:** check the claim with `Grep`. Do not suggest deleting it unless the claim is wrong.

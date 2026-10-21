@@ -66,6 +66,6 @@ public function run( ContainerInterface $container ): bool {
 
 State changes here act on money, orders, and saved payment data.
 
-- **State changes:** before code deletes or changes persistent data (orders, refunds, vaulted tokens, subscriptions, session or checkout data), check that the entity exists, that its state permits the operation (only refund a captured payment), and that the current user or session owns it. Check the return value.
-- **Request handlers:** AJAX, REST, webhook, and `admin-post` handlers check capability (`current_user_can()`) and, where it applies, the nonce before they do work.
+- **State changes:** before code deletes or changes persistent data (orders, refunds, vaulted tokens, subscriptions, session or checkout data), check that the entity exists, that its state permits the operation (only refund a captured payment), and, for user- or session-scoped data, that the current user or session owns it (so a race cannot act on another party's data). Check the return value.
+- **Request handlers:** AJAX, REST, and `admin-post` handlers check capability (`current_user_can()`) and nonce where they apply, before they do work. Webhooks have no user: they verify the PayPal signature instead.
 - **Untrusted input:** sanitize and validate request data (`$_POST`, `$_GET`, webhook payloads). Never pass a raw request value to a data store or gateway.
