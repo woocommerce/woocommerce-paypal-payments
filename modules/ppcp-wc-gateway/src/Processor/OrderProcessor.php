@@ -116,8 +116,10 @@ class OrderProcessor {
 		try {
 			$order = $this->session_handler->order();
 			if ( ! $order ) {
-				// phpcs:ignore WordPress.Security.NonceVerification
-				$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
+				$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+				if ( ! $order_id ) {
+					$order_id = $this->posted_session_order_id();
+				}
 				if ( is_string( $order_id ) && $order_id ) {
 					try {
 						$order = $this->order_endpoint->order( $order_id );
@@ -351,6 +353,21 @@ class OrderProcessor {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Returns the posted PayPal order ID only if this session created it, so a request
+	 * cannot attach a foreign PayPal order.
+	 */
+	private function posted_session_order_id(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$order_id = wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
+
+		if ( ! is_string( $order_id ) || ! $this->session_handler->is_created_order( $order_id ) ) {
+			return '';
+		}
+
+		return $order_id;
 	}
 
 	/**

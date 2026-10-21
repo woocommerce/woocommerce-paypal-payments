@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException as PayPalRuntimeException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
@@ -204,6 +205,97 @@ class WcGatewayTest extends TestCase
 		);
 	}
 
+	/**
+	 * Mocks WC()->session as an in-memory key/value store.
+	 */
+	private function mock_wc_session_store(): \WC_Session {
+		$store = array();
+
+		$session = Mockery::mock(\WC_Session::class);
+		$session->shouldReceive('set')->andReturnUsing(
+			static function (string $key, $value) use (&$store): void {
+				$store[$key] = $value;
+			}
+		);
+		$session->shouldReceive('get')->andReturnUsing(
+			static function (string $key) use (&$store) {
+				return $store[$key] ?? null;
+			}
+		);
+
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$cart = Mockery::mock(\WC_Cart::class);
+		$woocommerce->cart = $cart;
+		$cart->shouldReceive('empty_cart');
+		$woocommerce->session = $session;
+		when('WC')->justReturn($woocommerce);
+
+		return $session;
+	}
+
+	/**
+	 * GIVEN a customer completes checkout successfully
+	 * WHEN process_payment() finishes handling the successful payment
+	 * THEN the `ppcp_vault_component_order` session flag is cleared
+	 */
+	public function test_process_payment_clears_vault_component_order_flag_on_success(): void {
+		$orderId = 1;
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_customer_id')->andReturn(1);
+		$wcOrder->shouldReceive('get_meta')->andReturn('');
+		$this->orderProcessor
+			->expects('process')
+			->andReturnUsing(
+				function(\WC_Order $order) use ($wcOrder) : bool {
+					return $order === $wcOrder;
+				}
+			);
+		$this->sessionHandler->shouldReceive('destroy_session_data');
+
+		$testee = $this->createGateway();
+
+		expect('wc_get_order')
+			->with($orderId)
+			->andReturn($wcOrder);
+
+		when('wc_get_checkout_url')->justReturn('test');
+
+		$session = $this->mock_wc_session_store();
+		$session->set('ppcp_vault_component_order', 'PAYPAL-VAULT-ORDER-1');
+
+		$testee->process_payment($orderId);
+
+		$this->assertSame('', $session->get('ppcp_vault_component_order'));
+	}
+
+	/**
+	 * GIVEN a customer's checkout attempt fails
+	 * WHEN process_payment() finishes handling the failed payment
+	 * THEN the `ppcp_vault_component_order` session flag is cleared
+	 */
+	public function test_process_payment_clears_vault_component_order_flag_on_failure(): void {
+		$orderId = 1;
+
+		$testee = $this->createGateway();
+
+		$session = $this->mock_wc_session_store();
+		$session->set('ppcp_vault_component_order', 'PAYPAL-VAULT-ORDER-1');
+
+		expect('wc_get_order')
+			->with($orderId)
+			->andReturn(false);
+
+		when('wc_get_checkout_url')->justReturn('http://example.com/checkout');
+
+		$this->sessionHandler->shouldReceive('destroy_session_data');
+
+		expect('wc_add_notice');
+
+		$testee->process_payment($orderId);
+
+		$this->assertSame('', $session->get('ppcp_vault_component_order'));
+	}
+
 	public function testProcessPaymentSuccess() {
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
@@ -342,6 +434,118 @@ class WcGatewayTest extends TestCase
 			$result
 		);
     }
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * GIVEN the current WC session has `ppcp_vault_component_order` set
+	 *   AND a saved PayPal payment token id was also posted along with the checkout
+	 * WHEN process_payment() runs
+	 * THEN the saved-token capture path is skipped and the order is processed through
+	 *   the normal PayPal order flow
+	 */
+	public function test_process_payment_skips_saved_token_capture_when_vault_component_order_flag_is_set(): void {
+		$orderId = 1;
+		$_POST['wc-ppcp-gateway-payment-token'] = '99';
+
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_customer_id')->andReturn(1);
+		$wcOrder->shouldReceive('get_meta')->andReturn('');
+
+		$this->orderProcessor
+			->expects('process')
+			->andReturnUsing(
+				function(\WC_Order $order) use ($wcOrder) : bool {
+					return $order === $wcOrder;
+				}
+			);
+		$this->sessionHandler
+			->shouldReceive('destroy_session_data');
+
+		$testee = $this->createGateway();
+
+		expect('wc_get_order')
+			->with($orderId)
+			->andReturn($wcOrder);
+
+		when('wc_get_checkout_url')
+			->justReturn('test');
+
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$cart = Mockery::mock(\WC_Cart::class);
+		when('WC')->justReturn($woocommerce);
+		$woocommerce->cart = $cart;
+		$cart->shouldReceive('empty_cart');
+
+		$session = Mockery::mock(\WC_Session::class);
+		$woocommerce->session = $session;
+		$session->shouldReceive('get')->with('ppcp_vault_component_order')->andReturn('PAYPAL-VAULT-ORDER-1');
+		$session->shouldReceive('get')->andReturn(null);
+		$session->shouldReceive('set');
+
+		$result = $testee->process_payment($orderId);
+
+		$this->assertIsArray($result);
+		$this->assertEquals('success', $result['result']);
+	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * GIVEN a saved PayPal payment token id was posted along with the checkout
+	 *   AND the `ppcp_vault_component_order` session flag is absent
+	 * WHEN process_payment() runs
+	 * THEN the saved-token capture path is entered and attempts to capture the matching
+	 *   token
+	 */
+	public function test_process_payment_enters_saved_token_capture_when_vault_component_order_flag_is_absent(): void {
+		$orderId = 1;
+		$_POST['wc-ppcp-gateway-payment-token'] = '99';
+
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_customer_id')->andReturn(1);
+		$wcOrder->shouldReceive('get_meta')->andReturn('');
+		$wcOrder->shouldReceive('get_id')->andReturn($orderId);
+		$wcOrder->shouldReceive('update_status')->andReturn(true);
+
+		when('get_current_user_id')->justReturn(1);
+		when('wc_add_notice')->justReturn(null);
+		when('wc_get_checkout_url')->justReturn('http://example.com/checkout');
+		when('is_checkout_pay_page')->justReturn(false);
+
+		$payment_token = Mockery::mock(\WC_Payment_Token::class);
+		$payment_token->shouldReceive('get_id')->andReturn(99);
+		$payment_token->shouldReceive('get_token')->andReturn('vault-token-abc');
+
+		$tokens_alias = Mockery::mock('alias:WC_Payment_Tokens');
+		$tokens_alias->shouldReceive('get_customer_tokens')->with(1)->andReturn([$payment_token]);
+
+		$this->capturePayPalPayment
+			->shouldReceive('create_order')
+			->once()
+			->with('vault-token-abc', $wcOrder, 'paypal')
+			->andThrow(new PayPalRuntimeException('capture failed'));
+
+		$this->sessionHandler->shouldReceive('destroy_session_data');
+
+		$testee = $this->createGateway();
+
+		expect('wc_get_order')
+			->with($orderId)
+			->andReturn($wcOrder);
+
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$session = Mockery::mock(\WC_Session::class);
+		$woocommerce->session = $session;
+		when('WC')->justReturn($woocommerce);
+		$session->shouldReceive('get')->with('ppcp_vault_component_order')->andReturn(null);
+		$session->shouldReceive('get')->andReturn(null);
+		$session->shouldReceive('set');
+
+		$result = $testee->process_payment($orderId);
+
+		$this->assertEquals('failure', $result['result']);
+	}
 
 	/**
 	 * GIVEN a freshly-created order exists in WooCommerce (normal checkout flow)

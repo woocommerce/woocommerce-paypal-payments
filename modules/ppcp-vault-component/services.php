@@ -80,6 +80,7 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

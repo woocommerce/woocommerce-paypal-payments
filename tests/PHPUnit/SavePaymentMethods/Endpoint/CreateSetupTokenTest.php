@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\SetupTokenBinding;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use function Brain\Monkey\Functions\expect;
@@ -25,6 +26,9 @@ class CreateSetupTokenTest extends TestCase {
 	/** @var PaymentMethodTokensEndpoint&\Mockery\MockInterface */
 	private $tokens_endpoint;
 
+	/** @var SetupTokenBinding&\Mockery\MockInterface */
+	private $setup_token_binding;
+
 	/** @var CreateSetupToken */
 	private $sut;
 
@@ -34,9 +38,13 @@ class CreateSetupTokenTest extends TestCase {
 		$this->request_data    = Mockery::mock( RequestData::class );
 		$this->tokens_endpoint = Mockery::mock( PaymentMethodTokensEndpoint::class );
 
+		$this->setup_token_binding = Mockery::mock( SetupTokenBinding::class );
+		$this->setup_token_binding->shouldReceive( 'bind' )->byDefault();
+
 		$this->sut = new CreateSetupToken(
 			$this->request_data,
-			$this->tokens_endpoint
+			$this->tokens_endpoint,
+			$this->setup_token_binding
 		);
 
 		// Common WP stubs used by handle_request(). get_user_meta is intentionally
@@ -210,6 +218,56 @@ class CreateSetupTokenTest extends TestCase {
 		$this->sut->handle_request();
 
 		$this->assertSame( 'cust-abc123', $captured_customer_id );
+	}
+
+	/**
+	 * GIVEN PayPal creates a setup token for the current customer
+	 * WHEN handle_request() is called
+	 * THEN the new token id is bound to the current customer and session exactly once
+	 */
+	public function test_created_setup_token_is_bound_to_its_creator(): void {
+		$this->request_data
+			->shouldReceive( 'read_request' )
+			->once()
+			->andReturn( array( 'payment_method' => 'ppcp-gateway' ) );
+
+		when( 'get_user_meta' )->justReturn( '' );
+
+		$this->tokens_endpoint
+			->shouldReceive( 'setup_tokens' )
+			->once()
+			->andReturn( (object) array( 'id' => 'setup-token-123' ) );
+
+		$this->setup_token_binding->shouldReceive( 'bind' )->once()->with( 'setup-token-123' );
+
+		$this->sut->handle_request();
+
+		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN PayPal returns a response without a token id
+	 * WHEN handle_request() is called
+	 * THEN nothing is bound
+	 */
+	public function test_nothing_is_bound_when_paypal_returns_no_token_id(): void {
+		$this->request_data
+			->shouldReceive( 'read_request' )
+			->once()
+			->andReturn( array( 'payment_method' => 'ppcp-gateway' ) );
+
+		when( 'get_user_meta' )->justReturn( '' );
+
+		$this->tokens_endpoint
+			->shouldReceive( 'setup_tokens' )
+			->once()
+			->andReturn( new \stdClass() );
+
+		$this->setup_token_binding->shouldNotReceive( 'bind' );
+
+		$this->sut->handle_request();
+
+		$this->addToAssertionCount( 1 );
 	}
 
 	/**

@@ -408,6 +408,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 			 */
 			do_action( 'woocommerce_paypal_payments_create_order_endpoint_order_created', $order, $data );
 
+			$this->session_handler->remember_created_order( $order->id() );
+
 			if ( 'checkout' === $data['context'] ) {
 				if ( $payment_method === PayPalGateway::ID && ! in_array( $funding_source, $this->funding_sources_without_redirect, true ) ) {
 					$this->session_handler->replace_order( $order );

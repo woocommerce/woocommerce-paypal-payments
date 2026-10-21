@@ -7,6 +7,8 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint;
 use Exception;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\SetupTokenBinding;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -33,6 +35,12 @@ class CreatePaymentTokenTest extends TestCase {
 
 	/** @var FreeTrialSubscriptionHelper&\Mockery\MockInterface */
 	private $free_trial_helper;
+
+	/** @var SetupTokenBinding&\Mockery\MockInterface */
+	private $setup_token_binding;
+
+	/** @var LoggerInterface&\Mockery\MockInterface */
+	private $logger;
 
 	/** @var CreatePaymentToken */
 	private $sut;
@@ -66,17 +74,28 @@ class CreatePaymentTokenTest extends TestCase {
 		$this->free_trial_helper = Mockery::mock( FreeTrialSubscriptionHelper::class );
 		$this->free_trial_helper->shouldReceive( 'is_free_trial_cart' )->andReturn( false )->byDefault();
 
-		$this->sut = new CreatePaymentToken(
+		$this->setup_token_binding = Mockery::mock( SetupTokenBinding::class );
+		$this->setup_token_binding->shouldReceive( 'consume' )->andReturn( true )->byDefault();
+
+		$this->logger = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
+
+		$this->sut = $this->create_sut( $this->free_trial_helper );
+
+		// Common WP stubs. A first-time customer has no stored PayPal customer id.
+		when( 'get_current_user_id' )->justReturn( 42 );
+		when( 'get_user_meta' )->justReturn( '' );
+		when( 'is_user_logged_in' )->justReturn( true );
+	}
+
+	private function create_sut( FreeTrialSubscriptionHelper $free_trial_helper ): CreatePaymentToken {
+		return new CreatePaymentToken(
 			$this->request_data,
 			$this->tokens_endpoint,
 			$this->wc_payment_tokens,
-			$this->free_trial_helper
+			$free_trial_helper,
+			$this->setup_token_binding,
+			$this->logger
 		);
-
-		// Common WP stubs.
-		when( 'get_current_user_id' )->justReturn( 42 );
-		when( 'get_user_meta' )->justReturn( 'cust-existing' );
-		when( 'is_user_logged_in' )->justReturn( true );
 	}
 
 	// -------------------------------------------------------------------------
@@ -156,12 +175,7 @@ class CreatePaymentTokenTest extends TestCase {
 		$free_trial_helper = Mockery::mock( FreeTrialSubscriptionHelper::class );
 		$free_trial_helper->shouldReceive( 'is_free_trial_cart' )->andReturn( true );
 
-		$this->sut = new CreatePaymentToken(
-			$this->request_data,
-			$this->tokens_endpoint,
-			$this->wc_payment_tokens,
-			$free_trial_helper
-		);
+		$this->sut = $this->create_sut( $free_trial_helper );
 
 		$this->request_data
 			->shouldReceive( 'read_request' )
@@ -200,12 +214,7 @@ class CreatePaymentTokenTest extends TestCase {
 		$free_trial_helper = Mockery::mock( FreeTrialSubscriptionHelper::class );
 		$free_trial_helper->shouldReceive( 'is_free_trial_cart' )->andReturn( false );
 
-		$this->sut = new CreatePaymentToken(
-			$this->request_data,
-			$this->tokens_endpoint,
-			$this->wc_payment_tokens,
-			$free_trial_helper
-		);
+		$this->sut = $this->create_sut( $free_trial_helper );
 
 		$this->request_data
 			->shouldReceive( 'read_request' )
@@ -329,5 +338,128 @@ class CreatePaymentTokenTest extends TestCase {
 		expect( 'wp_send_json_error' )->once()->withNoArgs();
 
 		$this->sut->handle_request();
+	}
+
+	/**
+	 * GIVEN the setup token was not created by the current customer and session
+	 * WHEN handle_request() is called with that token
+	 * THEN the request is rejected with HTTP 403
+	 * AND PayPal is never asked to exchange the token
+	 * AND no customer id is stored and no WC token is created
+	 */
+	public function test_token_not_created_by_current_customer_is_rejected_without_exchange(): void {
+		$this->request_data
+			->shouldReceive( 'read_request' )
+			->once()
+			->andReturn( array( 'vault_setup_token' => 'foreign-token' ) );
+
+		$this->setup_token_binding
+			->shouldReceive( 'consume' )
+			->with( 'foreign-token' )
+			->andReturn( false );
+
+		$this->tokens_endpoint->shouldNotReceive( 'create_payment_token' );
+		$this->wc_payment_tokens->shouldNotReceive( 'create_payment_token_card' );
+		$this->wc_payment_tokens->shouldNotReceive( 'create_payment_token_paypal' );
+
+		expect( 'update_user_meta' )->never();
+		expect( 'wp_send_json_success' )->never();
+		expect( 'wp_send_json_error' )
+			->once()
+			->with( null, 403 )
+			->andReturnUsing( $this->abort_request() );
+
+		$this->expectExceptionMessage( 'wp_send_json_error' );
+
+		$this->sut->handle_request();
+	}
+
+	/**
+	 * Makes wp_send_json_error() end the request the way it does in production.
+	 */
+	private function abort_request(): callable {
+		return static function (): void {
+			throw new \Error( 'wp_send_json_error' );
+		};
+	}
+
+	/**
+	 * GIVEN the user already has a stored PayPal customer id
+	 * AND PayPal returns a token belonging to a different PayPal customer
+	 * WHEN handle_request() is called
+	 * THEN the request is rejected with HTTP 403
+	 * AND the stored customer id is not overwritten
+	 * AND no WC token is created
+	 *
+	 * @dataProvider payment_result_provider
+	 */
+	public function test_token_belonging_to_a_different_paypal_customer_is_rejected( string $result_type ): void {
+		$this->request_data
+			->shouldReceive( 'read_request' )
+			->once()
+			->andReturn( array( 'vault_setup_token' => 'setup-tok-020' ) );
+
+		when( 'get_user_meta' )->justReturn( 'cust-existing' );
+
+		$result = $result_type === 'card' ? $this->card_result_fixture() : $this->paypal_result_fixture();
+		$this->tokens_endpoint->shouldReceive( 'create_payment_token' )->once()->andReturn( $result );
+
+		$this->wc_payment_tokens->shouldNotReceive( 'create_payment_token_card' );
+		$this->wc_payment_tokens->shouldNotReceive( 'create_payment_token_paypal' );
+
+		expect( 'update_user_meta' )->never();
+		expect( 'wp_send_json_success' )->never();
+		expect( 'wp_send_json_error' )
+			->once()
+			->with( null, 403 )
+			->andReturnUsing( $this->abort_request() );
+
+		$this->expectExceptionMessage( 'wp_send_json_error' );
+
+		$this->sut->handle_request();
+	}
+
+	public function payment_result_provider(): array {
+		return array(
+			'card token'   => array( 'card' ),
+			'paypal token' => array( 'paypal' ),
+		);
+	}
+
+	/**
+	 * GIVEN the user already has a stored PayPal customer id
+	 * AND PayPal returns a token for that same PayPal customer
+	 * WHEN handle_request() is called
+	 * THEN the WC token is created and its id is sent back as success
+	 */
+	public function test_token_for_the_stored_paypal_customer_is_accepted(): void {
+		$this->request_data
+			->shouldReceive( 'read_request' )
+			->once()
+			->andReturn( array( 'vault_setup_token' => 'setup-tok-021' ) );
+
+		when( 'get_user_meta' )->justReturn( 'LYraJLIEfz' );
+
+		$fixture = $this->card_result_fixture();
+		$this->tokens_endpoint->shouldReceive( 'create_payment_token' )->once()->andReturn( $fixture );
+		$this->wc_payment_tokens
+			->shouldReceive( 'create_payment_token_card' )
+			->once()
+			->with( 42, $fixture )
+			->andReturn( 4343 );
+
+		expect( 'update_user_meta' )->once()->with( 42, '_ppcp_target_customer_id', 'LYraJLIEfz' );
+		expect( 'wp_send_json_error' )->never();
+
+		$sent_value = null;
+		expect( 'wp_send_json_success' )
+			->once()
+			->andReturnUsing( function ( $value ) use ( &$sent_value ): void {
+				$sent_value = $value;
+			} );
+
+		$this->sut->handle_request();
+
+		$this->assertSame( 4343, $sent_value );
 	}
 }

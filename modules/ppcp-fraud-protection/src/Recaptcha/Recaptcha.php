@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection\Recaptcha;
 
+use Automattic\WooCommerce\StoreApi\Exceptions\RouteException;
 use Automattic\WooCommerce\Utilities\OrderUtil;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -11,8 +12,8 @@ use WC_Product;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WP_Error;
 use WP_Post;
+use WP_REST_Request;
 
 class Recaptcha {
 	private const V2_CONTAINER_ID                = 'ppcp-recaptcha-v2-container';
@@ -425,84 +426,69 @@ class Recaptcha {
 	}
 
 	/**
-	 * @param  WP_Error|null|true $errors
+	 * Verifies the reCAPTCHA token on Store API order placement.
 	 *
-	 * @return WP_Error|null|true WP_Error
+	 * @throws RouteException When the token is missing or the verification fails.
 	 */
-	public function validate_blocks_request( $errors ) {
-		$request_uri = sanitize_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
-
-		if (
-			! is_wp_error( $errors ) && strpos(
-				$request_uri,
-				'/wc/store/v1/checkout'
-			) !== false
-		) {
-			if ( ! $this->should_use_recaptcha() ) {
-				return $errors;
-			}
-
-			$request_body = file_get_contents( 'php://input' );
-			if ( ! is_string( $request_body ) ) {
-				return $errors;
-			}
-			$data = json_decode( $request_body, true );
-			// Not an order creation request.
-			if ( ! is_array( $data ) || ! isset( $data['billing_address'] ) ) {
-				return $errors;
-			}
-			$ext_data = $data['extensions']['ppcp_recaptcha'] ?? null;
-
-			$payment_method = sanitize_text_field( $data['payment_method'] ?? '' );
-
-			if ( ! in_array( $payment_method, $this->payment_methods, true ) ) {
-				return $errors;
-			}
-
-			if ( empty( $ext_data ) || empty( $ext_data['token'] ) || empty( $ext_data['version'] ) ) {
-				return new WP_Error(
-					self::ERROR_CODE_MISSING_TOKEN,
-					__(
-						'Please complete the CAPTCHA verification.',
-						'woocommerce-paypal-payments'
-					),
-					array( 'status' => 400 )
-				);
-			}
-
-			$token   = sanitize_text_field( $ext_data['token'] );
-			$version = sanitize_text_field( $ext_data['version'] );
-
-			// Initialize WooCommerce session as it doesn't exist in REST API requests.
-			WC()->initialize_session();
-
-			$success = ( $version === 'v3' )
-				? $this->verify_v3(
-					$token,
-					$this->integration->get_option( 'secret_key_v3' ),
-					$this->score_threshold()
-				)
-				: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
-
-			if ( ! $success ) {
-				if ( $version === 'v3' ) {
-					$content = $data;
-					unset( $content['extensions'] );
-					$this->log_rejection( 'Block Checkout Submission', $content );
-				}
-
-				return new WP_Error(
-					self::ERROR_CODE_VERIFICATION_FAILED,
-					__(
-						'CAPTCHA verification failed. Please try again.',
-						'woocommerce-paypal-payments'
-					),
-					array( 'status' => 403 )
-				);
-			}
+	public function validate_store_api_checkout( WC_Order $order, WP_REST_Request $request ): void {
+		// The Checkout route also fires this hook on PATCH, which does not place the order.
+		if ( 'POST' !== $request->get_method() ) {
+			return;
 		}
 
-		return $errors;
+		if ( ! $this->should_use_recaptcha() ) {
+			return;
+		}
+
+		if ( ! in_array( $order->get_payment_method(), $this->payment_methods, true ) ) {
+			return;
+		}
+
+		$extensions = $request->get_param( 'extensions' );
+		$ext_data   = is_array( $extensions ) ? ( $extensions['ppcp_recaptcha'] ?? null ) : null;
+
+		if (
+			! is_array( $ext_data )
+			|| empty( $ext_data['token'] ) || ! is_string( $ext_data['token'] )
+			|| empty( $ext_data['version'] ) || ! is_string( $ext_data['version'] )
+		) {
+			throw new RouteException(
+				self::ERROR_CODE_MISSING_TOKEN,
+				esc_html__(
+					'Please complete the CAPTCHA verification.',
+					'woocommerce-paypal-payments'
+				),
+				400
+			);
+		}
+
+		$token   = sanitize_text_field( $ext_data['token'] );
+		$version = sanitize_text_field( $ext_data['version'] );
+
+		$success = ( $version === 'v3' )
+			? $this->verify_v3(
+				$token,
+				$this->integration->get_option( 'secret_key_v3' ),
+				$this->score_threshold()
+			)
+			: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
+
+		if ( ! $success ) {
+			if ( $version === 'v3' ) {
+				$content = $request->get_params();
+				unset( $content['extensions'] );
+				$this->log_rejection( 'Block Checkout Submission', $content );
+			}
+
+			throw new RouteException(
+				self::ERROR_CODE_VERIFICATION_FAILED,
+				esc_html__(
+					'CAPTCHA verification failed. Please try again.',
+					'woocommerce-paypal-payments'
+				),
+				403
+			);
+		}
 	}
 
 	public function add_result_meta( WC_Order $order ): void {

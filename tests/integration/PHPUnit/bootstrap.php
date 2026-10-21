@@ -21,6 +21,17 @@ define('WP_ROOT_DIR', $wpRootDir);
 $_SERVER['HTTP_HOST'] = ''; // just to avoid a warning
 
 require_once WP_ROOT_DIR . '/wp-load.php';
+
+// Start every run with reCAPTCHA disabled, whatever the site has stored.
+$recaptchaOptionKey = 'woocommerce_ppcp-recaptcha_settings';
+$recaptchaSettings  = get_option($recaptchaOptionKey, array());
+if (!is_array($recaptchaSettings)) {
+	$recaptchaSettings = array();
+}
+$recaptchaSettings['enabled'] = 'no';
+update_option($recaptchaOptionKey, $recaptchaSettings);
+\WooCommerce\PayPalCommerce\PPCP::container()->get('fraud-protection.recaptcha.integration')->init_settings();
+
 // Ensure the TestCase class is loaded
 require_once __DIR__ . '/TestCase.php';
 require_once __DIR__ . '/IntegrationMockedTestCase.php';

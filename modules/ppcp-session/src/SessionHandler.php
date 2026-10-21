@@ -60,6 +60,8 @@ class SessionHandler {
 
 	private string $payer_action_order_id = '';
 
+	private string $created_order_id = '';
+
 	public function __construct( ?LoggerInterface $logger = null ) {
 		$this->logger = $logger ?? new NullLogger();
 	}
@@ -185,6 +187,23 @@ class SessionHandler {
 	}
 
 	/**
+	 * Lets a later checkout request refer to this PayPal order by ID.
+	 */
+	public function remember_created_order( string $order_id ): void {
+		$this->load_session();
+
+		$this->created_order_id = $order_id;
+
+		$this->store_session();
+	}
+
+	public function is_created_order( string $order_id ): bool {
+		$this->load_session();
+
+		return '' !== $order_id && $order_id === $this->created_order_id;
+	}
+
+	/**
 	 * Returns how many times the customer tried to use the PayPal Gateway in this session.
 	 *
 	 * @return int
@@ -231,6 +250,7 @@ class SessionHandler {
 		$this->funding_source             = null;
 		$this->checkout_form              = array();
 		$this->payer_action_order_id      = '';
+		$this->created_order_id           = '';
 		$this->store_session();
 		return $this;
 	}
@@ -270,6 +290,7 @@ class SessionHandler {
 		}
 		$this->checkout_form         = $data['checkout_form'] ?? array();
 		$this->payer_action_order_id = (string) ( $data['payer_action_order_id'] ?? '' );
+		$this->created_order_id      = (string) ( $data['created_order_id'] ?? '' );
 	}
 
 	/**
@@ -286,6 +307,7 @@ class SessionHandler {
 			'funding_source'             => $obj->funding_source,
 			'checkout_form'              => $obj->checkout_form,
 			'payer_action_order_id'      => $obj->payer_action_order_id,
+			'created_order_id'           => $obj->created_order_id,
 		);
 	}
 }
