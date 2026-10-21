@@ -35,7 +35,8 @@
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-deprecation-rules": "^2.0",
         "swissspidy/phpstan-no-private": "^1.0",
-        "inpsyde/wp-stubs-versions": "dev-latest"
+        "inpsyde/wp-stubs-versions": "dev-latest",
+        "slevomat/coding-standard": "^8.22"
     },
     "autoload": {
         "psr-4": {
