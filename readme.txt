@@ -161,7 +161,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 4.2.0 - XXXX-XX-XX =
+= 4.2.0 - 2026-10-21 =
 * Enhancement - PayPal JS SDK v6 is now the default for all stores, including existing ones; SDK v5 remains available as a fallback via `woocommerce.feature-flags.woocommerce_paypal_payments.sdk_v6_enabled` filter #4720
 * Enhancement - Remove the leftover checks that let vaulting disable Pay Later, including the `woocommerce_paypal_payments_pay_later_with_vaulting` filter #4736
 * Enhancement - Enable the Pay Later payment method after onboarding on every onboarding path, keeping the merchant's previous choice on reconnect #4733
