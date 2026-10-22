@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WP_Comment;
 
@@ -85,6 +86,11 @@ class RefundFeesUpdater {
 			$refunds = $payments->refunds();
 
 			foreach ( $refunds as $refund ) {
+				// No money moved, e.g. a dispute hold closed in the seller's favour ends as FAILED.
+				if ( $refund->status()->is( RefundStatus::FAILED ) || $refund->status()->is( RefundStatus::CANCELLED ) ) {
+					continue;
+				}
+
 				$breakdown     = $refund->seller_payable_breakdown();
 				$refunds_ids[] = $refund->id();
 
