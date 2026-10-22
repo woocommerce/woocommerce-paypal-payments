@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
@@ -62,30 +61,19 @@ class MiniCartBlocks {
 	 * @return array{sdkV6: ?array, buttonStyle: ?array}
 	 */
 	private static function sdk_v6_preview_data( ContainerInterface $c ): array {
-		if ( ! $c->has( 'sdk-v6.button-style-mapper' ) ) {
+		$sdk_v6 = SdkV6EditorPreview::config( $c );
+		if ( null === $sdk_v6 || ! $c->has( 'sdk-v6.button-style-mapper' ) ) {
 			return array(
 				'sdkV6'       => null,
 				'buttonStyle' => null,
 			);
 		}
 
-		$environment = $c->get( 'settings.environment' );
-		assert( $environment instanceof Environment );
-
 		$style_mapper = $c->get( 'sdk-v6.button-style-mapper' );
 		assert( $style_mapper instanceof ButtonStyleMapper );
 
-		$base_url = $environment->is_sandbox()
-			? 'https://www.sandbox.paypal.com'
-			: 'https://www.paypal.com';
-
 		return array(
-			'sdkV6'       => array(
-				'sdkUrl'   => $base_url . '/web-sdk/v6/core',
-				'clientId' => (string) $c->get( 'button.client_id' ),
-				'currency' => get_woocommerce_currency(),
-				'locale'   => str_replace( '_', '-', get_locale() ),
-			),
+			'sdkV6'       => $sdk_v6,
 			'buttonStyle' => array_merge(
 				$style_mapper->styles_for_context( 'mini-cart' ),
 				array( 'height' => '35px' )

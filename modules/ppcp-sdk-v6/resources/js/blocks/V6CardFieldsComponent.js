@@ -18,6 +18,7 @@ import {
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange, setSdkBusy } from '../tokenRefresh';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
 import {
 	createCardSetupToken,
@@ -31,6 +32,7 @@ import { V6CardFieldContainer } from './V6CardFieldContainer';
 import { amountFromBilling } from '../utils/amount';
 import { isFreeTrialCart } from '../utils/freeTrial';
 import { hasCheckoutValidationErrors } from './checkoutValidation';
+import { trackFieldState, fieldStateError } from '../cardFields/fieldState';
 import {
 	CARD_DECLINE_MESSAGE,
 	CARD_SAVE_DECLINE_MESSAGE,
@@ -227,6 +229,7 @@ export function V6CardFieldsComponent( {
 	const isFreeTrial = isFreeTrialCart( config, amountFromBilling( billing ) );
 
 	const [ session, setSession ] = useState( null );
+	const getFieldStateRef = useRef( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
 	const [ textStyle, setTextStyle ] = useState( null );
 	const [ floatingLabel, setFloatingLabel ] = useState( false );
@@ -258,8 +261,19 @@ export function V6CardFieldsComponent( {
 			: null
 	);
 
-	// One card session for the component's lifetime: the SDK cannot dispose a
-	// session, so it must not be recreated on ordinary re-renders.
+	// A new SDK instance mounts new fields. Card data the buyer entered is
+	// lost, which is clearer than a declined payment later.
+	const [ sdkGeneration, setSdkGeneration ] = useState( 0 );
+	useEffect(
+		() =>
+			onSdkInstanceChange( () =>
+				setSdkGeneration( ( generation ) => generation + 1 )
+			),
+		[]
+	);
+
+	// One card session per SDK instance: the SDK cannot dispose a session, so
+	// it must not be recreated on ordinary re-renders.
 	useEffect( () => {
 		let active = true;
 
@@ -269,6 +283,7 @@ export function V6CardFieldsComponent( {
 				? sdk.createCardFieldsSavePaymentSession()
 				: sdk.createCardFieldsOneTimePaymentSession();
 			if ( active ) {
+				getFieldStateRef.current = trackFieldState( cardSession );
 				setSession( cardSession );
 			}
 		} )().catch( ( error ) => {
@@ -279,7 +294,7 @@ export function V6CardFieldsComponent( {
 		return () => {
 			active = false;
 		};
-	}, [ config, context, isFreeTrial ] );
+	}, [ config, context, isFreeTrial, sdkGeneration ] );
 
 	// v6 returns unstyled field elements, so their styling is derived from a real
 	// block text input on the page, or a hidden reference input when there is
@@ -309,6 +324,9 @@ export function V6CardFieldsComponent( {
 		if ( ! session || ! floatingLabel ) {
 			return undefined;
 		}
+
+		// The fields of a new session start empty.
+		setFieldStates( {} );
 
 		let listening = true;
 		const handler = ( payload ) => {
@@ -353,7 +371,7 @@ export function V6CardFieldsComponent( {
 			return undefined;
 		}
 
-		return onPaymentSetup( () => {
+		return onPaymentSetup( async () => {
 			// The onCheckoutValidation check ran earlier and its verdict can go
 			// stale, so re-check right before calling PayPal.
 			if ( hasCheckoutValidationErrors() ) {
@@ -363,21 +381,40 @@ export function V6CardFieldsComponent( {
 				};
 			}
 
-			return isFreeTrial
-				? submitCardSave( {
-						config,
-						session: sessionRef.current,
-						responseTypes,
-				  } )
-				: submitCardPayment( {
-						config,
-						context,
-						session: sessionRef.current,
-						responseTypes,
-						savePaymentMethod: savePaymentRef.current,
-						// null when no billing address is available.
-						billingAddress: billingRef.current,
-				  } );
+			// Without a session, the submit below reports that the form is not ready.
+			const getFieldState = getFieldStateRef.current;
+			const fieldError =
+				getFieldState &&
+				fieldStateError( getFieldState(), config.labels );
+			if ( fieldError ) {
+				return {
+					type: responseTypes.ERROR,
+					message: fieldError,
+				};
+			}
+
+			// No new fields while 3D Secure runs in the current ones.
+			setSdkBusy( true );
+
+			try {
+				return await ( isFreeTrial
+					? submitCardSave( {
+							config,
+							session: sessionRef.current,
+							responseTypes,
+					  } )
+					: submitCardPayment( {
+							config,
+							context,
+							session: sessionRef.current,
+							responseTypes,
+							savePaymentMethod: savePaymentRef.current,
+							// null when no billing address is available.
+							billingAddress: billingRef.current,
+					  } ) );
+			} finally {
+				setSdkBusy( false );
+			}
 		} );
 	}, [
 		onPaymentSetup,

@@ -193,10 +193,7 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'blocks.settings.final_review_enabled' ),
-			$container->get( 'button.helper.wc-order-creator' ),
-			$container->get( 'wcgateway.paypal-gateway' ),
-			$container->get( 'button.helper.context' ),
+			$container->get( 'order-endpoints.helper.pay-now-order-handler' ),
 			$container->get( 'api.endpoint.billing-subscriptions' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wc-subscriptions.helper' )

@@ -177,6 +177,7 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn(null);
+		$sessionHandler->shouldReceive('is_created_order')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,

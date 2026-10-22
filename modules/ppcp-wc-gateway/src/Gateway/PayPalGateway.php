@@ -437,8 +437,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$paypal_payment_token_id = wc_clean( wp_unslash( $_POST['wc-ppcp-gateway-payment-token'] ?? '' ) );
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$vault_approved_order_id = wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
 
 		/**
 		 * WC Subscriptions zeroes the order total during a change-payment request, so
@@ -454,8 +452,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			return $this->add_payment_token_to_order( $wc_order, (int) $paypal_payment_token_id, $this->get_return_url( $wc_order ), $this->session_handler );
 		}
 
-		// Skip saved token handling when an approved order exists.
-		if ( $paypal_payment_token_id && 'new' !== $paypal_payment_token_id && ! $vault_approved_order_id ) {
+		// Skip saved-token handling only for the Vault Component's server-created order; a
+		// dedicated flag avoids catching the Smart Button flow, which also sets a session order.
+		if ( $paypal_payment_token_id && 'new' !== $paypal_payment_token_id && ! WC()->session->get( 'ppcp_vault_component_order' ) ) {
 			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
 			foreach ( $tokens as $token ) {
 				if ( $token->get_id() === (int) $paypal_payment_token_id ) {
@@ -631,6 +630,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				);
 			}
 		} catch ( PayPalApiException $error ) {
+			$wallet_failure = $this->handle_wallet_payer_action( $wc_order, $error );
+			if ( $wallet_failure ) {
+				return $wallet_failure;
+			}
+
 			$retry_keys_messages = array(
 				'INSTRUMENT_DECLINED'   => __( 'Instrument declined.', 'woocommerce-paypal-payments' ),
 				'PAYER_ACTION_REQUIRED' => __( 'Payer action required, possibly overcharge.', 'woocommerce-paypal-payments' ),
@@ -676,6 +680,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				// in its current status instead of failing it prematurely - only
 				// note the reason and send the customer back to complete it.
 				$wc_order->add_order_note( $retry_message );
+				$this->session_handler->replace_payer_action_order_id( $session_order->id() );
 
 				return array(
 					'result'   => 'success',

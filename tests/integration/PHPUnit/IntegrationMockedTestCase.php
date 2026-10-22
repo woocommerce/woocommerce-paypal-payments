@@ -31,10 +31,17 @@ class IntegrationMockedTestCase extends TestCase
 {
     use MockeryPHPUnitIntegration, CreateTestOrders, CreateTestProducts, CleansTestData;
 
+    /**
+     * @var int[]
+     */
+    private array $tokenCustomerIds = [];
+
     public function setUp(): void
     {
         parent::setUp();
         $this->customer_id = $this->createCustomerIfNotExists();
+        $this->tokenCustomerIds = [$this->customer_id];
+        $this->purgePaymentTokens();
         $this->createTestProducts();
         $this->createTestCoupons();
     }
@@ -43,6 +50,7 @@ class IntegrationMockedTestCase extends TestCase
     {
         // This cleans up everything created during tests
         $this->cleanupTestData();
+        $this->purgePaymentTokens();
 	    wc_clear_notices();
         parent::tearDown();
     }
@@ -131,6 +139,7 @@ class IntegrationMockedTestCase extends TestCase
     public function createAPaymentTokenForTheCustomer(int $customer_id = 1, $gateway_id = 'ppcp-gateway'): WC_Payment_Token_CC
     {
         $this->createCustomerIfNotExists($customer_id);
+        $this->tokenCustomerIds[] = $customer_id;
 
         $token = new WC_Payment_Token_CC();
         $token->set_token('test_token_' . uniqid()); // Unique token ID
@@ -156,6 +165,27 @@ class IntegrationMockedTestCase extends TestCase
         }
 
         return $token;
+    }
+
+    /**
+     * Queries the database directly: WC_Payment_Tokens::get_customer_tokens() is
+     * paginated and skips tokens of unregistered gateways.
+     */
+    private function purgePaymentTokens(): void
+    {
+        global $wpdb;
+
+        foreach (array_unique($this->tokenCustomerIds) as $customer_id) {
+            $wpdb->query($wpdb->prepare(
+                "DELETE meta FROM {$wpdb->prefix}woocommerce_payment_tokenmeta meta
+                INNER JOIN {$wpdb->prefix}woocommerce_payment_tokens tokens
+                    ON meta.payment_token_id = tokens.token_id
+                WHERE tokens.user_id = %d",
+                $customer_id
+            ));
+            $wpdb->delete($wpdb->prefix . 'woocommerce_payment_tokens', ['user_id' => $customer_id], ['%d']);
+        }
+        wp_cache_flush();
     }
 
     /**
@@ -272,7 +302,13 @@ class IntegrationMockedTestCase extends TestCase
             $auth_status = \Mockery::mock(\WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus::class)->shouldIgnoreMissing();
 
             $auth_status->shouldReceive('name')->andReturn($capture_success ? 'CREATED' : 'DENIED');
-            $auth_status->shouldReceive('is')->andReturn($capture_success);
+            $auth_status->shouldReceive('is')->andReturnUsing(
+                static function (string $status) use ($capture_success): bool {
+                    return $capture_success
+                        ? $status === \WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus::CREATED
+                        : $status === \WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus::DENIED;
+                }
+            );
             $authorization->shouldReceive('status')->andReturn($auth_status);
             $payments->shouldReceive('authorizations')->andReturn([$authorization]);
             $payments->shouldReceive('captures')->andReturn([]);

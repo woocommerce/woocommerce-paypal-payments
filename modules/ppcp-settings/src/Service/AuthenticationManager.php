@@ -236,7 +236,6 @@ class AuthenticationManager {
 			'Storing one-time OAuth credentials...',
 			array(
 				'shared_id'   => $shared_id,
-				'auth_code'   => $auth_code,
 				'use_sandbox' => $use_sandbox,
 			)
 		);
@@ -518,7 +517,14 @@ class AuthenticationManager {
 	private function update_connection_details( MerchantConnectionDTO $connection ): void {
 		$this->logger->info(
 			'Updating connection details',
-			(array) $connection
+			array(
+				'is_sandbox'       => $connection->is_sandbox,
+				'client_id'        => $connection->client_id,
+				'merchant_id'      => $connection->merchant_id,
+				'merchant_email'   => $connection->merchant_email,
+				'merchant_country' => $connection->merchant_country,
+				'seller_type'      => $connection->seller_type,
+			)
 		);
 
 		$this->common_settings->set_merchant_data( $connection );

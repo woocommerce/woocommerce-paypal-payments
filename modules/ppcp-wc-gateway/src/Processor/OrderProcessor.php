@@ -116,8 +116,10 @@ class OrderProcessor {
 		try {
 			$order = $this->session_handler->order();
 			if ( ! $order ) {
-				// phpcs:ignore WordPress.Security.NonceVerification
-				$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
+				$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+				if ( ! $order_id ) {
+					$order_id = $this->posted_session_order_id();
+				}
 				if ( is_string( $order_id ) && $order_id ) {
 					try {
 						$order = $this->order_endpoint->order( $order_id );
@@ -283,6 +285,11 @@ class OrderProcessor {
 		$updated_order = $this->order_factory->from_wc_order( $wc_order, $order );
 		$this->restore_order_from_filters( $wc_order );
 
+		$amount_unchanged = $this->order_amount_unchanged( $order, $updated_order );
+		if ( ! $amount_unchanged ) {
+			$this->log_amount_change( $wc_order, $order, $updated_order );
+		}
+
 		try {
 			$order = $this->order_endpoint->patch_order_with( $order, $updated_order );
 		} catch ( PayPalApiException $exception ) {
@@ -296,7 +303,7 @@ class OrderProcessor {
 			 * unchanged it is therefore safe to skip the patch and capture the order
 			 * as-is. Any other failure (including an actual amount change) is re-thrown.
 			 */
-			if ( $exception->status_code() !== 422 || ! $this->order_amount_unchanged( $order, $updated_order ) ) {
+			if ( $exception->status_code() !== 422 || ! $amount_unchanged ) {
 				throw $exception;
 			}
 
@@ -346,6 +353,45 @@ class OrderProcessor {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Returns the posted PayPal order ID only if this session created it, so a request
+	 * cannot attach a foreign PayPal order.
+	 */
+	private function posted_session_order_id(): string {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$order_id = wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
+
+		if ( ! is_string( $order_id ) || ! $this->session_handler->is_created_order( $order_id ) ) {
+			return '';
+		}
+
+		return $order_id;
+	}
+
+	/**
+	 * A higher amount after approval can fail the capture with PAYER_ACTION_REQUIRED.
+	 */
+	private function log_amount_change( WC_Order $wc_order, Order $approved_order, Order $updated_order ): void {
+		$this->logger->warning(
+			sprintf(
+				'PayPal order %1$s: amount changed after approval from %2$s to %3$s (WC order #%4$d).',
+				$approved_order->id(),
+				$this->purchase_unit_amount( $approved_order ),
+				$this->purchase_unit_amount( $updated_order ),
+				$wc_order->get_id()
+			)
+		);
+	}
+
+	private function purchase_unit_amount( Order $order ): string {
+		$unit = $order->purchase_units()[0] ?? null;
+		if ( ! $unit instanceof PurchaseUnit ) {
+			return '-';
+		}
+
+		return $unit->amount()->value_str() . ' ' . $unit->amount()->currency_code();
 	}
 
 	/**

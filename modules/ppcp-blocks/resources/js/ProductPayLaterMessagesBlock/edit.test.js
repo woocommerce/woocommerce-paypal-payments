@@ -44,6 +44,22 @@ jest.mock(
 	{ virtual: true }
 );
 
+jest.mock(
+	'@ppcp-paylater-block/components/v6-message-preview',
+	() => ( {
+		V6MessagePreview: ( { amount, pageType, style, sdkV6 } ) => (
+			<div
+				className="ppcp-v6-message-preview"
+				data-amount={ amount }
+				data-page-type={ pageType }
+				data-client-id={ sdkV6.clientId }
+				data-text-color={ style.textColor }
+			/>
+		),
+	} ),
+	{ virtual: true }
+);
+
 jest.mock( '@paypal/react-paypal-js', () => ( {
 	PayPalScriptProvider: jest.fn( ( { children } ) => children ),
 	PayPalMessages: jest.fn( () => null ),
@@ -75,6 +91,17 @@ const defaultConfig = {
 			'text-size': '14',
 		},
 	},
+};
+
+const v6Config = {
+	isSdkV6Active: true,
+	sdkV6: {
+		sdkUrl: 'https://example.test/v6-sdk.js',
+		clientId: 'client-id',
+		currency: 'USD',
+		locale: 'en_US',
+	},
+	messageStyle: { textColor: 'black' },
 };
 
 const defaultProps = {
@@ -133,6 +160,62 @@ describe( 'Edit', () => {
 
 		const { PayPalMessages } = require( '@paypal/react-paypal-js' );
 		expect( PayPalMessages ).toHaveBeenCalled();
+	} );
+
+	test( 'shows the timed-out placeholder immediately when the script params request fails', () => {
+		useScriptParams.mockReturnValue( false );
+
+		render( <Edit { ...defaultProps } /> );
+
+		expect(
+			document.querySelector( '.ppcp-preview-placeholder' )
+		).toHaveTextContent( 'timed-out' );
+	} );
+
+	describe( 'SDK v6 preview', () => {
+		test( 'renders the v6 message preview with the sample amount, product page type and message style', () => {
+			global.PcpProductPayLaterBlock = {
+				...defaultConfig,
+				...v6Config,
+			};
+
+			render( <Edit { ...defaultProps } /> );
+
+			const preview = document.querySelector(
+				'.ppcp-v6-message-preview'
+			);
+			expect( preview ).toHaveAttribute( 'data-amount', '50.00' );
+			expect( preview ).toHaveAttribute(
+				'data-page-type',
+				'product-details'
+			);
+			expect( preview ).toHaveAttribute( 'data-client-id', 'client-id' );
+			expect( preview ).toHaveAttribute( 'data-text-color', 'black' );
+			expect( useScriptParams ).not.toHaveBeenCalled();
+		} );
+
+		test.each( [
+			[ 'the v6 SDK flag is off', { isSdkV6Active: false } ],
+			[ 'the v6 sdk config is missing', { sdkV6: null } ],
+			[ 'the message style config is missing', { messageStyle: null } ],
+		] )( 'falls back to the v5 preview when %s', ( _name, overrides ) => {
+			global.PcpProductPayLaterBlock = {
+				...defaultConfig,
+				...v6Config,
+				...overrides,
+			};
+			useScriptParams.mockReturnValue( null );
+
+			render( <Edit { ...defaultProps } /> );
+
+			expect(
+				document.querySelector( '.ppcp-v6-message-preview' )
+			).not.toBeInTheDocument();
+			expect(
+				document.querySelector( '.ppcp-preview-placeholder' )
+			).toBeInTheDocument();
+			expect( useScriptParams ).toHaveBeenCalled();
+		} );
 	} );
 
 	describe( 'preview controller integration', () => {

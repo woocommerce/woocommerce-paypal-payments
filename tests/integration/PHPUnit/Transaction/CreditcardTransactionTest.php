@@ -8,6 +8,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * @group transactions
@@ -135,12 +136,10 @@ class CreditcardTransactionTest extends IntegrationMockedTestCase
 
 		$paypal_order_id = 'TEST-PAYPAL-ORDER-' . uniqid();
 
-		// Set the PayPal order ID in POST data (simulating frontend submission)
-		$_POST['paypal_order_id'] = $paypal_order_id;
-		$order->update_meta_data('_paypal_order_id', $paypal_order_id);
+		$order->update_meta_data(PayPalGateway::ORDER_ID_META_KEY, $paypal_order_id);
 		$order->save();
 
-		// Mock the session handler to return null (forcing fallback to POST/meta)
+		// Mock the session handler to return null (forcing the order ID to come from order meta)
 		$sessionHandler = \Mockery::mock(\WooCommerce\PayPalCommerce\Session\SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn(null);
 		$sessionHandler->shouldReceive('destroy_session_data')->once();
@@ -175,7 +174,6 @@ class CreditcardTransactionTest extends IntegrationMockedTestCase
 		$this->assertNotEmpty($order->get_transaction_id());
 
 		// Clean up POST data
-		unset($_POST['paypal_order_id']);
 		unset($_POST['ppcp-credit-card-gateway-card-number']);
 		unset($_POST['ppcp-credit-card-gateway-card-expiry']);
 		unset($_POST['ppcp-credit-card-gateway-card-cvc']);
@@ -204,8 +202,7 @@ class CreditcardTransactionTest extends IntegrationMockedTestCase
 		);
 		$paypal_order_id = 'TEST-PAYPAL-ORDER-' . uniqid();
 
-		$_POST['paypal_order_id'] = $paypal_order_id;
-		$order->update_meta_data('_paypal_order_id', $paypal_order_id);
+		$order->update_meta_data(PayPalGateway::ORDER_ID_META_KEY, $paypal_order_id);
 		$order->save();
 
 		$paymentToken = $this->setupPaymentToken($this->customer_id, 'ppcp-credit-card-gateway');

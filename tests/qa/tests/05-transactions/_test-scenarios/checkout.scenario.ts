@@ -10,7 +10,16 @@ import {
 } from '../../../utils';
 
 export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer, merchant, orderStatus } = testOrder;
+	const {
+		title,
+		payment,
+		products,
+		customer,
+		merchant,
+		orderStatus,
+		isPayNowEnabled = true,
+		isCheckoutFormEmpty = false,
+	} = testOrder;
 
 	test(
 		title,
@@ -37,8 +46,19 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 
 			await test.step( `Visit Checkout, make payment with ${ gatewayTitle }`, async () => {
 				await checkout.visit();
-				await checkout.completeCheckoutDetails( testOrder );
-				await checkout.payPalUi.makePayment( { merchant, payment } );
+				// Express buttons can be used before the form is filled; PayPal provides the details
+				if ( ! isCheckoutFormEmpty ) {
+					await checkout.completeCheckoutDetails( testOrder );
+				}
+				await checkout.payPalUi.makePayment( {
+					merchant,
+					payment,
+					isPayNowEnabled,
+				} );
+				if ( ! isPayNowEnabled ) {
+					// Express payment returns to checkout for review
+					await checkout.placeOrder();
+				}
 			} );
 				
 			let orderId: number;

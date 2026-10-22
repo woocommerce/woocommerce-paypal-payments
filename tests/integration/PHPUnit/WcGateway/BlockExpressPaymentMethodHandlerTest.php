@@ -71,6 +71,10 @@ class BlockExpressPaymentMethodHandlerTest extends IntegrationMockedTestCase
         }
         $this->order_ids_to_cleanup = [];
 
+        if (null !== WC()->session) {
+            WC()->session->set('chosen_payment_method', null);
+        }
+
         parent::tearDown();
     }
 
@@ -157,6 +161,10 @@ class BlockExpressPaymentMethodHandlerTest extends IntegrationMockedTestCase
         $this->force_paypal_gateway_available();
         $order = $this->create_order_with_payment_method('some-other-gateway', false);
         $this->mark_order_via_express_checkout_context($order);
+        if (null === WC()->session) {
+            WC()->initialize_session();
+        }
+        WC()->session->set('chosen_payment_method', PayPalGateway::ID);
 
         // When: another gateway sorted first in WC Settings resets the method after the context ran
         $reloaded = wc_get_order($order->get_id());

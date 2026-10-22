@@ -193,6 +193,7 @@ class AddPaymentMethodManagerTest extends TestCase
      * WHEN the bootstrap script is enqueued
      * THEN it is registered with the dependencies and version webpack recorded for the
      *      compiled bundle, not an empty dependency list and not just the plugin version.
+     * AND its JS translations are loaded for the plugin text domain.
      */
     public function testEnqueueRegistersScriptWithAssetDataDependenciesAndVersion(): void
     {
@@ -226,6 +227,9 @@ class AddPaymentMethodManagerTest extends TestCase
                 'deadbeef',
                 true
             );
+        expect('wp_set_script_translations')
+            ->once()
+            ->with('wc-ppcp-sdk-v6-add-payment-method', 'woocommerce-paypal-payments');
         expect('wp_localize_script')->once();
         expect('wp_enqueue_script')->once()->with('wc-ppcp-sdk-v6-add-payment-method');
 

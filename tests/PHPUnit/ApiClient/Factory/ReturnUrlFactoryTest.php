@@ -59,8 +59,16 @@ class ReturnUrlFactoryTest extends TestCase
         $this->assertEquals('https://example.com/product/123', $result);
     }
 
-    public function testFromContextProductThrowsExceptionWhenNoUrl()
+    /**
+     * GIVEN a product page request whose first item carries no URL
+     * AND the cart holds the viewed product
+     * WHEN the return URL is resolved
+     * THEN the permalink of the cart product is returned
+     */
+    public function testFromContextProductFallsBackToCartProductWhenItemHasNoUrl()
     {
+        $this->given_cart_contents([$this->product_with_permalink('https://example.com/product/cart-item')]);
+
         $request_data = [
             'purchase_units' => [
                 [
@@ -73,9 +81,64 @@ class ReturnUrlFactoryTest extends TestCase
             ]
         ];
 
-        $this->expectException(RuntimeException::class);
+        $result = $this->testee->from_context('product', $request_data);
 
-        $this->testee->from_context('product', $request_data);
+        $this->assertSame('https://example.com/product/cart-item', $result);
+    }
+
+    /**
+     * GIVEN a product page request whose items were discarded (e.g. due to a negative fee)
+     * AND the cart holds the viewed product
+     * WHEN the return URL is resolved
+     * THEN the permalink of the cart product is returned
+     */
+    public function testFromContextProductFallsBackToCartProductWhenItemsAreMissing()
+    {
+        $this->given_cart_contents([$this->product_with_permalink('https://example.com/product/cart-item')]);
+
+        $request_data = [
+            'purchase_units' => [
+                [
+                    'amount' => ['value' => '10.00']
+                ]
+            ]
+        ];
+
+        $result = $this->testee->from_context('product', $request_data);
+
+        $this->assertSame('https://example.com/product/cart-item', $result);
+    }
+
+    /**
+     * GIVEN a product page request without purchase units
+     * AND an empty cart
+     * WHEN the return URL is resolved
+     * THEN the buyer is sent back to the cart page
+     */
+    public function testFromContextProductFallsBackToCartUrlWhenCartIsEmpty()
+    {
+        when('wc_get_cart_url')->justReturn('https://example.com/cart');
+        $this->given_cart_contents([]);
+
+        $result = $this->testee->from_context('product', []);
+
+        $this->assertSame('https://example.com/cart', $result);
+    }
+
+    /**
+     * GIVEN a product page request without purchase units
+     * AND no cart initialised in WooCommerce
+     * WHEN the return URL is resolved
+     * THEN the buyer is sent back to the cart page
+     */
+    public function testFromContextProductFallsBackToCartUrlWhenCartIsNotInitialised()
+    {
+        when('wc_get_cart_url')->justReturn('https://example.com/cart');
+        when('WC')->justReturn((object) ['cart' => null]);
+
+        $result = $this->testee->from_context('product', []);
+
+        $this->assertSame('https://example.com/cart', $result);
     }
 
     public function testFromContextPayNowReturnsOrderPaymentUrl()
@@ -121,6 +184,30 @@ class ReturnUrlFactoryTest extends TestCase
 
         $this->assertEquals('https://example.com/checkout', $result);
     }
+
+	private function product_with_permalink(string $permalink): \WC_Product
+	{
+		$product = Mockery::mock(\WC_Product::class);
+		$product->shouldReceive('get_permalink')->andReturn($permalink);
+
+		return $product;
+	}
+
+	/**
+	 * @param \WC_Product[] $products
+	 */
+	private function given_cart_contents(array $products): void
+	{
+		$items = [];
+		foreach ($products as $index => $product) {
+			$items['key' . $index] = ['data' => $product];
+		}
+
+		$cart = $this->createStub(\WC_Cart::class);
+		$cart->method('get_cart')->willReturn($items);
+
+		when('WC')->justReturn((object) ['cart' => $cart]);
+	}
 
 	public function cartContextProvider(): array
 	{

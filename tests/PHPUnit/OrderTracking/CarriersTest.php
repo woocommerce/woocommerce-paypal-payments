@@ -3,7 +3,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
-use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
+use WooCommerce\PayPalCommerce\TestCase;
 use WC_Countries;
 use function Brain\Monkey\Functions\when;
 

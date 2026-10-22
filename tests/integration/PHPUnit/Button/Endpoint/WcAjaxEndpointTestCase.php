@@ -26,8 +26,18 @@ abstract class WcAjaxEndpointTestCase extends IntegrationMockedTestCase {
 	/** @var int[] */
 	protected $wcOrderIds = array();
 
+	/**
+	 * The original woocommerce-ppcp-data-settings option, captured before the
+	 * first enablePayNow() call. Null while the option is untouched.
+	 *
+	 * @var array{exists: bool, value: mixed}|null
+	 */
+	private $originalSettingsOption = null;
+
 	public function setUp(): void {
 		parent::setUp();
+
+		$this->originalSettingsOption = null;
 
 		// SessionModule hooks ppcp_session_get_order to reload non-approved session
 		// orders through its container's api.endpoint.order. Every bootstrapModule()
@@ -56,9 +66,47 @@ abstract class WcAjaxEndpointTestCase extends IntegrationMockedTestCase {
 		}
 		$this->postIds = array();
 
+		$this->restoreSettingsOption();
+
 		$this->resetWcFrontendState();
 
 		parent::tearDown();
+	}
+
+	/**
+	 * Enables the "Pay Now" setting. Call before bootstrapping the container.
+	 * The original option state is restored in tearDown().
+	 *
+	 * @return void
+	 */
+	protected function enablePayNow(): void {
+		$sentinel = new \stdClass();
+		$current  = get_option( 'woocommerce-ppcp-data-settings', $sentinel );
+
+		if ( null === $this->originalSettingsOption ) {
+			$this->originalSettingsOption = array(
+				'exists' => $current !== $sentinel,
+				'value'  => $current,
+			);
+		}
+
+		$settings                   = is_array( $current ) ? $current : array();
+		$settings['enable_pay_now'] = true;
+		update_option( 'woocommerce-ppcp-data-settings', $settings );
+	}
+
+	private function restoreSettingsOption(): void {
+		if ( null === $this->originalSettingsOption ) {
+			return;
+		}
+
+		if ( $this->originalSettingsOption['exists'] ) {
+			update_option( 'woocommerce-ppcp-data-settings', $this->originalSettingsOption['value'] );
+		} else {
+			delete_option( 'woocommerce-ppcp-data-settings' );
+		}
+
+		$this->originalSettingsOption = null;
 	}
 
 	/**

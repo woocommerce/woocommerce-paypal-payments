@@ -4,6 +4,7 @@
  *
  * @package WooCommerce
  */
+
 namespace {
 
 	if ( ! defined( 'PAYPAL_INTEGRATION_DATE' ) ) {
@@ -79,6 +80,18 @@ namespace {
 	 */
 	function as_unschedule_action( $hook, $args = array(), $group = '' ) {
 		return null;
+	}
+
+	/**
+	 * Cancel all occurrences of a scheduled action.
+	 *
+	 * @param string $hook  The hook that the job will trigger.
+	 * @param array  $args  Args that would have been passed to the job.
+	 * @param string $group The group the job is assigned to.
+	 *
+	 * @return void
+	 */
+	function as_unschedule_all_actions( $hook, $args = array(), $group = '' ) {
 	}
 
 	/**

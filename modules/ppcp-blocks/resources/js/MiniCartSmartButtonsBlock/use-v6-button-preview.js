@@ -70,7 +70,7 @@ export function useV6ButtonPreview( { sdkV6, pageType, style } ) {
 					return;
 				}
 
-				console.error( '[ppcp] Mini-Cart button preview', error );
+				console.error( '[ppcp] Button preview', error );
 				setFailed( true );
 			} );
 

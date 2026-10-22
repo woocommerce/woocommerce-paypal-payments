@@ -23,6 +23,7 @@ require_once TESTS_ROOT_DIR . '/stubs/ProductStatus.php';
 require_once TESTS_ROOT_DIR . '/stubs/ProductType.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_Error.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Request.php';
+require_once TESTS_ROOT_DIR . '/stubs/RouteException.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Response.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Controller.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_REST_Controller.php';

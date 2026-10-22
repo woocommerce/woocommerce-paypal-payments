@@ -95,7 +95,14 @@ jest.mock(
 	{ virtual: true }
 );
 
+const mockSetSdkBusy = jest.fn();
+jest.mock( '../tokenRefresh', () => ( {
+	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
+} ) );
+
 import { renderGooglePay } from './googlePay';
+
+const isSdkBusy = () => mockSetSdkBusy.mock.calls.at( -1 )?.[ 0 ] === true;
 
 /**
  * Drains pending microtasks.
@@ -494,21 +501,15 @@ describe( 'as its own payment-method row (gateway set)', () => {
 	const gateway = { id: 'ppcp-googlepay', wrapper: '#gateway-row' };
 
 	test( 'reveals the row once isReadyToPay resolves truthy', async () => {
-		const { config } = await render( { gateway } );
+		await render( { gateway } );
 
-		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
-			gateway,
-			config
-		);
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith( gateway );
 	} );
 
 	test( 'passes no gateway on the express path, so nothing is revealed', async () => {
-		const { config } = await render();
+		await render();
 
-		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
-			undefined,
-			config
-		);
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith( undefined );
 	} );
 
 	test( 'never reveals an ineligible row', async () => {
@@ -663,6 +664,16 @@ describe( 'a click on the rendered button', () => {
 		expect( callOrder ).toEqual( [ 'commit', 'payWithSession' ] );
 	} );
 
+	test( 'creates its shipping controller without demanding an exact total', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+
+		await render( { context: 'cart' } );
+
+		expect( mockCreateShippingController ).toHaveBeenCalledWith(
+			expect.not.objectContaining( { exactTotal: true } )
+		);
+	} );
+
 	test( 'never commits a shipping address when this context requires no shipping', async () => {
 		mockWalletShippingRequired.mockReturnValue( false );
 		await render( { context: 'product' } );
@@ -792,6 +803,41 @@ describe( 'a click on the rendered button', () => {
 
 		expect( mockSpinnerBlock ).toHaveBeenCalled();
 		expect( mockSpinnerUnblock ).toHaveBeenCalled();
+	} );
+
+	test.each( [
+		[ 'the buyer cancels', { statusCode: 'CANCELED' } ],
+		[ 'the sheet fails', new Error( 'sheet failed' ) ],
+	] )(
+		'holds a pending SDK swap while the sheet is open and releases it when %s',
+		async ( _label, rejection ) => {
+			let closeSheet;
+			mockLoadPaymentData.mockImplementationOnce(
+				() =>
+					new Promise( ( resolve, reject ) => {
+						closeSheet = reject;
+					} )
+			);
+			await render();
+
+			const click = createButtonOptions.onClick();
+			await flushPromises();
+			expect( isSdkBusy() ).toBe( true );
+
+			closeSheet( rejection );
+			await click;
+
+			expect( isSdkBusy() ).toBe( false );
+		}
+	);
+
+	test( 'releases the pending SDK swap when resolving the total fails before the sheet opens', async () => {
+		mockResolveWalletTotal.mockRejectedValueOnce( new Error( 'total failed' ) );
+		await render();
+
+		await createButtonOptions.onClick();
+
+		expect( isSdkBusy() ).toBe( false );
 	} );
 
 	test( 'unblocks the spinner after a failed payment', async () => {

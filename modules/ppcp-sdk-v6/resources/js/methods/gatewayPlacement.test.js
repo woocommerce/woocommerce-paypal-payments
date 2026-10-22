@@ -18,6 +18,8 @@ jest.mock( '../utils/api', () => ( {
 // The module keeps its registered wallet rows and listener flag at module
 // scope, so each test needs a fresh module instance.
 let revealMethodGateway;
+let placeExpressButtons;
+let setExpressButtonsFailed;
 
 beforeEach( () => {
 	jest.resetModules();
@@ -33,12 +35,17 @@ beforeEach( () => {
 	jQuery( document ).off( 'change', 'input[name="wc-ppcp-gateway-payment-token"]' );
 	document.body.innerHTML = '';
 	global.jQuery = jQuery;
-	( { revealMethodGateway } = require( './gatewayPlacement' ) );
+	( {
+		revealMethodGateway,
+		placeExpressButtons,
+		setExpressButtonsFailed,
+	} = require( './gatewayPlacement' ) );
 } );
 
 /**
- * Calls revealMethodGateway() with the common googlepay/#wallet-wrapper
- * defaults, so each test states only what it overrides.
+ * Registers the common googlepay/#wallet-wrapper row, and the express
+ * container when an expressSelector is given, so each test states only what
+ * it overrides.
  *
  * @param {Object} [overrides] - Overrides for methodId/wrapperSelector/expressSelector/pageContext.
  *                             The page context defaults to 'checkout'.
@@ -52,10 +59,27 @@ function reveal( overrides = {} ) {
 		pageContext = 'checkout',
 	} = overrides;
 
-	revealMethodGateway(
-		{ id: methodId, wrapper: wrapperSelector },
-		{ wrapper: expressSelector, page_context: pageContext }
-	);
+	revealMethodGateway( { id: methodId, wrapper: wrapperSelector } );
+
+	if ( expressSelector ) {
+		placeExpressButtons( {
+			page_context: pageContext,
+			wrapper: expressSelector,
+		} );
+	}
+}
+
+/**
+ * Registers the express container the way the render does.
+ *
+ * @param {string} [pageContext] - The page context, 'checkout' by default.
+ * @return {void}
+ */
+function placeExpress( pageContext = 'checkout' ) {
+	placeExpressButtons( {
+		page_context: pageContext,
+		wrapper: '#express-wrapper',
+	} );
 }
 
 /**
@@ -120,7 +144,7 @@ describe( 'revealMethodGateway()', () => {
 					'<style data-hide-gateway="googlepay"></style>' +
 					'<div id="place_order" style="display: none"></div>';
 
-				revealMethodGateway( null, { wrapper: '#express-wrapper' } );
+				revealMethodGateway( null );
 
 				expect(
 					document.querySelector(
@@ -522,4 +546,210 @@ describe( 'revealMethodGateway()', () => {
 			}
 		);
 	} );
+} );
+
+describe( 'placeExpressButtons()', () => {
+	function setDomWithEmptyExpress() {
+		document.body.innerHTML =
+			'<div id="express-wrapper"></div>' + '<div id="place_order"></div>';
+	}
+
+	describe( "PayPal's row with no wallet rows registered", () => {
+		test.each( [ 'checkout', 'pay-now' ] )(
+			'hides "Place order" and shows the empty express container on the %s page',
+			( pageContext ) => {
+				setDomWithEmptyExpress();
+				mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+
+				placeExpress( pageContext );
+
+				expect( displayOf( '#place_order' ) ).toBe( 'none' );
+				expect( displayOf( '#express-wrapper' ) ).toBe( '' );
+			}
+		);
+
+		test( 'shows "Place order" and hides the express container once another method is selected', () => {
+			setDomWithEmptyExpress();
+			mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+			placeExpress();
+
+			mockGetCurrentPaymentMethod.mockReturnValue( 'bacs' );
+			jQuery( document.body ).trigger( 'payment_method_selected' );
+
+			expect( displayOf( '#place_order' ) ).toBe( '' );
+			expect( displayOf( '#express-wrapper' ) ).toBe( 'none' );
+		} );
+
+		test( 'keeps "Place order" and hides the express container when a saved token is selected', () => {
+			setDomWithEmptyExpress();
+			mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+			mockIsSavedPayPalTokenSelected.mockReturnValue( true );
+
+			placeExpress();
+
+			expect( displayOf( '#place_order' ) ).toBe( '' );
+			expect( displayOf( '#express-wrapper' ) ).toBe( 'none' );
+		} );
+
+		test( 'keeps "Place order" when the express container is not in the DOM', () => {
+			document.body.innerHTML = '<div id="place_order"></div>';
+			mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+
+			placeExpress();
+
+			expect( displayOf( '#place_order' ) ).toBe( '' );
+		} );
+	} );
+
+	test.each( [ 'cart', '' ] )(
+		'does nothing on the %p page context: no visibility pass, no listener',
+		( pageContext ) => {
+			setDomWithEmptyExpress();
+			mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+
+			placeExpress( pageContext );
+
+			expect( displayOf( '#place_order' ) ).toBe( '' );
+			expect( displayOf( '#express-wrapper' ) ).toBe( '' );
+
+			mockGetCurrentPaymentMethod.mockReturnValue( 'bacs' );
+			jQuery( document.body ).trigger( 'payment_method_selected' );
+
+			expect( displayOf( '#place_order' ) ).toBe( '' );
+			expect( displayOf( '#express-wrapper' ) ).toBe( '' );
+		}
+	);
+
+	test( 'does not register a listener when jQuery is absent', () => {
+		setDomWithEmptyExpress();
+		mockHasJQuery.mockReturnValue( false );
+		mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+
+		placeExpress();
+		mockGetCurrentPaymentMethod.mockReturnValue( 'bacs' );
+		jQuery( document.body ).trigger( 'payment_method_selected' );
+
+		expect( displayOf( '#place_order' ) ).toBe( 'none' );
+	} );
+
+	test( 'binds the checkout listeners once across placeExpressButtons() and revealMethodGateway()', () => {
+		setDomWithEmptyExpress();
+		mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+
+		placeExpress();
+		revealMethodGateway( { id: 'googlepay', wrapper: '#wallet-wrapper' } );
+		placeExpress();
+
+		mockGetCurrentPaymentMethod.mockClear();
+		jQuery( document.body ).trigger( 'payment_method_selected' );
+
+		expect( mockGetCurrentPaymentMethod ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	describe( 'inline display on "Place order"', () => {
+		test( 'is hidden with important priority', () => {
+			setDomWithEmptyExpress();
+			mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+
+			placeExpress();
+
+			const style = document.querySelector( '#place_order' ).style;
+			expect( style.display ).toBe( 'none' );
+			expect( style.getPropertyPriority( 'display' ) ).toBe(
+				'important'
+			);
+		} );
+
+		test( 'is removed entirely when shown again', () => {
+			setDomWithEmptyExpress();
+			mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+			placeExpress();
+
+			mockGetCurrentPaymentMethod.mockReturnValue( 'bacs' );
+			jQuery( document.body ).trigger( 'payment_method_selected' );
+
+			const style = document.querySelector( '#place_order' ).style;
+			expect( style.display ).toBe( '' );
+			expect( style.getPropertyPriority( 'display' ) ).toBe( '' );
+		} );
+	} );
+} );
+
+describe( 'setExpressButtonsFailed()', () => {
+	function setDomWithEmptyExpress() {
+		document.body.innerHTML =
+			'<div id="express-wrapper"></div>' + '<div id="place_order"></div>';
+	}
+
+	beforeEach( () => {
+		setDomWithEmptyExpress();
+		mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+		placeExpress();
+	} );
+
+	test( 'shows "Place order" and hides the empty express container when PayPal is selected', () => {
+		expect( displayOf( '#place_order' ) ).toBe( 'none' );
+
+		setExpressButtonsFailed( true );
+
+		expect( displayOf( '#place_order' ) ).toBe( '' );
+		expect( displayOf( '#express-wrapper' ) ).toBe( 'none' );
+	} );
+
+	test( 'keeps the failure after the checkout DOM is replaced and updated_checkout fires', () => {
+		setExpressButtonsFailed( true );
+
+		setDomWithEmptyExpress();
+		jQuery( document.body ).trigger( 'updated_checkout' );
+
+		expect( displayOf( '#place_order' ) ).toBe( '' );
+		expect( displayOf( '#express-wrapper' ) ).toBe( 'none' );
+	} );
+
+	test( 'keeps the failure after switching to another method and back', () => {
+		setExpressButtonsFailed( true );
+
+		mockGetCurrentPaymentMethod.mockReturnValue( 'bacs' );
+		jQuery( document.body ).trigger( 'payment_method_selected' );
+		mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
+		jQuery( document.body ).trigger( 'payment_method_selected' );
+
+		expect( displayOf( '#place_order' ) ).toBe( '' );
+		expect( displayOf( '#express-wrapper' ) ).toBe( 'none' );
+	} );
+
+	test( 'hides "Place order" and shows the express container again when the failure is cleared', () => {
+		setExpressButtonsFailed( true );
+
+		setExpressButtonsFailed( false );
+
+		expect( displayOf( '#place_order' ) ).toBe( 'none' );
+		expect( displayOf( '#express-wrapper' ) ).toBe( '' );
+	} );
+
+	test( 'does not affect a selected wallet row that has a rendered button', () => {
+		document.body.innerHTML =
+			'<div id="wallet-wrapper"><button></button></div>' +
+			'<div id="express-wrapper"></div>' +
+			'<div id="place_order"></div>';
+		mockGetCurrentPaymentMethod.mockReturnValue( 'googlepay' );
+		revealMethodGateway( { id: 'googlepay', wrapper: '#wallet-wrapper' } );
+
+		setExpressButtonsFailed( true );
+
+		expect( displayOf( '#place_order' ) ).toBe( 'none' );
+		expect( displayOf( '#wallet-wrapper' ) ).toBe( '' );
+	} );
+
+	test.each( [ true, false ] )(
+		'changes nothing with a saved token selected (failed: %p)',
+		( failed ) => {
+			mockIsSavedPayPalTokenSelected.mockReturnValue( true );
+
+			setExpressButtonsFailed( failed );
+
+			expect( displayOf( '#place_order' ) ).toBe( '' );
+			expect( displayOf( '#express-wrapper' ) ).toBe( 'none' );
+		}
+	);
 } );

@@ -4,27 +4,43 @@
 import { test } from '../../utils';
 import { customers, gateways, negative12FeePlugin, taxSettings } from '../../resources';
 import {
+	transactionsOnCart,
+	transactionsOnMiniCart,
 	transactionsOnCheckout,
 	transactionsOnPayByLink,
 	transactionsOnProduct,
 } from './_test-scenarios';
 import {
+	payPalCart,
+	payPalCartPayNowOff,
 	payPalCheckout,
 	payPalCheckoutExcludingTax,
 	payPalCheckoutIntentAuthorized,
 	payPalCheckoutNegativeFee,
+	payPalCheckoutPayNowOff,
+	payPalCheckoutVariable,
+	payPalCheckoutEmptyForm,
+	payPalMiniCart,
+	payPalMiniCartPayNowOff,
 	payPalPayByLink,
 	payPalPayByLinkExcludingTax,
 	payPalPayByLinkIntentAuthorized,
 	payPalProduct,
+	payPalProductPayNowOff,
 } from './_test-data/paypal';
 import {
+	payLaterCart,
+	payLaterCartPayNowOff,
 	payLaterCheckout,
 	payLaterCheckoutExcludingTax,
 	payLaterCheckoutIntentAuthorized,
 	payLaterProduct,
+	payLaterProductPayNowOff,
 	payLaterPayByLink,
 	payLaterCheckoutNegativeFee,
+	payLaterCheckoutPayNowOff,
+	payLaterCheckoutEmptyForm,
+	payLaterMiniCart,
 } from './_test-data/pay-later';
 import {
 	acdcCheckout,
@@ -39,7 +55,7 @@ import {
 } from './_test-data/acdc';
 import { fastlaneCheckout } from './_test-data/fastlane';
 
-const { fastlane } = gateways;
+const { fastlane, payPal, payLater } = gateways;
 
 test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( {
@@ -78,6 +94,25 @@ for ( const testOrder of payPalProduct ) {
 
 for ( const testOrder of payLaterProduct ) {
 	transactionsOnProduct( testOrder );
+}
+
+for ( const testOrder of payPalCheckoutVariable ) {
+	transactionsOnCheckout( testOrder );
+}
+
+for ( const testOrder of [
+	...payPalCheckoutEmptyForm,
+	...payLaterCheckoutEmptyForm,
+] ) {
+	transactionsOnCheckout( testOrder );
+}
+
+for ( const testOrder of payPalCart ) {
+	transactionsOnCart( testOrder );
+}
+
+for ( const testOrder of payLaterCart ) {
+	transactionsOnCart( testOrder );
 }
 
 // Excluding Tax
@@ -210,5 +245,74 @@ test.describe( () => {
 
 	test.afterAll( async ( { requestUtils } ) => {
 		await requestUtils.deactivatePlugin( negative12FeePlugin.slug );
+	} );
+} );
+
+/**
+ * Pay Now off: the buyer reviews the order on checkout after PayPal approval
+ */
+
+test.describe( () => {
+	test.beforeAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpSettings( { enablePayNow: false } );
+	} );
+
+	for ( const testOrder of [
+		...payPalProductPayNowOff,
+		...payLaterProductPayNowOff,
+	] ) {
+		transactionsOnProduct( testOrder );
+	}
+
+	for ( const testOrder of [ ...payPalCartPayNowOff, ...payLaterCartPayNowOff ] ) {
+		transactionsOnCart( testOrder );
+	}
+
+	for ( const testOrder of [
+		...payPalCheckoutPayNowOff,
+		...payLaterCheckoutPayNowOff,
+	] ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	// Mini cart (off by default)
+	test.describe( () => {
+		test.beforeAll( async ( { pcpApi } ) => {
+			await pcpApi.updatePcpStyling( {
+				miniCart: { enabled: true, methods: [ payPal.id, payLater.id ] },
+			} );
+		} );
+
+		for ( const testOrder of payPalMiniCartPayNowOff ) {
+			transactionsOnMiniCart( testOrder );
+		}
+
+		test.afterAll( async ( { pcpApi } ) => {
+			await pcpApi.updatePcpStyling( { miniCart: { enabled: false } } );
+		} );
+	} );
+
+	test.afterAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpSettings( { enablePayNow: true } );
+	} );
+} );
+
+/**
+ * Mini cart (off by default)
+ */
+
+test.describe( () => {
+	test.beforeAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpStyling( {
+			miniCart: { enabled: true, methods: [ payPal.id, payLater.id ] },
+		} );
+	} );
+
+	for ( const testOrder of [ ...payPalMiniCart, ...payLaterMiniCart ] ) {
+		transactionsOnMiniCart( testOrder );
+	}
+
+	test.afterAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpStyling( { miniCart: { enabled: false } } );
 	} );
 } );

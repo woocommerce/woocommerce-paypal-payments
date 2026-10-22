@@ -284,6 +284,15 @@ if ( config && config.page_context && config.continuation ) {
 				// page-load flag, so a coupon that zeroes or un-zeroes the cart
 				// after render is honoured.
 				if ( isFreeTrialCart( config, amount ) ) {
+					// Saving from the cart yields no billing details, so a guest
+					// has to go through the checkout (mirrors the v5 block cart).
+					if (
+						config.page_context === 'cart-block' &&
+						! config.user?.is_logged
+					) {
+						return false;
+					}
+
 					return fundingSource === FundingSources.PAYPAL;
 				}
 
@@ -306,7 +315,8 @@ if ( config && config.page_context && config.continuation ) {
 		} );
 	};
 
-	for ( const fundingSource of FUNDING_SOURCES ) {
+	// Off when the block is active for other reasons, such as the Mini Cart.
+	for ( const fundingSource of config.buttons_enabled ? FUNDING_SOURCES : [] ) {
 		registerExpress( {
 			name: `ppcp-gateway-${ fundingSource }`,
 			gatewayId: PAYPAL_GATEWAY_ID,

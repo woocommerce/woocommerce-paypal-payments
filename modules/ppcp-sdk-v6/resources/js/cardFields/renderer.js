@@ -11,9 +11,11 @@
  * @package
  */
 
-import { mountField } from './mountField';
+import { mountField, unmountField } from './mountField';
+import { FIELD_TYPES, trackFieldState, fieldStateError } from './fieldState';
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange, setSdkBusy } from '../tokenRefresh';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
 import {
 	createCardSetupToken,
@@ -27,8 +29,6 @@ import {
 	CARD_SAVE_DECLINE_MESSAGE,
 	userFacingError,
 } from '../utils/cardDeclineMessages';
-
-const FIELD_TYPES = [ 'number', 'expiry', 'cvv' ];
 
 /**
  * Reads the billing address from the classic checkout form for the card
@@ -149,6 +149,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 	}
 
 	let cardSessionPromise = null;
+	let getFieldState = null;
 	let submitting = false;
 	let boundPlaceOrderButton = null;
 
@@ -174,6 +175,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 				const cardSession = isFreeTrial()
 					? sdk.createCardFieldsSavePaymentSession()
 					: sdk.createCardFieldsOneTimePaymentSession();
+				getFieldState = trackFieldState( cardSession );
 
 				for ( const fieldType of FIELD_TYPES ) {
 					if ( inputs[ fieldType ] ) {
@@ -214,10 +216,19 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 		event.preventDefault();
 		event.stopImmediatePropagation();
 		spinner?.block();
+		setSdkBusy( true );
 
 		try {
 			const cardSession = await ensureCardSession();
 			const submitOptions = billingAddressForSubmit();
+
+			const fieldError = fieldStateError(
+				getFieldState(),
+				config.labels
+			);
+			if ( fieldError ) {
+				throw userFacingError( fieldError );
+			}
 
 			// Free trial: confirm a setup token and store it; the native submit
 			// that follows lets the gateway place the $0 order against it.
@@ -267,7 +278,21 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 			handleError( error );
 		} finally {
 			submitting = false;
+			setSdkBusy( false );
 			spinner?.unblock();
+		}
+	}
+
+	function remountCardFields() {
+		cardSessionPromise = null;
+
+		const inputs = getInputs();
+		for ( const fieldType of FIELD_TYPES ) {
+			unmountField( inputs[ fieldType ] );
+		}
+
+		if ( isCardGatewaySelected( paymentMethod ) ) {
+			ensureCardSession().catch( handleError );
 		}
 	}
 
@@ -308,6 +333,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 	}
 
 	attach();
+	onSdkInstanceChange( remountCardFields );
 
 	if ( hasJQuery() ) {
 		jQuery( document.body ).on( 'updated_checkout', attach );

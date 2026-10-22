@@ -10,11 +10,13 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\SetupTokenBinding;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 
@@ -48,16 +50,24 @@ class CreatePaymentToken implements EndpointInterface {
 
 	private FreeTrialSubscriptionHelper $free_trial_helper;
 
+	private SetupTokenBinding $setup_token_binding;
+
+	private LoggerInterface $logger;
+
 	public function __construct(
 		RequestData $request_data,
 		PaymentMethodTokensEndpoint $payment_method_tokens_endpoint,
 		WooCommercePaymentTokens $wc_payment_tokens,
-		FreeTrialSubscriptionHelper $free_trial_helper
+		FreeTrialSubscriptionHelper $free_trial_helper,
+		SetupTokenBinding $setup_token_binding,
+		LoggerInterface $logger
 	) {
 		$this->request_data                   = $request_data;
 		$this->payment_method_tokens_endpoint = $payment_method_tokens_endpoint;
 		$this->wc_payment_tokens              = $wc_payment_tokens;
 		$this->free_trial_helper              = $free_trial_helper;
+		$this->setup_token_binding            = $setup_token_binding;
+		$this->logger                         = $logger;
 	}
 
 	/**
@@ -79,6 +89,12 @@ class CreatePaymentToken implements EndpointInterface {
 			$data        = $this->request_data->read_request( $this->nonce() );
 			$wc_token_id = 0;
 
+			$setup_token_id = is_string( $data['vault_setup_token'] ?? null ) ? $data['vault_setup_token'] : '';
+			if ( ! $this->setup_token_binding->consume( $setup_token_id ) ) {
+				$this->logger->warning( 'Rejected a setup token exchange: the token was not created by the current customer.' );
+				wp_send_json_error( null, 403 );
+			}
+
 			/**
 			 * Suppress ArgumentTypeCoercion
 			 *
@@ -87,7 +103,7 @@ class CreatePaymentToken implements EndpointInterface {
 			$payment_source = new PaymentSource(
 				'token',
 				(object) array(
-					'id'   => $data['vault_setup_token'],
+					'id'   => $setup_token_id,
 					'type' => 'SETUP_TOKEN',
 				)
 			);
@@ -98,6 +114,12 @@ class CreatePaymentToken implements EndpointInterface {
 
 			if ( is_user_logged_in() && isset( $result->customer->id ) ) {
 				$current_user_id = get_current_user_id();
+
+				if ( $customer_id && (string) $customer_id !== (string) $result->customer->id ) {
+					$this->logger->warning( "Rejected a setup token exchange: PayPal returned a different customer than the one stored for user {$current_user_id}." );
+					wp_send_json_error( null, 403 );
+				}
+
 				update_user_meta( $current_user_id, '_ppcp_target_customer_id', $result->customer->id );
 
 				if ( isset( $result->payment_source->paypal ) ) {

@@ -25,6 +25,8 @@ class ProductSmartButtonsRendererTest extends TestCase
         when('get_block_wrapper_attributes')->justReturn('');
         when('apply_filters')->returnArg(2);
         when('do_action')->justReturn(null);
+        // No viewed product unless a test names one.
+        when('wc_get_product')->justReturn(false);
 
         $this->settings_status = Mockery::mock(SettingsStatus::class);
     }
@@ -136,5 +138,49 @@ class ProductSmartButtonsRendererTest extends TestCase
         $html = $renderer->render(array(), $container);
 
         $this->assertStringContainsString('id="ppc-button-ppcp-gateway-v6"', $html);
+    }
+
+    /**
+     * GIVEN the product Smart Buttons placement is enabled and the viewed product is free
+     * WHEN the block is rendered
+     * THEN no wrapper is rendered when nothing can be charged for shipping either, since
+     *      PayPal rejects a zero-total order
+     * AND the wrapper is rendered when shipping can still add a cost to the order
+     *
+     * @dataProvider free_product_shipping_provider
+     */
+    public function testFreeProductWrapperDependsOnWhetherShippingCanBeCharged(
+        bool $needs_shipping,
+        bool $shipping_enabled,
+        bool $expect_wrapper
+    ): void {
+        when('is_product')->justReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('product')
+            ->andReturn(true);
+
+        $product = Mockery::mock(\WC_Product::class);
+        $product->shouldReceive('is_type')->andReturn(false);
+        $product->shouldReceive('needs_shipping')->andReturn($needs_shipping);
+        when('wc_get_product')->justReturn($product);
+        when('wc_get_price_including_tax')->justReturn(0.0);
+        when('wc_shipping_enabled')->justReturn($shipping_enabled);
+
+        $html = (new ProductSmartButtonsRenderer())->render(array(), $this->create_container(false));
+
+        if ($expect_wrapper) {
+            $this->assertStringContainsString('class="ppc-button-wrapper"', $html);
+        } else {
+            $this->assertSame('', $html);
+        }
+    }
+
+    public function free_product_shipping_provider(): array
+    {
+        return [
+            'free product needing no shipping renders nothing' => [false, true, false],
+            'free product with shipping disabled renders nothing' => [true, false, false],
+            'free product with paid shipping possible still renders' => [true, true, true],
+        ];
     }
 }

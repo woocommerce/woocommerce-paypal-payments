@@ -72,6 +72,38 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	}
 
 	/**
+	 * Builds a WC_Cart stub reporting the given amounts (decimal strings).
+	 *
+	 * @return WC_Cart&\Mockery\MockInterface
+	 */
+	private function make_wc_cart( string $discount, string $shipping, string $tax, string $total ): WC_Cart {
+		$wc_cart = Mockery::mock( WC_Cart::class );
+		$wc_cart->allows( 'get_discount_total' )->andReturn( $discount );
+		$wc_cart->allows( 'get_shipping_total' )->andReturn( $shipping );
+		$wc_cart->allows( 'get_total_tax' )->andReturn( $tax );
+		$wc_cart->allows( 'get_total' )->with( 'edit' )->andReturn( $total );
+
+		return $wc_cart;
+	}
+
+	/**
+	 * Builds a SUT whose items are given as [ unit price, quantity ] pairs.
+	 */
+	private function make_totals_sut( WC_Cart $wc_cart, array $items, string $currency = 'USD' ): StorePayPalCart {
+		$store_items = array();
+		foreach ( $items as $item ) {
+			$schema        = $this->make_cart_item_schema( array( 'quantity' => $item[1] ) );
+			$store_items[] = $this->make_store_item( $schema, $item[0] );
+		}
+
+		return $this->make_sut( array(
+			'cart_builder'   => $this->make_cart_builder( $wc_cart ),
+			'store_items'    => $store_items,
+			'store_currency' => $this->make_currency( $currency ),
+		) );
+	}
+
+	/**
 	 * Builds a StoreCartItem stub using the given CartItem schema and price.
 	 *
 	 * @param CartItem   $schema          The schema to return from schema().
@@ -84,6 +116,7 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 		$stub = Mockery::mock( StoreCartItem::class );
 		$stub->allows( 'paypal_item' )->andReturn( $schema );
 		$stub->allows( 'real_price' )->andReturn( $real_price );
+		$stub->allows( 'quantity' )->andReturn( $schema->quantity() );
 
 		if ( $to_array_result === null ) {
 			// Build a minimal to_array() result from the schema fields and real price.
@@ -400,54 +433,84 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 *     with the correct currency_code and decimal-formatted value
 	 */
 	public function test_totals_returns_array_when_wc_cart_available_and_no_pricing_issue(): void {
-		$wc_cart = Mockery::mock( WC_Cart::class );
-		$wc_cart->allows( 'get_cart_contents_total' )->andReturn( '50.00' );
-		$wc_cart->allows( 'get_discount_total' )->andReturn( '0.00' );
-		$wc_cart->allows( 'get_shipping_total' )->andReturn( '5.00' );
-		$wc_cart->allows( 'get_total_tax' )->andReturn( '3.50' );
-		$wc_cart->allows( 'get_total' )->with( 'edit' )->andReturn( '55.00' );
-
-		$sut = $this->make_sut( array(
-			'cart_builder'   => $this->make_cart_builder( $wc_cart ),
-			'store_currency' => $this->make_currency( 'USD' ),
-		) );
+		$sut = $this->make_totals_sut(
+			$this->make_wc_cart( '0.00', '5.00', '3.50', '58.50' ),
+			array( array( 20.00, 1 ), array( 15.00, 2 ) )
+		);
 
 		$totals = $sut->get_totals();
 
 		$this->assertIsArray( $totals );
-		$this->assertArrayHasKey( 'subtotal', $totals );
-		$this->assertArrayHasKey( 'shipping', $totals );
-		$this->assertArrayHasKey( 'tax', $totals );
-		$this->assertArrayHasKey( 'total', $totals );
 		$this->assertMoneyValue( $totals['subtotal'], 50.00, 'USD' );
 		$this->assertMoneyValue( $totals['shipping'], 5.00, 'USD' );
 		$this->assertMoneyValue( $totals['tax'], 3.50, 'USD' );
-		$this->assertMoneyValue( $totals['total'], 55.00, 'USD' );
+		$this->assertMoneyValue( $totals['total'], 58.50, 'USD' );
+		$this->assertArrayNotHasKey( 'discount', $totals );
 	}
 
 	/**
-	 * GIVEN a WC_Cart where the discount total is greater than zero
+	 * GIVEN two items with a tax-inclusive price of 10.00 (9.324 ex-tax) and a cart total of 20.00
 	 * WHEN totals() is called
-	 * THEN the totals array includes a discount key with the correct Money structure
+	 * THEN the subtotal is the sum of the rounded item prices times quantity (18.64)
+	 * AND the tax absorbs the rounding gap, so the breakdown adds up to the total
 	 */
-	public function test_totals_includes_discount_when_discount_total_is_positive(): void {
-		$wc_cart = Mockery::mock( WC_Cart::class );
-		$wc_cart->allows( 'get_cart_contents_total' )->andReturn( '100.00' );
-		$wc_cart->allows( 'get_discount_total' )->andReturn( '10.00' );
-		$wc_cart->allows( 'get_shipping_total' )->andReturn( '0.00' );
-		$wc_cart->allows( 'get_total_tax' )->andReturn( '0.00' );
-		$wc_cart->allows( 'get_total' )->with( 'edit' )->andReturn( '90.00' );
-
-		$sut = $this->make_sut( array(
-			'cart_builder'   => $this->make_cart_builder( $wc_cart ),
-			'store_currency' => $this->make_currency( 'EUR' ),
-		) );
+	public function test_totals_tax_absorbs_rounding_gap_of_tax_inclusive_prices(): void {
+		$sut = $this->make_totals_sut(
+			$this->make_wc_cart( '0.00', '0.00', '1.35', '20.00' ),
+			array( array( 9.324, 2 ) )
+		);
 
 		$totals = $sut->get_totals();
 
 		$this->assertIsArray( $totals );
-		$this->assertArrayHasKey( 'discount', $totals );
-		$this->assertMoneyValue( $totals['discount'], 10.00, 'EUR' );
+		$this->assertMoneyValue( $totals['subtotal'], 18.64, 'USD' );
+		$this->assertMoneyValue( $totals['tax'], 1.36, 'USD' );
+		$this->assertMoneyValue( $totals['total'], 20.00, 'USD' );
+	}
+
+	/**
+	 * GIVEN a cart with a coupon discount of 5.00 on items worth 20.00
+	 * WHEN totals() is called
+	 * THEN the subtotal is the pre-discount item sum
+	 * AND the discount is listed once
+	 * AND subtotal + shipping + tax - discount equals the total
+	 */
+	public function test_totals_subtotal_is_pre_discount_and_breakdown_adds_up_with_coupon(): void {
+		$sut = $this->make_totals_sut(
+			$this->make_wc_cart( '5.00', '0.00', '0.00', '15.00' ),
+			array( array( 10.00, 2 ) ),
+			'EUR'
+		);
+
+		$totals = $sut->get_totals();
+
+		$this->assertIsArray( $totals );
+		$this->assertMoneyValue( $totals['subtotal'], 20.00, 'EUR' );
+		$this->assertMoneyValue( $totals['discount'], 5.00, 'EUR' );
+		$this->assertMoneyValue( $totals['tax'], 0.00, 'EUR' );
+		$this->assertMoneyValue( $totals['total'], 15.00, 'EUR' );
+	}
+
+	/**
+	 * GIVEN items worth 20.00, tax of 1.00, no discount reported, and a cart total of 18.00
+	 * WHEN totals() is called
+	 * THEN the tax stays at the reported 1.00 instead of going negative
+	 * AND the remaining gap of 3.00 is listed as discount
+	 * AND subtotal + shipping + tax - discount equals the total
+	 */
+	public function test_totals_moves_gap_into_discount_when_tax_would_be_negative(): void {
+		$sut = $this->make_totals_sut(
+			$this->make_wc_cart( '0.00', '0.00', '1.00', '18.00' ),
+			array( array( 20.00, 1 ) )
+		);
+
+		$totals = $sut->get_totals();
+
+		$this->assertIsArray( $totals );
+		$this->assertMoneyValue( $totals['subtotal'], 20.00, 'USD' );
+		$this->assertMoneyValue( $totals['tax'], 1.00, 'USD' );
+		$this->assertMoneyValue( $totals['discount'], 3.00, 'USD' );
+		$this->assertMoneyValue( $totals['total'], 18.00, 'USD' );
 	}
 
 	/**
@@ -456,22 +519,29 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 * THEN the totals array does not include a discount key
 	 */
 	public function test_totals_omits_discount_when_discount_total_is_zero(): void {
-		$wc_cart = Mockery::mock( WC_Cart::class );
-		$wc_cart->allows( 'get_cart_contents_total' )->andReturn( '50.00' );
-		$wc_cart->allows( 'get_discount_total' )->andReturn( '0.00' );
-		$wc_cart->allows( 'get_shipping_total' )->andReturn( '0.00' );
-		$wc_cart->allows( 'get_total_tax' )->andReturn( '0.00' );
-		$wc_cart->allows( 'get_total' )->with( 'edit' )->andReturn( '50.00' );
-
-		$sut = $this->make_sut( array(
-			'cart_builder'   => $this->make_cart_builder( $wc_cart ),
-			'store_currency' => $this->make_currency( 'USD' ),
-		) );
+		$sut = $this->make_totals_sut(
+			$this->make_wc_cart( '0.00', '0.00', '0.00', '50.00' ),
+			array( array( 50.00, 1 ) )
+		);
 
 		$totals = $sut->get_totals();
 
 		$this->assertIsArray( $totals );
 		$this->assertArrayNotHasKey( 'discount', $totals );
+	}
+
+	/**
+	 * GIVEN a WC_Cart but no listed items
+	 * WHEN totals() is called
+	 * THEN null is returned
+	 */
+	public function test_totals_returns_null_when_no_items_are_listed(): void {
+		$sut = $this->make_totals_sut(
+			$this->make_wc_cart( '0.00', '0.00', '0.00', '50.00' ),
+			array()
+		);
+
+		$this->assertNull( $sut->get_totals() );
 	}
 
 	// -------------------------------------------------------------------------
@@ -719,22 +789,14 @@ class StorePayPalCartTest extends StoreSyncTestCase {
 	 * THEN a non-null array is returned
 	 */
 	public function test_to_array_includes_totals_when_totals_are_available(): void {
-		$wc_cart = Mockery::mock( WC_Cart::class );
-		$wc_cart->allows( 'get_cart_contents_total' )->andReturn( '100.00' );
-		$wc_cart->allows( 'get_discount_total' )->andReturn( '0.00' );
-		$wc_cart->allows( 'get_shipping_total' )->andReturn( '10.00' );
-		$wc_cart->allows( 'get_total_tax' )->andReturn( '0.00' );
-		$wc_cart->allows( 'get_total' )->with( 'edit' )->andReturn( '110.00' );
-
-		$sut = $this->make_sut( array(
-			'cart_builder'   => $this->make_cart_builder( $wc_cart ),
-			'store_currency' => $this->make_currency( 'USD' ),
-		) );
+		$sut = $this->make_totals_sut(
+			$this->make_wc_cart( '0.00', '10.00', '0.00', '110.00' ),
+			array( array( 100.00, 1 ) )
+		);
 
 		$result = $sut->get_totals();
 
 		$this->assertNotNull( $result );
-		$this->assertIsArray( $result );
 	}
 
 	/**

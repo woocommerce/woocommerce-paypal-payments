@@ -13,6 +13,9 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
+use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -331,6 +334,11 @@ class ProductBlocks {
 		$blocks_js_path         = $c->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-blocks/resources/js/';
 		$settings_url           = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
 
+		// The editor previews render with the v6 SDK when it is loaded: the v5 preview's
+		// script-params request is answered by a disabled smart button wherever v6 claims
+		// the request (e.g. sitewide while the Mini-Cart placement is on).
+		$sdk_v6 = SdkV6EditorPreview::config( $c );
+
 		// Smart Buttons block.
 		$buttons_handle = 'ppcp-product-smart-buttons-block';
 		wp_register_script(
@@ -350,6 +358,8 @@ class ProductBlocks {
 				'placementEnabled' => self::is_buttons_enabled( $settings_status ),
 				'settingsUrl'      => $settings_url,
 				'isSdkV6Active'    => $c->has( 'sdk-v6.owns-current-page' ),
+				'sdkV6'            => $sdk_v6,
+				'buttonStyle'      => self::sdk_v6_button_style( $c ),
 			)
 		);
 
@@ -398,6 +408,8 @@ class ProductBlocks {
 				'payLaterSettingsUrl' => $settings_url,
 				'settingsUrl'         => $settings_url,
 				'isSdkV6Active'       => $c->has( 'sdk-v6.owns-current-page' ),
+				'sdkV6'               => $sdk_v6,
+				'messageStyle'        => self::sdk_v6_message_style( $c ),
 			)
 		);
 
@@ -411,6 +423,43 @@ class ProductBlocks {
 				},
 			)
 		);
+	}
+
+	/**
+	 * The product buttons' v6 style for the editor preview, or null when the v6 module is not
+	 * loaded. The height matches the front end's product buttons.
+	 *
+	 * @param ContainerInterface $c The container.
+	 */
+	private static function sdk_v6_button_style( ContainerInterface $c ): ?array {
+		if ( ! $c->has( 'sdk-v6.button-style-mapper' ) ) {
+			return null;
+		}
+
+		$style_mapper = $c->get( 'sdk-v6.button-style-mapper' );
+		assert( $style_mapper instanceof ButtonStyleMapper );
+
+		return array_merge(
+			$style_mapper->styles_for_context( 'product' ),
+			array( 'height' => SdkV6Manager::PAYMENT_BUTTON_HEIGHT )
+		);
+	}
+
+	/**
+	 * The product messaging's v6 style for the editor preview, or null when the v6 module is
+	 * not loaded.
+	 *
+	 * @param ContainerInterface $c The container.
+	 */
+	private static function sdk_v6_message_style( ContainerInterface $c ): ?array {
+		if ( ! $c->has( 'sdk-v6.message-style-mapper' ) ) {
+			return null;
+		}
+
+		$style_mapper = $c->get( 'sdk-v6.message-style-mapper' );
+		assert( $style_mapper instanceof MessageStyleMapper );
+
+		return $style_mapper->styles_for_location( 'product' );
 	}
 
 	/**
