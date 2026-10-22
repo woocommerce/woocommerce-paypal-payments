@@ -39,6 +39,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\PayerActionReturnForwarder;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ShippingCallbackEndpoint;
@@ -297,7 +298,10 @@ return array(
     'wcgateway.endpoint.return-url' => static function (ContainerInterface $container): ReturnUrlEndpoint {
         $gateway = $container->get('wcgateway.paypal-gateway');
         $endpoint = $container->get('api.endpoint.order');
-        return new ReturnUrlEndpoint($gateway, $endpoint, $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'));
+        return new ReturnUrlEndpoint($gateway, $endpoint, $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.helper.return-url-secret'));
+    },
+    'wcgateway.payer-action-return-forwarder' => static function (ContainerInterface $container): PayerActionReturnForwarder {
+        return new PayerActionReturnForwarder($container->get('session.handler'), $container->get('http.redirector'));
     },
     'wcgateway.endpoint.refresh-feature-status' => static function (ContainerInterface $container): RefreshFeatureStatusEndpoint {
         return new RefreshFeatureStatusEndpoint($container->get('wcgateway.settings'), new Cache('ppcp-timeout'), $container->get('woocommerce.logger.woocommerce'));

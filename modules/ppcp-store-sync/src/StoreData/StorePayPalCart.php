@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\StoreSync\StoreData;
 
 use WC_Cart;
 use WP_Error;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\StoreSync\Config\StoreCurrencyValue;
 use WooCommerce\PayPalCommerce\StoreSync\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
@@ -122,20 +123,37 @@ class StorePayPalCart
         if (!$wc_cart) {
             return null;
         }
-        $currency_code = $this->currency();
-        $item_total = (float) $wc_cart->get_cart_contents_total();
-        $discount_total = (float) $wc_cart->get_discount_total();
-        $shipping_total = (float) $wc_cart->get_shipping_total();
-        $tax_total = (float) $wc_cart->get_total_tax();
-        $cart_total = (float) $wc_cart->get_total('edit');
-        if ($item_total <= 0 || $cart_total <= 0) {
+        $item_cents = $this->item_total_cents();
+        $shipping_cents = $this->to_cents((float) $wc_cart->get_shipping_total());
+        $total_cents = $this->to_cents((float) $wc_cart->get_total('edit'));
+        if ($item_cents <= 0 || $total_cents <= 0) {
             return null;
         }
-        $totals = array('subtotal' => Money::create($item_total, $currency_code)->to_array(), 'shipping' => Money::create($shipping_total, $currency_code)->to_array(), 'tax' => Money::create($tax_total, $currency_code)->to_array(), 'total' => Money::create($cart_total, $currency_code)->to_array());
-        if ($discount_total > 0) {
-            $totals['discount'] = Money::create($discount_total, $currency_code)->to_array();
+        list($tax_cents, $discount_cents) = AmountFactory::reconcile_with_total($total_cents, $item_cents, $shipping_cents, $this->to_cents((float) $wc_cart->get_total_tax()), $this->to_cents((float) $wc_cart->get_discount_total()));
+        $totals = array('subtotal' => $this->money_array($item_cents), 'shipping' => $this->money_array($shipping_cents), 'tax' => $this->money_array($tax_cents), 'total' => $this->money_array($total_cents));
+        if ($discount_cents > 0) {
+            $totals['discount'] = $this->money_array($discount_cents);
         }
         return $totals;
+    }
+    /**
+     * Sum of the listed item prices, so that the subtotal matches the items in the response.
+     */
+    private function item_total_cents(): int
+    {
+        $cents = 0;
+        foreach ($this->store_items as $item) {
+            $cents += $this->to_cents($item->real_price()) * $item->quantity();
+        }
+        return $cents;
+    }
+    private function to_cents(float $amount): int
+    {
+        return (int) round($amount * 100);
+    }
+    private function money_array(int $cents): array
+    {
+        return Money::create($cents / 100, $this->currency())->to_array();
     }
     /**
      * An array containing all validation issues for the API response. If no validation

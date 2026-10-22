@@ -330,8 +330,6 @@ class PayPalGateway extends \WC_Payment_Gateway
         }
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $paypal_payment_token_id = wc_clean(wp_unslash($_POST['wc-ppcp-gateway-payment-token'] ?? ''));
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing
-        $vault_approved_order_id = wc_clean(wp_unslash($_POST['paypal_order_id'] ?? ''));
         /**
          * WC Subscriptions zeroes the order total during a change-payment request, so
          * attempting a real capture here would send a $0 create-order request to PayPal
@@ -341,8 +339,9 @@ class PayPalGateway extends \WC_Payment_Gateway
         if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id && $this->is_customer_changing_subscription_payment($this->subscription_helper, $wc_order)) {
             return $this->add_payment_token_to_order($wc_order, (int) $paypal_payment_token_id, $this->get_return_url($wc_order), $this->session_handler);
         }
-        // Skip saved token handling when an approved order exists.
-        if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id && !$vault_approved_order_id) {
+        // Skip saved-token handling only for the Vault Component's server-created order; a
+        // dedicated flag avoids catching the Smart Button flow, which also sets a session order.
+        if ($paypal_payment_token_id && 'new' !== $paypal_payment_token_id && !WC()->session->get('ppcp_vault_component_order')) {
             $tokens = WC_Payment_Tokens::get_customer_tokens(get_current_user_id());
             foreach ($tokens as $token) {
                 if ($token->get_id() === (int) $paypal_payment_token_id) {
@@ -474,6 +473,10 @@ class PayPalGateway extends \WC_Payment_Gateway
                 return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($order->id()));
             }
         } catch (PayPalApiException $error) {
+            $wallet_failure = $this->handle_wallet_payer_action($wc_order, $error);
+            if ($wallet_failure) {
+                return $wallet_failure;
+            }
             $retry_keys_messages = array('INSTRUMENT_DECLINED' => __('Instrument declined.', 'woocommerce-paypal-payments'), 'PAYER_ACTION_REQUIRED' => __('Payer action required, possibly overcharge.', 'woocommerce-paypal-payments'));
             $retry_errors = array_values(array_filter(array_keys($retry_keys_messages), function (string $key) use ($error): bool {
                 return $error->has_detail($key);
@@ -495,6 +498,7 @@ class PayPalGateway extends \WC_Payment_Gateway
                 // in its current status instead of failing it prematurely - only
                 // note the reason and send the customer back to complete it.
                 $wc_order->add_order_note($retry_message);
+                $this->session_handler->replace_payer_action_order_id($session_order->id());
                 return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($session_order->id()));
             }
             return $this->handle_payment_failure($wc_order, new Exception(\WooCommerce\PayPalCommerce\WcGateway\Gateway\Messages::generic_payment_error_message() . ' ' . $error->getMessage(), $error->getCode(), $error));

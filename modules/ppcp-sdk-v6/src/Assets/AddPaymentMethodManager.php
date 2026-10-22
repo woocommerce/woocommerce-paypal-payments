@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\SdkLocale;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -65,6 +66,7 @@ class AddPaymentMethodManager
         }
         $asset = $this->asset_getter->get_asset_data('boot-add-payment-method.js', $this->version);
         wp_register_script('wc-ppcp-sdk-v6-add-payment-method', $script_url, $asset['dependencies'], $asset['version'], \true);
+        wp_set_script_translations('wc-ppcp-sdk-v6-add-payment-method', 'woocommerce-paypal-payments');
         wp_localize_script('wc-ppcp-sdk-v6-add-payment-method', 'wc_ppcp_sdk_v6_save', $this->script_data());
         wp_enqueue_script('wc-ppcp-sdk-v6-add-payment-method');
         // v5's smart-button stylesheet (which carries this rule) is suppressed
@@ -94,6 +96,6 @@ class AddPaymentMethodManager
          * @param string $verification_method The default 3D Secure enum value.
          */
         $verification_method = (string) apply_filters('woocommerce_paypal_payments_three_d_secure_contingency', $this->settings_provider->three_d_secure_enum());
-        return array('sdk_url' => $base_url . '/web-sdk/v6/core', 'currency' => get_woocommerce_currency(), 'locale' => str_replace('_', '-', get_locale()), 'verification_method' => $verification_method, 'payment_methods_page' => wc_get_account_endpoint_url('payment-methods'), 'button' => array('wrapper' => '#' . self::WRAPPER_ID, 'color_class' => 'paypal-gold'), 'card_fields' => array('enabled' => $this->card_vaulting_enabled, 'payment_method' => CreditCardGateway::ID, 'funding_source' => 'card', 'fields' => array('number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID), 'styles' => $this->card_field_styles->overrides()), 'ajax' => array('client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())), 'create_setup_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreateSetupToken::ENDPOINT), 'nonce' => wp_create_nonce(CreateSetupToken::nonce())), 'create_payment_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreatePaymentToken::ENDPOINT), 'nonce' => wp_create_nonce(CreatePaymentToken::nonce()))), 'labels' => array('generic_error' => __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-payments')));
+        return array('sdk_url' => $base_url . '/web-sdk/v6/core', 'currency' => get_woocommerce_currency(), 'locale' => SdkLocale::from_wp_locale(get_locale()), 'verification_method' => $verification_method, 'payment_methods_page' => wc_get_account_endpoint_url('payment-methods'), 'button' => array('wrapper' => '#' . self::WRAPPER_ID, 'color_class' => 'paypal-gold'), 'card_fields' => array('enabled' => $this->card_vaulting_enabled, 'payment_method' => CreditCardGateway::ID, 'funding_source' => 'card', 'fields' => array('number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID), 'styles' => $this->card_field_styles->overrides()), 'ajax' => array('client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())), 'create_setup_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreateSetupToken::ENDPOINT), 'nonce' => wp_create_nonce(CreateSetupToken::nonce())), 'create_payment_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreatePaymentToken::ENDPOINT), 'nonce' => wp_create_nonce(CreatePaymentToken::nonce()))), 'labels' => array('generic_error' => __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-payments')));
     }
 }

@@ -16,6 +16,19 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\CartItem;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\Money;
 class ProductManager
 {
+    /**
+     * Blank characters that are not ASCII whitespace. The ingestion API rejects
+     * a description that contains only such characters as empty.
+     */
+    private const UNICODE_SPACES = array(
+        " ",
+        // No-break space, from "&nbsp;".
+        " ",
+        // Narrow no-break space.
+        "　",
+        // Ideographic space.
+        "﻿",
+    );
     protected static array $product_cache = array();
     private StoreCurrencyValue $store_currency;
     public function __construct(StoreCurrencyValue $store_currency)
@@ -89,24 +102,39 @@ class ProductManager
         return \true;
     }
     /**
-     * @param WC_Product $product  The WooCommerce product object.
-     * @param string     $fallback Fallback description (e.g. short description for simple products,
-     *                             parent description for variations).
+     * @param WC_Product $product      The WooCommerce product object.
+     * @param string     ...$fallbacks Descriptions to use in this order when the product
+     *                                 description has no visible text.
      * @return string Plain-text description, passed through the filter hook.
      */
-    public function get_product_description(WC_Product $product, string $fallback = ''): string
+    public function get_product_description(WC_Product $product, string ...$fallbacks): string
     {
-        $description = $product->get_description() ?: $fallback;
-        $plain_text = wp_strip_all_tags($description);
-        $plain_text = html_entity_decode($plain_text, \ENT_QUOTES, 'UTF-8');
-        $plain_text = trim(preg_replace('/\s+/', ' ', $plain_text) ?? '');
+        $plain_text = '';
+        foreach (array($product->get_description(), ...$fallbacks) as $description) {
+            $plain_text = $this->to_plain_text($description);
+            if ('' !== $plain_text) {
+                break;
+            }
+        }
         /**
          * Filters the product description for PayPal Agentic Commerce ingestion.
          *
          * @param string     $plain_text The plain text description.
          * @param WC_Product $product    The WooCommerce product object.
          */
-        return apply_filters('woocommerce_paypal_payments_store_sync_item_description', $plain_text, $product);
+        $filtered = apply_filters('woocommerce_paypal_payments_store_sync_item_description', $plain_text, $product);
+        return $this->normalize_whitespace($filtered);
+    }
+    private function to_plain_text(string $html): string
+    {
+        $text = wp_strip_all_tags($html);
+        $text = html_entity_decode($text, \ENT_QUOTES, 'UTF-8');
+        return $this->normalize_whitespace($text);
+    }
+    private function normalize_whitespace(string $text): string
+    {
+        $text = str_replace(self::UNICODE_SPACES, ' ', $text);
+        return trim(preg_replace('/\s+/', ' ', $text) ?? '');
     }
     /**
      * @param WC_Product $product The WooCommerce product object.

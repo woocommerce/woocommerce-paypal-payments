@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenFor
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\FreeTrialVaultReturnEndpoint;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsApplies;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\SetupTokenBinding;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array(
     // @deprecated - use `save-payment-methods.eligibility.check` instead.
@@ -46,13 +47,16 @@ return array(
         return $factory->for_module('ppcp-save-payment-methods');
     },
     'save-payment-methods.endpoint.create-setup-token' => static function (ContainerInterface $container): CreateSetupToken {
-        return new CreateSetupToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'));
+        return new CreateSetupToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('save-payment-methods.service.setup-token-binding'));
     },
     'save-payment-methods.endpoint.create-payment-token' => static function (ContainerInterface $container): CreatePaymentToken {
-        return new CreatePaymentToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wc-subscriptions.free-trial-subscription-helper'));
+        return new CreatePaymentToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wc-subscriptions.free-trial-subscription-helper'), $container->get('save-payment-methods.service.setup-token-binding'), $container->get('woocommerce.logger.woocommerce'));
     },
     'save-payment-methods.endpoint.create-payment-token-for-guest' => static function (ContainerInterface $container): CreatePaymentTokenForGuest {
-        return new CreatePaymentTokenForGuest($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'));
+        return new CreatePaymentTokenForGuest($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('save-payment-methods.service.setup-token-binding'), $container->get('woocommerce.logger.woocommerce'));
+    },
+    'save-payment-methods.service.setup-token-binding' => static function (): SetupTokenBinding {
+        return new SetupTokenBinding();
     },
     'save-payment-methods.service.payment-method-tokens-checker' => static function (ContainerInterface $container): PaymentMethodTokensChecker {
         return new PaymentMethodTokensChecker($container->get('api.endpoint.payment-tokens'));

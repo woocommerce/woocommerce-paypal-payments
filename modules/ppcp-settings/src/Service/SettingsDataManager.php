@@ -242,6 +242,8 @@ class SettingsDataManager
     protected function apply_payment_methods(ConfigurationFlagsDTO $flags): void
     {
         $this->payment_methods->toggle_method_state('pay-later', \true);
+        $this->payment_methods->set_paypal_show_logo(\true);
+        $this->payment_methods->set_show_card_logos(\true);
         $this->payment_methods->save();
     }
     /**

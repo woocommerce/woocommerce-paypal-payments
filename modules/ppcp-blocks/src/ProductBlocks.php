@@ -12,6 +12,9 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
+use WooCommerce\PayPalCommerce\SdkV6\Assets\SdkV6Manager;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
 use WooCommerce\PayPalCommerce\Settings\Data\PayLaterMessagingSettings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -263,10 +266,14 @@ class ProductBlocks
         $script_params_endpoint = \WC_AJAX::get_endpoint(CartScriptParamsEndpoint::ENDPOINT);
         $blocks_js_path = $c->get('ppcp.path-to-plugin-folder') . 'modules/ppcp-blocks/resources/js/';
         $settings_url = admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway');
+        // The editor previews render with the v6 SDK when it is loaded: the v5 preview's
+        // script-params request is answered by a disabled smart button wherever v6 claims
+        // the request (e.g. sitewide while the Mini-Cart placement is on).
+        $sdk_v6 = \WooCommerce\PayPalCommerce\Blocks\SdkV6EditorPreview::config($c);
         // Smart Buttons block.
         $buttons_handle = 'ppcp-product-smart-buttons-block';
         wp_register_script($buttons_handle, $asset_getter->get_asset_url('ProductSmartButtonsBlock/product-smart-buttons-block.js'), array(), $asset_version, \true);
-        wp_localize_script($buttons_handle, 'PcpProductSmartButtonsBlock', array('ajax' => array('cart_script_params' => array('endpoint' => $script_params_endpoint)), 'placementEnabled' => self::is_buttons_enabled($settings_status), 'settingsUrl' => $settings_url, 'isSdkV6Active' => $c->has('sdk-v6.owns-current-page')));
+        wp_localize_script($buttons_handle, 'PcpProductSmartButtonsBlock', array('ajax' => array('cart_script_params' => array('endpoint' => $script_params_endpoint)), 'placementEnabled' => self::is_buttons_enabled($settings_status), 'settingsUrl' => $settings_url, 'isSdkV6Active' => $c->has('sdk-v6.owns-current-page'), 'sdkV6' => $sdk_v6, 'buttonStyle' => self::sdk_v6_button_style($c)));
         register_block_type($blocks_js_path . 'ProductSmartButtonsBlock', array('render_callback' => static function (array $attributes) use ($c): string {
             $renderer = $c->get('blocks.product-buttons-renderer');
             assert($renderer instanceof \WooCommerce\PayPalCommerce\Blocks\ProductSmartButtonsRenderer);
@@ -285,12 +292,42 @@ class ProductBlocks
         assert($paylater_settings instanceof PayLaterMessagingSettings);
         $messaging_handle = 'ppcp-product-paylater-block';
         wp_register_script($messaging_handle, $asset_getter->get_asset_url('ProductPayLaterMessagesBlock/product-paylater-block.js'), array(), $asset_version, \true);
-        wp_localize_script($messaging_handle, 'PcpProductPayLaterBlock', array('ajax' => array('cart_script_params' => array('endpoint' => $script_params_endpoint)), 'config' => $config_factory->from_settings($paylater_settings), 'placementEnabled' => self::is_messaging_enabled($settings_status), 'payLaterSettingsUrl' => $settings_url, 'settingsUrl' => $settings_url, 'isSdkV6Active' => $c->has('sdk-v6.owns-current-page')));
+        wp_localize_script($messaging_handle, 'PcpProductPayLaterBlock', array('ajax' => array('cart_script_params' => array('endpoint' => $script_params_endpoint)), 'config' => $config_factory->from_settings($paylater_settings), 'placementEnabled' => self::is_messaging_enabled($settings_status), 'payLaterSettingsUrl' => $settings_url, 'settingsUrl' => $settings_url, 'isSdkV6Active' => $c->has('sdk-v6.owns-current-page'), 'sdkV6' => $sdk_v6, 'messageStyle' => self::sdk_v6_message_style($c)));
         register_block_type($blocks_js_path . 'ProductPayLaterMessagesBlock', array('render_callback' => static function (array $attributes) use ($c): string {
             $renderer = $c->get('blocks.product-messaging-renderer');
             assert($renderer instanceof \WooCommerce\PayPalCommerce\Blocks\ProductPayLaterMessagesRenderer);
             return $renderer->render($attributes, $c);
         }));
+    }
+    /**
+     * The product buttons' v6 style for the editor preview, or null when the v6 module is not
+     * loaded. The height matches the front end's product buttons.
+     *
+     * @param ContainerInterface $c The container.
+     */
+    private static function sdk_v6_button_style(ContainerInterface $c): ?array
+    {
+        if (!$c->has('sdk-v6.button-style-mapper')) {
+            return null;
+        }
+        $style_mapper = $c->get('sdk-v6.button-style-mapper');
+        assert($style_mapper instanceof ButtonStyleMapper);
+        return array_merge($style_mapper->styles_for_context('product'), array('height' => SdkV6Manager::PAYMENT_BUTTON_HEIGHT));
+    }
+    /**
+     * The product messaging's v6 style for the editor preview, or null when the v6 module is
+     * not loaded.
+     *
+     * @param ContainerInterface $c The container.
+     */
+    private static function sdk_v6_message_style(ContainerInterface $c): ?array
+    {
+        if (!$c->has('sdk-v6.message-style-mapper')) {
+            return null;
+        }
+        $style_mapper = $c->get('sdk-v6.message-style-mapper');
+        assert($style_mapper instanceof MessageStyleMapper);
+        return $style_mapper->styles_for_location('product');
     }
     /**
      * Whether a block template's content renders the blocks, so the classic product render path
