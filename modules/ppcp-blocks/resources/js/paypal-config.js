@@ -206,7 +206,6 @@ export const handleApproveSubscription = async (
 	data,
 	actions,
 	config,
-	shouldHandleShippingInPayPal,
 	shippingData,
 	setPaypalOrder,
 	shouldskipFinalConfirmation,
@@ -229,20 +228,18 @@ export const handleApproveSubscription = async (
 					shipping_address: addresses.shippingAddress,
 				} ),
 			];
-			if ( shouldHandleShippingInPayPal() ) {
-				// set address in UI
+			// Set the address in the UI as well: the checkout is submitted right after.
+			promises.push(
+				wp.data
+					.dispatch( 'wc/store/cart' )
+					.setBillingAddress( addresses.billingAddress )
+			);
+			if ( shippingData.needsShipping ) {
 				promises.push(
 					wp.data
 						.dispatch( 'wc/store/cart' )
-						.setBillingAddress( addresses.billingAddress )
+						.setShippingAddress( addresses.shippingAddress )
 				);
-				if ( shippingData.needsShipping ) {
-					promises.push(
-						wp.data
-							.dispatch( 'wc/store/cart' )
-							.setShippingAddress( addresses.shippingAddress )
-					);
-				}
 			}
 			await Promise.all( promises );
 		}
