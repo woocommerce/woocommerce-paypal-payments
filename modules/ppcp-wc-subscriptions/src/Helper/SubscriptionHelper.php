@@ -256,8 +256,7 @@ class SubscriptionHelper
         if (!$this->plugin_is_active()) {
             return '';
         }
-        $subscription_mode_disabled = (bool) apply_filters('woocommerce_paypal_payments_subscription_mode_disabled', \false);
-        if ($subscription_mode_disabled) {
+        if ($this->is_mode_disabled_by_filter()) {
             return self::SUBSCRIPTION_MODE_VALUE_DISABLED;
         }
         $save_paypal_and_venmo = $settings_provider->save_paypal_and_venmo();
@@ -265,6 +264,17 @@ class SubscriptionHelper
             return self::SUBSCRIPTION_MODE_VALUE_DISABLED;
         }
         return $save_paypal_and_venmo ? self::SUBSCRIPTION_MODE_VALUE_VAULTING : self::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
+    }
+    /**
+     * Whether accepting manual renewals, rather than the filter, disables the subscriptions mode.
+     */
+    public function is_mode_disabled_for_manual_renewals(SettingsProvider $settings_provider): bool
+    {
+        return $this->plugin_is_active() && !$this->is_mode_disabled_by_filter() && $this->accept_manual_renewals() && !$settings_provider->save_paypal_and_venmo();
+    }
+    private function is_mode_disabled_by_filter(): bool
+    {
+        return (bool) apply_filters('woocommerce_paypal_payments_subscription_mode_disabled', \false);
     }
     /**
      * Returns PayPal subscription plan id from WC subscription product.
