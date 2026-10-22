@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
@@ -24,6 +25,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -96,6 +98,8 @@ class SdkV6ManagerTest extends TestCase
 		$this->context->shouldReceive('location')->andReturn('')->byDefault();
 
 		when('is_admin')->justReturn(false);
+		// No viewed product unless a test names one.
+		when('wc_get_product')->justReturn(false);
 
 		$this->google_pay_config = Mockery::mock(GooglePayConfig::class);
 		$this->google_pay_config->shouldReceive('should_render')->andReturn(false)->byDefault();
@@ -287,10 +291,11 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN a merchant with smart buttons enabled for every location
      * WHEN determining which locations should render on the current page
-     * THEN the cart, checkout and mini-cart wallet buttons are suppressed whenever the cart
+     * THEN the cart and checkout wallet buttons are suppressed whenever the cart
      *      does not need payment (e.g. a $0 order from a full-value coupon)
-     * AND the product and pay-now locations render regardless of the cart's payment status,
-     *     since pay-now is driven by an existing WC order rather than the cart
+     * AND the product, pay-now and mini-cart locations render regardless of the cart's payment
+     *     status, since pay-now is driven by an existing WC order rather than the cart, and the
+     *     mini-cart checks the cart when its wrapper prints
      *
      * AND determine_render_places() does not call Context::init_context() itself — that
      *     initialization now happens once in SdkV6Module's 'wp' callback, before both the
@@ -325,9 +330,9 @@ class SdkV6ManagerTest extends TestCase
                 true,
                 ['product' => true, 'cart' => true, 'checkout' => true, 'pay-now' => true, 'mini-cart' => true],
             ],
-            'zero-total cart not needing payment suppresses cart, checkout and mini-cart' => [
+            'zero-total cart not needing payment suppresses cart and checkout only' => [
                 false,
-                ['product' => true, 'cart' => false, 'checkout' => false, 'pay-now' => true, 'mini-cart' => false],
+                ['product' => true, 'cart' => false, 'checkout' => false, 'pay-now' => true, 'mini-cart' => true],
             ],
             'no cart present is treated as needing payment' => [
                 null,
@@ -343,8 +348,10 @@ class SdkV6ManagerTest extends TestCase
      * THEN the checkout still renders, because it must offer the PayPal
      *      save-without-purchase button for the vaulted token backing the future
      *      recurring payment
-     * AND the cart and mini-cart stay suppressed regardless of the free-trial flag,
-     *     since neither has a form to submit that vaulted token from
+     * AND the cart stays suppressed regardless of the free-trial flag, since it has no
+     *     form to submit that vaulted token from
+     * AND the mini-cart follows its setting alone, since its wrapper checks the cart
+     *     when it prints
      * AND a $0 cart that is NOT a free trial (e.g. a full-value coupon) keeps the
      *     checkout suppressed too, same as before the fix
      *
@@ -364,7 +371,116 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame($expected_checkout, $result['checkout']);
         $this->assertSame($needs_payment, $result['cart']);
-        $this->assertSame($needs_payment, $result['mini-cart']);
+        $this->assertTrue($result['mini-cart']);
+    }
+
+    /**
+     * GIVEN the cart was empty (needing no payment) when the render places were determined
+     * WHEN the cart changes and the mini-cart button wrapper is rendered afterwards
+     * THEN the wrapper prints when the cart needs payment at render time
+     * AND nothing prints when the cart still needs no payment, e.g. a $0 cart
+     *
+     * @dataProvider mini_cart_wrapper_provider
+     */
+    public function testRenderMiniCartWrapperFollowsCartStateAtRenderTime(bool $needs_payment_at_render, string $expected_output): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $needs_payment = false;
+        $cart          = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturnUsing(static function () use (&$needs_payment): bool {
+            return $needs_payment;
+        });
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $testee = $this->createTestee();
+        $places = $testee->determine_render_places();
+
+        $needs_payment = $needs_payment_at_render;
+        $testee->render_mini_cart_wrapper();
+
+        $this->assertTrue($places['mini-cart']);
+        $this->expectOutputString($expected_output);
+    }
+
+    public function mini_cart_wrapper_provider(): array
+    {
+        return [
+            'cart that needs payment at render time prints the wrapper' => [
+                true,
+                '<p class="woocommerce-mini-cart__buttons buttons"><span id="' . SdkV6Manager::MINI_CART_WRAPPER_ID . '"></span></p>',
+            ],
+            'zero-total cart at render time prints nothing' => [
+                false,
+                '',
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN the buyer is on the Block Checkout page
+     * AND the checkout buttons, card fields, Fastlane and Checkout Pay Later messaging are all off
+     * AND the Mini Cart buttons are on
+     * WHEN checking whether the block payment method is active
+     * THEN it is active, so the PayPal payment row and the continuation review keep working
+     */
+    public function testBlockPaymentMethodStaysActiveOnCheckoutBlockWhenOnlyMiniCartButtonsAreOn(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout-block');
+        $this->context->shouldReceive('location')->andReturn('checkout-block');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
+        $this->fastlane_config->shouldReceive('should_render')->andReturn(false);
+        $this->messages_eligibility->shouldReceive('is_enabled_for_location')->andReturn(false);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->andReturnUsing(static fn (string $location): bool => 'mini-cart' === $location);
+
+        $payment_method = new V6PaymentMethod(
+            $this->createTestee(),
+            $this->asset_getter,
+            '1.0.0',
+            Mockery::mock(PayPalGateway::class),
+            Mockery::mock(CreditCardGateway::class),
+            null,
+            null,
+            ''
+        );
+
+        $this->assertTrue($payment_method->is_active());
+    }
+
+    /**
+     * GIVEN a page and the set of smart button locations the merchant enabled
+     * WHEN the SDK bootstrap data is generated
+     * THEN buttons_enabled is true only when the page's own location has smart buttons on
+     * AND it is false when only another location, such as the mini-cart, has them on
+     * AND it is false on a page with no page context
+     *
+     * @dataProvider buttons_enabled_provider
+     */
+    public function testScriptDataButtonsEnabledFollowsThePagesOwnLocation(string $page_context, array $enabled_locations, bool $expected): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->andReturnUsing(static function (string $location) use ($enabled_locations): bool {
+                return in_array($location, $enabled_locations, true);
+            });
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame($expected, $data['buttons_enabled']);
+    }
+
+    public function buttons_enabled_provider(): array
+    {
+        return [
+            'checkout page with checkout buttons on'              => ['checkout', ['checkout'], true],
+            'checkout page with only mini cart buttons on'        => ['checkout', ['mini-cart'], false],
+            'checkout page with checkout buttons off'             => ['checkout', [], false],
+            'cart block page with only mini cart buttons on'      => ['cart-block', ['mini-cart'], false],
+            'page without context even with mini cart buttons on' => ['', ['mini-cart', 'checkout', 'cart'], false],
+        ];
     }
 
     public function free_trial_checkout_provider(): array
@@ -610,6 +726,21 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame('FR', $data['merchant_country']);
         $this->assertSame('DE', $data['buyer_country']);
+    }
+
+    /**
+     * GIVEN a store whose WordPress locale is a formal variant (de_DE_formal)
+     * WHEN the SDK bootstrap data is generated
+     * THEN the locale is normalised to the SDK-supported de-DE
+     */
+    public function testScriptDataNormalisesWordPressLocaleVariantToSupportedSdkLocale(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        when('get_locale')->justReturn('de_DE_formal');
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame('de-DE', $data['locale']);
     }
 
     /**
@@ -1233,6 +1364,8 @@ class SdkV6ManagerTest extends TestCase
         $product = $this->create_product_stub(false, false);
         when('wc_get_product')->justReturn($product);
         when('wc_get_price_including_tax')->justReturn(29.99);
+        when('wc_shipping_enabled')->justReturn(true);
+        when('wc_get_shipping_method_count')->justReturn(1);
 
         $cart = Mockery::mock();
         $cart->shouldReceive('is_empty')->andReturn(false);
@@ -1512,6 +1645,7 @@ class SdkV6ManagerTest extends TestCase
      * WHEN the bootstrap script is enqueued
      * THEN it is registered with the dependencies and version webpack recorded for the
      *      compiled bundle, not an empty dependency list and not just the plugin version.
+     * AND its JS translations are loaded for the plugin text domain.
      */
     public function testEnqueueRegistersScriptWithAssetDataDependenciesAndVersion(): void
     {
@@ -1560,6 +1694,9 @@ class SdkV6ManagerTest extends TestCase
                 'deadbeef',
                 true
             );
+        expect('wp_set_script_translations')
+            ->once()
+            ->with('wc-ppcp-sdk-v6-boot', 'woocommerce-paypal-payments');
         expect('wp_localize_script')->once();
         expect('wp_enqueue_script')->once()->with('wc-ppcp-sdk-v6-boot');
         expect('wp_enqueue_style')
@@ -2365,9 +2502,9 @@ class SdkV6ManagerTest extends TestCase
      *      and the pay-for-order page pays an order already priced from itself, so neither page
      *      can let a wallet sheet collect a destination or total the order can't use; the block
      *      cart/checkout contexts enable it unconditionally, since the block components already
-     *      gate on their own live cart state; the product page is decided solely by the viewed
-     *      product being physical and non-downloadable; and every remaining context (cart) falls
-     *      back to whether the cart needs shipping at all
+     *      gate on their own live cart state; the product page needs the store to ship at all
+     *      and the viewed product to be physical and non-downloadable; and every remaining
+     *      context (cart) falls back to whether the cart needs shipping at all
      * AND the mini-cart entry is always present alongside the current page's own entry,
      *     since the mini-cart can render on any page independently of it
      *
@@ -2378,7 +2515,9 @@ class SdkV6ManagerTest extends TestCase
         string $page_context,
         bool $cart_needs_shipping,
         string $product_state,
-        array $expected_in_context
+        array $expected_in_context,
+        bool $shipping_enabled = true,
+        int $shipping_method_count = 1
     ): void {
         $this->context->shouldReceive('context')->andReturn($page_context);
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
@@ -2420,6 +2559,8 @@ class SdkV6ManagerTest extends TestCase
         when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
         when('wc_get_product')->justReturn($product);
+        when('wc_shipping_enabled')->justReturn($shipping_enabled);
+        when('wc_get_shipping_method_count')->justReturn($shipping_method_count);
 
         $testee = $this->createTestee([], true, 'US', $final_review_enabled);
         $data   = $testee->script_data();
@@ -2477,6 +2618,16 @@ class SdkV6ManagerTest extends TestCase
             'product page with no resolvable product disables shipping only for the product context' => [
                 false, 'product', true, 'none',
                 ['product' => false, 'mini-cart' => true],
+            ],
+            'product page with a physical product disables shipping when the store has shipping disabled' => [
+                false, 'product', true, 'physical',
+                ['product' => false, 'mini-cart' => true],
+                false, 1,
+            ],
+            'product page with a physical product disables shipping when the store has no shipping methods' => [
+                false, 'product', true, 'physical',
+                ['product' => false, 'mini-cart' => true],
+                true, 0,
             ],
             'cart-block context enables shipping without consulting the cart' => [
                 false, 'cart-block', false, 'none',
@@ -2573,15 +2724,13 @@ class SdkV6ManagerTest extends TestCase
     /**
      * GIVEN the SDK bootstrap data is generated
      * WHEN reading the labels payload
-     * THEN it carries exactly the documented keys — the shipping-unserviceable key
-     *      shown when a wallet sheet's address cannot be served, and the itemization
-     *      keys the Apple Pay sheet uses to break down the total — since a missing
-     *      or renamed key is what would break those consumers, not the wording
+     * THEN it carries exactly the expected keys, since a missing or renamed
+     *      key breaks the frontend consumers, not the wording
      * AND every label is a non-empty string, since the exact copy is not the
      *     contract: the frontend renders whatever text arrives, and this project
      *     revises user-facing copy independently of this test
      */
-    public function testScriptDataIncludesShippingAndItemizationLabels(): void
+    public function testScriptDataLabelsHaveTheExpectedKeys(): void
     {
         $this->context->shouldReceive('context')->andReturn('checkout-block');
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
@@ -2607,7 +2756,17 @@ class SdkV6ManagerTest extends TestCase
         $data   = $testee->script_data();
 
         $this->assertSame(
-            ['generic_error', 'card_declined', 'shipping_unserviceable', 'subtotal', 'shipping', 'tax', 'discount'],
+            [
+                'generic_error',
+                'card_declined',
+                'shipping_unserviceable',
+                'fields_empty',
+                'fields_not_valid',
+                'subtotal',
+                'shipping',
+                'tax',
+                'discount',
+            ],
             array_keys($data['labels'])
         );
 
@@ -2810,6 +2969,60 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertFalse($result['product']);
         $this->assertTrue($result['checkout']);
+    }
+
+    /**
+     * GIVEN the smart button is enabled for every location and the viewed product is
+     *       priced, free, or a variable product whose cheapest variation is free
+     * WHEN determining which locations should render
+     * THEN the product location is suppressed only when the product is free and has
+     *      no possible shipping cost, since PayPal rejects a zero-total order
+     * AND a free product that still needs paid shipping keeps its button
+     * AND the cart, checkout, mini-cart and pay-now locations are unaffected
+     *
+     * @dataProvider unpayable_free_product_provider
+     */
+    public function testDetermineRenderPlacesProductSuppressedOnlyForFreeProductWithoutShippingCost(
+        bool $is_variable,
+        float $price,
+        bool $needs_shipping,
+        bool $shipping_enabled,
+        bool $expected_product
+    ): void {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $product = Mockery::mock(\WC_Product::class);
+        $product->shouldReceive('is_type')->andReturn($is_variable);
+        $product->shouldReceive('needs_shipping')->andReturn($needs_shipping);
+        when('wc_get_product')->justReturn($product);
+        when('wc_get_price_including_tax')->justReturn($price);
+        when('wc_shipping_enabled')->justReturn($shipping_enabled);
+
+        $this->assertSame(
+            [
+                'product'   => $expected_product,
+                'cart'      => true,
+                'checkout'  => true,
+                'pay-now'   => true,
+                'mini-cart' => true,
+            ],
+            $this->createTestee()->determine_render_places()
+        );
+    }
+
+    public function unpayable_free_product_provider(): array
+    {
+        return [
+            'free product needing no shipping is suppressed' => [false, 0.0, false, true, false],
+            'free product needing shipping with shipping enabled keeps the button' => [false, 0.0, true, true, true],
+            'free product needing shipping with shipping disabled is suppressed' => [false, 0.0, true, false, false],
+            'priced product keeps the button' => [false, 10.0, false, true, true],
+            'variable product priced at zero keeps the button' => [true, 0.0, false, true, true],
+        ];
     }
 
     /**

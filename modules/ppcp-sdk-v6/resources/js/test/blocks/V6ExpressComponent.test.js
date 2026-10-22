@@ -1,6 +1,18 @@
 const mockLoadSdkV6 = jest.fn();
+let mockInstanceListeners = [];
+const mockOnSdkInstanceChange = jest.fn( ( listener ) => {
+	mockInstanceListeners.push( listener );
+	return () => {
+		mockInstanceListeners = mockInstanceListeners.filter(
+			( registered ) => registered !== listener
+		);
+	};
+} );
 jest.mock( '../../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+jest.mock( '../../tokenRefresh', () => ( {
+	onSdkInstanceChange: ( ...args ) => mockOnSdkInstanceChange( ...args ),
 } ) );
 
 const mockCheckEligibility = jest.fn();
@@ -109,7 +121,11 @@ function renderComponent( overrides = {} ) {
 	);
 }
 
+const emitInstanceChange = ( sdk ) =>
+	mockInstanceListeners.forEach( ( listener ) => listener( sdk ) );
+
 beforeEach( () => {
+	mockInstanceListeners = [];
 	capturedHandlers = null;
 	paymentSetupCb = null;
 	checkoutFailCb = null;
@@ -311,6 +327,58 @@ describe( 'V6ExpressComponent', () => {
 		expect( styles.height ).toBeUndefined();
 	} );
 
+	describe( 'when the SDK instance changes', () => {
+		const newSdk = { sdk: 'new' };
+
+		test( 'builds the button from a session of the new instance', async () => {
+			renderComponent();
+			await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
+			mockCreateSession.mockReturnValueOnce( { fake: 'new-session' } );
+
+			act( () => emitInstanceChange( newSdk ) );
+
+			await waitFor( () =>
+				expect(
+					mockButtonContainer.mock.calls.at( -1 )[ 0 ].session
+				).toEqual( { fake: 'new-session' } )
+			);
+			expect( mockCreateSession.mock.calls.at( -1 )[ 0 ] ).toBe( newSdk );
+		} );
+
+		test( 'builds the free-trial save button from a save session of the new instance', async () => {
+			renderComponent( {
+				config: {
+					...config,
+					amount: '0.00',
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				},
+			} );
+			await waitFor( () =>
+				expect( mockCreateFreeTrialPayPalSession ).toHaveBeenCalled()
+			);
+
+			act( () => emitInstanceChange( newSdk ) );
+
+			await waitFor( () =>
+				expect(
+					mockCreateFreeTrialPayPalSession.mock.calls.at( -1 )[ 0 ]
+				).toBe( newSdk )
+			);
+		} );
+
+		test( 'ignores the change after the component unmounted', async () => {
+			const { unmount } = renderComponent();
+			await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
+			const sessionsBefore = mockCreateSession.mock.calls.length;
+
+			unmount();
+			emitInstanceChange( newSdk );
+
+			expect( mockCreateSession.mock.calls.length ).toBe( sessionsBefore );
+		} );
+	} );
+
 	test( 'keeps one session and one button across re-renders with new callback identities', async () => {
 		const { rerender } = renderComponent();
 		await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
@@ -431,6 +499,72 @@ describe( 'V6ExpressComponent', () => {
 
 		expect( onSubmit ).toHaveBeenCalledTimes( 1 );
 		expect( mockAssign ).not.toHaveBeenCalled();
+	} );
+
+	test( 'on Pay Now the PayPal addresses are in the Blocks form before the checkout is submitted', async () => {
+		mockGetOrder.mockResolvedValue( {
+			id: 'PPORDER',
+			payer: {
+				name: { given_name: 'Ada', surname: 'Lovelace' },
+				email_address: 'ada@example.com',
+			},
+			purchase_units: [
+				{
+					shipping: {
+						name: { full_name: 'Ada Lovelace' },
+						address: {
+							address_line_1: '1 St',
+							admin_area_1: 'CA',
+							admin_area_2: 'LA',
+							postal_code: '90001',
+							country_code: 'US',
+						},
+					},
+				},
+			],
+		} );
+		const formState = { billing: null, shipping: null };
+		const originalDispatch = global.wp.data.dispatch;
+		global.wp.data.dispatch = ( store ) => ( {
+			...originalDispatch( store ),
+			setBillingAddress: ( address ) => {
+				formState.billing = address;
+			},
+			setShippingAddress: ( address ) => {
+				formState.shipping = address;
+			},
+		} );
+		let formStateAtSubmit = null;
+		const onSubmit = jest.fn( () => {
+			formStateAtSubmit = { ...formState };
+		} );
+
+		renderComponent( {
+			onSubmit,
+			shippingData: { needsShipping: true },
+		} );
+		await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+
+		await act( async () => {
+			await capturedHandlers.onApprove( { orderId: 'ORDER1' } );
+		} );
+
+		expect( formStateAtSubmit.shipping ).toMatchObject( {
+			first_name: 'Ada',
+			last_name: 'Lovelace',
+			address_1: '1 St',
+			city: 'LA',
+			state: 'CA',
+			postcode: '90001',
+			country: 'US',
+		} );
+		expect( formStateAtSubmit.billing ).toMatchObject( {
+			first_name: 'Ada',
+			last_name: 'Lovelace',
+			address_1: '1 St',
+			postcode: '90001',
+			country: 'US',
+		} );
 	} );
 
 	test( 'on the cart block, Pay Now creates and captures the order server-side instead of submitting the checkout store', async () => {

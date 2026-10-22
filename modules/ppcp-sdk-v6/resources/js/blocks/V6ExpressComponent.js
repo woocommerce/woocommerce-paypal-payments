@@ -7,6 +7,7 @@
 
 import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange } from '../tokenRefresh';
 import { checkEligibility } from '../eligibility';
 import { createSession } from '../sessions/createSession';
 import {
@@ -107,6 +108,9 @@ export function V6ExpressComponent( {
 		};
 	}, [ config, context, amount ] );
 
+	// A new instance creates a new session, which draws the button again.
+	useEffect( () => onSdkInstanceChange( setSdk ), [] );
+
 	// Without releasing the express UI the buyer is stuck with no message.
 	const failFlow = ( error ) => {
 		if ( onError ) {
@@ -127,7 +131,10 @@ export function V6ExpressComponent( {
 			const order = await getOrder( config, data.orderId );
 
 			if ( order?.purchase_units?.[ 0 ]?.shipping?.address ) {
-				await prefillFromPayPalOrder( order, { needsShipping } );
+				await prefillFromPayPalOrder( order, {
+					needsShipping,
+					reflectInUi: true,
+				} );
 			}
 
 			setPaypalOrder( order );

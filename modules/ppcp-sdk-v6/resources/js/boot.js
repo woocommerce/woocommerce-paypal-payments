@@ -13,6 +13,7 @@
  */
 
 import { loadSdkV6 } from './sdkLoader';
+import { onSdkInstanceChange } from './tokenRefresh';
 import { checkEligibility } from './eligibility';
 import {
 	createSession,
@@ -20,7 +21,11 @@ import {
 } from './sessions/createSession';
 import { renderButtons } from './components/buttonRenderer';
 import { renderMethods } from './methods/renderMethods';
-import { isMethodEnabled, MERCHANT_PRESENTED_METHODS } from './methods/methodRegistry';
+import {
+	isMethodEnabled,
+	methodConfig,
+	MERCHANT_PRESENTED_METHODS,
+} from './methods/methodRegistry';
 import { FundingSources } from './utils/fundingSources';
 import { createOrder, fetchCartTotal } from './endpointsAdapter';
 import {
@@ -35,7 +40,11 @@ import { watchProductAmount } from './messages/productAmount';
 import { initProductButtonGate } from './utils/productButtonGate';
 import { setErrorLabels } from './utils/errorHandler';
 import { isFreeTrialCart } from './utils/freeTrial';
-import { setVisible } from '@ppcp-button/Helper/Hiding';
+import { onBlockCartTotalChange } from './utils/blockCartTotal';
+import {
+	placeExpressButtons,
+	setExpressButtonsFailed,
+} from './methods/gatewayPlacement';
 import { debounce } from '@ppcp-blocks/Helper/debounce';
 import {
 	initMessages,
@@ -46,7 +55,6 @@ import {
 // The native WC submit button, replaced by the v6 buttons while the PayPal
 // gateway is selected and left as the submit for every other method.
 const PLACE_ORDER_SELECTOR = '#place_order';
-const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
 const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 
@@ -127,6 +135,8 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	const messagesFollowCartTotal = 'product' !== config.page_context;
 
 	let amount = config.amount;
+	// Kept apart from amount, which is the product price on a product page.
+	let cartTotal = null;
 	let refreshPromise = Promise.resolve();
 	let eligibilityPromise = null;
 	const sessionPromises = {};
@@ -241,17 +251,55 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	 * still contain buttons are left alone (WC AJAX updates that replace
 	 * the surrounding DOM deliver the wrapper empty again).
 	 *
-	 * Wallets render after renderButtons(), which empties the wrapper first,
-	 * and they append rather than replace.
+	 * A page-context pass that leaves the wrapper empty, whether it threw or found
+	 * nothing to render, hands PayPal's row back to "Place order".
 	 *
 	 * @param {Object} target - The render target.
 	 */
 	async function renderTarget( target ) {
 		const wrapper = document.querySelector( target.wrapperSelector );
-		if ( ! wrapper || wrapper.childElementCount > 0 ) {
+		if ( ! wrapper ) {
 			return;
 		}
 
+		// The block mini-cart keeps its wrapper when the cart drops to $0 in place.
+		if ( target.context === 'mini-cart' && parseFloat( cartTotal ) <= 0 ) {
+			wrapper.replaceChildren();
+			return;
+		}
+
+		if ( wrapper.childElementCount > 0 ) {
+			return;
+		}
+
+		// A free trial can only be saved where a checkout form follows; elsewhere
+		// (e.g. the block mini-cart) the wrapper stays empty.
+		if (
+			isFreeTrialCart( config, amount ) &&
+			! FREE_TRIAL_CONTEXTS.includes( target.context )
+		) {
+			return;
+		}
+
+		try {
+			await renderInto( wrapper, target );
+		} finally {
+			if ( target.context === config.page_context ) {
+				setExpressButtonsFailed( wrapper.childElementCount === 0 );
+			}
+		}
+	}
+
+	/**
+	 * Renders a target's buttons into its wrapper.
+	 *
+	 * Wallets render after renderButtons(), which empties the wrapper first,
+	 * and they append rather than replace.
+	 *
+	 * @param {HTMLElement} wrapper - The target's wrapper.
+	 * @param {Object}      target  - The render target.
+	 */
+	async function renderInto( wrapper, target ) {
 		const { map, payLaterDetails } = await ensureSessions( target.context );
 
 		renderButtons( {
@@ -330,7 +378,8 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		// Read before the new total lands, to compare against it below.
 		const wasFreeTrial = isFreeTrialCart( config, amount );
 
-		amount = ( await fetchCartTotal( config ) ) || amount;
+		cartTotal = ( await fetchCartTotal( config ) ) || cartTotal;
+		amount = cartTotal || amount;
 		if ( messagesFollowCartTotal ) {
 			updateMessagesAmount( amount );
 		}
@@ -349,35 +398,12 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 			METHODS.some( ( m ) => previous[ m ] !== current[ m ] );
 
 		if ( changed ) {
-			for ( const key of Object.keys( sessionPromises ) ) {
-				delete sessionPromises[ key ];
-			}
-			for ( const target of targets ) {
-				const wrapper = document.querySelector(
-					target.wrapperSelector
-				);
-				if ( wrapper ) {
-					wrapper.innerHTML = '';
-				}
-			}
+			discardSessions(
+				targets.map( ( target ) => target.wrapperSelector )
+			);
 		}
 
 		renderAll();
-	}
-
-	/**
-	 * Whether a saved PayPal token (not "Use a new payment method") is selected.
-	 * Such a payment is charged via the native Place Order button — server-side, or
-	 * through the vault component's in-page approval where eligible — not the v6
-	 * express button, which would start a new PayPal flow instead.
-	 *
-	 * @return {boolean} True when a saved ppcp-gateway token is selected.
-	 */
-	function isSavedPayPalTokenSelected() {
-		const checked = document.querySelector(
-			'input[name="wc-ppcp-gateway-payment-token"]:checked'
-		);
-		return Boolean( checked && checked.value && checked.value !== 'new' );
 	}
 
 	/**
@@ -404,35 +430,6 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		queueRefreshEligibility,
 		ELIGIBILITY_REFRESH_DEBOUNCE_MS
 	);
-
-	/**
-	 * Hides the native WC place order button while the PayPal gateway
-	 * is selected with a NEW payment method — the v6 PayPal buttons stand in for
-	 * it — and restores it for cards, saved PayPal tokens (charged via Place
-	 * Order), and every other method. The v6 express button is hidden for a saved
-	 * token so it does not compete with it. Re-run on updated_checkout /
-	 * payment_method_selected / token change because WC rebuilds the #payment DOM
-	 * (and this inline style) on each update.
-	 */
-	function syncPlaceOrderButton() {
-		if (
-			! hasJQuery() ||
-			! [ 'checkout', 'pay-now' ].includes( config.page_context )
-		) {
-			return;
-		}
-
-		const selected = document.querySelector(
-			'input[name="payment_method"]:checked'
-		)?.value;
-		const useExpress =
-			selected === PAYPAL_GATEWAY_ID && ! isSavedPayPalTokenSelected();
-
-		setVisible( PLACE_ORDER_SELECTOR, ! useExpress, true );
-		if ( config.wrapper ) {
-			setVisible( config.wrapper, useExpress );
-		}
-	}
 
 	function initMessagesSafely() {
 		initMessages( config, sdkPageType ).catch( ( error ) => {
@@ -467,6 +464,37 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		watchProductAmount( config, updateMessagesAmount );
 	}
 
+	/**
+	 * A render pass skips a wrapper that is not empty.
+	 *
+	 * @param {Array<?string>} wrapperSelectors - The wrappers to empty.
+	 */
+	function discardSessions( wrapperSelectors ) {
+		for ( const key of Object.keys( sessionPromises ) ) {
+			delete sessionPromises[ key ];
+		}
+
+		for ( const selector of wrapperSelectors.filter( Boolean ) ) {
+			const wrapper = document.querySelector( selector );
+			if ( wrapper ) {
+				wrapper.innerHTML = '';
+			}
+		}
+	}
+
+	function renderWithNewSessions() {
+		discardSessions( [
+			...targets.map( ( target ) => target.wrapperSelector ),
+			...MERCHANT_PRESENTED_METHODS.map(
+				( method ) => methodConfig( config, method )?.gateway?.wrapper
+			),
+			config.card_button?.row && config.card_button.wrapper,
+		] );
+
+		renderAll();
+		initCardButtonSafely();
+	}
+
 	function initialRender() {
 		renderAll();
 		initCardFieldsSafely();
@@ -474,7 +502,9 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		initMessagesSafely();
 		trackProductTotal();
 		initProductButtonGate( config );
-		syncPlaceOrderButton();
+		placeExpressButtons( config );
+		onSdkInstanceChange( renderWithNewSessions );
+		onBlockCartTotalChange( refreshEligibilityDebounced );
 	}
 
 	if ( document.readyState === 'loading' ) {
@@ -502,21 +532,6 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		// The same DOM replacement rebuilds the card button's row and restores
 		// the hide-style PHP printed, so it needs rendering and revealing again.
 		jQuery( document.body ).on( 'updated_checkout', initCardButtonSafely );
-
-		// WC rebuilds #place_order on these too, and the selected method can
-		// change without a DOM rebuild, so re-sync the button on both.
-		jQuery( document.body ).on(
-			'updated_checkout payment_method_selected',
-			syncPlaceOrderButton
-		);
-
-		// Switching between a saved PayPal token and "new" flips whether the
-		// express button or Place Order should show, without a DOM rebuild.
-		jQuery( document ).on(
-			'change',
-			'input[name="wc-ppcp-gateway-payment-token"]',
-			syncPlaceOrderButton
-		);
 
 		// Total-changing updates: eligibility must be re-checked too, and the
 		// message re-priced.

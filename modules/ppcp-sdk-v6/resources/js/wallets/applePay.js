@@ -16,12 +16,13 @@ import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { describeError, logEvent } from '../utils/diagnostics';
 import { handleError } from '../utils/errorHandler';
+import { setSdkBusy } from '../tokenRefresh';
 import { loadScript } from '../utils/scriptLoaders';
 import { revealMethodGateway } from '../methods/gatewayPlacement';
 import { renderIsObsolete } from '../methods/renderOverrides';
 import { APPLE_PAY_VERSION, buildApplePayRequest } from './applePayRequest';
 import { watchSheetTotal } from './applePaySheetTotal';
-import { applePayFailure, attachShippingHandlers } from './applePayShipping';
+import { attachShippingHandlers } from './applePayShipping';
 import { recordDomainValidation } from './applePayValidation';
 import { buttonHeight, buttonStyle } from '../methods/buttonStyle';
 import {
@@ -102,7 +103,7 @@ export async function renderApplePay( {
 		return;
 	}
 
-	revealMethodGateway( gateway, config );
+	revealMethodGateway( gateway );
 
 	// Synchronous either way: Safari refuses a sheet opened after an await.
 	const sheetTotal = overrides.sheetTotal ?? watchSheetTotal( config, context );
@@ -111,9 +112,15 @@ export async function renderApplePay( {
 	const sheetContacts = overrides.sheetContacts ?? { get: () => ( {} ) };
 	const requiresShipping =
 		overrides.requiresShipping ?? methodShippingRequired( config, context );
-	const shipping = createShippingController( { config } );
+	// The token is bound to the total the sheet displayed, and PayPal rejects
+	// an order for any other amount, even a lower one.
+	const shipping = createShippingController( { config, exactTotal: true } );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
+	const setPaying = ( value ) => {
+		paying = value;
+		setSdkBusy( value );
+	};
 
 	/**
 	 * The cart holding what is being bought, resolved once per sheet.
@@ -145,7 +152,7 @@ export async function renderApplePay( {
 			return;
 		}
 
-		paying = true;
+		setPaying( true );
 
 		// Claims the surface's express UI; onSheetClosed() releases it again.
 		overrides.onClick?.();
@@ -199,7 +206,7 @@ export async function renderApplePay( {
 			// `paying` or the button could never open a second sheet. It also
 			// drops the rate this sheet pinned server-side.
 			appleSession.oncancel = () => {
-				paying = false;
+				setPaying( false );
 				spinner?.unblock();
 
 				if ( requiresShipping ) {
@@ -213,7 +220,7 @@ export async function renderApplePay( {
 			// Presents the sheet, and only then asks for merchant validation.
 			appleSession.begin();
 		} catch ( error ) {
-			paying = false;
+			setPaying( false );
 			spinner?.unblock();
 			handleError( error );
 			overrides.onSheetClosed?.();
@@ -252,7 +259,7 @@ export async function renderApplePay( {
 			// Nothing can be paid without a validated merchant, and the usual
 			// cause (an unregistered domain) is not something the shopper can
 			// act on, so close the sheet rather than leave it open.
-			paying = false;
+			setPaying( false );
 			appleSession.abort();
 			handleError( error );
 			overrides.onSheetClosed?.();
@@ -314,20 +321,27 @@ export async function renderApplePay( {
 			appleSession.completePayment(
 				window.ApplePaySession.STATUS_SUCCESS
 			);
+
+			// A rejected checkout form submit keeps the shopper on the page.
+			setSdkBusy( false );
+			if ( hasJQuery() ) {
+				jQuery( document.body ).one( 'checkout_error', () => {
+					setPaying( false );
+					spinner?.unblock();
+				} );
+			}
 		} catch ( error ) {
-			// Apple's sheet wording is the same whichever branch failed.
 			logEvent(
 				config,
 				'apple-pay-authorization-failed',
 				describeError( error )
 			);
 
-			// Apple still has the sheet up, so it can tell the shopper why.
-			appleSession.completePayment(
-				applePayFailure( error, window.ApplePaySession.STATUS_FAILURE )
-			);
+			// Apple cannot change the total after authorization, so a retry in
+			// this sheet would fail again. handleError() shows the message.
+			appleSession.abort();
 
-			paying = false;
+			setPaying( false );
 			spinner?.unblock();
 			refreshCartUi( context );
 			handleError( error );

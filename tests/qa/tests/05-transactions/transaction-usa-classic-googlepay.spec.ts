@@ -12,6 +12,11 @@ import {
 import { GooglePayPopup } from '../../utils/frontend/google-pay-popup';
 import { customers, negative12FeePlugin } from '../../resources';
 
+test.skip(
+	!! process.env.CI,
+	'Google Pay fails in CI because of Google account verification'
+);
+
 test.use( {
 	// Strip Basic Auth from the visitor context — when present it breaks
 	// Playwright's popup-event tracking for cross-origin window.open() calls.

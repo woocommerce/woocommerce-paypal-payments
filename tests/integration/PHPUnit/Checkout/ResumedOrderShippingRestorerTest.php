@@ -51,6 +51,11 @@ class ResumedOrderShippingRestorerTest extends IntegrationMockedTestCase
     private $flag_callback;
 
     /**
+     * @var callable|null
+     */
+    private $zone_criteria_filter;
+
+    /**
      * Baseline values of the global WooCommerce tax options, captured in setUp()
      * and restored verbatim in tearDown() so this class never leaks tax
      * configuration into tests that run after it in the same process.
@@ -119,6 +124,12 @@ class ResumedOrderShippingRestorerTest extends IntegrationMockedTestCase
             }
         }
         $this->created_order_ids = [];
+
+        if ($this->zone_criteria_filter) {
+            remove_filter('woocommerce_get_zone_criteria', $this->zone_criteria_filter);
+            $this->zone_criteria_filter = null;
+        }
+        WC_Cache_Helper::invalidate_cache_group('shipping_zones');
 
         foreach ($this->created_zones as $zone) {
             delete_option('woocommerce_flat_rate_' . $zone['instance_id'] . '_settings');
@@ -584,6 +595,15 @@ class ResumedOrderShippingRestorerTest extends IntegrationMockedTestCase
             'zone_id' => $zone->get_id(),
             'instance_id' => $instance_id,
         ];
+
+        // Zones that already exist in the database must not match before this test's zone.
+        $zone_id = $zone->get_id();
+        $this->zone_criteria_filter = static function (array $criteria) use ($zone_id): array {
+            $criteria[] = 'AND zones.zone_id = ' . (int) $zone_id;
+            return $criteria;
+        };
+        add_filter('woocommerce_get_zone_criteria', $this->zone_criteria_filter);
+        WC_Cache_Helper::invalidate_cache_group('shipping_zones');
 
         return [
             'zone_id' => $zone->get_id(),

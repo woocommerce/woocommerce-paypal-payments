@@ -11,6 +11,8 @@
 import { hide } from '@ppcp-button/Helper/Hiding';
 import { hostedFieldTextStyles } from './cardFieldStyles';
 
+const FIELD_CLASS = 'ppcp-sdk-v6-card-field';
+
 /**
  * Reads the input's rendered height, briefly undoing the hiding applied here.
  *
@@ -113,8 +115,8 @@ export function mountField(
 
 	const fieldElement = cardSession.createCardFieldsComponent( options );
 	fieldElement.classList.add(
-		'ppcp-sdk-v6-card-field',
-		`ppcp-sdk-v6-card-field--${ fieldType }`
+		FIELD_CLASS,
+		`${ FIELD_CLASS }--${ fieldType }`
 	);
 	fieldElement.style.width = '100%';
 
@@ -123,4 +125,22 @@ export function mountField(
 
 	hide( inputField, true );
 	inputField.hidden = true;
+}
+
+/**
+ * Lets mountField() mount the input again, for a new card session. The input
+ * stays invisible. Card data the buyer entered is lost, which is clearer than
+ * a declined payment later.
+ *
+ * @param {HTMLElement} inputField - The WC input the field replaced.
+ */
+export function unmountField( inputField ) {
+	if ( ! inputField ) {
+		return;
+	}
+
+	inputField.parentNode
+		?.querySelector( `:scope > .${ FIELD_CLASS }` )
+		?.remove();
+	inputField.hidden = false;
 }

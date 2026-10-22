@@ -3,6 +3,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection\Recaptcha;
 
+use Automattic\WooCommerce\StoreApi\Exceptions\RouteException;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Psr\Log\LoggerInterface;
@@ -11,6 +12,8 @@ use WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WC_Order;
+use WP_REST_Request;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -366,6 +369,92 @@ class RecaptchaTest extends TestCase {
 	}
 
 	/**
+	 * GIVEN reCAPTCHA is allowed on the current page
+	 * WHEN the script settings are localized
+	 * THEN they describe the page type and keys for the handler
+	 * AND they do not contain an 'isBlocks' flag.
+	 */
+	public function test_localized_settings_do_not_contain_is_blocks(): void {
+		when( 'is_product' )->justReturn( true );
+		when( 'is_cart' )->justReturn( false );
+		when( 'is_checkout' )->justReturn( false );
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+		$settings_status->shouldReceive( 'is_smart_button_enabled_for_location' )->andReturn( true );
+
+		when( 'apply_filters' )->returnArg( 2 );
+		when( 'wp_enqueue_script' )->justReturn( true );
+
+		$captured = null;
+		expect( 'wp_localize_script' )->once()->andReturnUsing(
+			function ( string $handle, string $name, array $data ) use ( &$captured ): void {
+				$captured = $data;
+			}
+		);
+
+		$this->make_testee( $settings_status )->enqueue_scripts();
+
+		$this->assertSame( 'v3-site-key', $captured['siteKeyV3'] );
+		$this->assertTrue( $captured['isSingleProduct'] );
+		$this->assertArrayNotHasKey( 'isBlocks', $captured );
+	}
+
+	/**
+	 * Stubs the page so reCAPTCHA is allowed to load, and reports the request state.
+	 */
+	private function stub_allowed_page_and_request( int $template_redirect_count, bool $is_ajax ): SettingsStatus {
+		when( 'is_product' )->justReturn( true );
+		when( 'is_cart' )->justReturn( false );
+		when( 'is_checkout' )->justReturn( false );
+		when( 'apply_filters' )->returnArg( 2 );
+		when( 'wp_script_is' )->justReturn( false );
+		when( 'did_action' )->justReturn( $template_redirect_count );
+		when( 'wp_doing_ajax' )->justReturn( $is_ajax );
+
+		$settings_status = Mockery::mock( SettingsStatus::class );
+		$settings_status->shouldReceive( 'is_smart_button_enabled_for_location' )->andReturn( true );
+
+		return $settings_status;
+	}
+
+	/**
+	 * GIVEN the Checkout Block renders outside a front-end page view
+	 * WHEN the block render is handled
+	 * THEN no reCAPTCHA script is enqueued.
+	 *
+	 * @dataProvider non_page_view_provider
+	 */
+	public function test_handle_block_render_skips_outside_front_end_page_view( int $template_redirect_count, bool $is_ajax ): void {
+		$settings_status = $this->stub_allowed_page_and_request( $template_redirect_count, $is_ajax );
+
+		expect( 'wp_enqueue_script' )->never();
+
+		$this->make_testee( $settings_status )->handle_block_render( array( 'blockName' => 'woocommerce/checkout' ) );
+	}
+
+	public function non_page_view_provider(): array {
+		return array(
+			'before template_redirect'      => array( 0, false ),
+			'during an AJAX request'        => array( 1, true ),
+			'AJAX request before redirect'  => array( 0, true ),
+		);
+	}
+
+	/**
+	 * GIVEN a front-end page view (template_redirect ran, not AJAX)
+	 * WHEN the Checkout Block renders
+	 * THEN the reCAPTCHA scripts are enqueued.
+	 */
+	public function test_handle_block_render_enqueues_scripts_during_front_end_page_view(): void {
+		$settings_status = $this->stub_allowed_page_and_request( 1, false );
+
+		expect( 'wp_enqueue_script' )->twice();
+		expect( 'wp_localize_script' )->once();
+
+		$this->make_testee( $settings_status )->handle_block_render( array( 'blockName' => 'woocommerce/checkout' ) );
+	}
+
+	/**
 	 * Stubs the API request/response plumbing so a v3 verify call is rejected
 	 * (score/success below threshold), independent of which logger receives
 	 * the resulting rejection log entry.
@@ -505,6 +594,206 @@ class RecaptchaTest extends TestCase {
 				'ppcp_recaptcha_token'   => 'test-token',
 				'ppcp_recaptcha_version' => 'v2',
 			)
+		);
+	}
+
+	private function make_order( string $payment_method ): WC_Order {
+		$order = Mockery::mock( WC_Order::class );
+		$order->shouldReceive( 'get_payment_method' )->andReturn( $payment_method );
+
+		return $order;
+	}
+
+	private function make_store_api_request( string $method, $extensions = array() ): WP_REST_Request {
+		$request = new WP_REST_Request( $method, '/wc/store/v1/checkout' );
+		$request->set_param( 'extensions', $extensions );
+
+		return $request;
+	}
+
+	private function stub_google_verification( bool $success ): void {
+		when( 'is_wp_error' )->justReturn( false );
+		expect( 'wp_remote_post' )->once()->andReturn( array() );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode( array( 'success' => $success, 'score' => $success ? 0.9 : 0.1 ) )
+		);
+		when( 'apply_filters' )->returnArg( 2 );
+		when( 'get_transient' )->justReturn( false );
+		when( 'set_transient' )->justReturn( true );
+
+		$this->stub_wc_session_and_cart();
+	}
+
+	private function capture_route_exception( callable $action ): ?RouteException {
+		try {
+			$action();
+		} catch ( RouteException $exception ) {
+			return $exception;
+		}
+
+		return null;
+	}
+
+	/**
+	 * GIVEN a Store API checkout paid with a reCAPTCHA-protected payment method
+	 * WHEN the request carries no valid token data in the expected shape
+	 * THEN the checkout is rejected with a missing-token error and HTTP status 400
+	 * AND no verification request is sent to Google.
+	 *
+	 * @dataProvider invalid_token_data_provider
+	 */
+	public function test_store_api_checkout_is_rejected_when_token_data_is_missing_or_malformed( $extensions ): void {
+		expect( 'wp_remote_post' )->never();
+
+		$testee = $this->make_testee( Mockery::mock( SettingsStatus::class ), array( CreditCardGateway::ID ) );
+
+		$exception = $this->capture_route_exception(
+			fn() => $testee->validate_store_api_checkout(
+				$this->make_order( CreditCardGateway::ID ),
+				$this->make_store_api_request( 'POST', $extensions )
+			)
+		);
+
+		$this->assertInstanceOf( RouteException::class, $exception );
+		$this->assertSame( 'ppcp_recaptcha_missing_token', $exception->getErrorCode() );
+		$this->assertSame( 400, $exception->getCode() );
+	}
+
+	public function invalid_token_data_provider(): array {
+		return array(
+			'no extensions'                => array( array() ),
+			'extensions is a string'       => array( 'ppcp_recaptcha' ),
+			'extensions without recaptcha' => array( array( 'other' => array( 'a' => 'b' ) ) ),
+			'recaptcha data is a string'   => array( array( 'ppcp_recaptcha' => 'token' ) ),
+			'token is missing'             => array( array( 'ppcp_recaptcha' => array( 'version' => 'v3' ) ) ),
+			'token is empty'               => array( array( 'ppcp_recaptcha' => array( 'token' => '', 'version' => 'v3' ) ) ),
+			'token is not a string'        => array( array( 'ppcp_recaptcha' => array( 'token' => array( 'x' ), 'version' => 'v3' ) ) ),
+			'version is missing'           => array( array( 'ppcp_recaptcha' => array( 'token' => 'abc' ) ) ),
+			'version is not a string'      => array( array( 'ppcp_recaptcha' => array( 'token' => 'abc', 'version' => 3 ) ) ),
+		);
+	}
+
+	/**
+	 * GIVEN a Store API checkout paid with a reCAPTCHA-protected payment method
+	 * WHEN the token fails verification
+	 * THEN the checkout is rejected with a verification-failed error and HTTP status 403.
+	 */
+	public function test_store_api_checkout_is_rejected_when_token_fails_verification(): void {
+		$this->stub_google_verification( false );
+
+		$testee = $this->make_testee( Mockery::mock( SettingsStatus::class ), array( CreditCardGateway::ID ) );
+
+		$exception = $this->capture_route_exception(
+			fn() => $testee->validate_store_api_checkout(
+				$this->make_order( CreditCardGateway::ID ),
+				$this->make_store_api_request(
+					'POST',
+					array( 'ppcp_recaptcha' => array( 'token' => 'bad-token', 'version' => 'v3' ) )
+				)
+			)
+		);
+
+		$this->assertInstanceOf( RouteException::class, $exception );
+		$this->assertSame( 'ppcp_recaptcha_verification_failed', $exception->getErrorCode() );
+		$this->assertSame( 403, $exception->getCode() );
+	}
+
+	/**
+	 * GIVEN a Store API checkout paid with a reCAPTCHA-protected payment method
+	 * WHEN the token passes verification
+	 * THEN the checkout is accepted without an error.
+	 */
+	public function test_store_api_checkout_is_accepted_when_token_is_valid(): void {
+		$this->stub_google_verification( true );
+
+		$testee = $this->make_testee( Mockery::mock( SettingsStatus::class ), array( CreditCardGateway::ID ) );
+
+		$exception = $this->capture_route_exception(
+			fn() => $testee->validate_store_api_checkout(
+				$this->make_order( CreditCardGateway::ID ),
+				$this->make_store_api_request(
+					'POST',
+					array( 'ppcp_recaptcha' => array( 'token' => 'good-token', 'version' => 'v3' ) )
+				)
+			)
+		);
+
+		$this->assertNull( $exception );
+	}
+
+	/**
+	 * GIVEN a Store API checkout paid with a payment method that reCAPTCHA does not protect
+	 * WHEN the request carries no token
+	 * THEN the checkout is accepted without an error
+	 * AND no verification request is sent to Google.
+	 */
+	public function test_store_api_checkout_is_accepted_without_token_for_unprotected_payment_method(): void {
+		expect( 'wp_remote_post' )->never();
+
+		$testee = $this->make_testee( Mockery::mock( SettingsStatus::class ), array( CreditCardGateway::ID ) );
+
+		$exception = $this->capture_route_exception(
+			fn() => $testee->validate_store_api_checkout(
+				$this->make_order( 'bacs' ),
+				$this->make_store_api_request( 'POST' )
+			)
+		);
+
+		$this->assertNull( $exception );
+	}
+
+	/**
+	 * GIVEN a Store API request that does not place an order (PATCH)
+	 * WHEN the payment method is protected and the request carries no token
+	 * THEN the request is accepted without an error.
+	 */
+	public function test_store_api_request_is_accepted_without_token_when_not_a_post(): void {
+		expect( 'wp_remote_post' )->never();
+
+		$testee = $this->make_testee( Mockery::mock( SettingsStatus::class ), array( CreditCardGateway::ID ) );
+
+		$exception = $this->capture_route_exception(
+			fn() => $testee->validate_store_api_checkout(
+				$this->make_order( CreditCardGateway::ID ),
+				$this->make_store_api_request( 'PATCH' )
+			)
+		);
+
+		$this->assertNull( $exception );
+	}
+
+	/**
+	 * GIVEN reCAPTCHA is not fully configured (a key is missing)
+	 * WHEN a Store API checkout with a protected payment method has no token
+	 * THEN the checkout is accepted without an error.
+	 *
+	 * @dataProvider incomplete_configuration_provider
+	 */
+	public function test_store_api_checkout_is_accepted_when_recaptcha_is_not_fully_configured( array $option_overrides ): void {
+		expect( 'wp_remote_post' )->never();
+
+		$testee = $this->make_testee(
+			Mockery::mock( SettingsStatus::class ),
+			array( CreditCardGateway::ID ),
+			$option_overrides
+		);
+
+		$exception = $this->capture_route_exception(
+			fn() => $testee->validate_store_api_checkout(
+				$this->make_order( CreditCardGateway::ID ),
+				$this->make_store_api_request( 'POST' )
+			)
+		);
+
+		$this->assertNull( $exception );
+	}
+
+	public function incomplete_configuration_provider(): array {
+		return array(
+			'v3 secret key missing' => array( array( 'secret_key_v3' => '' ) ),
+			'v3 site key missing'   => array( array( 'site_key_v3' => '' ) ),
+			'v2 secret key missing' => array( array( 'secret_key_v2' => '' ) ),
+			'v2 site key missing'   => array( array( 'site_key_v2' => '' ) ),
 		);
 	}
 }

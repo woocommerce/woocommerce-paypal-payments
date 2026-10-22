@@ -6,15 +6,9 @@ import { useScriptParams } from '@ppcp-paylater-block/hooks/script-params';
 import { usePreviewTimeout } from '@ppcp-paylater-block/hooks/use-preview-timeout';
 import { usePreviewController } from '@ppcp-paylater-block/hooks/use-preview-controller';
 import { PreviewPlaceholder } from '@ppcp-paylater-block/components/preview-placeholder';
+import { V6ButtonPreview } from '../MiniCartSmartButtonsBlock/v6-button-preview';
 
 export default function Edit() {
-	const [ loaded, setLoaded ] = useState( false );
-	const timedOut = usePreviewTimeout( loaded );
-	const { containerRef, renderKey } = usePreviewController(
-		loaded,
-		setLoaded
-	);
-
 	const classes = [ 'ppcp-paylater-block-preview', 'ppcp-overlay-parent' ];
 	if ( ! PcpProductSmartButtonsBlock.placementEnabled ) {
 		classes.push( 'ppcp-paylater-unavailable', 'block-editor-warning' );
@@ -51,14 +45,48 @@ export default function Edit() {
 		);
 	}
 
+	const { sdkV6, buttonStyle } = PcpProductSmartButtonsBlock;
+	const useSdkV6 = Boolean(
+		PcpProductSmartButtonsBlock.isSdkV6Active && sdkV6 && buttonStyle
+	);
+
+	return (
+		<div { ...props }>
+			{ useSdkV6 ? (
+				<V6ButtonPreview
+					sdkV6={ sdkV6 }
+					pageType="product-details"
+					style={ buttonStyle }
+				/>
+			) : (
+				<V5ButtonPreview />
+			) }
+		</div>
+	);
+}
+
+/**
+ * The v5 SDK preview, used while the v6 module is not loaded.
+ *
+ * @return {Object} The preview.
+ */
+function V5ButtonPreview() {
+	const [ loaded, setLoaded ] = useState( false );
+	const timedOut = usePreviewTimeout( loaded );
+	const { containerRef, renderKey } = usePreviewController(
+		loaded,
+		setLoaded
+	);
 	const scriptParams = useScriptParams(
 		PcpProductSmartButtonsBlock.ajax.cart_script_params
 	);
-	if ( scriptParams === null ) {
+
+	if ( ! scriptParams ) {
+		// `false` means the params request failed, so there is nothing to wait for.
 		return (
-			<div { ...props }>
-				<PreviewPlaceholder timedOut={ timedOut } />
-			</div>
+			<PreviewPlaceholder
+				timedOut={ timedOut || scriptParams === false }
+			/>
 		);
 	}
 
@@ -69,7 +97,7 @@ export default function Edit() {
 	};
 
 	return (
-		<div { ...props }>
+		<>
 			<div className="ppcp-overlay-child" ref={ containerRef }>
 				<PayPalScriptProvider key={ renderKey } options={ urlParams }>
 					<PayPalButtons
@@ -85,6 +113,6 @@ export default function Edit() {
 				{ /* make the buttons not clickable in the editor */ }
 				{ ! loaded && <PreviewPlaceholder timedOut={ timedOut } /> }
 			</div>
-		</div>
+		</>
 	);
 }

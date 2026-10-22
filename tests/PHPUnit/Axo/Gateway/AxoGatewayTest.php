@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -22,10 +23,64 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\when;
 
 class AxoGatewayTestable extends AxoGateway
 {
+	/**
+	 * Option values that override the WC_Payment_Gateway stub's `get_option()`,
+	 * keyed by option name. Must be set before the parent constructor runs,
+	 * since title/description resolution happens there.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private array $option_overrides;
+
+	public function __construct(
+		CardPaymentsConfiguration $dcc_configuration,
+		SessionHandler $session_handler,
+		OrderProcessor $order_processor,
+		array $card_icons,
+		OrderEndpoint $order_endpoint,
+		PurchaseUnitFactory $purchase_unit_factory,
+		ShippingPreferenceFactory $shipping_preference_factory,
+		TransactionUrlProvider $transaction_url_provider,
+		Environment $environment,
+		LoggerInterface $logger,
+		ExperienceContextBuilder $experience_context_builder,
+		SettingsModel $settings_model,
+		?ReturnUrlSecret $return_url_secret = null,
+		array $option_overrides = []
+	) {
+		$this->option_overrides = $option_overrides;
+
+		parent::__construct(
+			$dcc_configuration,
+			$session_handler,
+			$order_processor,
+			$card_icons,
+			$order_endpoint,
+			$purchase_unit_factory,
+			$shipping_preference_factory,
+			$transaction_url_provider,
+			$environment,
+			$logger,
+			$experience_context_builder,
+			$settings_model,
+			$return_url_secret
+		);
+	}
+
+	public function get_option( string $key, $empty_value = null )
+	{
+		if ( array_key_exists( $key, $this->option_overrides ) ) {
+			return $this->option_overrides[ $key ];
+		}
+
+		return parent::get_option( $key, $empty_value );
+	}
+
 	public function update_option( $key, $value = '' ): bool
 	{
 		return true;
@@ -80,6 +135,115 @@ class AxoGatewayTest extends TestCase
 			Mockery::mock( ExperienceContextBuilder::class ),
 			Mockery::mock( SettingsModel::class )
 		);
+	}
+
+	/**
+	 * Builds a gateway instance with a given set of `get_option()` overrides,
+	 * so each test can control what the merchant "saved" for a setting (e.g.
+	 * the Fastlane title) without touching the other constructor collaborators.
+	 *
+	 * @param array<string, mixed>           $option_overrides  Option values, keyed by option name.
+	 * @param CardPaymentsConfiguration|null $dcc_configuration Defaults to the shared setUp() stub.
+	 */
+	private function create_gateway(
+		array $option_overrides = [],
+		?CardPaymentsConfiguration $dcc_configuration = null
+	): AxoGatewayTestable {
+		return new AxoGatewayTestable(
+			$dcc_configuration ?? $this->dcc_configuration,
+			Mockery::mock( SessionHandler::class ),
+			$this->order_processor,
+			[],
+			$this->order_endpoint,
+			Mockery::mock( PurchaseUnitFactory::class ),
+			Mockery::mock( ShippingPreferenceFactory::class ),
+			Mockery::mock( TransactionUrlProvider::class ),
+			Mockery::mock( Environment::class ),
+			$this->logger,
+			Mockery::mock( ExperienceContextBuilder::class ),
+			Mockery::mock( SettingsModel::class ),
+			null,
+			$option_overrides
+		);
+	}
+
+	/**
+	 * GIVEN a merchant who saved a Fastlane title ("Pay with Fastlane")
+	 * AND the card (ACDC) gateway resolves to a different title ("Cards")
+	 * WHEN the Fastlane gateway is constructed
+	 * THEN the gateway's title is the merchant's saved Fastlane title, not the card gateway's
+	 *
+	 * This guards against regressing to passing Fastlane's title as a *fallback*
+	 * into the card gateway's title helper, which made the card title win whenever
+	 * one was configured — the common case.
+	 */
+	public function test_uses_configured_fastlane_title_even_when_card_gateway_title_differs(): void
+	{
+		$dcc_configuration = Mockery::mock( CardPaymentsConfiguration::class );
+		$dcc_configuration->shouldReceive( 'use_fastlane' )->andReturn( false );
+		$dcc_configuration->shouldReceive( 'gateway_title' )->andReturn( 'Cards' );
+
+		$gateway = $this->create_gateway( [ 'title' => 'Pay with Fastlane' ], $dcc_configuration );
+
+		$this->assertSame( 'Pay with Fastlane', $gateway->title );
+	}
+
+	/**
+	 * GIVEN a merchant who never saved a Fastlane title (empty string)
+	 * AND the card (ACDC) gateway resolves to "Cards"
+	 * WHEN the Fastlane gateway is constructed
+	 * THEN the gateway inherits the card gateway's title
+	 */
+	public function test_inherits_card_gateway_title_when_no_fastlane_title_configured(): void
+	{
+		$dcc_configuration = Mockery::mock( CardPaymentsConfiguration::class );
+		$dcc_configuration->shouldReceive( 'use_fastlane' )->andReturn( false );
+		$dcc_configuration->shouldReceive( 'gateway_title' )->andReturn( 'Cards' );
+
+		$gateway = $this->create_gateway( [ 'title' => '' ], $dcc_configuration );
+
+		$this->assertSame( 'Cards', $gateway->title );
+	}
+
+	/**
+	 * GIVEN a merchant who never saved a Fastlane title
+	 * AND the card (ACDC) gateway has no title of its own either, so it returns whatever
+	 *     fallback it is given
+	 * WHEN the Fastlane gateway is constructed
+	 * THEN the gateway's title falls back to its own method title
+	 */
+	public function test_falls_back_to_method_title_when_neither_fastlane_nor_card_title_configured(): void
+	{
+		$dcc_configuration = Mockery::mock( CardPaymentsConfiguration::class );
+		$dcc_configuration->shouldReceive( 'use_fastlane' )->andReturn( false );
+		$dcc_configuration->shouldReceive( 'gateway_title' )
+			->andReturnUsing( static fn ( string $fallback ): string => $fallback );
+
+		$gateway = $this->create_gateway( [ 'title' => '' ], $dcc_configuration );
+
+		$this->assertSame( 'Fastlane Debit & Credit Cards', $gateway->title );
+	}
+
+	/**
+	 * GIVEN a merchant who saved a Fastlane title
+	 * AND a callback attached to the `woocommerce_paypal_payments_axo_gateway_title` filter
+	 * WHEN the Fastlane gateway is constructed
+	 * THEN the filter's return value is used as the gateway's title, overriding the resolved one
+	 */
+	public function test_filter_can_override_resolved_title(): void
+	{
+		$dcc_configuration = Mockery::mock( CardPaymentsConfiguration::class );
+		$dcc_configuration->shouldReceive( 'use_fastlane' )->andReturn( false );
+		$dcc_configuration->shouldReceive( 'gateway_title' )->andReturn( 'Cards' );
+
+		expectApplied( 'woocommerce_paypal_payments_axo_gateway_title' )
+			->once()
+			->with( 'Pay with Fastlane', Mockery::type( AxoGateway::class ) )
+			->andReturn( 'Overridden Fastlane Title' );
+
+		$gateway = $this->create_gateway( [ 'title' => 'Pay with Fastlane' ], $dcc_configuration );
+
+		$this->assertSame( 'Overridden Fastlane Title', $gateway->title );
 	}
 
 	/**
@@ -282,5 +446,139 @@ class AxoGatewayTest extends TestCase
 
 		// Then — Mockery verifies logger->error() call in tearDown(); count it as an assertion
 		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * Builds an AxoGatewayTestable whose collaborators are all configurable per
+	 * test, so the 3DS redirect built inside process_payment()
+	 * can be inspected without disturbing the shared setUp() wiring.
+	 *
+	 *
+	 * @param \WooCommerce\PayPalCommerce\ApiClient\Entity\Order $paypal_order   Order returned by OrderEndpoint::create().
+	 * @param \Mockery\MockInterface                              $purchase_unit_factory
+	 * @param \Mockery\MockInterface                              $shipping_preference_factory
+	 * @param \Mockery\MockInterface                              $settings_model
+	 * @param \Mockery\MockInterface                              $experience_context_builder
+	 * @param \Mockery\MockInterface                              $return_url_secret
+	 */
+	private function create_gateway_for_process_payment(
+		\WooCommerce\PayPalCommerce\ApiClient\Entity\Order $paypal_order,
+		$purchase_unit_factory,
+		$shipping_preference_factory,
+		$settings_model,
+		$experience_context_builder,
+		$return_url_secret
+	): AxoGatewayTestable {
+		$order_endpoint = Mockery::mock( OrderEndpoint::class );
+		$order_endpoint->allows( 'create' )->andReturn( $paypal_order );
+
+		return new AxoGatewayTestable(
+			$this->dcc_configuration,
+			Mockery::mock( SessionHandler::class ),
+			$this->order_processor,
+			[],
+			$order_endpoint,
+			$purchase_unit_factory,
+			$shipping_preference_factory,
+			Mockery::mock( TransactionUrlProvider::class ),
+			Mockery::mock( Environment::class ),
+			$this->logger,
+			$experience_context_builder,
+			$settings_model,
+			$return_url_secret
+		);
+	}
+
+	/**
+	 * GIVEN a card payment that requires a 3D Secure challenge
+	 * AND a ReturnUrlSecret that reuses the secret already bound to the newly created
+	 *     PayPal order id (secret_for())
+	 * WHEN process_payment() builds the 3DS redirect URL (AxoGateway.php:267-271)
+	 * THEN the redirect's embedded return URL carries the PayPal order id as "token"
+	 * AND it carries a "ppcp_return_nonce" argument equal to the value ReturnUrlSecret
+	 *     returned for that same PayPal order id
+	 *
+	 * @scenario Closes the token-replay gap: without a bound nonce, a leaked PayPal
+	 *           order id alone is enough to trigger a capture on someone else's
+	 *           order via the return URL (bug:wc-gateway:return-url-token-replay).
+	 * @covers \WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway::process_payment
+	 */
+	public function test_process_payment_redirect_url_carries_nonce_bound_to_paypal_order_when_3ds_required(): void
+	{
+		// Arrange
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 77 );
+
+		$payer_action_link = (object) [
+			'rel'  => 'payer-action',
+			'href' => 'https://paypal.example/payer-action',
+		];
+
+		$paypal_order = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Entity\Order::class );
+		$paypal_order->shouldReceive( 'id' )->andReturn( 'PAYPAL-ORDER-XYZ' );
+		$paypal_order->shouldReceive( 'links' )->andReturn( [ $payer_action_link ] );
+
+		$purchase_unit = Mockery::mock( PurchaseUnit::class );
+		$purchase_unit_factory = Mockery::mock( PurchaseUnitFactory::class );
+		$purchase_unit_factory->allows( 'from_wc_order' )->andReturn( $purchase_unit );
+
+		$shipping_preference_factory = Mockery::mock( ShippingPreferenceFactory::class );
+		$shipping_preference_factory->allows( 'from_state' )->andReturn( 'preference' );
+
+		$settings_model = Mockery::mock( SettingsModel::class );
+		$settings_model->allows( 'get_three_d_secure_enum' )->andReturn( '' );
+
+		$experience_context = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext::class );
+		$experience_context->allows( 'to_array' )->andReturn( [] );
+
+		$experience_context_builder = Mockery::mock( ExperienceContextBuilder::class );
+		$experience_context_builder->allows( 'with_endpoint_return_urls' )->andReturnSelf();
+		$experience_context_builder->allows( 'with_current_brand_name' )->andReturnSelf();
+		$experience_context_builder->allows( 'with_current_locale' )->andReturnSelf();
+		$experience_context_builder->allows( 'build' )->andReturn( $experience_context );
+
+		$return_url_secret = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret::class );
+		$return_url_secret->allows( 'secret_for' )->with( 'PAYPAL-ORDER-XYZ' )->andReturn( 'bound-nonce-value' );
+
+		when( 'wc_get_order' )->justReturn( $wc_order );
+		when( 'wc_clean' )->alias( static fn( $value ) => $value );
+		when( 'wp_unslash' )->alias( static fn( $value ) => $value );
+		when( 'home_url' )->alias( static fn( string $path = '' ): string => 'https://example.com' . $path );
+		when( 'add_query_arg' )->alias( static function ( $key, $value, $url ): string {
+			// The production code already rawurlencode()s the redirect_uri value before
+			// calling add_query_arg(); this stub concatenates as-is, as WordPress does.
+			$separator = strpos( $url, '?' ) === false ? '?' : '&';
+			return $url . $separator . $key . '=' . $value;
+		} );
+
+		$_POST['axo_nonce'] = 'card-single-use-token';
+		unset( $_GET['token'] );
+
+		$sut = $this->create_gateway_for_process_payment(
+			$paypal_order,
+			$purchase_unit_factory,
+			$shipping_preference_factory,
+			$settings_model,
+			$experience_context_builder,
+			$return_url_secret
+		);
+
+		// When
+		$result = $sut->process_payment( 77 );
+
+		unset( $_POST['axo_nonce'] );
+
+		// Then
+		$this->assertSame( 'success', $result['result'] );
+
+		$redirect_query = [];
+		parse_str( (string) parse_url( $result['redirect'], PHP_URL_QUERY ), $redirect_query );
+
+		$inner_return_url = $redirect_query['redirect_uri'] ?? '';
+		$inner_query = [];
+		parse_str( (string) parse_url( $inner_return_url, PHP_URL_QUERY ), $inner_query );
+
+		$this->assertSame( 'PAYPAL-ORDER-XYZ', $inner_query['token'] ?? null );
+		$this->assertSame( 'bound-nonce-value', $inner_query['ppcp_return_nonce'] ?? null );
 	}
 }

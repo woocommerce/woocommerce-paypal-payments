@@ -111,6 +111,8 @@ export class PayPalUi {
 		} );
 	payPalVaultComponent = () =>
 		this.page.locator( '#ppcp-vault-component' );
+	// "You are currently paying with ..." notice on the review (Pay Now off) page
+	payPalCancelNotice = () => this.page.locator( '#ppcp-cancel' );
 
 	/** v5 (legacy): the Message component's zoid iframe. */
 	payLaterMessageIframeV5 = () =>
@@ -408,14 +410,22 @@ export class PayPalUi {
 	 * @param data.merchant
 	 * @param data.customer
 	 * @param data.isPayPalSubscription
+	 * @param data.isPayNowEnabled      false: buyer returns to checkout to review and place the order
 	 */
 	makePayment = async ( data: {
 		payment: Pcp.Payment;
 		merchant?: Pcp.Merchant;
 		customer?: ShopOrder[ 'customer' ];
 		isPayPalSubscription?: boolean;
+		isPayNowEnabled?: boolean;
 	} ) => {
-		const { payment, merchant, customer, isPayPalSubscription } = data;
+		const {
+			payment,
+			merchant,
+			customer,
+			isPayPalSubscription,
+			isPayNowEnabled = true,
+		} = data;
 		const { gateway, payPalAccount } = payment;
 		const { shortcut } = gateway;
 		let popup: PayPalPopup;
@@ -434,6 +444,10 @@ export class PayPalUi {
 				// pay with given PayPal account
 				await popup.completePayPalPayment( payPalAccount );
 				// PayPal popap occasionally shows "Try again" error need to assert the hang
+				if ( ! isPayNowEnabled ) {
+					await this.assertReturnedToReview( gateway.title );
+					break;
+				}
 				await expect(
 					this.page,
 					'Assert redirected to order received page after PayPal payment'
@@ -444,6 +458,9 @@ export class PayPalUi {
 				// open expected PayPal popup
 				popup = await this.openPayLaterPopup();
 				await popup.completePayLaterPayment( payPalAccount );
+				if ( ! isPayNowEnabled ) {
+					await this.assertReturnedToReview( gateway.title );
+				}
 				break;
 
 			case 'venmo':
@@ -812,6 +829,20 @@ export class PayPalUi {
 	};
 
 	// Assertions
+
+	/**
+	 * Asserts the buyer is back on checkout to review the order (Pay Now off)
+	 *
+	 * @param gatewayTitle Funding source name shown in the notice
+	 */
+	assertReturnedToReview = async ( gatewayTitle: string ) => {
+		await expect(
+			this.payPalCancelNotice(),
+			`Assert "You are currently paying with ${ gatewayTitle }." notice is visible`
+		).toContainText( `You are currently paying with ${ gatewayTitle }.`, {
+			timeout: 30_000,
+		} );
+	};
 
 	/**
 	 * Asserts the saved payment method is visible

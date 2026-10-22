@@ -80,7 +80,7 @@ class CreateOrderEndpointContractTest extends WcAjaxEndpointTestCase {
 	 *     allow webhook completion binding)
 	 * AND no PayPal order is stored in the plugin session
 	 *
-	 * The product context additionally requires purchase_units[0].items[0].url
+	 * The product context additionally sends purchase_units[0].items[0].url
 	 * in the request body (the product page URL, consumed by ReturnUrlFactory
 	 * as the PayPal return URL).
 	 *
@@ -124,6 +124,40 @@ class CreateOrderEndpointContractTest extends WcAjaxEndpointTestCase {
 
 		$session_handler = $this->getContainer()->get( 'session.handler' );
 		$this->assertNull( $session_handler->order(), ucfirst( $context ) . ' context must not store a session order' );
+	}
+
+	/**
+	 * GIVEN a populated WC cart (virtual product, price 10, quantity 2)
+	 * WHEN ppc-create-order is called in the product context with purchase units
+	 *      that carry no items, as ppc-change-cart returns them once the sanitizer
+	 *      ditched the items (e.g. a negative cart fee)
+	 * THEN the PayPal order is still created
+	 */
+	public function test_product_context_without_purchase_unit_items_creates_order(): void {
+		$this->addVirtualProductToCart( 10.0, 2 );
+		$endpoint = $this->endpointWithMockedCreate();
+
+		$response = $this->dispatchAjaxRequest(
+			$endpoint,
+			array(
+				'context'        => 'product',
+				'payment_method' => 'ppcp-gateway',
+				'funding_source' => 'paypal',
+				'purchase_units' => array(
+					array(
+						'reference_id' => 'default',
+						'amount'       => array(
+							'currency_code' => 'USD',
+							'value'         => '20.00',
+						),
+					),
+				),
+			)
+		);
+
+		$this->assertTrue( $response['success'], 'ppc-create-order must succeed: ' . $response['raw'] );
+		$this->assertSame( self::PAYPAL_ORDER_ID, $response['data']['id'] ?? null );
+		$this->assertNotNull( $this->captured_create, 'The PayPal create order API must be called' );
 	}
 
 	/**

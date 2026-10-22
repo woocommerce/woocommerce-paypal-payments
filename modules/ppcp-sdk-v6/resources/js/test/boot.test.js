@@ -10,14 +10,26 @@ jest.mock( '../utils/errorHandler', () => ( {
 	setErrorLabels: ( ...args ) => mockSetErrorLabels( ...args ),
 } ) );
 
-const mockSetVisible = jest.fn();
-jest.mock( '@ppcp-button/Helper/Hiding', () => ( {
-	setVisible: ( ...args ) => mockSetVisible( ...args ),
+const mockPlaceExpressButtons = jest.fn();
+const mockSetExpressButtonsFailed = jest.fn();
+jest.mock( '../methods/gatewayPlacement', () => ( {
+	placeExpressButtons: ( ...args ) => mockPlaceExpressButtons( ...args ),
+	setExpressButtonsFailed: ( ...args ) =>
+		mockSetExpressButtonsFailed( ...args ),
 } ) );
 
 const mockLoadSdkV6 = jest.fn();
+const mockOnSdkInstanceChange = jest.fn();
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+jest.mock( '../tokenRefresh', () => ( {
+	onSdkInstanceChange: ( ...args ) => mockOnSdkInstanceChange( ...args ),
+} ) );
+
+const mockInitCardButton = jest.fn();
+jest.mock( '../cardButton/renderCardButton', () => ( {
+	initCardButton: ( ...args ) => mockInitCardButton( ...args ),
 } ) );
 
 const mockCheckEligibility = jest.fn();
@@ -31,6 +43,13 @@ jest.mock( '../sessions/createSession', () => ( {
 	SUPPORTED_METHODS: [ 'paypal', 'venmo', 'paylater' ],
 } ) );
 
+const mockCreateFreeTrialPayPalSession = jest.fn();
+jest.mock( '../sessions/freeTrialSave', () => ( {
+	createFreeTrialPayPalSession: ( ...args ) =>
+		mockCreateFreeTrialPayPalSession( ...args ),
+	createVaultSetupToken: jest.fn(),
+} ) );
+
 const mockRenderButtons = jest.fn();
 jest.mock( '../components/buttonRenderer', () => ( {
 	renderButtons: ( ...args ) => mockRenderButtons( ...args ),
@@ -42,9 +61,11 @@ jest.mock( '../methods/renderMethods', () => ( {
 } ) );
 
 const mockIsWalletEnabled = jest.fn();
+const mockMethodConfig = jest.fn();
 jest.mock( '../methods/methodRegistry', () => ( {
 	isMethodEnabled: ( ...args ) => mockIsWalletEnabled( ...args ),
-	MERCHANT_PRESENTED_METHODS: [],
+	methodConfig: ( ...args ) => mockMethodConfig( ...args ),
+	MERCHANT_PRESENTED_METHODS: [ 'googlepay' ],
 } ) );
 
 const mockCreateOrder = jest.fn();
@@ -71,6 +92,12 @@ jest.mock( '../messages/renderer', () => ( {
 const mockWatchViewedTotal = jest.fn();
 jest.mock( '../utils/viewedTotal', () => ( {
 	watchViewedTotal: ( ...args ) => mockWatchViewedTotal( ...args ),
+} ) );
+
+const mockOnBlockCartTotalChange = jest.fn();
+jest.mock( '../utils/blockCartTotal', () => ( {
+	onBlockCartTotalChange: ( ...args ) =>
+		mockOnBlockCartTotalChange( ...args ),
 } ) );
 
 const mockInitProductButtonGate = jest.fn();
@@ -153,14 +180,23 @@ function boot( config ) {
  */
 const flush = () => jest.advanceTimersByTimeAsync( 0 );
 
+let instanceChangeCallback;
+
 beforeEach( () => {
 	jest.useFakeTimers();
 	jest.clearAllMocks();
+	mockRenderButtons.mockReset();
 
 	mockHasJQuery.mockReturnValue( true );
 	global.jQuery = createFakeJQuery();
 
 	mockLoadSdkV6.mockResolvedValue( {} );
+	mockOnSdkInstanceChange.mockImplementation( ( callback ) => {
+		instanceChangeCallback = callback;
+		return () => {};
+	} );
+	mockInitCardButton.mockResolvedValue();
+	mockMethodConfig.mockReturnValue( undefined );
 	mockCheckEligibility.mockResolvedValue( {
 		paypal: true,
 		venmo: false,
@@ -347,6 +383,82 @@ describe( 'boot', () => {
 		);
 	} );
 
+	describe( 'free-trial cart targets', () => {
+		const savePaypalSession = { name: 'save-session' };
+		const renderedWrapperIds = () =>
+			mockRenderButtons.mock.calls.map(
+				( [ options ] ) => options.wrapper.id
+			);
+
+		beforeEach( () => {
+			mockCreateFreeTrialPayPalSession.mockReturnValue(
+				savePaypalSession
+			);
+		} );
+
+		test( 'renders the PayPal save session into the checkout wrapper', async () => {
+			buildDom();
+			boot( baseConfig( { cart_needs_vaulting: true, amount: '0.00' } ) );
+			await flush();
+
+			const checkoutCall = mockRenderButtons.mock.calls.find(
+				( [ options ] ) =>
+					options.wrapper.id === WRAPPER_SELECTOR.slice( 1 )
+			);
+			expect( checkoutCall[ 0 ].sessions ).toEqual( {
+				paypal: savePaypalSession,
+			} );
+		} );
+
+		test( 'leaves the mini-cart wrapper empty and creates no session for it', async () => {
+			buildDom();
+			boot( baseConfig( { cart_needs_vaulting: true, amount: '0.00' } ) );
+			await flush();
+
+			expect( renderedWrapperIds() ).not.toContain(
+				MINI_CART_WRAPPER_SELECTOR.slice( 1 )
+			);
+			expect(
+				document.querySelector( MINI_CART_WRAPPER_SELECTOR )
+					.childElementCount
+			).toBe( 0 );
+			expect( mockCreateSession ).not.toHaveBeenCalled();
+		} );
+
+		test( 'renders the mini-cart wrapper on a cart that is not a free trial', async () => {
+			buildDom();
+			boot(
+				baseConfig( { cart_needs_vaulting: false, amount: '0.00' } )
+			);
+			await flush();
+
+			expect( renderedWrapperIds() ).toContain(
+				MINI_CART_WRAPPER_SELECTOR.slice( 1 )
+			);
+		} );
+	} );
+
+	test( 'empties the mini-cart wrapper when a block cart change drops the total to zero', async () => {
+		let onCartChange;
+		mockOnBlockCartTotalChange.mockImplementation( ( callback ) => {
+			onCartChange = callback;
+		} );
+		mockRenderButtons.mockImplementation( ( { wrapper } ) => {
+			wrapper.appendChild( document.createElement( 'paypal-button' ) );
+		} );
+		mockFetchCartTotal.mockResolvedValue( '0.00' );
+		buildDom();
+		boot( baseConfig() );
+		await flush();
+		const miniCart = document.querySelector( MINI_CART_WRAPPER_SELECTOR );
+		expect( miniCart.childElementCount ).toBe( 1 );
+
+		onCartChange();
+		await jest.advanceTimersByTimeAsync( 300 );
+
+		expect( miniCart.childElementCount ).toBe( 0 );
+	} );
+
 	describe( 'DOM-replacing update events', () => {
 		test.each( [
 			[ 'updated_checkout' ],
@@ -362,6 +474,215 @@ describe( 'boot', () => {
 			await flush();
 
 			expect( mockRenderMessages ).toHaveBeenCalled();
+		} );
+	} );
+
+	describe( 'after the SDK instance changed', () => {
+		const oldSdk = { name: 'old' };
+		const newSdk = { name: 'new' };
+		const GATEWAY_WRAPPER_SELECTOR = '#ppcp-googlepay-gateway';
+		const CARD_WRAPPER_SELECTOR = '#ppcp-card-button';
+
+		// Every wrapper holds a button of the old instance, and a render pass
+		// skips a wrapper that is not empty.
+		function buildDomWithButtons() {
+			document.body.innerHTML = [
+				WRAPPER_SELECTOR,
+				MINI_CART_WRAPPER_SELECTOR,
+				GATEWAY_WRAPPER_SELECTOR,
+				CARD_WRAPPER_SELECTOR,
+			]
+				.map(
+					( selector ) =>
+						`<div id="${ selector.slice(
+							1
+						) }"><button></button></div>`
+				)
+				.join( '' );
+		}
+
+		async function bootAndChangeInstance( overrides = {} ) {
+			let currentSdk = oldSdk;
+			mockLoadSdkV6.mockImplementation( async () => currentSdk );
+			mockCreateSession.mockImplementation( ( sdk ) => ( { sdk } ) );
+			mockMethodConfig.mockReturnValue( {
+				gateway: { wrapper: GATEWAY_WRAPPER_SELECTOR },
+			} );
+
+			buildDomWithButtons();
+			boot(
+				baseConfig( {
+					card_button: { row: true, wrapper: CARD_WRAPPER_SELECTOR },
+					...overrides,
+				} )
+			);
+			await flush();
+			mockRenderButtons.mockClear();
+			mockInitCardButton.mockClear();
+
+			currentSdk = newSdk;
+			instanceChangeCallback( newSdk );
+			await flush();
+		}
+
+		test( 'draws the page and mini-cart buttons again with sessions from the new instance', async () => {
+			await bootAndChangeInstance();
+
+			const wrapperIds = mockRenderButtons.mock.calls.map(
+				( [ options ] ) => options.wrapper.id
+			);
+			expect( wrapperIds.sort() ).toEqual(
+				[
+					WRAPPER_SELECTOR.slice( 1 ),
+					MINI_CART_WRAPPER_SELECTOR.slice( 1 ),
+				].sort()
+			);
+			mockRenderButtons.mock.calls.forEach( ( [ options ] ) => {
+				expect( options.sessions ).toEqual( { paypal: { sdk: newSdk } } );
+			} );
+		} );
+
+		test( 'clears the wallet gateway row so the wallet renders again', async () => {
+			await bootAndChangeInstance();
+
+			expect(
+				document.querySelector( GATEWAY_WRAPPER_SELECTOR ).childElementCount
+			).toBe( 0 );
+			expect( mockRenderWallets ).toHaveBeenCalledWith(
+				expect.objectContaining( { sessions: { paypal: { sdk: newSdk } } } )
+			);
+		} );
+
+		test( 'clears the card button wrapper and renders it again with sessions from the new instance', async () => {
+			await bootAndChangeInstance();
+
+			expect(
+				document.querySelector( CARD_WRAPPER_SELECTOR ).childElementCount
+			).toBe( 0 );
+			expect( mockInitCardButton ).toHaveBeenCalledTimes( 1 );
+
+			const ensureSessions = mockInitCardButton.mock.calls[ 0 ][ 1 ];
+			const { map } = await ensureSessions( 'checkout' );
+			expect( map ).toEqual( { paypal: { sdk: newSdk } } );
+		} );
+
+		test( 'leaves a card button wrapper alone when the page has no card button row', async () => {
+			await bootAndChangeInstance( { card_button: { row: false } } );
+
+			expect(
+				document.querySelector( CARD_WRAPPER_SELECTOR ).childElementCount
+			).toBe( 1 );
+		} );
+	} );
+
+	describe( 'express button placement', () => {
+		const drawButton = ( { wrapper } ) => {
+			wrapper.appendChild( document.createElement( 'paypal-button' ) );
+		};
+
+		test( 'places the express buttons once on the initial render, with the config', async () => {
+			const config = baseConfig();
+			buildDom();
+			boot( config );
+			await flush();
+
+			expect( mockPlaceExpressButtons ).toHaveBeenCalledTimes( 1 );
+			expect( mockPlaceExpressButtons ).toHaveBeenCalledWith( config );
+		} );
+
+		test( 'reports a failure when the SDK fails to load', async () => {
+			mockLoadSdkV6.mockRejectedValueOnce( new Error( 'sdk failed' ) );
+			mockRenderButtons.mockImplementation( drawButton );
+
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledWith( true );
+		} );
+
+		test( 'reports a failure when the buttons draw nothing', async () => {
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledWith( true );
+		} );
+
+		test( 'reports success when a button is drawn', async () => {
+			mockRenderButtons.mockImplementation( drawButton );
+
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledWith( false );
+		} );
+
+		test( 'reports success when a button is drawn but a wallet then fails to render', async () => {
+			mockRenderButtons.mockImplementation( drawButton );
+			mockRenderWallets.mockRejectedValue( new Error( 'wallet failed' ) );
+
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).toHaveBeenCalledWith( false );
+		} );
+
+		test( 'never reports for the mini-cart target when there is no page context', async () => {
+			mockRenderButtons.mockImplementation( drawButton );
+
+			buildDom();
+			boot( baseConfig( { page_context: '' } ) );
+			await flush();
+
+			expect( mockRenderButtons ).toHaveBeenCalledTimes( 1 );
+			expect( mockSetExpressButtonsFailed ).not.toHaveBeenCalled();
+		} );
+
+		test( 'does not report when the page wrapper is already populated', async () => {
+			buildDom();
+			document
+				.querySelector( WRAPPER_SELECTOR )
+				.appendChild( document.createElement( 'paypal-button' ) );
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).not.toHaveBeenCalled();
+		} );
+
+		test( 'does not report when the page wrapper is absent', async () => {
+			document.body.innerHTML = `<div id="${ MINI_CART_WRAPPER_SELECTOR.slice(
+				1
+			) }"></div>`;
+			boot( baseConfig() );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).not.toHaveBeenCalled();
+		} );
+
+		test( 'a DOM-replacing event retries after a failed pass and reports success once a button is drawn', async () => {
+			mockLoadSdkV6.mockRejectedValueOnce( new Error( 'sdk failed' ) );
+			mockRenderButtons.mockImplementation( drawButton );
+
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+			expect( mockSetExpressButtonsFailed ).toHaveBeenLastCalledWith(
+				true
+			);
+
+			global.jQuery.trigger( 'updated_checkout' );
+			await flush();
+
+			expect( mockSetExpressButtonsFailed ).toHaveBeenLastCalledWith(
+				false
+			);
 		} );
 	} );
 

@@ -55,17 +55,12 @@ test.describe( 'PayPal Subscription', () => {
 		}
 	} );
 
-	test.afterAll( async ( { pcpApi, requestUtils } ) => {
+	// Keep webhook verification disabled: later specs (sign-up fee) also send simulated webhooks
+	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( {
 			savePaypalAndVenmo: true,
 			saveCardDetails: true,
 		} );
-
-		if ( ! process.env.CI ) {
-			await requestUtils.deactivatePlugin(
-				disableWebhookVerificationPlugin.slug
-			);
-		}
 	} );
 
 	for ( const testOrder of payPalRenewal ) {

@@ -2,7 +2,12 @@
  * Internal dependencies
  */
 import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
-import { annotateVisitor, test, expect } from '../../../utils';
+import {
+	annotateVisitor,
+	test,
+	expect,
+	waitForTransactionId,
+} from '../../../utils';
 import {
 	getTestedGatewayButton,
 	assertPaymentBlockedBeforeVariationSelected,
@@ -10,7 +15,7 @@ import {
 } from './product.scenario'
 
 export const transactionsOnClassicProduct = ( testOrder: ShopOrder ) => {
-	const { products, payment, merchant, isPayNowEnabled } = testOrder;
+	const { products, payment, merchant, isPayNowEnabled = true } = testOrder;
 
 	test(
 		testOrder.title,
@@ -48,8 +53,12 @@ export const transactionsOnClassicProduct = ( testOrder: ShopOrder ) => {
 			}
 			
 			await test.step( `Complete payment with ${ gatewayTitle }`, async () => {
-				await product.payPalUi.makePayment( { merchant, payment } );
-				if( isPayNowEnabled === false ) {
+				await product.payPalUi.makePayment( {
+					merchant,
+					payment,
+					isPayNowEnabled,
+				} );
+				if ( ! isPayNowEnabled ) {
 					await classicCheckout.completeOrderFromProduct( testOrder );
 				}
 			} );
@@ -61,9 +70,11 @@ export const transactionsOnClassicProduct = ( testOrder: ShopOrder ) => {
 				await orderReceived.assertOrderDetails( testOrder );
 				await orderReceived.assertNoErrors();
 
-				orderId = await orderReceived.getOrderNumber();				
-				const transactionId =
-						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+				orderId = await orderReceived.getOrderNumber();
+				const transactionId = await waitForTransactionId(
+					wooCommerceApi,
+					orderId
+				);
 
 				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
 					transactionId,

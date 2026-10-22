@@ -60,6 +60,7 @@ jest.mock( '../messages/cartTotalWatcher', () => ( {
 const baseConfig = ( overrides = {} ) => ( {
 	id: 'ppcp-gateway',
 	page_context: 'checkout',
+	buttons_enabled: true,
 	supported_features: [ 'products', 'subscriptions' ],
 	pay_later_button: { checkout: true },
 	venmo_button: { checkout: true },
@@ -243,6 +244,28 @@ describe( 'checkout-block', () => {
 			expect( expressCallFor( 'ppcp-gateway-paypal' ).gatewayId ).toBe(
 				'ppcp-gateway-custom'
 			);
+		} );
+	} );
+
+	describe( 'when buttons_enabled is false', () => {
+		const registeredExpressNames = () =>
+			mockRegisterExpressPaymentMethod.mock.calls.map(
+				( [ args ] ) => args.name
+			);
+
+		test( 'still registers the wallet express methods and the regular ppcp-gateway method', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					buttons_enabled: false,
+					place_order_enabled: true,
+				} )
+			);
+
+			expect( registeredExpressNames().sort() ).toEqual( [
+				'ppcp-applepay',
+				'ppcp-googlepay',
+			] );
+			expect( regularCallFor( 'ppcp-gateway' ) ).toBeDefined();
 		} );
 	} );
 
@@ -731,6 +754,41 @@ describe( 'checkout-block', () => {
 			);
 			expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
 			expect( mockCheckEligibility ).not.toHaveBeenCalled();
+		} );
+
+		test.each( [
+			{
+				name: 'resolves to false for a guest on the block cart with a free-trial cart',
+				pageContext: 'cart-block',
+				user: { is_logged: false },
+				expected: false,
+			},
+			{
+				name: 'resolves to true for a logged-in user on the block cart with a free-trial cart',
+				pageContext: 'cart-block',
+				user: { is_logged: true },
+				expected: true,
+			},
+			{
+				name: 'resolves to true for a guest on the block checkout with a free-trial cart',
+				pageContext: 'checkout-block',
+				user: { is_logged: false },
+				expected: true,
+			},
+		] )( '$name', async ( { pageContext, user, expected } ) => {
+			loadCheckoutBlock(
+				baseConfig( {
+					page_context: pageContext,
+					user,
+					cart_needs_vaulting: true,
+				} )
+			);
+
+			const { canMakePayment } = expressCallFor( 'ppcp-gateway-paypal' );
+
+			await expect( canMakePayment( { cartTotals } ) ).resolves.toBe(
+				expected
+			);
 		} );
 
 		test.each( [

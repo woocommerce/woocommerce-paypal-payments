@@ -2,11 +2,17 @@
  * Internal dependencies
  */
 import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
-import { test, annotateVisitor } from '../../../utils';
+import { test, annotateVisitor, waitForTransactionId } from '../../../utils';
 
 export const transactionsOnCart = ( testOrder: ShopOrder ) => {
-	const { products, payment, merchant, coupons, customer, shipping } =
-		testOrder;
+	const {
+		products,
+		payment,
+		merchant,
+		coupons,
+		shipping,
+		isPayNowEnabled = true,
+	} = testOrder;
 
 	test(
 		testOrder.title,
@@ -32,11 +38,24 @@ export const transactionsOnCart = ( testOrder: ShopOrder ) => {
 				for ( const coupon of coupons ?? [] ) {
 					await cart.applyCoupon( coupon.code );
 				}
-				await cart.selectShippingMethod( shipping.settings.title );
-				await cart.payPalUi.makePayment( { merchant, payment } );
-
-				await checkout.fillCheckoutForm( customer );
-				await checkout.placeOrder();
+				// A single shipping rate has no radio on the block cart
+				for ( const radio of await cart
+					.shippingMethodRadio( shipping.settings.title )
+					.all() ) {
+					await radio.click();
+				}
+				await cart.payPalUi.makePayment( {
+					merchant,
+					payment,
+					isPayNowEnabled,
+				} );
+				if ( ! isPayNowEnabled ) {
+					// Coupons are already applied in the cart
+					await checkout.completeOrderFromProduct( {
+						...testOrder,
+						coupons: [],
+					} );
+				}
 			} );
 				
 			let orderId: number;
@@ -46,9 +65,11 @@ export const transactionsOnCart = ( testOrder: ShopOrder ) => {
 				await orderReceived.assertOrderDetails( testOrder );
 				await orderReceived.assertNoErrors();
 
-				orderId = await orderReceived.getOrderNumber();				
-				const transactionId =
-						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+				orderId = await orderReceived.getOrderNumber();
+				const transactionId = await waitForTransactionId(
+					wooCommerceApi,
+					orderId
+				);
 
 				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
 					transactionId,

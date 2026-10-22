@@ -15,11 +15,14 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\StoreSync\Validation\StoreValidation;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\ClearsStoreSyncProductCache;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\StoreSync\Endpoint\CheckoutEndpoint
  */
 class CheckoutEndpointTest extends IntegrationMockedTestCase {
+
+	use ClearsStoreSyncProductCache;
 
 	private CheckoutEndpoint $endpoint;
 
@@ -27,6 +30,8 @@ class CheckoutEndpointTest extends IntegrationMockedTestCase {
 
 	public function setUp(): void {
 		parent::setUp();
+
+		$this->clear_store_sync_product_cache();
 
 		$c = $this->getContainer();
 
@@ -56,7 +61,7 @@ class CheckoutEndpointTest extends IntegrationMockedTestCase {
 	/**
 	 * GIVEN a cart session exists with a buyer-unapproved PayPal token
 	 * WHEN complete_checkout() is called and the checkout processor cannot capture the PayPal order
-	 * THEN the HTTP status is 200
+	 * THEN the HTTP status is 422
 	 * AND the response status is INCOMPLETE
 	 * AND validation_status is INVALID
 	 * AND validation_issues contains exactly one entry
@@ -100,7 +105,7 @@ class CheckoutEndpointTest extends IntegrationMockedTestCase {
 		$response = $this->endpoint->complete_checkout( $request );
 
 		$this->assertInstanceOf( WP_REST_Response::class, $response );
-		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 422, $response->get_status() );
 
 		$data = $response->get_data();
 

@@ -6,6 +6,7 @@
 	let v2Token = null;
 	let v2WidgetId = null;
 	let showingV2 = false;
+	let currentToken = null;
 
 	function waitForRecaptchaV3() {
 		return new Promise( function ( resolve ) {
@@ -23,11 +24,11 @@
 		} );
 	}
 
-	function updateClassicCheckoutToken( token, version ) {
-		if ( config.isBlocks ) {
-			return;
-		}
+	function getWpData() {
+		return window.wp && window.wp.data ? window.wp.data : null;
+	}
 
+	function updateClassicCheckoutToken( token, version ) {
 		const selector = config.isSingleProduct
 			? 'form.cart'
 			: config.isCheckout
@@ -39,7 +40,6 @@
 
 		const form = $( selector );
 		if ( form.length === 0 ) {
-			console.error( 'PPCP reCAPTCHA: Form not found for token update' );
 			return;
 		}
 
@@ -55,6 +55,26 @@
 				version +
 				'">'
 		);
+	}
+
+	function updateBlocksCheckoutToken( token, version ) {
+		const wpData = getWpData();
+		const checkoutStore = wpData && wpData.dispatch( 'wc/store/checkout' );
+		if ( ! checkoutStore ) {
+			return;
+		}
+
+		checkoutStore.__internalSetExtensionData( 'ppcp_recaptcha', {
+			token,
+			version,
+		} );
+	}
+
+	// The saved page content does not tell which checkout renders, so send the token to each one that is present.
+	function deliverToken( token, version ) {
+		currentToken = { token, version };
+		updateClassicCheckoutToken( token, version );
+		updateBlocksCheckoutToken( token, version );
 	}
 
 	function handleCheckoutErrors( errorMessages ) {
@@ -102,16 +122,7 @@
 				action: 'ppcp',
 			} );
 			console.log( 'PPCP reCAPTCHA: New v3 token generated' );
-			updateClassicCheckoutToken( v3Token, 'v3' );
-
-			if ( config.isBlocks && window.wp && window.wp.data ) {
-				window.wp.data
-					.dispatch( 'wc/store/checkout' )
-					.__internalSetExtensionData( 'ppcp_recaptcha', {
-						token: v3Token,
-						version: 'v3',
-					} );
-			}
+			deliverToken( v3Token, 'v3' );
 		} catch ( error ) {
 			console.error(
 				'PPCP reCAPTCHA: Failed to generate v3 token',
@@ -152,29 +163,11 @@
 			callback( token ) {
 				v2Token = token;
 				console.log( 'PPCP reCAPTCHA: v2 verified' );
-				updateClassicCheckoutToken( token, 'v2' );
-
-				if ( config.isBlocks && window.wp && window.wp.data ) {
-					window.wp.data
-						.dispatch( 'wc/store/checkout' )
-						.__internalSetExtensionData( 'ppcp_recaptcha', {
-							token,
-							version: 'v2',
-						} );
-				}
+				deliverToken( token, 'v2' );
 			},
 			'expired-callback'() {
 				v2Token = null;
-				updateClassicCheckoutToken( '', 'v2' );
-
-				if ( config.isBlocks && window.wp && window.wp.data ) {
-					window.wp.data
-						.dispatch( 'wc/store/checkout' )
-						.__internalSetExtensionData( 'ppcp_recaptcha', {
-							token: '',
-							version: 'v2',
-						} );
-				}
+				deliverToken( '', 'v2' );
 			},
 		} );
 
@@ -247,33 +240,31 @@
 			} );
 	};
 
-	$( document ).ready( function () {
-		if ( config.siteKeyV3 ) {
-			waitForRecaptchaV3().then( function () {
-				console.log( 'PPCP reCAPTCHA: Pre-generating v3 token' );
-				generateV3Token();
-				setInterval( generateV3Token, 90000 );
-			} );
+	function watchBlocksCheckout() {
+		const wpData = getWpData();
+		if ( ! wpData ) {
+			return;
 		}
-	} );
 
-	if ( ! config.isBlocks && config.isCheckout ) {
-		$( document.body ).on( 'checkout_error', function () {
-			const errorMessages = $(
-				'.woocommerce-error, .woocommerce-NoticeGroup-checkout'
-			).text();
-			handleCheckoutErrors( errorMessages );
-		} );
-	}
-
-	if ( config.isBlocks && window.wp && window.wp.data ) {
-		const { subscribe, select } = window.wp.data;
+		const { subscribe, select } = wpData;
 		let previousHasError = false;
+		let hasCheckoutStore = false;
 
 		subscribe( () => {
 			const checkoutStore = select( 'wc/store/checkout' );
 			if ( ! checkoutStore ) {
 				return;
+			}
+
+			// The store can register after the first token was generated.
+			if ( ! hasCheckoutStore ) {
+				hasCheckoutStore = true;
+				if ( currentToken ) {
+					updateBlocksCheckoutToken(
+						currentToken.token,
+						currentToken.version
+					);
+				}
 			}
 
 			// Using hasError() + DOM read as fallback, validationStore.getValidationErrors() not yet working
@@ -301,6 +292,27 @@
 			}
 
 			previousHasError = hasError;
+		} );
+	}
+
+	$( document ).ready( function () {
+		watchBlocksCheckout();
+
+		if ( config.siteKeyV3 ) {
+			waitForRecaptchaV3().then( function () {
+				console.log( 'PPCP reCAPTCHA: Pre-generating v3 token' );
+				generateV3Token();
+				setInterval( generateV3Token, 90000 );
+			} );
+		}
+	} );
+
+	if ( config.isCheckout ) {
+		$( document.body ).on( 'checkout_error', function () {
+			const errorMessages = $(
+				'.woocommerce-error, .woocommerce-NoticeGroup-checkout'
+			).text();
+			handleCheckoutErrors( errorMessages );
 		} );
 	}
 } )( jQuery );
