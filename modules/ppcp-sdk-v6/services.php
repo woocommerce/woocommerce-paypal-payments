@@ -137,7 +137,8 @@ return array(
             $container->get('sdk-v6.apple-pay-config'),
             $container->get('sdk-v6.fastlane-config'),
             $container->get('sdk-v6.card-field-styles'),
-            $container->get('button.helper.disabled-funding-sources')
+            $container->get('button.helper.disabled-funding-sources'),
+            $container->get('order-endpoints.pay-now-contexts')
         );
     },
     'sdk-v6.add-payment-method-manager' => static function (ContainerInterface $container): AddPaymentMethodManager {
