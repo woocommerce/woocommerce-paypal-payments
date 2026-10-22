@@ -99,9 +99,8 @@ export const paypalPayerToWc = ( payer ) => {
 export const paypalSubscriberToWc = ( subscriber ) => {
 	const firstName = subscriber?.name?.given_name ?? '';
 	const lastName = subscriber?.name?.surname ?? '';
-	const address = subscriber.address
-		? paypalAddressToWc( subscriber.shipping_address.address )
-		: {};
+	const shippingAddress = subscriber?.shipping_address?.address;
+	const address = shippingAddress ? paypalAddressToWc( shippingAddress ) : {};
 	return {
 		...address,
 		first_name: firstName,
