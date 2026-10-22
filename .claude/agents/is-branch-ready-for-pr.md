@@ -27,7 +27,7 @@ Flag changes that affect how other developers integrate with the code: public AP
 
 ## Code review
 
-Read `.claude/rules/php-code-quality.md` first and apply it, plus a normal bug and edge-case pass.
+Read `.claude/rules/php-code-quality.md` first and apply it, plus a normal bug and edge-case pass. When context is given, flag requirements the diff does not cover and changes outside its scope.
 
 | Severity    | Definition                                                                    |
 |-------------|-------------------------------------------------------------------------------|
