@@ -42,6 +42,19 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): bool {
+		// The Single Product PayPal buttons & Pay Later messaging blocks do not depend on the
+		// WooCommerce Blocks payment-method framework, so they are wired before the guard below.
+		// Deferred to `init`: block types must register there, and it keeps run() free of any
+		// boot-time service resolution.
+		add_action(
+			'init',
+			static function () use ( $c ): void {
+				ProductBlocks::register( $c );
+				MiniCartBlocks::register( $c );
+			},
+			20
+		);
+
 		if (
 			! class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' )
 			|| ! function_exists( 'woocommerce_store_api_register_payment_requirements' )
@@ -126,6 +139,21 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					$asset_version
 				);
 				wp_enqueue_style( 'wc-ppcp-blocks-editor' );
+			}
+		);
+
+		add_action(
+			'enqueue_block_assets',
+			static function () use ( $c ) {
+				$asset_getter = $c->get( 'blocks.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
+				wp_enqueue_style(
+					'wc-ppcp-mini-cart-buttons',
+					$asset_getter->get_asset_url( 'mini-cart-buttons.css' ),
+					array(),
+					$c->get( 'ppcp.asset-version' )
+				);
 			}
 		);
 

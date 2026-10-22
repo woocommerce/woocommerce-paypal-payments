@@ -4,41 +4,24 @@ Minimal instructions for coding agents working in this repository.
 
 ## CRITICAL Rules
 
-- CRITICAL: Keep `CLAUDE.md` as a pointer to this file (`@AGENTS.md`).
 - CRITICAL: Maintain PHP `7.4+` compatibility unless project requirements change.
 - CRITICAL: Do not edit WordPress core, `vendor/`, or `node_modules/`.
 - CRITICAL: For frontend work, edit `modules/*/resources/*`.
 - CRITICAL: Never revert unrelated local changes.
-- CRITICAL: Any change to a public or externally exposed surface - a signature, a hook, or an assumption about global state, multisite, or install layout - is high-risk; state its backward-compatibility impact in the PR (see [Backward Compatibility](#backward-compatibility)).
+- CRITICAL: Any change to an externally exposed surface - a hook, an `api/` function, stored data, or an assumption about global state, multisite, or install layout - is high-risk; state its backward-compatibility impact in the PR (see [Backward compatibility](#backward-compatibility)). PHP classes, interfaces, and methods are not such a surface.
 - MUST: Run relevant lint/tests before claiming completion.
 
-## Backward Compatibility
+## Backward compatibility
 
-Any change to a **public or externally exposed** class, interface, function, method, or hook signature is **high-risk** and **must state its backward-compatibility impact in the PR description** - regardless of which module or namespace the symbol lives in. Being under `WooCommerce\PayPalCommerce\...`, an `Internal` sub-namespace, or a module's `src/` is not a guarantee that a symbol is safe to change: extensions, themes, and other plugins implement and consume some of these contracts in practice.
+The plugin's compatibility contracts with third-party code are its WordPress-level surfaces: hooks, the public functions in `api/`, stored data, and its assumptions about the runtime environment. A change to any of them is **high-risk** and **must state its backward-compatibility impact in the PR description**.
 
-Treat a symbol as **externally exposed** when it is implemented or consumed outside this plugin - by extensions, other plugins, or themes. This includes:
+PHP classes, interfaces, and methods are **not** a compatibility contract, even when they are reachable via the module container or wired in `services.php`/`factories.php`/`extensions.php`. Change, rename, or remove them as needed: they need no deprecation window and no backward-compatibility statement.
 
-- WordPress actions and filters this plugin fires or documents (e.g. `ppcp_*`, `woocommerce_paypal_payments_*`) - their names, argument counts, and argument types are a public contract.
-- Public classes, interfaces, and methods reachable via the module container, `services.php`/`factories.php`/`extensions.php` wiring, or returned from public APIs.
-- Any interface external code can implement, and any class external code can extend or instantiate.
-
-When in doubt, assume it is exposed and state the BC impact.
-
-**Adding a method to an interface that external code can implement is a backward-incompatible change** and must be flagged explicitly: existing implementers fatal on load because they no longer satisfy the contract. Removing a required interface method is likewise breaking for existing implementers. Prefer a non-breaking alternative - add the method to the concrete class rather than the interface, introduce a separate new interface, or supply a default via an abstract base class.
-
-**Deprecate, don't rename.** For existing public symbols (classes, interfaces, methods, constants, hooks), never rename or remove them in place. Mark the old symbol `@deprecated`, introduce the replacement alongside it, and keep both working through a deprecation window so external consumers have time to migrate.
-
-### The compatibility surface is wider than PHP signatures
-
-WordPress exposes more contracts than class and function signatures. The following are equally binding: a change to any of them is **high-risk** and requires the same backward-compatibility impact statement in the PR description.
+### WordPress-level contracts
 
 **Hooks and filters are public contracts.** Every `do_action` and `apply_filters` call this plugin makes is an interface that third-party callbacks depend on. Removing a hook, renaming it, or removing/reordering its arguments breaks every attached callback. Changing *when* or *whether* a hook fires can break consumers that depend on its timing. Additive is the safe path: append new arguments at the end, never remove or reorder existing ones. To retire a hook, fire it through `do_action_deprecated()` / `apply_filters_deprecated()` for a deprecation window instead of deleting it.
 
 **Never trust data that flows through hooks.** Keep hook callback parameters untyped and validate or coerce the value before passing it to strictly typed code, since any callback can receive a value another one produced. And when firing a filter (`ppcp_*`, `woocommerce_paypal_payments_*`), validate the final return value before using it, since any callback in the chain can return the wrong thing.
-
-**Overridable classes are contracts too, including which internal methods get called.** External code extends this plugin's non-final classes and overrides individual public and protected methods, so those methods are contracts: changing their signatures or removing them breaks subclasses even when no caller inside this plugin remains. Adding a fast path or skip that avoids calling an overridable method silently disables those overrides even though no signature changed: the subclass's code simply stops running. When optimizing such a class, ensure overridable methods are still invoked on every code path, or treat the change as breaking. The same applies to swapping which service the container wires: code that decorated or replaced the old service via `extensions.php` stops taking effect.
-
-**Registered script and style handles are public contracts.** Third-party code enqueues this plugin's handles and lists them as dependencies - the `ppcp-*` module assets - including handles that were only ever registered incidentally. Renaming or removing a handle breaks those consumers. To rename with a compatibility window, register the legacy handle as an alias that depends on the new handle (the same pattern WordPress core uses for `jquery` -> `jquery-core`); do not register the same file under both handles, or pages with mixed consumers will load it twice.
 
 **Do not assume global state.** Code can run in admin, REST, WP-CLI, cron, PayPal webhook, and front-end contexts, and not all of them set the globals a front-end request does (`$post`, `$wp_query`, an initialized session or cart). A newly introduced read of a global, or of `WC()->…` state, in a path reachable outside a standard request is a fatal or a silent misbehavior in the contexts that do not set it - webhook and cron paths in this plugin are especially exposed. Guard the exact dependency explicitly: use `function_exists`/`class_exists` for symbols, `isset` for variables, `did_action` for lifecycle state, and verify that `WC()` and the required component are initialized before dereferencing `WC()->…`. The same caution applies to this plugin's own container: do not reach for services before the module has booted.
 
@@ -53,11 +36,11 @@ Settings and data migrations run from `CompatModule` (`modules/ppcp-compat`) on 
 - Migrations are one-shot: the marker option keys them, so a site that has run one never re-runs it. Never reuse or repurpose an already-shipped marker, and never edit a shipped migration - add a new one with its own marker instead.
 - Every schema or data update must remain reversible one version back: a rollback to the previous release must not fatal or corrupt data against the migrated state. If old code cannot read the new format, the change needs a deprecation window, not a hard cutover.
 
-### Before changing any public or externally exposed surface (agent checklist)
+### Before changing an externally exposed surface (agent checklist)
 
-1. Identify the contract you are touching: signature, hook, global/scope expectation, site topology, or install layout.
+1. Identify the contract you are touching: hook, `api/` function, stored data, global/scope expectation, site topology, or install layout.
 2. Assume unseen consumers. You cannot enumerate third-party code; if the surface is reachable from outside this plugin, someone consumes it.
-3. Prefer the additive path (new optional method, appended hook argument, new symbol + deprecation) over changing what exists.
+3. Prefer the additive path (appended hook argument, new hook or function plus deprecation of the old one) over changing what exists.
 4. State the impact in the PR description: what changed, who could consume it, and why it is safe or what the deprecation path is.
 5. If you cannot establish the impact, stop and flag it to the user as needing review.
 
@@ -74,10 +57,11 @@ Settings and data migrations run from `CompatModule` (`modules/ppcp-compat`) on 
 
 ## Commands
 
+Run every command through DDEV, not with host PHP, Node, or Composer. The web container provides the project's PHP and Node versions, extensions, and database. Use `ddev npm`, `ddev npx`, `ddev composer`, and `ddev php` in place of their host counterparts, and `ddev exec` for anything else, e.g. `ddev exec vendor/bin/phpunit --filter <TestName>`.
+
 ### Setup
 
-- Preferred local env: DDEV.
-- `npm run ddev:setup` (start + orchestrate).
+- `ddev start && ddev orchestrate`
 - If WP is missing after startup, run `ddev orchestrate`.
 - Use `ddev describe` for active URLs/ports.
 - If `.ddev.site` routing fails, use the direct host mapping shown in `ddev describe` for `web:80` (for example `http://127.0.0.1:60792`).
@@ -86,18 +70,18 @@ Settings and data migrations run from `CompatModule` (`modules/ppcp-compat`) on 
 
 ### Build
 
-- Non-DDEV setup: `composer install && npm ci && npm run build`.
+- `ddev npm run build` (rebuild after JS/SCSS source changes).
+- `ddev composer install && ddev npm ci && ddev npm run build` (reinstall dependencies and rebuild).
 
 ### Quality
 
-- `npm run lint` (PHPCS + PHPStan)
-- `npm run lint-js` (currently unreliable for full-repo linting in this project)
-- `npx wp-scripts lint-js <file-or-dir>` (recommended; works for targeted JS/TS paths)
-- `npm run unit-tests`
-- `npm run test:unit-js`
-- `npm run integration-tests`
-- `npm run test` (full suite)
-- `npm run ddev:unit-tests:coverage` (coverage in DDEV)
+- `ddev npm run lint` (PHPCS + PHPStan)
+- `ddev npm run lint-js` (currently unreliable for full-repo linting in this project)
+- `ddev npx wp-scripts lint-js <file-or-dir>` (recommended; works for targeted JS/TS paths)
+- `ddev npm run unit-tests`
+- `ddev npm run test:unit-js`
+- `ddev npm run integration-tests`
+- `ddev npm run test` (full suite)
 
 ## Conventions
 
@@ -136,6 +120,6 @@ abilities surface go stale.
 
 ## Verification Matrix
 
-- PHP-only change: `npm run unit-tests && npm run lint`
-- JS-only change: `npm run test:unit-js && npx wp-scripts lint-js <changed-js-files-or-dir>`
-- Checkout/payment/onboarding/webhook change: `npm run test`
+- PHP-only change: `ddev npm run unit-tests && ddev npm run lint`
+- JS-only change: `ddev npm run test:unit-js && ddev npx wp-scripts lint-js <changed-js-files-or-dir>`
+- Checkout/payment/onboarding/webhook change: `ddev npm run test`

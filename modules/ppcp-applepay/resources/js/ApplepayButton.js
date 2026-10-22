@@ -6,6 +6,7 @@ import FormValidator from '@ppcp-button/Helper/FormValidator';
 import ErrorHandler from '@ppcp-button/ErrorHandler';
 import widgetBuilder from '@ppcp-button/Renderer/WidgetBuilder';
 import PaymentButton from '@ppcp-button/Renderer/PaymentButton';
+import { describeError } from '@ppcp-button/Helper/FrontendLog';
 import {
 	PaymentContext,
 	PaymentMethods,
@@ -347,7 +348,12 @@ class ApplePayButton extends PaymentButton {
 				this.transactionInfo = transactionInfo;
 			} )
 			.catch( ( error ) => {
-				console.error( 'Failed to get transaction info:', error );
+				// The button reinits with the previous total, so a stale sheet
+				// is the visible symptom.
+				this.logEvent(
+					'transaction-info-failed',
+					describeError( error )
+				);
 			} );
 
 		super.reinit();
@@ -373,6 +379,10 @@ class ApplePayButton extends PaymentButton {
 			this.isEligible = !! this.#applePayConfig.isEligible;
 		} catch ( error ) {
 			this.isEligible = false;
+			this.logEvent(
+				'eligibility-check-failed',
+				describeError( error )
+			);
 		}
 	}
 
@@ -495,7 +505,18 @@ class ApplePayButton extends PaymentButton {
 	async onButtonClick() {
 		this.log( 'onButtonClick' );
 
-		const paymentRequest = this.paymentRequest();
+		let paymentRequest;
+
+		try {
+			paymentRequest = this.paymentRequest();
+		} catch ( error ) {
+			// Thrown before a session exists, so there is no sheet to abort.
+			this.logEvent(
+				'payment-request-failed',
+				describeError( error )
+			);
+			return;
+		}
 
 		// Do this on another place like on create order endpoint handler.
 		window.ppcpFundingSource = 'apple_pay';
@@ -516,7 +537,7 @@ class ApplePayButton extends PaymentButton {
 
 				this.updateRequestDataWithForm( paymentRequest );
 			} catch ( error ) {
-				console.error( error );
+				this.logEvent( 'form-data-failed', describeError( error ) );
 			}
 
 			this.log( '=== paymentRequest', paymentRequest );
@@ -540,11 +561,22 @@ class ApplePayButton extends PaymentButton {
 						jQuery( document.body ).trigger( 'checkout_error', [
 							errorHandler.currentHtml(),
 						] );
+						this.logEvent(
+							'checkout-validation-abort',
+							`errors=${ errors.length }`
+						);
 						session.abort();
 						return;
 					}
 				} catch ( error ) {
-					console.error( error );
+					// Falling through would leave the sheet up on data nobody
+					// validated.
+					this.logEvent(
+						'form-validation-failed',
+						describeError( error )
+					);
+					session.abort();
+					return;
 				}
 			}
 			return;
@@ -759,7 +791,10 @@ class ApplePayButton extends PaymentButton {
 					this.adminValidation( true );
 				} )
 				.catch( ( validateError ) => {
-					console.error( validateError );
+					this.logEvent(
+						'merchant-validation-failed',
+						describeError( validateError )
+					);
 					this.adminValidation( false );
 					this.log( 'onvalidatemerchant session abort' );
 					session.abort();
@@ -781,32 +816,48 @@ class ApplePayButton extends PaymentButton {
 				data,
 				success: ( applePayShippingMethodUpdate ) => {
 					this.log( 'onshippingmethodselected ok' );
-					const response = applePayShippingMethodUpdate.data;
-					if ( applePayShippingMethodUpdate.success === false ) {
-						response.errors = createAppleErrors( response.errors );
-					}
-					this.#selectedShippingMethod = event.shippingMethod;
 
-					// Sort the response shipping methods, so that the selected shipping method is
-					// the first one.
-					response.newShippingMethods =
-						response.newShippingMethods.sort( ( a ) => {
-							if (
-								a.label === this.#selectedShippingMethod.label
-							) {
-								return -1;
-							}
-							return 1;
-						} );
+					// A 200 whose body is not the expected envelope throws in
+					// here, and an unanswered sheet only dies on Apple's timeout.
+					try {
+						const response = applePayShippingMethodUpdate.data;
+						if ( applePayShippingMethodUpdate.success === false ) {
+							response.errors = createAppleErrors(
+								response.errors
+							);
+						}
+						this.#selectedShippingMethod = event.shippingMethod;
 
-					if ( applePayShippingMethodUpdate.success === false ) {
-						response.errors = createAppleErrors( response.errors );
+						// Sort the response shipping methods, so that the selected shipping method is
+						// the first one.
+						response.newShippingMethods =
+							response.newShippingMethods.sort( ( a ) => {
+								if (
+									a.label ===
+									this.#selectedShippingMethod.label
+								) {
+									return -1;
+								}
+								return 1;
+							} );
+
+						session.completeShippingMethodSelection( response );
+					} catch ( error ) {
+						this.logEvent(
+							'shipping-method-invalid-response',
+							`${ describeError( error ) } keys=${ Object.keys(
+								applePayShippingMethodUpdate ?? {}
+							).join( ',' ) }`
+						);
+						session.abort();
 					}
-					session.completeShippingMethodSelection( response );
 				},
 				error: ( jqXHR, textStatus, errorThrown ) => {
-					this.log( 'onshippingmethodselected error', textStatus );
-					console.warn( textStatus, errorThrown );
+					// Apple words an aborted sheet exactly like a buyer's dismissal.
+					this.logEvent(
+						'shipping-method-abort',
+						`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
+					);
 					session.abort();
 				},
 			} );
@@ -829,20 +880,39 @@ class ApplePayButton extends PaymentButton {
 				data,
 				success: ( applePayShippingContactUpdate ) => {
 					this.log( 'onshippingcontactselected ok' );
-					const response = applePayShippingContactUpdate.data;
-					this.#updatedContactInfo = event.shippingContact;
-					if ( applePayShippingContactUpdate.success === false ) {
-						response.errors = createAppleErrors( response.errors );
+
+					// A 200 whose body is not the expected envelope throws in
+					// here, and an unanswered sheet only dies on Apple's timeout.
+					try {
+						const response = applePayShippingContactUpdate.data;
+						this.#updatedContactInfo = event.shippingContact;
+						if ( applePayShippingContactUpdate.success === false ) {
+							response.errors = createAppleErrors(
+								response.errors
+							);
+						}
+						if ( response.newShippingMethods ) {
+							this.#selectedShippingMethod =
+								response.newShippingMethods[ 0 ];
+						}
+
+						session.completeShippingContactSelection( response );
+					} catch ( error ) {
+						this.logEvent(
+							'shipping-contact-invalid-response',
+							`${ describeError( error ) } keys=${ Object.keys(
+								applePayShippingContactUpdate ?? {}
+							).join( ',' ) }`
+						);
+						session.abort();
 					}
-					if ( response.newShippingMethods ) {
-						this.#selectedShippingMethod =
-							response.newShippingMethods[ 0 ];
-					}
-					session.completeShippingContactSelection( response );
 				},
 				error: ( jqXHR, textStatus, errorThrown ) => {
-					this.log( 'onshippingcontactselected error', textStatus );
-					console.warn( textStatus, errorThrown );
+					// Apple words an aborted sheet exactly like a buyer's dismissal.
+					this.logEvent(
+						'shipping-contact-abort',
+						`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
+					);
 					session.abort();
 				},
 			} );
@@ -978,20 +1048,50 @@ class ApplePayButton extends PaymentButton {
 								resolve( authorizationResult );
 							},
 							error: ( jqXHR, textStatus, errorThrown ) => {
-								this.log(
-									'onpaymentauthorized error',
-									textStatus
+								this.logEvent(
+									'capture-request-failed',
+									`HTTP ${ jqXHR.status } ${ textStatus } ${ errorThrown }`
 								);
-								reject( new Error( errorThrown ) );
+								reject(
+									new Error(
+										errorThrown ||
+											`HTTP ${ jqXHR.status } ${ textStatus }`
+									)
+								);
 							},
 						} );
 					} catch ( error ) {
-						this.error( 'onpaymentauthorized catch', error );
+						// Without the reject the awaited promise never settles
+						// and the sheet spins until Apple gives up.
+						this.logEvent(
+							'capture-exception',
+							describeError( error )
+						);
+						reject( error );
 					}
 				} );
 			};
 
-			const id = await this.contextHandler.createOrder();
+			let id;
+
+			try {
+				id = await this.contextHandler.createOrder();
+			} catch ( error ) {
+				this.logEvent(
+					'create-order-failed',
+					describeError( error )
+				);
+				session.completePayment( ApplePaySession.STATUS_FAILURE );
+				session.abort();
+				return;
+			}
+
+			if ( ! id ) {
+				this.logEvent( 'create-order-failed', 'no order id' );
+				session.completePayment( ApplePaySession.STATUS_FAILURE );
+				session.abort();
+				return;
+			}
 
 			this.log(
 				'onpaymentauthorized paypal order ID',
@@ -1058,9 +1158,7 @@ class ApplePayButton extends PaymentButton {
 										ApplePaySession.STATUS_SUCCESS
 									);
 								} else {
-									this.error(
-										'onpaymentauthorized approveOrder FAIL'
-									);
+									this.logEvent( 'approve-order-failed' );
 									session.completePayment(
 										ApplePaySession.STATUS_FAILURE
 									);
@@ -1087,32 +1185,47 @@ class ApplePayButton extends PaymentButton {
 									window.location.href =
 										authorizationResult.redirect;
 								} else {
+									this.logEvent(
+										'capture-failed',
+										`result=${ authorizationResult?.result }`
+									);
 									session.completePayment(
 										ApplePaySession.STATUS_FAILURE
 									);
 								}
 							}
 						} catch ( error ) {
+							this.logEvent(
+								'authorization-failed',
+								describeError( error )
+							);
 							session.completePayment(
 								ApplePaySession.STATUS_FAILURE
 							);
 							session.abort();
-							console.error( error );
 						}
 					} else {
-						console.error( 'Error status is not APPROVED' );
+						// confirmOrder goes straight from the browser to PayPal,
+						// so this status is the only account of the refusal.
+						this.logEvent(
+							'confirm-order-not-approved',
+							`status=${ confirmOrderResponse.approveApplePayPayment.status }`
+						);
 						session.completePayment(
 							ApplePaySession.STATUS_FAILURE
 						);
 					}
 				} else {
-					console.error( 'Invalid confirmOrderResponse' );
+					this.logEvent(
+						'confirm-order-unrecognized',
+						`keys=${ Object.keys( confirmOrderResponse ?? {} ).join( ',' ) }`
+					);
 					session.completePayment( ApplePaySession.STATUS_FAILURE );
 				}
 			} catch ( error ) {
-				console.error(
-					'Error confirming order with applepay token',
-					error
+				this.logEvent(
+					'confirm-order-failed',
+					describeError( error )
 				);
 				session.completePayment( ApplePaySession.STATUS_FAILURE );
 				session.abort();

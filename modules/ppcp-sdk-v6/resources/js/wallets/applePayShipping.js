@@ -3,11 +3,10 @@
  *
  * Translates between Apple's ApplePaySession protocol and the shared shipping
  * quote; everything about pricing lives in methodShipping.js.
- *
- * @package
  */
 
 import { resolveOptionId } from '../methods/shippingQuote';
+import { describeError, logEvent } from '../utils/diagnostics';
 import { walletAddressToWc } from './walletContacts';
 
 /**
@@ -136,29 +135,6 @@ export function applePayUnserviceableUpdate(
 }
 
 /**
- * Builds the authorization result that reports a failure to the open sheet.
- *
- * Only a message the server marked shopper-facing is passed through; anything
- * else is internal, and Apple's own wording serves better.
- *
- * @param {Error}  error  - What went wrong.
- * @param {number} status - ApplePaySession.STATUS_FAILURE.
- * @return {Object} The ApplePayPaymentAuthorizationResult.
- */
-export function applePayFailure( error, status ) {
-	const result = { status };
-
-	// ApplePayError is only defined inside a live session.
-	if ( error?.isUserFacing && typeof window.ApplePayError === 'function' ) {
-		result.errors = [
-			new window.ApplePayError( 'unknown', undefined, error.message ),
-		];
-	}
-
-	return result;
-}
-
-/**
  * Wires an ApplePaySession's shipping callbacks to the shared controller.
  *
  * @param {Object}   appleSession     - The live ApplePaySession.
@@ -212,12 +188,14 @@ export function attachShippingHandlers(
 			complete( applePayShippingUpdate( quote, { displayName, labels } ) );
 		} catch ( error ) {
 			// A sheet that cannot price what it is about to charge must not go on,
-			// and nothing can be shown to the shopper behind it.
-			// eslint-disable-next-line no-console
-			console.error(
-				'[PPCP SDK v6] Apple Pay shipping update failed: ' +
-					error.message
+			// and nothing can be shown to the shopper behind it. Reported because
+			// Apple words an abort and a shopper's dismissal identically.
+			logEvent(
+				config,
+				'apple-pay-shipping-abort',
+				describeError( error )
 			);
+
 			appleSession.abort();
 		}
 	}

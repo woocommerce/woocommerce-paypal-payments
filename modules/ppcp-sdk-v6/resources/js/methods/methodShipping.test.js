@@ -91,7 +91,8 @@ describe( 'createShippingController()', () => {
 				address,
 				rateId: 'flat_rate:1',
 				billingAddress: null,
-					expectedTotal: null,
+				expectedTotal: null,
+				exactTotal: false,
 			} );
 			expect( mockQuoteFromResponse ).toHaveBeenCalledWith( response );
 			expect( result ).toEqual( priced );
@@ -109,8 +110,25 @@ describe( 'createShippingController()', () => {
 				address,
 				rateId: null,
 				billingAddress: null,
-					expectedTotal: null,
+				expectedTotal: null,
+				exactTotal: false,
 			} );
+		} );
+
+		test( 'never asks for an exact total, even when the controller is set to', async () => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse.mockReturnValue( priced );
+
+			const controller = createShippingController( {
+				config: config(),
+				exactTotal: true,
+			} );
+			await controller.quote( { address } );
+
+			expect( mockQuoteWalletShipping ).toHaveBeenCalledWith(
+				config(),
+				expect.objectContaining( { exactTotal: false } )
+			);
 		} );
 
 		test( 'a rejected selection rejects, but does not poison later selections', async () => {
@@ -215,7 +233,31 @@ describe( 'createShippingController()', () => {
 					rateId: 'flat_rate:9',
 					billingAddress: address,
 					expectedTotal: '10.00',
+					exactTotal: false,
 				}
+			);
+		} );
+
+		test.each( [
+			[ 'asks for an exact total when the controller requires it', true, true ],
+			[ 'does not ask for an exact total by default', undefined, false ],
+		] )( '%s', async ( label, exactTotal, expected ) => {
+			mockQuoteWalletShipping.mockResolvedValue( response );
+			mockQuoteFromResponse.mockReturnValue( {
+				total: '10.00',
+				selectedId: 'flat_rate:1',
+			} );
+
+			const controller = createShippingController( {
+				config: config(),
+				exactTotal,
+			} );
+			await controller.quote( { address, rateId: 'flat_rate:1' } );
+			await controller.commit( address );
+
+			expect( mockQuoteWalletShipping ).toHaveBeenLastCalledWith(
+				config(),
+				expect.objectContaining( { exactTotal: expected } )
 			);
 		} );
 

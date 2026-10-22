@@ -5,19 +5,44 @@
  * Every assumption about that contract lives here: ppc-change-cart,
  * ppc-create-order, ppc-approve-order, ppc-update-shipping. Keep the
  * request/response shapes in sync with the endpoint contract tests.
- *
- * @package
  */
 
 import SingleProductActionHandler from '@ppcp-button/ActionHandler/SingleProductActionHandler';
 import { payerData } from '@ppcp-button/Helper/PayerData';
+import { cartPayerData } from '@ppcp-button/Helper/CartPayerData';
 import { postJson, postStoreApi } from './utils/api';
+import { describeError, logEvent } from './utils/diagnostics';
 import { FundingSources } from './utils/fundingSources';
 import { amountFromCartTotals } from './utils/amount';
 import { continuationRedirectUrl } from './utils/continuation';
 
 // The gateway that processes an order unless a caller names another one.
 const DEFAULT_PAYMENT_METHOD = 'ppcp-gateway';
+
+/**
+ * The shopper's details for a create-order request, read from wherever the
+ * current checkout keeps them.
+ *
+ * PayPal's risk engine identifies a buyer partly by their email address, and a
+ * card it has never seen has nothing else to be matched against. The classic
+ * checkout holds the details in billing inputs; the block checkout has no such
+ * inputs and keeps them in the cart store. Anywhere else there is no billing
+ * form to read, so nothing is sent.
+ *
+ * @param {string} context - The page context.
+ * @return {?Object} The payer, or null when no details are available.
+ */
+function payerFor( context ) {
+	if ( context === 'checkout' ) {
+		return payerData();
+	}
+
+	if ( context === 'checkout-block' ) {
+		return cartPayerData();
+	}
+
+	return null;
+}
 
 /**
  * Navigation seam: window.location is not mockable under jsdom, so
@@ -191,11 +216,11 @@ export async function createOrder(
 			body.createaccount =
 				!! form.querySelector( '#createaccount' )?.checked;
 		}
+	}
 
-		const payer = payerData();
-		if ( payer ) {
-			body.payer = payer;
-		}
+	const payer = payerFor( context );
+	if ( payer ) {
+		body.payer = payer;
 	}
 
 	const data = await postJson( config.ajax.create_order, body );
@@ -206,11 +231,12 @@ export async function createOrder(
 /**
  * Reports an approved PayPal order and takes the buyer wherever it leads.
  *
- * should_create_wc_order is requested except for the card button and for Venmo
- * with vaulting, and the server decides: with the Pay Now experience it creates
- * the WC order and responds with order_received_url, otherwise it only stores the
- * approved order in the session and the gateway processes it on Place Order. On
- * classic checkout the WC checkout form is submitted after approval instead.
+ * should_create_wc_order is requested except on classic checkout, for the card
+ * button and for Venmo with vaulting, and the server decides: with the Pay Now
+ * experience it creates the WC order and responds with order_received_url,
+ * otherwise it only stores the approved order in the session and the gateway
+ * processes it on Place Order. On classic checkout the WC checkout form is
+ * submitted after approval instead.
  *
  * @param {Object} config                    - The wc_ppcp_sdk_v6 config object.
  * @param {string} context                   - The page context.
@@ -241,14 +267,16 @@ export async function approveOrder(
 		return;
 	}
 
+	// Never on classic checkout: its form submit must create the order, and an
+	// order created here would consume the reCAPTCHA result that submit re-checks.
 	// Never for the card button: ApproveOrderEndpoint would run
 	// PayPalGateway::process_payment() and pin chosen_payment_method to the
 	// PayPal gateway, so CardButtonGateway::process_payment() is never reached.
 	// False routes us through the classic form submit below instead.
 	const canCreateOrder =
+		context !== 'checkout' &&
 		fundingSource !== FundingSources.CARD &&
-		( ! config.vaulting_enabled ||
-			fundingSource !== FundingSources.VENMO );
+		( ! config.vaulting_enabled || fundingSource !== FundingSources.VENMO );
 
 	const body = {
 		order_id: orderId,
@@ -274,6 +302,14 @@ export async function approveOrder(
 		if ( ! canCreateOrder ) {
 			throw error;
 		}
+
+		// The retry below hides the refusal, so record it first.
+		logEvent(
+			config,
+			'approve-order-retried',
+			`${ fundingSource } order=${ orderId } ${ describeError( error ) }`
+		);
+
 		// e.g. One-Touch approval without a shipping option; fall back
 		// to the classic continuation on checkout.
 		data = await postJson( config.ajax.approve_order, {
@@ -365,14 +401,12 @@ export async function approveOrderInSession( config, fundingSource, orderId ) {
  *
  * @param {Object} config   - The wc_ppcp_sdk_v6 config object.
  * @param {string} context  - The page context (checkout or checkout-block).
- * @param {string} cardName - The cardholder name (v6 has no name field component).
  * @param {boolean} savePaymentMethod - Whether to vault the card during purchase.
  * @return {Promise<{orderId: string}>} The created PayPal order id.
  */
 export async function createCardOrder(
 	config,
 	context = 'checkout',
-	cardName = '',
     savePaymentMethod = false
 ) {
 	const body = {
@@ -382,13 +416,6 @@ export async function createCardOrder(
 		funding_source: config.card_fields.funding_source,
         save_payment_method: savePaymentMethod,
 	};
-
-	// The v6 card-fields component set is number|expiry|cvv only, so the
-	// cardholder name is collected as a plain input and sent to the server,
-	// which sets it as payment_source.card.name on the order.
-	if ( cardName ) {
-		body.card_name = cardName;
-	}
 
 	// Pay-for-order: the server builds the order from the existing WC order.
 	if ( context === 'pay-now' && config.pay_now ) {
@@ -408,11 +435,11 @@ export async function createCardOrder(
 			body.createaccount =
 				!! form.querySelector( '#createaccount' )?.checked;
 		}
+	}
 
-		const payer = payerData();
-		if ( payer ) {
-			body.payer = payer;
-		}
+	const payer = payerFor( context );
+	if ( payer ) {
+		body.payer = payer;
 	}
 
 	const data = await postJson( config.ajax.create_order, body );
@@ -546,11 +573,18 @@ function selectShippingMethodInForm( rateId ) {
  * @param {?string} [args.expectedTotal]    - The total the sheet displayed. The
  *                                            server refuses a higher one rather
  *                                            than charge it.
+ * @param {boolean} [args.exactTotal]       - Refuse a lower total as well.
  * @return {Promise<Object>} The quote.
  */
 export async function quoteCartShipping(
 	config,
-	{ address, rateId = null, billingAddress = null, expectedTotal = null }
+	{
+		address,
+		rateId = null,
+		billingAddress = null,
+		expectedTotal = null,
+		exactTotal = false,
+	}
 ) {
 	const body = {
 		address,
@@ -563,6 +597,10 @@ export async function quoteCartShipping(
 
 	if ( expectedTotal ) {
 		body.expected_total = expectedTotal;
+	}
+
+	if ( exactTotal ) {
+		body.exact_total = 1;
 	}
 
 	return postJson( config.ajax.wallet_shipping, body );

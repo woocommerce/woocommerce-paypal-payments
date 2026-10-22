@@ -1,7 +1,13 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, ShopOrder, customers, guests } from '../../../../resources';
+import {
+	payments,
+	orders,
+	ShopOrder,
+	customers,
+	guests,
+} from '../../../../resources';
 
 const customer = customers.usa;
 const guest = guests.usa;
@@ -53,5 +59,28 @@ export const payLaterCheckoutNegativeFee: ShopOrder[] = [
 		...orders.negative12Fee,
 		payment: payLater,
 		customer: guest,
+	},
+];
+
+export const payLaterCheckoutPayNowOff: ShopOrder[] = [
+	{
+		// TODO: replace PCP-0000 with the Xray key once the test case is created.
+		title: 'PCP-0000 | Transaction - Checkout - Pay Later - Pay Now off - Default order',
+		...orders.default,
+		payment: payLater,
+		customer: guest,
+		isPayNowEnabled: false,
+	},
+];
+
+export const payLaterCheckoutEmptyForm: ShopOrder[] = [
+	{
+		// Fails on SDK v6: lands on the review page instead of order received (PCP-7032)
+		// TODO: replace PCP-0000 with the Xray key once the test case is created.
+		title: 'PCP-0000 | Transaction - Checkout - Pay Later - Empty checkout form - Default order',
+		...orders.default,
+		payment: payLater,
+		customer: guest,
+		isCheckoutFormEmpty: true,
 	},
 ];

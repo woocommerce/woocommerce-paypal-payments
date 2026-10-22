@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection\Recaptcha;
 
+use Automattic\WooCommerce\StoreApi\Exceptions\RouteException;
 use Automattic\WooCommerce\Utilities\OrderUtil;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -11,8 +12,8 @@ use WC_Product;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WP_Error;
 use WP_Post;
+use WP_REST_Request;
 
 class Recaptcha {
 	private const V2_CONTAINER_ID                = 'ppcp-recaptcha-v2-container';
@@ -39,21 +40,21 @@ class Recaptcha {
 
 	private LoggerInterface $logger;
 
+	/**
+	 * Logs the rejected attempts, independently of the plugin-wide logging setting.
+	 *
+	 * @var LoggerInterface
+	 */
+	private LoggerInterface $rejection_logger;
+
 	private PersistentCounter $rejection_counter;
 
 	private SettingsStatus $settings_status;
 
 	private float $last_v3_score = 0;
 
-	/**
-	 * @param RecaptchaIntegration $integration
-	 * @param string[]             $payment_methods The methods that require captcha.
-	 * @param AssetGetter          $asset_getter
-	 * @param string               $asset_version
-	 * @param LoggerInterface      $logger
-	 * @param PersistentCounter    $rejection_counter
-	 * @param SettingsStatus       $settings_status
-	 */
+	private bool $checkout_block_rendered = false;
+
 	public function __construct(
 		RecaptchaIntegration $integration,
 		array $payment_methods,
@@ -61,7 +62,8 @@ class Recaptcha {
 		string $asset_version,
 		LoggerInterface $logger,
 		PersistentCounter $rejection_counter,
-		SettingsStatus $settings_status
+		SettingsStatus $settings_status,
+		LoggerInterface $rejection_logger
 	) {
 
 		$this->integration       = $integration;
@@ -71,6 +73,7 @@ class Recaptcha {
 		$this->logger            = $logger;
 		$this->rejection_counter = $rejection_counter;
 		$this->settings_status   = $settings_status;
+		$this->rejection_logger  = $rejection_logger;
 	}
 
 	protected function should_use_recaptcha(): bool {
@@ -115,8 +118,6 @@ class Recaptcha {
 			return;
 		}
 
-		$is_blocks = has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' );
-
 		wp_enqueue_script(
 			'ppcp-recaptcha',
 			'https://www.google.com/recaptcha/api.js?render=' . esc_attr( $this->integration->get_option( 'site_key_v3' ) ),
@@ -125,15 +126,10 @@ class Recaptcha {
 			true
 		);
 
-		$dependencies = array( 'ppcp-recaptcha' );
-		if ( $is_blocks ) {
-			$dependencies[] = 'wp-data';
-		}
-
 		wp_enqueue_script(
 			'ppcp-recaptcha-handler',
 			$this->asset_getter->get_asset_url( 'recaptcha-handler.js' ),
-			$dependencies,
+			array( 'ppcp-recaptcha' ),
 			$this->asset_version,
 			true
 		);
@@ -145,7 +141,6 @@ class Recaptcha {
 				'siteKeyV3'                   => $this->integration->get_option( 'site_key_v3' ),
 				'siteKeyV2'                   => $this->integration->get_option( 'site_key_v2' ),
 				'theme'                       => $this->integration->get_option( 'v2_theme', 'light' ),
-				'isBlocks'                    => $is_blocks,
 				'isCheckout'                  => is_checkout(),
 				'isCart'                      => is_cart(),
 				'isSingleProduct'             => is_product(),
@@ -155,6 +150,40 @@ class Recaptcha {
 			)
 		);
 	}
+
+	/**
+	 * Enqueues the assets when the Checkout Block renders.
+	 *
+	 * Merchants can put the Checkout Block on any page, but `is_checkout()`
+	 * only recognizes the WooCommerce checkout page.
+	 *
+	 * @param mixed $parsed_block The block data from the `render_block_data` filter.
+	 */
+	public function handle_block_render( $parsed_block ): void {
+		if ( ! $this->is_front_end_page_view() ) {
+			return;
+		}
+
+		if ( ! is_array( $parsed_block ) ) {
+			return;
+		}
+
+		$block_name = $parsed_block['blockName'] ?? '';
+		if ( 'woocommerce/checkout' !== $block_name ) {
+			return;
+		}
+
+		$this->checkout_block_rendered = true;
+
+		// On the WooCommerce checkout page, the assets are already enqueued.
+		$is_already_enqueued = wp_script_is( 'ppcp-recaptcha-handler' );
+		if ( $is_already_enqueued ) {
+			return;
+		}
+
+		$this->enqueue_scripts();
+	}
+
 	public function render_v2_container(): string {
 		if ( ! $this->should_use_recaptcha() ) {
 			return '';
@@ -184,11 +213,41 @@ class Recaptcha {
 			return 'cart';
 		}
 
+		if ( $this->is_block_checkout_page() ) {
+			return 'checkout-block-express';
+		}
+
 		if ( is_checkout() ) {
-			return has_block( 'woocommerce/checkout' ) ? 'checkout-block-express' : 'checkout';
+			return 'checkout';
 		}
 
 		return null;
+	}
+
+	private function is_block_checkout_page(): bool {
+		if ( $this->checkout_block_rendered ) {
+			return true;
+		}
+
+		return is_checkout() && has_block( 'woocommerce/checkout' );
+	}
+
+	/**
+	 * Unlike `is_checkout()`, also true for a Checkout Block on a page
+	 * that is not the WooCommerce checkout page.
+	 */
+	private function is_any_checkout_page(): bool {
+		return is_checkout() || $this->checkout_block_rendered;
+	}
+
+	/**
+	 * True when the request is a front-end page view.
+	 * REST, admin, cron and WP-CLI requests never reach `template_redirect`.
+	 * WooCommerce handles its `wc-ajax` requests on `template_redirect`,
+	 * thus the AJAX check.
+	 */
+	private function is_front_end_page_view(): bool {
+		return did_action( 'template_redirect' ) > 0 && ! wp_doing_ajax();
 	}
 
 	/**
@@ -225,7 +284,7 @@ class Recaptcha {
 	 * page — surfaces whose availability is independent of the smart-button location.
 	 */
 	private function has_protected_gateway_on_current_page(): bool {
-		if ( ! is_checkout() && ! is_add_payment_method_page() ) {
+		if ( ! $this->is_any_checkout_page() && ! is_add_payment_method_page() ) {
 			return false;
 		}
 
@@ -367,84 +426,69 @@ class Recaptcha {
 	}
 
 	/**
-	 * @param  WP_Error|null|true $errors
+	 * Verifies the reCAPTCHA token on Store API order placement.
 	 *
-	 * @return WP_Error|null|true WP_Error
+	 * @throws RouteException When the token is missing or the verification fails.
 	 */
-	public function validate_blocks_request( $errors ) {
-		$request_uri = sanitize_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
-
-		if (
-			! is_wp_error( $errors ) && strpos(
-				$request_uri,
-				'/wc/store/v1/checkout'
-			) !== false
-		) {
-			if ( ! $this->should_use_recaptcha() ) {
-				return $errors;
-			}
-
-			$request_body = file_get_contents( 'php://input' );
-			if ( ! is_string( $request_body ) ) {
-				return $errors;
-			}
-			$data = json_decode( $request_body, true );
-			// Not an order creation request.
-			if ( ! is_array( $data ) || ! isset( $data['billing_address'] ) ) {
-				return $errors;
-			}
-			$ext_data = $data['extensions']['ppcp_recaptcha'] ?? null;
-
-			$payment_method = sanitize_text_field( $data['payment_method'] ?? '' );
-
-			if ( ! in_array( $payment_method, $this->payment_methods, true ) ) {
-				return $errors;
-			}
-
-			if ( empty( $ext_data ) || empty( $ext_data['token'] ) || empty( $ext_data['version'] ) ) {
-				return new WP_Error(
-					self::ERROR_CODE_MISSING_TOKEN,
-					__(
-						'Please complete the CAPTCHA verification.',
-						'woocommerce-paypal-payments'
-					),
-					array( 'status' => 400 )
-				);
-			}
-
-			$token   = sanitize_text_field( $ext_data['token'] );
-			$version = sanitize_text_field( $ext_data['version'] );
-
-			// Initialize WooCommerce session as it doesn't exist in REST API requests.
-			WC()->initialize_session();
-
-			$success = ( $version === 'v3' )
-				? $this->verify_v3(
-					$token,
-					$this->integration->get_option( 'secret_key_v3' ),
-					$this->score_threshold()
-				)
-				: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
-
-			if ( ! $success ) {
-				if ( $version === 'v3' ) {
-					$content = $data;
-					unset( $content['extensions'] );
-					$this->log_rejection( 'Block Checkout Submission', $content );
-				}
-
-				return new WP_Error(
-					self::ERROR_CODE_VERIFICATION_FAILED,
-					__(
-						'CAPTCHA verification failed. Please try again.',
-						'woocommerce-paypal-payments'
-					),
-					array( 'status' => 403 )
-				);
-			}
+	public function validate_store_api_checkout( WC_Order $order, WP_REST_Request $request ): void {
+		// The Checkout route also fires this hook on PATCH, which does not place the order.
+		if ( 'POST' !== $request->get_method() ) {
+			return;
 		}
 
-		return $errors;
+		if ( ! $this->should_use_recaptcha() ) {
+			return;
+		}
+
+		if ( ! in_array( $order->get_payment_method(), $this->payment_methods, true ) ) {
+			return;
+		}
+
+		$extensions = $request->get_param( 'extensions' );
+		$ext_data   = is_array( $extensions ) ? ( $extensions['ppcp_recaptcha'] ?? null ) : null;
+
+		if (
+			! is_array( $ext_data )
+			|| empty( $ext_data['token'] ) || ! is_string( $ext_data['token'] )
+			|| empty( $ext_data['version'] ) || ! is_string( $ext_data['version'] )
+		) {
+			throw new RouteException(
+				self::ERROR_CODE_MISSING_TOKEN,
+				esc_html__(
+					'Please complete the CAPTCHA verification.',
+					'woocommerce-paypal-payments'
+				),
+				400
+			);
+		}
+
+		$token   = sanitize_text_field( $ext_data['token'] );
+		$version = sanitize_text_field( $ext_data['version'] );
+
+		$success = ( $version === 'v3' )
+			? $this->verify_v3(
+				$token,
+				$this->integration->get_option( 'secret_key_v3' ),
+				$this->score_threshold()
+			)
+			: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
+
+		if ( ! $success ) {
+			if ( $version === 'v3' ) {
+				$content = $request->get_params();
+				unset( $content['extensions'] );
+				$this->log_rejection( 'Block Checkout Submission', $content );
+			}
+
+			throw new RouteException(
+				self::ERROR_CODE_VERIFICATION_FAILED,
+				esc_html__(
+					'CAPTCHA verification failed. Please try again.',
+					'woocommerce-paypal-payments'
+				),
+				403
+			);
+		}
 	}
 
 	public function add_result_meta( WC_Order $order ): void {
@@ -767,10 +811,9 @@ class Recaptcha {
 
 		$cart = $this->cart_contents();
 
-		$this->logger->debug(
+		$this->rejection_logger->debug(
 			"Rejected by v3 reCAPTCHA at {$endpoint_name} with score {$this->last_v3_score}, IP: {$ip}, User Agent: {$user_agent}.",
 			array(
-				'source'  => self::REJECTION_LOGGER_SOURCE,
 				'request' => $request_data,
 				'cart'    => $cart,
 			)

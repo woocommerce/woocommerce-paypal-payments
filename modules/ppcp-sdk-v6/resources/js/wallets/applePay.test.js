@@ -13,6 +13,12 @@ jest.mock( '../utils/errorHandler', () => ( {
 	handleError: ( ...args ) => mockHandleError( ...args ),
 } ) );
 
+const mockLogEvent = jest.fn();
+jest.mock( '../utils/diagnostics', () => ( {
+	...jest.requireActual( '../utils/diagnostics' ),
+	logEvent: ( ...args ) => mockLogEvent( ...args ),
+} ) );
+
 const mockResolveWalletTotal = jest.fn();
 jest.mock( '../methods/contextTotal', () => ( {
 	resolveContextTotal: ( ...args ) => mockResolveWalletTotal( ...args ),
@@ -74,11 +80,9 @@ jest.mock( '../methods/methodShipping', () => ( {
 } ) );
 
 const mockAttachShippingHandlers = jest.fn();
-const mockApplePayFailure = jest.fn();
 jest.mock( './applePayShipping', () => ( {
 	attachShippingHandlers: ( ...args ) =>
 		mockAttachShippingHandlers( ...args ),
-	applePayFailure: ( ...args ) => mockApplePayFailure( ...args ),
 } ) );
 
 const mockSpinnerBlock = jest.fn();
@@ -97,7 +101,14 @@ jest.mock(
 	{ virtual: true }
 );
 
+const mockSetSdkBusy = jest.fn();
+jest.mock( '../tokenRefresh', () => ( {
+	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
+} ) );
+
 import { renderApplePay } from './applePay';
+
+const isSdkBusy = () => mockSetSdkBusy.mock.calls.at( -1 )?.[ 0 ] === true;
 
 /**
  * Drains pending microtasks.
@@ -206,6 +217,7 @@ const paymentEvent = {
 
 let ApplePaySessionMock;
 let mockJQueryTrigger;
+let wooCommerceEvents;
 let shippingController;
 
 beforeEach( () => {
@@ -224,9 +236,6 @@ beforeEach( () => {
 	} );
 	mockPayWithWallet.mockResolvedValue( undefined );
 	mockWalletShippingRequired.mockReturnValue( false );
-	mockApplePayFailure.mockImplementation( ( error, status ) => ( {
-		status,
-	} ) );
 	shippingController = {
 		quote: jest.fn(),
 		current: jest.fn(),
@@ -246,7 +255,12 @@ beforeEach( () => {
 	window.ApplePaySession = ApplePaySessionMock;
 
 	mockJQueryTrigger = jest.fn();
-	global.jQuery = jest.fn( () => ( { trigger: mockJQueryTrigger } ) );
+	wooCommerceEvents = new EventTarget();
+	global.jQuery = jest.fn( () => ( {
+		trigger: mockJQueryTrigger,
+		one: ( name, handler ) =>
+			wooCommerceEvents.addEventListener( name, handler, { once: true } ),
+	} ) );
 } );
 
 afterEach( () => {
@@ -340,21 +354,15 @@ describe( 'obsolescence', () => {
 
 describe( 'as its own payment-method row (gateway set)', () => {
 	test( 'reveals the row once eligible', async () => {
-		const { config } = await render( { gateway } );
+		await render( { gateway } );
 
-		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
-			gateway,
-			config
-		);
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith( gateway );
 	} );
 
 	test( 'passes no gateway on the express path, so nothing is revealed', async () => {
-		const { config } = await render();
+		await render();
 
-		expect( mockRevealWalletGateway ).toHaveBeenCalledWith(
-			undefined,
-			config
-		);
+		expect( mockRevealWalletGateway ).toHaveBeenCalledWith( undefined );
 	} );
 
 	test( 'never reveals a row the config vetoes', async () => {
@@ -585,6 +593,87 @@ describe( 'a click on the rendered button', () => {
 	} );
 } );
 
+describe( 'holding a pending SDK swap while the sheet is open', () => {
+	test( 'a tap that finds no total does not hold it', async () => {
+		mockWatchSheetTotal.mockReturnValue( { get: jest.fn( () => '' ) } );
+
+		const { wrapper } = await render();
+		wrapper.querySelector( 'apple-pay-button' ).click();
+
+		expect( isSdkBusy() ).toBe( false );
+	} );
+
+	test( 'holds it from the tap on', async () => {
+		await clickAndGetSession();
+
+		expect( isSdkBusy() ).toBe( true );
+	} );
+
+	test( 'releases it when Apple rejects the request', async () => {
+		ApplePaySessionMock.mockImplementationOnce( () => {
+			throw new Error( 'bad supportedNetworks' );
+		} );
+
+		await clickAndGetSession();
+
+		expect( isSdkBusy() ).toBe( false );
+	} );
+
+	test.each( [
+		[
+			'the buyer dismisses the sheet',
+			() => ( {} ),
+			async ( appleSession ) => appleSession.oncancel(),
+		],
+		[
+			'merchant validation fails',
+			() => ( {
+				session: makeSession( {
+					validateMerchant: jest
+						.fn()
+						.mockRejectedValue( new Error( 'unregistered domain' ) ),
+				} ),
+			} ),
+			async ( appleSession ) => {
+				appleSession.onvalidatemerchant( { validationURL: 'https://x' } );
+				await flushPromises();
+			},
+		],
+		[
+			'the payment fails',
+			() => {
+				mockPayWithWallet.mockRejectedValueOnce( new Error( 'declined' ) );
+				return {};
+			},
+			async ( appleSession ) => {
+				appleSession.onpaymentauthorized( paymentEvent );
+				await flushPromises();
+			},
+		],
+		[
+			'the payment succeeds',
+			() => ( {} ),
+			async ( appleSession ) => {
+				appleSession.onpaymentauthorized( paymentEvent );
+				await flushPromises();
+				expect( appleSession.completePayment ).toHaveBeenCalledWith(
+					'STATUS_SUCCESS'
+				);
+			},
+		],
+	] )(
+		'keeps holding it while the sheet is open and releases it when %s',
+		async ( _label, arrange, closeSheet ) => {
+			const { appleSession } = await clickAndGetSession( arrange() );
+			expect( isSdkBusy() ).toBe( true );
+
+			await closeSheet( appleSession );
+
+			expect( isSdkBusy() ).toBe( false );
+		}
+	);
+} );
+
 describe( 'surface overrides', () => {
 	test( 'a height override wins over the shared button height', async () => {
 		const { wrapper } = await render( {
@@ -730,6 +819,11 @@ describe( 'onvalidatemerchant', () => {
 			false
 		);
 		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
+		expect( mockLogEvent ).toHaveBeenCalledWith(
+			config,
+			'apple-pay-merchant-validation-failed',
+			'unregistered domain'
+		);
 
 		wrapper.querySelector( 'apple-pay-button' ).click();
 		expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 2 );
@@ -836,6 +930,16 @@ describe( 'onpaymentauthorized', () => {
 		expect( callOrder ).toEqual( [ 'commit', 'payWithSession' ] );
 	} );
 
+	test( 'creates its shipping controller to demand an exact total at commit', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+
+		await clickAndGetSession();
+
+		expect( mockCreateShippingController ).toHaveBeenCalledWith(
+			expect.objectContaining( { exactTotal: true } )
+		);
+	} );
+
 	test( 'never commits a shipping address when this context requires no shipping', async () => {
 		mockWalletShippingRequired.mockReturnValue( false );
 		const { appleSession } = await clickAndGetSession();
@@ -858,9 +962,24 @@ describe( 'onpaymentauthorized', () => {
 		await flushPromises();
 
 		expect( mockPayWithWallet ).not.toHaveBeenCalled();
-		expect( appleSession.completePayment ).toHaveBeenCalledWith( {
-			status: 'STATUS_FAILURE',
-		} );
+		expect( appleSession.abort ).toHaveBeenCalledTimes( 1 );
+		expect( appleSession.completePayment ).not.toHaveBeenCalled();
+	} );
+
+	test( 'closes the sheet and shows the shopper-facing message on the page when the commit is refused with one', async () => {
+		mockWalletShippingRequired.mockReturnValue( true );
+		const refusal = new Error( 'This address cannot be shipped to.' );
+		refusal.isUserFacing = true;
+		shippingController.commit.mockRejectedValueOnce( refusal );
+		const { appleSession } = await clickAndGetSession();
+
+		appleSession.onpaymentauthorized( paymentEvent );
+		await flushPromises();
+
+		expect( mockPayWithWallet ).not.toHaveBeenCalled();
+		expect( appleSession.abort ).toHaveBeenCalledTimes( 1 );
+		expect( appleSession.completePayment ).not.toHaveBeenCalled();
+		expect( mockHandleError ).toHaveBeenCalledWith( refusal );
 	} );
 
 	test( 'pays with the configured gateway id when Apple Pay is its own row', async () => {
@@ -883,21 +1002,51 @@ describe( 'onpaymentauthorized', () => {
 		expect( mockSpinnerUnblock ).not.toHaveBeenCalled();
 	} );
 
+	describe( 'when the checkout form submit is rejected after success', () => {
+		test( 'removes the spinner and lets the button open a new sheet after checkout_error', async () => {
+			const { appleSession, wrapper } = await clickAndGetSession();
+			appleSession.onpaymentauthorized( paymentEvent );
+			await flushPromises();
+
+			wooCommerceEvents.dispatchEvent( new Event( 'checkout_error' ) );
+
+			expect( mockSpinnerUnblock ).toHaveBeenCalledTimes( 1 );
+
+			wrapper.querySelector( 'apple-pay-button' ).click();
+			expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test( 'keeps the spinner and ignores further taps without a checkout_error', async () => {
+			const { appleSession, wrapper } = await clickAndGetSession();
+			appleSession.onpaymentauthorized( paymentEvent );
+			await flushPromises();
+
+			wrapper.querySelector( 'apple-pay-button' ).click();
+
+			expect( mockSpinnerUnblock ).not.toHaveBeenCalled();
+			expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 1 );
+		} );
+	} );
+
 	test( 'recovers the page and releases the guard when the payment throws', async () => {
 		mockPayWithWallet.mockRejectedValueOnce( new Error( 'declined' ) );
-		const { appleSession, wrapper } = await clickAndGetSession();
+		const { config, appleSession, wrapper } = await clickAndGetSession();
 
 		appleSession.onpaymentauthorized( paymentEvent );
 		await flushPromises();
 
-		expect( appleSession.completePayment ).toHaveBeenCalledWith( {
-			status: 'STATUS_FAILURE',
-		} );
+		expect( appleSession.abort ).toHaveBeenCalledTimes( 1 );
+		expect( appleSession.completePayment ).not.toHaveBeenCalled();
 		expect( mockSpinnerUnblock ).toHaveBeenCalledTimes( 1 );
 		expect( mockJQueryTrigger ).toHaveBeenCalledWith(
 			'wc_fragment_refresh'
 		);
 		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
+		expect( mockLogEvent ).toHaveBeenCalledWith(
+			config,
+			'apple-pay-authorization-failed',
+			'declined'
+		);
 
 		wrapper.querySelector( 'apple-pay-button' ).click();
 		expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 2 );

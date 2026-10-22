@@ -51,12 +51,17 @@ the following table are met.
 | Payment Method | Country | Seller Type | Subscriptions | Cards | Notes                         |
 |----------------|---------|-------------|---------------|-------|-------------------------------|
 | Venmo          | US      | *any*       | *any*         | *any* | Always                        |
-| Pay Later      | US      | *any*       | *any*         | *any* | Always                        |
+| Pay Later      | US      | *any*       | *any*         | *any* | Always, see note below        |
 | ACDC           | US      | Business    | *any*         | ✅     | Greyed out for Casual Sellers |
 | BCDC           | US      | *any*       | *any*         | ✅     |                               |
 | Apple Pay      | US      | Business    | *any*         | ✅     | Based on feature eligibility  |
 | Google Pay     | US      | Business    | *any*         | ✅     | Based on feature eligibility  |
 | All APMs       | US      | Business    | *any*         | ✅     | Based on feature eligibility  |
+
+Pay Later is enabled together with the other new-merchant defaults, in `SettingsDataManager::apply_payment_methods()`. 
+The gateway sync in `SettingsDataManager::toggle_payment_gateways()` runs after every connection
+but leaves Pay Later untouched. 
+A reconnect therefore keeps the merchant's choice, while "Start Over" enables Pay Later again.
 
 ### Settings
 

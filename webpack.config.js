@@ -23,8 +23,12 @@ const modulesAssets = {
 	'ppcp-blocks': [
 		'js/checkout-block.js',
 		'js/advanced-card-checkout-block.js',
+		'js/ProductPayLaterMessagesBlock/product-paylater-block.js',
+		'js/ProductSmartButtonsBlock/product-smart-buttons-block.js',
+		'js/MiniCartSmartButtonsBlock/mini-cart-smart-buttons-block.js',
 		'css/gateway.scss',
 		'css/gateway-editor.scss',
+		'css/mini-cart-buttons.scss',
 	],
 	'ppcp-button': [
 		'js/button.js',

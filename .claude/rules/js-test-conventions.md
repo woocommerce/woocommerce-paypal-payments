@@ -6,6 +6,6 @@ paths:
 
 Hard rules about how to write JS unit tests. Violations waste time and money.
 
-**Why:** Jest tests written outside the js-unit-test-writer agent do not follow the existing suite's conventions (colocation, alias imports, describe/test naming, behavior-over-plumbing assertions).
+**Why:** Jest tests written outside the `write-js-unit-test` agent do not follow the existing suite's conventions (colocation, alias imports, describe/test naming, behavior-over-plumbing assertions).
 
-**How to apply:** Whenever JS/TS unit tests need to be written or updated, spawn the `js-unit-test-writer` agent with full context. Do not write test code inline, not even helpers or mocks.
+**How to apply:** Whenever JS/TS unit tests need to be written or updated, spawn the `write-js-unit-test` agent with full context. Do not write test code inline, not even helpers or mocks. That agent never runs what it writes: verify its output with the `ci` agent.

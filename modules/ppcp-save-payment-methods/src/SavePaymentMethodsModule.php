@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\FreeTrialVaultReturnEndpoint;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -142,13 +143,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 							// Only vault Apple Pay when a subscription is being purchased.
 							// Apple guidelines forbid reusing Apple Pay for general returning-buyer
 							// checkout, so vaulting only serves merchant-initiated renewals.
-							$subscription_helper = $c->get( 'wc-subscriptions.helper' );
-							assert( $subscription_helper instanceof SubscriptionHelper );
-							if (
-								! $subscription_helper->cart_contains_subscription()
-								&& ! $subscription_helper->current_product_is_subscription()
-								&& ! $subscription_helper->order_pay_contains_subscription()
-							) {
+							if ( ! $this->is_subscription_purchase( $c, $request_data ) ) {
 								return $data;
 							}
 
@@ -162,6 +157,12 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 							}
 
 							if ( ! in_array( $funding_source, array( 'paypal', 'venmo' ), true ) ) {
+								return $data;
+							}
+
+							// PayPal fails the Venmo approval when a one-time purchase asks to
+							// vault, so Venmo is only vaulted when renewals need the token.
+							if ( $funding_source === 'venmo' && ! $this->is_subscription_purchase( $c, $request_data ) ) {
 								return $data;
 							}
 
@@ -452,6 +453,36 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 				);
 
 				add_action(
+					'wc_ajax_' . FreeTrialVaultReturnEndpoint::ENDPOINT,
+					static function () use ( $c ) {
+						$endpoint = $c->get( 'save-payment-methods.endpoint.free-trial-vault-return' );
+						assert( $endpoint instanceof FreeTrialVaultReturnEndpoint );
+
+						$endpoint->handle_request();
+					}
+				);
+
+				// A $0 free-trial subscription paid with the native "Place order"
+				// button has no saved PayPal account yet; the gateway asks here for a
+				// vault-approval redirect so the buyer can approve saving their account
+				// at PayPal, instead of failing with "No saved PayPal account.".
+				add_filter(
+					'woocommerce_paypal_payments_free_trial_vault_redirect_url',
+					static function ( $url, WC_Order $wc_order ) use ( $c ): string {
+						if ( is_string( $url ) && '' !== $url ) {
+							return $url;
+						}
+
+						$redirect = $c->get( 'save-payment-methods.free-trial-vault-redirect' );
+						assert( $redirect instanceof FreeTrialVaultRedirect );
+
+						return $redirect->create_redirect_url( $wc_order );
+					},
+					10,
+					2
+				);
+
+				add_action(
 					'woocommerce_paypal_payments_before_delete_payment_token',
 					function ( string $token_id ) use ( $c ) {
 						try {
@@ -543,5 +574,34 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 		}
 
 		return $localized_script_data;
+	}
+
+	/**
+	 * Whether the order being created pays for a subscription.
+	 *
+	 * The create-order AJAX request is not an order-pay page, so a pay-for-order
+	 * subscription is detected from the order ID in the request data.
+	 *
+	 * @param ContainerInterface $c            The container.
+	 * @param array              $request_data The create-order request data.
+	 */
+	private function is_subscription_purchase( ContainerInterface $c, array $request_data ): bool {
+		$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
+
+		if (
+			$subscription_helper->cart_contains_subscription()
+			|| $subscription_helper->current_product_is_subscription()
+			|| $subscription_helper->order_pay_contains_subscription()
+		) {
+			return true;
+		}
+
+		$order_id = (int) ( $request_data['order_id'] ?? 0 );
+
+		return 'pay-now' === ( $request_data['context'] ?? '' )
+			&& $order_id > 0
+			&& $subscription_helper->plugin_is_active()
+			&& $subscription_helper->has_subscription( $order_id );
 	}
 }

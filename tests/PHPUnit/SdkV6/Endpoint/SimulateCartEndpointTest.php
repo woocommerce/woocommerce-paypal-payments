@@ -60,6 +60,16 @@ class SimulateCartEndpointTest extends TestCase {
 	}
 
 	/**
+	 * Stubs WC() with no session, so prevent_session_persistence() takes its
+	 * no-op path and the test stays about the endpoint's own behaviour.
+	 */
+	private function stub_wc_without_session(): void {
+		$wc          = Mockery::mock( 'WooCommerce' );
+		$wc->session = null;
+		when( 'WC' )->justReturn( $wc );
+	}
+
+	/**
 	 * GIVEN a posted product for which the merchant has cart simulation enabled
 	 * WHEN the request is handled
 	 * THEN the response contains only the simulated total and the shop's currency code,
@@ -71,6 +81,7 @@ class SimulateCartEndpointTest extends TestCase {
 		when( 'wc_get_price_decimals' )->justReturn( 2 );
 		when( 'wc_format_decimal' )->justReturn( '19.99' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		$this->stub_wc_without_session();
 
 		$posted_products = array( array( 'product' => 'a-product', 'quantity' => 2 ) );
 		$this->stub_posted_products( $posted_products );
@@ -104,6 +115,41 @@ class SimulateCartEndpointTest extends TestCase {
 		when( 'wc_format_decimal' )->justReturn( '19.99' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wp_send_json_success' )->justReturn( null );
+		$this->stub_wc_without_session();
+
+		$posted_products = array( array( 'product' => 'a-product', 'quantity' => 1 ) );
+		$this->stub_posted_products( $posted_products );
+
+		// The only source of a total: nothing reads WC()->cart.
+		$this->cart_simulator->shouldReceive( 'simulate' )
+			->once()
+			->andReturn( array( 'total' => 19.99, 'shipping_fee' => 0.0 ) );
+
+		$this->sut->handle_request();
+	}
+
+	/**
+	 * GIVEN a WooCommerce session with WC_Session_Handler::save_data registered on the
+	 * shutdown hook - the mechanism that overwrites the whole session row from a stale
+	 * snapshot and can wipe a concurrent shopper's cart
+	 * WHEN a simulate-cart request is handled
+	 * THEN that shutdown persistence is removed before the simulation runs, so this
+	 * read-only request has nothing left to write back to the session
+	 */
+	public function test_removes_session_persistence_before_simulating(): void {
+		when( 'apply_filters' )->justReturn( true );
+		when( 'wc_get_price_decimals' )->justReturn( 2 );
+		when( 'wc_format_decimal' )->justReturn( '19.99' );
+		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		when( 'wp_send_json_success' )->justReturn( null );
+
+		$session  = Mockery::mock( \WC_Session::class );
+		$callback = array( $session, 'save_data' );
+		add_action( 'shutdown', $callback, 20 );
+
+		$wc          = Mockery::mock();
+		$wc->session = $session;
+		when( 'WC' )->justReturn( $wc );
 
 		$posted_products = array( array( 'product' => 'a-product', 'quantity' => 1 ) );
 		$this->stub_posted_products( $posted_products );
@@ -112,9 +158,9 @@ class SimulateCartEndpointTest extends TestCase {
 			->once()
 			->andReturn( array( 'total' => 19.99, 'shipping_fee' => 0.0 ) );
 
-		expect( 'WC' )->never();
-
 		$this->sut->handle_request();
+
+		$this->assertFalse( has_action( 'shutdown', $callback, 20 ) );
 	}
 
 	/**

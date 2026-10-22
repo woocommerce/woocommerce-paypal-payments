@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\SdkV6\Endpoint
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\SdkV6\Endpoint;
 
@@ -16,96 +16,64 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
-use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 
-/**
- * Class ClientTokenEndpoint
- */
 class ClientTokenEndpoint implements EndpointInterface {
 
-	const ENDPOINT = 'ppc-sdk-v6-client-token';
+	public const ENDPOINT = 'ppc-sdk-v6-client-token';
+
+	private const REFRESH_BEFORE_EXPIRY = 60;
 
 	/**
-	 * The request data helper.
-	 *
-	 * @var RequestData
+	 * Minimum seconds until the next browser refresh, also after a failed one.
 	 */
+	private const MIN_REFRESH_DELAY = 10;
+
 	private RequestData $request_data;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
 	private LoggerInterface $logger;
-
-	/**
-	 * The SDK client token generator.
-	 *
-	 * @var SdkClientToken
-	 */
 	private SdkClientToken $sdk_client_token;
 
-	/**
-	 * The rate limiter.
-	 *
-	 * @var RateLimiter
-	 */
-	private RateLimiter $rate_limiter;
-
-	/**
-	 * ClientTokenEndpoint constructor.
-	 *
-	 * @param RequestData     $request_data The request data helper.
-	 * @param LoggerInterface $logger The logger.
-	 * @param SdkClientToken  $sdk_client_token The SDK client token generator.
-	 * @param RateLimiter     $rate_limiter The rate limiter.
-	 */
 	public function __construct(
 		RequestData $request_data,
 		LoggerInterface $logger,
-		SdkClientToken $sdk_client_token,
-		RateLimiter $rate_limiter
+		SdkClientToken $sdk_client_token
 	) {
 		$this->request_data     = $request_data;
 		$this->logger           = $logger;
 		$this->sdk_client_token = $sdk_client_token;
-		$this->rate_limiter     = $rate_limiter;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public static function nonce(): string {
-		return self::ENDPOINT;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	public function handle_request(): void {
 		try {
-			$this->request_data->read_request( $this->nonce() );
+			$this->request_data->read_request( self::nonce() );
 		} catch ( NonceValidationException $error ) {
 			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		}
 
-		if ( $this->rate_limiter->is_limited() ) {
-			$this->logger->warning( 'SDK v6 client token rate limit exceeded.' );
-			wp_send_json_error(
-				array( 'message' => 'Rate limit exceeded. Please try again later.' ),
-				429
-			);
-		}
-
-		$this->rate_limiter->hit();
-
 		try {
-			$token = $this->sdk_client_token->sdk_client_token();
+			$token = $this->sdk_client_token->sdk_client_token_data();
+
+			$refresh_in = max( self::MIN_REFRESH_DELAY, $token['expires_in'] - self::REFRESH_BEFORE_EXPIRY );
+
+			/**
+			 * Filters the seconds until the browser gets a new client token.
+			 *
+			 * Only a shorter value takes effect, down to a fixed minimum.
+			 *
+			 * @param int $refresh_in Seconds until the refresh.
+			 */
+			$filtered_refresh_in = apply_filters(
+				'woocommerce_paypal_payments_sdk_v6_client_token_refresh_in',
+				$refresh_in
+			);
+			if ( is_numeric( $filtered_refresh_in ) ) {
+				$refresh_in = min( $refresh_in, max( self::MIN_REFRESH_DELAY, (int) $filtered_refresh_in ) );
+			}
 
 			wp_send_json_success(
 				array(
-					'client_token' => $token,
+					'client_token' => $token['token'],
+					'refresh_in'   => $refresh_in,
+					'retry_in'     => self::MIN_REFRESH_DELAY,
 				)
 			);
 		} catch ( PayPalApiException $exception ) {
@@ -115,5 +83,9 @@ class ClientTokenEndpoint implements EndpointInterface {
 			$this->logger->error( 'SDK v6 client token runtime error: ' . $exception->getMessage() );
 			wp_send_json_error( array( 'message' => 'Failed to generate client token.' ), 500 );
 		}
+	}
+
+	public static function nonce(): string {
+		return self::ENDPOINT;
 	}
 }

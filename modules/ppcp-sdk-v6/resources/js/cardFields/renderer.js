@@ -3,9 +3,7 @@
  *
  * Mounts number/expiry/CVV into the existing WC card-form inputs and runs a new
  * card through the v6 card session (3D Secure included) before letting the
- * native submit through to CreditCardGateway::process_payment(). The SDK has no
- * cardholder-name component, so that input stays a plain field forwarded to
- * create-order.
+ * native submit through to CreditCardGateway::process_payment().
  *
  * Scope: a fresh card, one-time or the $0 free-trial variant that saves via a
  * setup token. A selected saved token is left to the native submit.
@@ -13,9 +11,11 @@
  * @package
  */
 
-import { mountField } from './mountField';
+import { mountField, unmountField } from './mountField';
+import { FIELD_TYPES, trackFieldState, fieldStateError } from './fieldState';
 import Spinner from '@ppcp-button/Helper/Spinner';
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange, setSdkBusy } from '../tokenRefresh';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
 import {
 	createCardSetupToken,
@@ -30,30 +30,27 @@ import {
 	userFacingError,
 } from '../utils/cardDeclineMessages';
 
-const FIELD_TYPES = [ 'number', 'expiry', 'cvv' ];
-
 /**
  * Reads the billing address from the classic checkout form for the card
- * session submit. The v6 SDK uses it for AVS/3D Secure verification, so
- * omitting it can make an otherwise-valid card fail authentication.
+ * session submit: countryCode is required, postalCode is included when present.
  *
  * @return {Object|undefined} A { billingAddress } options object, or undefined
- *                            when no postal code is present (e.g. pay-for-order).
+ *                            when no country is present.
  */
 function billingAddressForSubmit() {
-	const postalCode = document
-		.querySelector( '#billing_postcode' )
-		?.value?.trim();
-	if ( ! postalCode ) {
-		return undefined;
-	}
-
-	const billingAddress = { postalCode };
 	const countryCode = document
 		.querySelector( '#billing_country' )
 		?.value?.trim();
-	if ( countryCode ) {
-		billingAddress.countryCode = countryCode;
+	if ( ! countryCode ) {
+		return undefined;
+	}
+
+	const billingAddress = { countryCode };
+	const postalCode = document
+		.querySelector( '#billing_postcode' )
+		?.value?.trim();
+	if ( postalCode ) {
+		billingAddress.postalCode = postalCode;
 	}
 
 	return { billingAddress };
@@ -152,6 +149,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 	}
 
 	let cardSessionPromise = null;
+	let getFieldState = null;
 	let submitting = false;
 	let boundPlaceOrderButton = null;
 
@@ -159,14 +157,13 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 	 * Re-queries the current card-form inputs, since a DOM swap invalidates
 	 * any previously queried references.
 	 *
-	 * @return {Object} The number/expiry/cvv/name input elements.
+	 * @return {Object} The number/expiry/cvv input elements.
 	 */
 	function getInputs() {
 		return {
 			number: document.querySelector( fields.number ),
 			expiry: document.querySelector( fields.expiry ),
 			cvv: document.querySelector( fields.cvv ),
-			name: fields.name ? document.querySelector( fields.name ) : null,
 		};
 	}
 
@@ -178,6 +175,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 				const cardSession = isFreeTrial()
 					? sdk.createCardFieldsSavePaymentSession()
 					: sdk.createCardFieldsOneTimePaymentSession();
+				getFieldState = trackFieldState( cardSession );
 
 				for ( const fieldType of FIELD_TYPES ) {
 					if ( inputs[ fieldType ] ) {
@@ -218,10 +216,19 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 		event.preventDefault();
 		event.stopImmediatePropagation();
 		spinner?.block();
+		setSdkBusy( true );
 
 		try {
 			const cardSession = await ensureCardSession();
 			const submitOptions = billingAddressForSubmit();
+
+			const fieldError = fieldStateError(
+				getFieldState(),
+				config.labels
+			);
+			if ( fieldError ) {
+				throw userFacingError( fieldError );
+			}
 
 			// Free trial: confirm a setup token and store it; the native submit
 			// that follows lets the gateway place the $0 order against it.
@@ -245,12 +252,9 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 				return;
 			}
 
-			// The name has no v6 field component; read the plain WC input.
-			const cardName = getInputs().name?.value?.trim() || '';
 			const { orderId } = await createCardOrder(
 				config,
 				config.page_context || 'checkout',
-				cardName,
                 shouldSavePaymentMethod(),
 			);
 			const result = submitOptions
@@ -274,7 +278,21 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 			handleError( error );
 		} finally {
 			submitting = false;
+			setSdkBusy( false );
 			spinner?.unblock();
+		}
+	}
+
+	function remountCardFields() {
+		cardSessionPromise = null;
+
+		const inputs = getInputs();
+		for ( const fieldType of FIELD_TYPES ) {
+			unmountField( inputs[ fieldType ] );
+		}
+
+		if ( isCardGatewaySelected( paymentMethod ) ) {
+			ensureCardSession().catch( handleError );
 		}
 	}
 
@@ -315,6 +333,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 	}
 
 	attach();
+	onSdkInstanceChange( remountCardFields );
 
 	if ( hasJQuery() ) {
 		jQuery( document.body ).on( 'updated_checkout', attach );

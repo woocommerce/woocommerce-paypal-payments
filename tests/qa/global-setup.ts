@@ -6,11 +6,15 @@ import { restLogin, guestStorageState } from '@inpsyde/playwright-utils/build';
 
 async function globalSetup( config: FullConfig ) {
 	const projectUse = config.projects[ 0 ].use;
+	// Playwright also accepts per-origin credential arrays; this suite configures a single set.
+	const httpCredentials = Array.isArray( projectUse.httpCredentials )
+		? projectUse.httpCredentials[ 0 ]
+		: projectUse.httpCredentials;
 
 	await restLogin( {
 		baseURL: projectUse.baseURL,
 		storageStatePath: String( projectUse.storageState ),
-		httpCredentials: projectUse.httpCredentials,
+		httpCredentials,
 		user: {
 			// @ts-ignore
 			username: process.env.WP_USERNAME,
@@ -21,7 +25,7 @@ async function globalSetup( config: FullConfig ) {
 
 	await guestStorageState( {
 		baseURL: projectUse.baseURL,
-		httpCredentials: projectUse.httpCredentials,
+		httpCredentials,
 		storageStatePath: `${ process.env.STORAGE_STATE_PATH }/guest.json`,
 	} );
 }

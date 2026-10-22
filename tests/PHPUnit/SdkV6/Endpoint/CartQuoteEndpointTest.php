@@ -287,6 +287,116 @@ class CartQuoteEndpointTest extends TestCase {
 	}
 
 	/**
+	 * GIVEN a wallet whose payment is bound to the displayed amount, so the commit
+	 * request demands an exact total
+	 * WHEN the recomputed total differs from the displayed total, lower or higher
+	 * THEN the shopper is refused with a message naming the new total
+	 * AND no quote is recorded for the payment
+	 *
+	 * @dataProvider exact_total_mismatch_provider
+	 */
+	public function test_exact_total_refuses_any_difference_from_the_displayed_total( string $expected_total, string $recomputed_total ): void {
+		when( 'get_option' )->justReturn( 'shipping' );
+
+		$this->stub_wc( $this->stub_cart( $recomputed_total ) );
+		$this->stub_request(
+			array(
+				'expected_total' => $expected_total,
+				'exact_total'    => true,
+			)
+		);
+
+		$captured_message = '';
+		expect( 'wp_send_json_error' )
+			->once()
+			->with(
+				Mockery::on(
+					static function ( $payload ) use ( &$captured_message ) {
+						$captured_message = $payload['message'] ?? '';
+
+						return true;
+					}
+				)
+			);
+		expect( 'wp_send_json_success' )->never();
+
+		$this->sut->handle_request();
+
+		$this->assertStringContainsString( $recomputed_total, $captured_message );
+
+		$meta = array();
+		$this->recorded_quote->apply_to_order( $this->order_with( '5.00', $meta ) );
+		$this->assertSame( array(), $meta );
+	}
+
+	public function exact_total_mismatch_provider(): array {
+		return array(
+			'total one cent lower than displayed is refused'  => array( '10.00', '9.99' ),
+			'total one cent higher than displayed is refused' => array( '10.00', '10.01' ),
+		);
+	}
+
+	/**
+	 * GIVEN a commit request that demands an exact total
+	 * WHEN the recomputed total equals the displayed total
+	 * THEN the quote is answered
+	 */
+	public function test_exact_total_accepts_a_matching_total(): void {
+		when( 'get_option' )->justReturn( 'shipping' );
+
+		$this->stub_wc( $this->stub_cart( '10.00' ) );
+		$this->stub_request(
+			array(
+				'expected_total' => '10.00',
+				'exact_total'    => true,
+			)
+		);
+
+		expect( 'wp_send_json_success' )
+			->once()
+			->with(
+				Mockery::on(
+					static function ( $payload ) {
+						return isset( $payload['total'] ) && '10.00' === $payload['total'];
+					}
+				)
+			);
+		expect( 'wp_send_json_error' )->never();
+
+		$this->sut->handle_request();
+	}
+
+	/**
+	 * GIVEN a commit request that does not demand an exact total
+	 * WHEN the recomputed total is lower than the displayed total
+	 * THEN the quote is answered
+	 * AND the displayed total is recorded, so the order is annotated with the difference
+	 */
+	public function test_lower_total_without_exact_total_is_accepted_and_recorded(): void {
+		when( 'get_option' )->justReturn( 'shipping' );
+
+		$this->stub_wc( $this->stub_cart( '9.99' ) );
+		$this->stub_request( array( 'expected_total' => '10.00' ) );
+
+		expect( 'wp_send_json_success' )
+			->once()
+			->with(
+				Mockery::on(
+					static function ( $payload ) {
+						return isset( $payload['total'] ) && '9.99' === $payload['total'];
+					}
+				)
+			);
+		expect( 'wp_send_json_error' )->never();
+
+		$this->sut->handle_request();
+
+		$meta = array();
+		$this->recorded_quote->apply_to_order( $this->order_with( '9.99', $meta ) );
+		$this->assertSame( '10.00', $meta[ RecordedQuote::ORDER_META_KEY ] );
+	}
+
+	/**
 	 * GIVEN a shopper chose a shipping rate, a tax basis was recorded for the open
 	 * payment sheet, and an authorized quote was recorded for it
 	 * WHEN the sheet is dismissed and sends a release request

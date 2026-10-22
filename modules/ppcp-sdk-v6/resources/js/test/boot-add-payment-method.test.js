@@ -16,8 +16,14 @@ jest.mock( '@ppcp-button/Helper/Hiding', () => ( {
 } ) );
 
 const mockLoadSdkV6 = jest.fn();
+const mockSetSdkBusy = jest.fn();
+let mockSdkListeners = [];
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+jest.mock( '../tokenRefresh', () => ( {
+	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
+	onSdkInstanceChange: ( listener ) => mockSdkListeners.push( listener ),
 } ) );
 
 const mockCheckVaultEligibility = jest.fn();
@@ -96,11 +102,25 @@ function boot( config ) {
 	} );
 }
 
+const isSdkBusy = () => mockSetSdkBusy.mock.calls.at( -1 )?.[ 0 ] === true;
+
+const swapSdk = ( sdkInstance ) =>
+	mockSdkListeners.forEach( ( listener ) => listener( sdkInstance ) );
+
+/**
+ * An SDK instance whose save session is the given stub.
+ *
+ * @param {Object} session - The session the instance creates.
+ */
+const sdkWithSession = ( session ) => ( { session } );
+
 beforeEach( () => {
 	jest.clearAllMocks();
+	mockSdkListeners = [];
 	mockLoadSdkV6.mockResolvedValue( {} );
 	mockCheckVaultEligibility.mockResolvedValue( { paypal: true, card: true } );
 	mockCreateSavePayPalSession.mockReturnValue( {} );
+	mockPostJson.mockResolvedValue( { id: 'SETUP1' } );
 } );
 
 afterEach( () => {
@@ -210,5 +230,63 @@ describe( 'boot-add-payment-method', () => {
 			WRAPPER_SELECTOR,
 			false
 		);
+	} );
+
+	describe( 'after the SDK instance changes', () => {
+		test( 'replaces the PayPal button with one that starts a session of the new instance', async () => {
+			buildDom();
+			const oldSession = { start: jest.fn() };
+			const newSession = { start: jest.fn() };
+			mockLoadSdkV6.mockResolvedValue( sdkWithSession( oldSession ) );
+			mockCreateSavePayPalSession.mockImplementation(
+				( sdkInstance ) => sdkInstance.session
+			);
+
+			boot( baseConfig() );
+			await flushPromises();
+			swapSdk( sdkWithSession( newSession ) );
+
+			const buttons = document.querySelectorAll(
+				`${ WRAPPER_SELECTOR } paypal-button`
+			);
+			expect( buttons ).toHaveLength( 1 );
+
+			buttons[ 0 ].click();
+
+			expect( newSession.start ).toHaveBeenCalledTimes( 1 );
+			expect( oldSession.start ).not.toHaveBeenCalled();
+		} );
+	} );
+
+	describe( 'a click on the PayPal button', () => {
+		test( 'holds the SDK busy while the session runs', async () => {
+			buildDom();
+			mockCreateSavePayPalSession.mockReturnValue( {
+				start: jest.fn( () => new Promise( () => {} ) ),
+			} );
+
+			boot( baseConfig() );
+			await flushPromises();
+			document.querySelector( 'paypal-button' ).click();
+			await flushPromises();
+
+			expect( isSdkBusy() ).toBe( true );
+		} );
+
+		test( 'releases the SDK and reports the error when the session fails to start', async () => {
+			buildDom();
+			const startError = new Error( 'popup blocked' );
+			mockCreateSavePayPalSession.mockReturnValue( {
+				start: jest.fn().mockRejectedValue( startError ),
+			} );
+
+			boot( baseConfig() );
+			await flushPromises();
+			document.querySelector( 'paypal-button' ).click();
+			await flushPromises();
+
+			expect( isSdkBusy() ).toBe( false );
+			expect( mockHandleError ).toHaveBeenCalledWith( startError );
+		} );
 	} );
 } );

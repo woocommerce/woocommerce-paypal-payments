@@ -8,6 +8,7 @@ use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Product;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
@@ -29,6 +30,10 @@ class ShippingPreferenceFactoryTest extends TestCase
 	}
 
     /**
+     * GIVEN a purchase unit, cart/order state, context and funding source
+     * WHEN the shipping preference for the PayPal order is derived
+     * THEN the matching ExperienceContext shipping preference is returned
+     *
      * @dataProvider forStateData
      */
     public function testFromState(
@@ -47,7 +52,7 @@ class ShippingPreferenceFactoryTest extends TestCase
     public function forStateData()
     {
 		yield [
-			$this->createPurchaseUnit(true, Mockery::mock(Shipping::class)),
+			$this->createPurchaseUnit(true, $this->createShippingWithAddress()),
 			'checkout',
 			$this->createCart(true),
 			'',
@@ -55,7 +60,7 @@ class ShippingPreferenceFactoryTest extends TestCase
 			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
 		];
 		yield [
-			$this->createPurchaseUnit(false, Mockery::mock(Shipping::class)),
+			$this->createPurchaseUnit(false, $this->createShippingWithAddress()),
 			'checkout',
 			$this->createCart(false),
 			'',
@@ -71,7 +76,7 @@ class ShippingPreferenceFactoryTest extends TestCase
 			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
 		];
 		yield [
-			$this->createPurchaseUnit(true, Mockery::mock(Shipping::class)),
+			$this->createPurchaseUnit(true, $this->createShippingWithAddress()),
 			'checkout',
 			$this->createCart(true),
 			'card',
@@ -95,7 +100,7 @@ class ShippingPreferenceFactoryTest extends TestCase
 			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING
 		];
 		yield [
-			$this->createPurchaseUnit(true, Mockery::mock(Shipping::class)),
+			$this->createPurchaseUnit(true, $this->createShippingWithAddress()),
 			'pay-now',
 			null,
 			'venmo',
@@ -103,7 +108,7 @@ class ShippingPreferenceFactoryTest extends TestCase
 			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS
 		];
 		yield [
-			$this->createPurchaseUnit(true, Mockery::mock(Shipping::class)),
+			$this->createPurchaseUnit(true, $this->createShippingWithAddress()),
 			'pay-now',
 			null,
 			'card',
@@ -118,6 +123,39 @@ class ShippingPreferenceFactoryTest extends TestCase
 			$this->createWcOrder(false),
 			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
 		];
+
+		yield 'checkout with options-only shipping node falls back to no shipping' => [
+			$this->createPurchaseUnit(true, $this->createShippingWithoutAddress()),
+			'checkout',
+			$this->createCart(true),
+			'',
+			null,
+			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+		];
+		yield 'pay-now with options-only shipping node falls back to no shipping' => [
+			$this->createPurchaseUnit(true, $this->createShippingWithoutAddress()),
+			'pay-now',
+			null,
+			'venmo',
+			$this->createWcOrder(true),
+			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+		];
+		yield 'card funding source with options-only shipping node falls back to no shipping' => [
+			$this->createPurchaseUnit(true, $this->createShippingWithoutAddress()),
+			'product',
+			$this->createCart(true),
+			'card',
+			null,
+			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+		];
+		yield 'product context returns get-from-file regardless of shipping address presence' => [
+			$this->createPurchaseUnit(true, $this->createShippingWithoutAddress()),
+			'product',
+			$this->createCart(true),
+			'',
+			null,
+			ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
+		];
     }
 
 	private function createPurchaseUnit(bool $containsPhysicalGoods, ?Shipping $shipping): PurchaseUnit {
@@ -125,6 +163,18 @@ class ShippingPreferenceFactoryTest extends TestCase
 		$pu->shouldReceive('contains_physical_goods')->andReturn($containsPhysicalGoods);
 		$pu->shouldReceive('shipping')->andReturn($shipping);
 		return $pu;
+	}
+
+	private function createShippingWithAddress(): Shipping {
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->shouldReceive('address')->andReturn(Mockery::mock(Address::class));
+		return $shipping;
+	}
+
+	private function createShippingWithoutAddress(): Shipping {
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->shouldReceive('address')->andReturn(null);
+		return $shipping;
 	}
 
 	private function createCart(bool $needsShipping): WC_Cart {

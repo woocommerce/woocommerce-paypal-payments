@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayPalSubscriptions;
 
 use Exception;
-use WC_Order;
 use WC_Product;
 use WC_Product_Subscription_Variation;
 use WC_Subscription;
@@ -534,19 +533,10 @@ class PayPalSubscriptionsModule implements ServiceModule, ExecutableModule {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( string $post_type, $post_or_order_object ) use ( $c ) {
-				if ( ! function_exists( 'wcs_get_subscription' ) ) {
-					return;
-				}
-
-				$order = ( $post_or_order_object instanceof WP_Post )
+				$subscription = ( $post_or_order_object instanceof WP_Post )
 					? wc_get_order( $post_or_order_object->ID )
 					: $post_or_order_object;
 
-				if ( ! ( $order instanceof WC_Order ) ) {
-					return;
-				}
-
-				$subscription = wcs_get_subscription( $order->get_id() );
 				if ( ! ( $subscription instanceof WC_Subscription ) ) {
 					return;
 				}

@@ -46,7 +46,7 @@ const payLater: Pcp.Gateway = {
 	titleInModal: 'PayPal Pay Later',
 	titleInPcpSettings: 'Pay Later',
 	hasSettingsButton: false,
-	enabled: false,
+	enabled: true, // enabled on every onboarding since PCP-6968
 };
 
 const acdc: Pcp.Gateway = {
@@ -81,7 +81,7 @@ const fastlane: Pcp.Gateway = {
 	title: 'Fastlane',
 	titleInPcpSettings: 'Fastlane by PayPal',
 	titleInModal: 'Debit & Credit Cards',
-	titleInWcSettings: 'Fastlane Debit & Credit Cards',
+	titleInWcSettings: 'Debit & Credit Cards (via Fastlane by PayPal)',
 	hasSettingsButton: true,
 	dependsOn: 'acdc',
 	enabled: false,

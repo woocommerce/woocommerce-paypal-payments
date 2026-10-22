@@ -46,11 +46,12 @@ export function methodShippingCountries( config ) {
  * Every quote writes to the shopper's real cart, so rapid selections are chained
  * rather than merely raced, and a superseded one resolves against the newest answer.
  *
- * @param {Object} args        - The controller inputs.
- * @param {Object} args.config - The wc_ppcp_sdk_v6 config object.
+ * @param {Object}  args              - The controller inputs.
+ * @param {Object}  args.config       - The wc_ppcp_sdk_v6 config object.
+ * @param {boolean} [args.exactTotal] - Refuse a lower total at commit as well.
  * @return {Object} The controller.
  */
-export function createShippingController( { config } ) {
+export function createShippingController( { config, exactTotal = false } ) {
 	let writeChain = Promise.resolve();
 	let latestRequest = 0;
 
@@ -68,6 +69,7 @@ export function createShippingController( { config } ) {
 	 *                                             commit time only.
 	 * @param {?string} [selection.expectedTotal]  - The total to hold the server to,
 	 *                                             at commit time only.
+	 * @param {boolean} [selection.exactTotal]     - Refuse a lower total as well.
 	 * @return {Promise<Object>} The quote for the newest selection.
 	 */
 	function quote( {
@@ -75,6 +77,7 @@ export function createShippingController( { config } ) {
 		rateId = null,
 		billingAddress = null,
 		expectedTotal = null,
+		exactTotal = false,
 	} ) {
 		const request = ++latestRequest;
 
@@ -91,6 +94,7 @@ export function createShippingController( { config } ) {
 					rateId,
 					billingAddress,
 					expectedTotal,
+					exactTotal,
 				} )
 			);
 		} );
@@ -112,8 +116,8 @@ export function createShippingController( { config } ) {
 	 * priced on exactly the basis the order will be created with.
 	 *
 	 * The total the sheet displayed goes with it, and the endpoint refuses a higher
-	 * one: the shopper is charged the correct tax, and never more than they
-	 * approved. Comparing there rather than here leaves nothing to bypass.
+	 * one (any other one, for an exact total): the shopper is charged the correct
+	 * tax, and never more than they approved. Comparing there rather than here leaves nothing to bypass.
 	 *
 	 * @param {Object}  address          - Complete WC shipping address fields.
 	 * @param {?Object} [billingAddress] - The card's WC billing address.
@@ -129,6 +133,7 @@ export function createShippingController( { config } ) {
 			// use whichever of the two the order will, not merely a plausible one.
 			billingAddress: billingAddress?.country ? billingAddress : address,
 			expectedTotal: lastQuote?.total ?? null,
+			exactTotal,
 		} );
 	}
 

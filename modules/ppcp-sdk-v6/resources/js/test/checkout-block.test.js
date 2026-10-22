@@ -1,5 +1,6 @@
 const mockRegisterExpressPaymentMethod = jest.fn();
 const mockRegisterPaymentMethod = jest.fn();
+const mockRegisterCheckoutFilters = jest.fn();
 // virtual: webpack resolves this to the wc.wcBlocksRegistry global, so there is
 // no package under node_modules for Jest to find.
 jest.mock(
@@ -59,8 +60,10 @@ jest.mock( '../messages/cartTotalWatcher', () => ( {
 const baseConfig = ( overrides = {} ) => ( {
 	id: 'ppcp-gateway',
 	page_context: 'checkout',
+	buttons_enabled: true,
 	supported_features: [ 'products', 'subscriptions' ],
 	pay_later_button: { checkout: true },
+	venmo_button: { checkout: true },
 	google_pay: {
 		enabled: true,
 		styles: { checkout: {} },
@@ -85,6 +88,10 @@ function loadCheckoutBlock( config ) {
 		wcSettings: {
 			getSetting: ( key ) =>
 				key === 'paymentMethodData' ? { 'ppcp-sdk-v6': config } : undefined,
+		},
+		blocksCheckout: {
+			registerCheckoutFilters: ( ...args ) =>
+				mockRegisterCheckoutFilters( ...args ),
 		},
 	};
 	jest.isolateModules( () => {
@@ -121,10 +128,25 @@ function regularCallsFor( name ) {
  * The single registerPaymentMethod call for one registered name.
  *
  * @param {string} name - The registration name to find.
- * @return {Object} The args object passed to registerPaymentMethod.
+ * @return {Object|undefined} The args object passed to registerPaymentMethod,
+ *                            or undefined when no such call was made.
  */
 function regularCallFor( name ) {
 	return regularCallsFor( name )[ 0 ];
+}
+
+/**
+ * The checkout filters object registered for one gateway id.
+ *
+ * @param {string} gatewayId - The gateway id passed to registerCheckoutFilters.
+ * @return {Object|undefined} The filters object, or undefined when no such
+ *                             call was made.
+ */
+function checkoutFiltersFor( gatewayId ) {
+	const call = mockRegisterCheckoutFilters.mock.calls.find(
+		( [ id ] ) => id === gatewayId
+	);
+	return call ? call[ 1 ] : undefined;
 }
 
 beforeEach( () => {
@@ -133,6 +155,7 @@ beforeEach( () => {
 
 afterEach( () => {
 	delete window.wc;
+	delete window.wp;
 } );
 
 describe( 'checkout-block', () => {
@@ -196,12 +219,53 @@ describe( 'checkout-block', () => {
 			] );
 		} );
 
+		test.each( [
+			[ 'the flag for the page context is false', { checkout: false } ],
+			[ 'only another context has the flag', { cart: true } ],
+			[ 'venmo_button is missing', undefined ],
+		] )(
+			'does not register the Venmo express method when %s',
+			( label, venmoButton ) => {
+				loadCheckoutBlock(
+					baseConfig( { venmo_button: venmoButton } )
+				);
+
+				const names = mockRegisterExpressPaymentMethod.mock.calls.map(
+					( [ args ] ) => args.name
+				);
+				expect( names ).not.toContain( 'ppcp-gateway-venmo' );
+				expect( names ).toContain( 'ppcp-gateway-paypal' );
+			}
+		);
+
 		test( 'ppcp-gateway-paypal processes through the gateway id the server supplied', () => {
 			loadCheckoutBlock( baseConfig( { id: 'ppcp-gateway-custom' } ) );
 
 			expect( expressCallFor( 'ppcp-gateway-paypal' ).gatewayId ).toBe(
 				'ppcp-gateway-custom'
 			);
+		} );
+	} );
+
+	describe( 'when buttons_enabled is false', () => {
+		const registeredExpressNames = () =>
+			mockRegisterExpressPaymentMethod.mock.calls.map(
+				( [ args ] ) => args.name
+			);
+
+		test( 'still registers the wallet express methods and the regular ppcp-gateway method', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					buttons_enabled: false,
+					place_order_enabled: true,
+				} )
+			);
+
+			expect( registeredExpressNames().sort() ).toEqual( [
+				'ppcp-applepay',
+				'ppcp-googlepay',
+			] );
+			expect( regularCallFor( 'ppcp-gateway' ) ).toBeDefined();
 		} );
 	} );
 
@@ -300,29 +364,17 @@ describe( 'checkout-block', () => {
 			test( 'registers ppcp-gateway as a regular payment method even with no vault component', () => {
 				loadCheckoutBlock(
 					baseConfig( {
-						place_order: { enabled: true, text: 'Complete order' },
+						place_order_enabled: true,
 					} )
 				);
 
 				expect( regularCallFor( 'ppcp-gateway' ) ).toBeDefined();
 			} );
 
-			test( 'uses place_order.text as the placeOrderButtonLabel', () => {
-				loadCheckoutBlock(
-					baseConfig( {
-						place_order: { enabled: true, text: 'Complete order' },
-					} )
-				);
-
-				expect(
-					regularCallFor( 'ppcp-gateway' ).placeOrderButtonLabel
-				).toBe( 'Complete order' );
-			} );
-
 			test( 'does not show saved cards when the vault component is not eligible', () => {
 				loadCheckoutBlock(
 					baseConfig( {
-						place_order: { enabled: true, text: 'Complete order' },
+						place_order_enabled: true,
 					} )
 				);
 
@@ -351,11 +403,11 @@ describe( 'checkout-block', () => {
 					expected: true,
 				},
 				{
-					name: 'a free-trial subscription cart at a $0 live total is not allowed: it is vaulted through the express button instead',
+					name: 'a free-trial subscription cart at a $0 live total is allowed: the gateway completes it via a server-side vault-approval redirect',
 					hasSubscriptions: true,
 					totalPrice: '0',
 					cartNeedsVaulting: true,
-					expected: false,
+					expected: true,
 				},
 			] )(
 				'$name',
@@ -367,10 +419,7 @@ describe( 'checkout-block', () => {
 				} ) => {
 					loadCheckoutBlock(
 						baseConfig( {
-							place_order: {
-								enabled: true,
-								text: 'Complete order',
-							},
+							place_order_enabled: true,
 							has_subscriptions: hasSubscriptions,
 							cart_needs_vaulting: cartNeedsVaulting,
 							amount: '10.00',
@@ -421,7 +470,7 @@ describe( 'checkout-block', () => {
 			loadCheckoutBlock(
 				baseConfig( {
 					id: 'ppcp-gateway-custom',
-					place_order: { enabled: true, text: 'Complete order' },
+					place_order_enabled: true,
 				} )
 			);
 
@@ -439,7 +488,7 @@ describe( 'checkout-block', () => {
 			loadCheckoutBlock(
 				baseConfig( {
 					continuation: { funding_source: 'paypal' },
-					place_order: { enabled: true, text: 'Complete order' },
+					place_order_enabled: true,
 					vault_component: { is_eligible: true },
 				} )
 			);
@@ -450,6 +499,240 @@ describe( 'checkout-block', () => {
 			expect( calls[ 0 ].supports.features ).toContain(
 				'ppcp_continuation'
 			);
+		} );
+	} );
+
+	/**
+	 * The place order button is WooCommerce's, so nothing here renames it. An
+	 * override only arrives when a merchant filters one in, and then it has to
+	 * reach both the registration property and the Checkout Actions filter.
+	 */
+	describe( 'place order button label', () => {
+		/**
+		 * The filters registered for one namespace.
+		 *
+		 * @param {string} namespace - The registerCheckoutFilters namespace.
+		 * @return {Object|undefined} The filters object, or undefined when none registered.
+		 */
+		const filtersFor = ( namespace ) =>
+			mockRegisterCheckoutFilters.mock.calls.find(
+				( [ ns ] ) => ns === namespace
+			)?.[ 1 ];
+
+		test( 'leaves the label alone when no override is filtered in', () => {
+			loadCheckoutBlock(
+				baseConfig( { place_order_enabled: true } )
+			);
+
+			expect( regularCallFor( 'ppcp-gateway' ) ).not.toHaveProperty(
+				'placeOrderButtonLabel'
+			);
+			expect( filtersFor( 'ppcp-gateway' ) ).toBeUndefined();
+		} );
+
+		test( 'applies a filtered override to both the registration and the checkout filter', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					place_order_enabled: true,
+					placeOrderButtonLabel: 'Complete order',
+				} )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-gateway' ).placeOrderButtonLabel
+			).toBe( 'Complete order' );
+
+			const payment = { getActivePaymentMethod: () => 'ppcp-gateway' };
+			window.wp = { data: { select: () => payment } };
+
+			expect(
+				filtersFor( 'ppcp-gateway' ).placeOrderButtonLabel(
+					'Place order'
+				)
+			).toBe( 'Complete order' );
+
+			delete window.wp;
+		} );
+
+		test( 'leaves the label alone in continuation mode', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					continuation: { funding_source: 'venmo' },
+					place_order_enabled: true,
+					placeOrderButtonLabel: 'Complete order',
+				} )
+			);
+
+			expect( regularCallFor( 'ppcp-gateway' ) ).not.toHaveProperty(
+				'placeOrderButtonLabel'
+			);
+			expect( filtersFor( 'ppcp-gateway' ) ).toBeUndefined();
+		} );
+	} );
+
+	describe( 'BCDC registration', () => {
+		const cardButtonConfig = ( overrides = {} ) => ( {
+			block_method: true,
+			payment_method: 'ppcp-card-button-gateway',
+			title: 'Debit & Credit Cards',
+			supported_features: [ 'products' ],
+			...overrides,
+		} );
+
+		test( 'registers BCDC as a regular method, not an express one, when card_button.block_method is true', () => {
+			loadCheckoutBlock(
+				baseConfig( { card_button: cardButtonConfig() } )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+			).toBeDefined();
+			expect( mockRegisterExpressPaymentMethod ).not.toHaveBeenCalledWith(
+				expect.objectContaining( { name: 'ppcp-card-button-gateway' } )
+			);
+		} );
+
+		test( 'does not register BCDC when card_button.block_method is false', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig( { block_method: false } ),
+				} )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+			).toBeUndefined();
+		} );
+
+		test( 'does not register BCDC in continuation mode', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig(),
+					continuation: { funding_source: 'paypal' },
+				} )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+			).toBeUndefined();
+		} );
+
+		test( 'takes its label and ariaLabel from card_button.title', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig( {
+						title: 'Pay with Card',
+					} ),
+				} )
+			);
+
+			const { ariaLabel } = regularCallFor( 'ppcp-card-button-gateway' );
+
+			expect( ariaLabel ).toBe( 'Pay with Card' );
+		} );
+
+		test( 'declares card_button.supported_features with no ppcp_continuation appended', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig( {
+						supported_features: [ 'products', 'refunds' ],
+					} ),
+				} )
+			);
+
+			const { supports } = regularCallFor( 'ppcp-card-button-gateway' );
+
+			expect( supports.features ).toEqual( [ 'products', 'refunds' ] );
+		} );
+
+		test( 'falls back to the "products" feature when card_button declares none of its own', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig( {
+						supported_features: undefined,
+					} ),
+				} )
+			);
+
+			const { supports } = regularCallFor( 'ppcp-card-button-gateway' );
+
+			expect( supports.features ).toEqual( [ 'products' ] );
+		} );
+
+		test( 'registers with no checkout filter and no placeOrderButtonLabel when no override is filtered in', () => {
+			loadCheckoutBlock(
+				baseConfig( { card_button: cardButtonConfig() } )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+			).not.toHaveProperty( 'placeOrderButtonLabel' );
+			expect(
+				checkoutFiltersFor( 'ppcp-card-button-gateway' )
+			).toBeUndefined();
+		} );
+
+		test( 'applies a filtered override to both the registration and the checkout filter for the card gateway id', () => {
+			loadCheckoutBlock(
+				baseConfig( {
+					card_button: cardButtonConfig(),
+					placeOrderButtonLabel: 'Proceed to PayPal',
+				} )
+			);
+
+			expect(
+				regularCallFor( 'ppcp-card-button-gateway' )
+					.placeOrderButtonLabel
+			).toBe( 'Proceed to PayPal' );
+			expect(
+				checkoutFiltersFor( 'ppcp-card-button-gateway' )
+			).toBeDefined();
+		} );
+
+		describe( 'the registered placeOrderButtonLabel filter', () => {
+			beforeEach( () => {
+				loadCheckoutBlock(
+					baseConfig( {
+						card_button: cardButtonConfig(),
+						placeOrderButtonLabel: 'Proceed to PayPal',
+					} )
+				);
+			} );
+
+			test( 'returns the configured label while the card gateway is the active payment method', () => {
+				window.wp = {
+					data: {
+						select: () => ( {
+							getActivePaymentMethod: () =>
+								'ppcp-card-button-gateway',
+						} ),
+					},
+				};
+				const { placeOrderButtonLabel } = checkoutFiltersFor(
+					'ppcp-card-button-gateway'
+				);
+
+				expect( placeOrderButtonLabel( 'Place order' ) ).toBe(
+					'Proceed to PayPal'
+				);
+			} );
+
+			test( 'returns the passed-in default label while a different method is active', () => {
+				window.wp = {
+					data: {
+						select: () => ( {
+							getActivePaymentMethod: () => 'ppcp-gateway',
+						} ),
+					},
+				};
+				const { placeOrderButtonLabel } = checkoutFiltersFor(
+					'ppcp-card-button-gateway'
+				);
+
+				expect( placeOrderButtonLabel( 'Place order' ) ).toBe(
+					'Place order'
+				);
+			} );
 		} );
 	} );
 
@@ -471,6 +754,41 @@ describe( 'checkout-block', () => {
 			);
 			expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
 			expect( mockCheckEligibility ).not.toHaveBeenCalled();
+		} );
+
+		test.each( [
+			{
+				name: 'resolves to false for a guest on the block cart with a free-trial cart',
+				pageContext: 'cart-block',
+				user: { is_logged: false },
+				expected: false,
+			},
+			{
+				name: 'resolves to true for a logged-in user on the block cart with a free-trial cart',
+				pageContext: 'cart-block',
+				user: { is_logged: true },
+				expected: true,
+			},
+			{
+				name: 'resolves to true for a guest on the block checkout with a free-trial cart',
+				pageContext: 'checkout-block',
+				user: { is_logged: false },
+				expected: true,
+			},
+		] )( '$name', async ( { pageContext, user, expected } ) => {
+			loadCheckoutBlock(
+				baseConfig( {
+					page_context: pageContext,
+					user,
+					cart_needs_vaulting: true,
+				} )
+			);
+
+			const { canMakePayment } = expressCallFor( 'ppcp-gateway-paypal' );
+
+			await expect( canMakePayment( { cartTotals } ) ).resolves.toBe(
+				expected
+			);
 		} );
 
 		test.each( [

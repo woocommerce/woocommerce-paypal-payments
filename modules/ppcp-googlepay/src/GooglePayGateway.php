@@ -211,6 +211,11 @@ class GooglePayGateway extends WC_Payment_Gateway {
 				);
 			}
 		} catch ( PayPalApiException $error ) {
+			$wallet_failure = $this->handle_wallet_payer_action( $wc_order, $error );
+			if ( $wallet_failure ) {
+				return $wallet_failure;
+			}
+
 			return $this->handle_payment_failure(
 				$wc_order,
 				new Exception(

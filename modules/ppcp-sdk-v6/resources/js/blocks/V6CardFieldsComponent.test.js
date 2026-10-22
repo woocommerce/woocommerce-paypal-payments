@@ -1,6 +1,19 @@
 const mockLoadSdkV6 = jest.fn();
+const mockSetSdkBusy = jest.fn();
+let mockInstanceListeners = [];
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+} ) );
+jest.mock( '../tokenRefresh', () => ( {
+	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
+	onSdkInstanceChange: ( callback ) => {
+		mockInstanceListeners.push( callback );
+		return () => {
+			mockInstanceListeners = mockInstanceListeners.filter(
+				( listener ) => listener !== callback
+			);
+		};
+	},
 } ) );
 
 const mockCreateCardOrder = jest.fn();
@@ -29,13 +42,7 @@ jest.mock( '../sessions/freeTrialSave', () => ( {
 	exchangeSetupToken: ( ...args ) => mockExchangeSetupToken( ...args ),
 } ) );
 
-import {
-	render,
-	waitFor,
-	act,
-	screen,
-	fireEvent,
-} from '@testing-library/react';
+import { render, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { createElement } from '@wordpress/element';
 import { V6CardFieldsComponent } from './V6CardFieldsComponent';
@@ -52,15 +59,39 @@ function appendFloatingLabelMarker() {
 	return wrapper;
 }
 
+const labels = {
+	fields_empty: 'Please fill in your card details.',
+	fields_not_valid: 'Please check your card details.',
+};
+
+const filledField = { isEmpty: false, isValid: true, isFocused: false };
+const emptyField = { isEmpty: true, isValid: false, isFocused: false };
+const invalidField = { isEmpty: false, isValid: false, isFocused: false };
+
+const validFieldData = {
+	number: filledField,
+	expiry: filledField,
+	cvv: filledField,
+};
+
+// What a session reports through its 'change' event; set before rendering.
+let sessionFieldData;
+
+function sessionOn( event, handler ) {
+	if ( event === 'change' ) {
+		handler( { data: sessionFieldData } );
+	}
+}
+
 function cardConfig( overrides = {} ) {
 	return {
+		labels,
 		page_context: 'checkout-block',
 		card_fields: {
 			enabled: true,
 			payment_method: 'ppcp-credit-card-gateway',
 			funding_source: 'card',
 			title: 'Debit & Credit Cards',
-			name_field: true,
 			fields: {},
 		},
 		ajax: {
@@ -120,6 +151,8 @@ async function waitForCheckoutFailReady() {
 }
 
 beforeEach( () => {
+	mockInstanceListeners = [];
+	mockSetSdkBusy.mockClear();
 	paymentSetupCb = null;
 	onPaymentSetup = jest.fn( ( cb ) => {
 		paymentSetupCb = cb;
@@ -156,12 +189,13 @@ beforeEach( () => {
 		},
 	};
 
+	sessionFieldData = validFieldData;
 	session = {
 		createCardFieldsComponent: jest.fn( () =>
 			document.createElement( 'div' )
 		),
 		submit: jest.fn(),
-		on: jest.fn(),
+		on: jest.fn( sessionOn ),
 	};
 
 	mockLoadSdkV6.mockReset().mockResolvedValue( {
@@ -294,7 +328,6 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'',
 			false
 		);
 		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
@@ -319,7 +352,6 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'',
 			true
 		);
 	} );
@@ -345,7 +377,6 @@ describe( 'V6CardFieldsComponent', () => {
 				has_subscriptions: true,
 			} ),
 			'checkout-block',
-			'',
 			true
 		);
 	} );
@@ -413,9 +444,71 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
 			cardConfig(),
 			'checkout-block',
-			'',
 			false
 		);
+	} );
+
+	describe( 'card field state', () => {
+		async function runPaymentSetup( config = cardConfig() ) {
+			renderComponent( { config } );
+			await waitForSessionReady();
+
+			let result;
+			await act( async () => {
+				result = await paymentSetupCb();
+			} );
+			return result;
+		}
+
+		test.each( [
+			[ 'no field has reported a state yet', {}, labels.fields_empty ],
+			[
+				'every field is empty',
+				{ number: emptyField, expiry: emptyField, cvv: emptyField },
+				labels.fields_empty,
+			],
+			[
+				'one field is empty and the others are valid',
+				{ ...validFieldData, number: emptyField },
+				labels.fields_empty,
+			],
+			[
+				'a filled field is invalid',
+				{ ...validFieldData, expiry: invalidField },
+				labels.fields_not_valid,
+			],
+		] )(
+			'reports the message and creates no order when %s',
+			async ( _label, fieldData, expectedMessage ) => {
+				sessionFieldData = fieldData;
+
+				const result = await runPaymentSetup();
+
+				expect( result ).toEqual( {
+					type: 'error',
+					message: expectedMessage,
+				} );
+				expect( mockCreateCardOrder ).not.toHaveBeenCalled();
+				expect( session.submit ).not.toHaveBeenCalled();
+			}
+		);
+
+		test( 'creates no setup token for a free-trial cart with empty fields', async () => {
+			sessionFieldData = {};
+
+			const result = await runPaymentSetup(
+				cardConfig( {
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				} )
+			);
+
+			expect( result ).toEqual( {
+				type: 'error',
+				message: labels.fields_empty,
+			} );
+			expect( mockCreateCardSetupToken ).not.toHaveBeenCalled();
+		} );
 	} );
 
 	test( 'reports the "authentication not completed" message and skips approval when 3D Secure is canceled', async () => {
@@ -509,16 +602,12 @@ describe( 'V6CardFieldsComponent', () => {
 		}
 	} );
 
-	test( 'renders the cardholder name as a plain input, not a V6CardFieldContainer, when card_fields.name_field is enabled', async () => {
+	test( 'renders only number/expiry/cvv field containers, with no cardholder-name field', async () => {
 		renderComponent();
 
 		await waitFor( () =>
 			expect( mockCardFieldContainer ).toHaveBeenCalled()
 		);
-
-		expect(
-			screen.getByPlaceholderText( 'Cardholder name (optional)' )
-		).toBeInTheDocument();
 
 		const types = mockCardFieldContainer.mock.calls.map(
 			( call ) => call[ 0 ].type
@@ -530,12 +619,12 @@ describe( 'V6CardFieldsComponent', () => {
 		expect( mockCardFieldContainer ).toHaveBeenCalledTimes( 3 );
 	} );
 
-	test( 'does not render the name input when card_fields.name_field is disabled', async () => {
+	test( 'renders no name input even with a stale name_field: true left over in config', async () => {
 		renderComponent( {
 			config: cardConfig( {
 				card_fields: {
 					...cardConfig().card_fields,
-					name_field: false,
+					name_field: true,
 				},
 			} ),
 		} );
@@ -545,17 +634,11 @@ describe( 'V6CardFieldsComponent', () => {
 		);
 
 		expect(
-			screen.queryByPlaceholderText( 'Cardholder name (optional)' )
+			document.getElementById( 'ppcp-sdk-v6-card-name' )
 		).not.toBeInTheDocument();
-
-		const types = mockCardFieldContainer.mock.calls.map(
-			( call ) => call[ 0 ].type
-		);
-		expect( types ).not.toContain( 'name' );
-		expect( types ).toContain( 'number' );
 	} );
 
-	test( 'keeps the plain placeholder and passes floatingLabel false to each field when no Blocks text-input markup is on the page', async () => {
+	test( 'keeps floatingLabel false for each field when no Blocks text-input markup is on the page', async () => {
 		renderComponent();
 		await waitForSessionReady();
 
@@ -565,37 +648,6 @@ describe( 'V6CardFieldsComponent', () => {
 			);
 			expect( call[ 0 ].floatingLabel ).toBe( false );
 		} );
-
-		expect(
-			screen.getByPlaceholderText( 'Cardholder name (optional)' )
-		).toBeInTheDocument();
-		expect(
-			document.querySelector( 'label[for="ppcp-sdk-v6-card-name"]' )
-		).not.toBeInTheDocument();
-	} );
-
-	test( 'forwards the typed cardholder name to createCardOrder on submit', async () => {
-		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
-		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
-
-		renderComponent();
-		await waitForSessionReady();
-
-		const nameInput = screen.getByPlaceholderText(
-			'Cardholder name (optional)'
-		);
-		fireEvent.change( nameInput, { target: { value: 'Jane Doe' } } );
-
-		await act( async () => {
-			await paymentSetupCb();
-		} );
-
-		expect( mockCreateCardOrder ).toHaveBeenCalledWith(
-			cardConfig(),
-			'checkout-block',
-			'Jane Doe',
-			false
-		);
 	} );
 
 	test( 'submits the session with the billing address derived from the Blocks billing prop', async () => {
@@ -618,11 +670,45 @@ describe( 'V6CardFieldsComponent', () => {
 		} );
 	} );
 
-	test( 'submits the session with no options when the Blocks billing prop has no postcode', async () => {
+	test( 'submits the session with only the country when the Blocks billing prop has no postcode', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent( {
+			billing: { billingAddress: { country: 'US' } },
+		} );
+		await waitForSessionReady();
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1', {
+			billingAddress: { countryCode: 'US' },
+		} );
+	} );
+
+	test( 'submits the session with no options when the Blocks billing prop has no country', async () => {
 		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
 		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 
 		renderComponent( { billing: { billingAddress: {} } } );
+		await waitForSessionReady();
+
+		await act( async () => {
+			await paymentSetupCb();
+		} );
+
+		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
+	} );
+
+	test( 'submits the session with no options when the Blocks billing prop has a postcode but no country', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+
+		renderComponent( {
+			billing: { billingAddress: { postcode: '90001' } },
+		} );
 		await waitForSessionReady();
 
 		await act( async () => {
@@ -822,6 +908,12 @@ describe( 'V6CardFieldsComponent', () => {
 			marker.remove();
 		} );
 
+		function focusHandler() {
+			return session.on.mock.calls.find(
+				( call ) => call[ 0 ] === 'focus'
+			)[ 1 ];
+		}
+
 		function lastCallFor( type ) {
 			const calls = mockCardFieldContainer.mock.calls.filter(
 				( call ) => call[ 0 ].type === type
@@ -890,9 +982,12 @@ describe( 'V6CardFieldsComponent', () => {
 					await waitForSessionReady();
 
 					await waitFor( () =>
-						expect( session.on ).toHaveBeenCalled()
+						expect( session.on ).toHaveBeenCalledWith(
+							'focus',
+							expect.any( Function )
+						)
 					);
-					const handler = session.on.mock.calls[ 0 ][ 1 ];
+					const handler = focusHandler();
 
 					act( () => {
 						handler( {
@@ -914,58 +1009,168 @@ describe( 'V6CardFieldsComponent', () => {
 				}
 			);
 		} );
+	} );
+} );
 
-		describe( 'cardholder name field', () => {
-			test( 'the label is associated with the input via for/id', async () => {
-				renderComponent();
-				await waitForSessionReady();
+describe( 'V6CardFieldsComponent after an SDK instance change', () => {
+	let newSession;
 
-				const input = screen.getByLabelText(
-					'Cardholder name (optional)'
-				);
-				expect( input ).toHaveAttribute(
-					'id',
-					'ppcp-sdk-v6-card-name'
-				);
+	function makeNewSession() {
+		newSession = {
+			createCardFieldsComponent: jest.fn( () =>
+				document.createElement( 'div' )
+			),
+			submit: jest.fn(),
+			on: jest.fn( sessionOn ),
+		};
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsOneTimePaymentSession: () => newSession,
+			createCardFieldsSavePaymentSession: () => newSession,
+		} );
+	}
+
+	async function changeInstance() {
+		await act( async () => {
+			mockInstanceListeners.forEach( ( listener ) => listener( {} ) );
+		} );
+		await waitFor( () =>
+			expect( mockCardFieldContainer ).toHaveBeenLastCalledWith(
+				expect.objectContaining( { session: newSession } )
+			)
+		);
+	}
+
+	test( 'renders the fields from a new session of the new instance', async () => {
+		renderComponent();
+		await waitForSessionReady();
+		makeNewSession();
+
+		await changeInstance();
+
+		const sessions = mockCardFieldContainer.mock.calls
+			.slice( -3 )
+			.map( ( call ) => call[ 0 ].session );
+		expect( sessions ).toEqual( [ newSession, newSession, newSession ] );
+	} );
+
+	test( 'submits through the new session on onPaymentSetup', async () => {
+		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+		renderComponent();
+		await waitForSessionReady();
+		makeNewSession();
+		newSession.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+		await changeInstance();
+
+		let result;
+		await act( async () => {
+			result = await paymentSetupCb();
+		} );
+
+		expect( newSession.submit ).toHaveBeenCalledWith( 'ORDER1' );
+		expect( session.submit ).not.toHaveBeenCalled();
+		expect( result ).toEqual( { type: 'success' } );
+	} );
+
+	test( 'no longer shows the floating labels as active', async () => {
+		const marker = appendFloatingLabelMarker();
+		renderComponent();
+		await waitForSessionReady();
+		await waitFor( () =>
+			expect( session.on ).toHaveBeenCalledWith(
+				'focus',
+				expect.any( Function )
+			)
+		);
+		act( () => {
+			session.on.mock.calls.find( ( call ) => call[ 0 ] === 'focus' )[ 1 ]( {
+				data: {
+					number: { ...emptyField, isFocused: true },
+					expiry: emptyField,
+					cvv: emptyField,
+				},
+			} );
+		} );
+		const lastNumberCall = () =>
+			mockCardFieldContainer.mock.calls
+				.filter( ( call ) => call[ 0 ].type === 'number' )
+				.pop()[ 0 ];
+		expect( lastNumberCall().isActive ).toBe( true );
+		makeNewSession();
+
+		await changeInstance();
+
+		await waitFor( () =>
+			expect( lastNumberCall().isActive ).toBe( false )
+		);
+		marker.remove();
+	} );
+
+	test( 'has no effect after the component unmounts', async () => {
+		const { unmount } = renderComponent();
+		await waitForSessionReady();
+		unmount();
+		makeNewSession();
+		mockLoadSdkV6.mockClear();
+
+		await act( async () => {
+			mockInstanceListeners.forEach( ( listener ) => listener( {} ) );
+		} );
+
+		expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+		expect( mockInstanceListeners ).toHaveLength( 0 );
+	} );
+
+	describe( 'SDK busy flag during a submit', () => {
+		let resolveSubmit;
+
+		async function startSubmit() {
+			mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+			session.submit.mockReturnValueOnce(
+				new Promise( ( resolve ) => {
+					resolveSubmit = resolve;
+				} )
+			);
+			renderComponent();
+			await waitForSessionReady();
+
+			let pending;
+			await act( async () => {
+				pending = paymentSetupCb();
+				await Promise.resolve();
+			} );
+			return { pending };
+		}
+
+		test.each( [
+			[ 'succeeds', { state: 'succeeded' } ],
+			[ 'fails', { state: 'failed' } ],
+			[ 'is canceled', { state: 'canceled' } ],
+		] )( 'is held until a submit that %s ends', async ( _label, outcome ) => {
+			const { pending } = await startSubmit();
+			await waitFor( () =>
+				expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( true )
+			);
+
+			await act( async () => {
+				resolveSubmit( outcome );
+				await pending;
 			} );
 
-			test( 'the wrapper carries the Blocks text-input class the stylesheet margin rule targets', async () => {
-				renderComponent();
-				await waitForSessionReady();
+			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( false );
+		} );
 
-				const input = screen.getByLabelText(
-					'Cardholder name (optional)'
-				);
-				const wrapper = input.closest( 'div' );
+		test( 'is released when the submit throws', async () => {
+			const { pending } = await startSubmit();
+			await waitFor( () =>
+				expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( true )
+			);
 
-				expect( wrapper ).toHaveClass(
-					'wc-block-components-text-input'
-				);
+			await act( async () => {
+				resolveSubmit( Promise.reject( new Error( 'boom' ) ) );
+				await pending;
 			} );
 
-			test( 'the wrapper becomes active on focus and stays active once the field holds a value', async () => {
-				renderComponent();
-				await waitForSessionReady();
-
-				const input = screen.getByLabelText(
-					'Cardholder name (optional)'
-				);
-				const wrapper = input.closest( 'div' );
-
-				expect( wrapper ).not.toHaveClass( 'is-active' );
-
-				fireEvent.focus( input );
-				expect( wrapper ).toHaveClass( 'is-active' );
-
-				fireEvent.blur( input );
-				expect( wrapper ).not.toHaveClass( 'is-active' );
-
-				fireEvent.change( input, {
-					target: { value: 'Jane Doe' },
-				} );
-				fireEvent.blur( input );
-				expect( wrapper ).toHaveClass( 'is-active' );
-			} );
+			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( false );
 		} );
 	} );
 } );

@@ -12,51 +12,60 @@ class MerchantCountrySupportTest extends TestCase
     private const FILTER = 'woocommerce_paypal_payments_sdk_v6_unsupported_countries';
 
     /**
-     * GIVEN a merchant based in Mexico
-     * WHEN checking whether the v6 SDK may load for them
-     * THEN it is not supported, so they are served the v5 stack instead
+     * GIVEN no third party filters the unsupported-countries list
+     * WHEN checking whether the v6 SDK may load for a merchant
+     * THEN the merchant is supported, including one based in Mexico, the only country
+     *      this list ever withheld by default
+     *
+     * @dataProvider merchant_country_provider
      */
-    public function testMexicanMerchantIsNotSupported(): void
+    public function testNoCountryIsWithheldByDefault(string $merchant_country): void
     {
-        $testee = new MerchantCountrySupport('MX');
-
-        $this->assertFalse($testee->is_supported());
-    }
-
-    /**
-     * GIVEN a merchant based in the United States
-     * WHEN checking whether the v6 SDK may load for them
-     * THEN it is supported
-     */
-    public function testNonMexicanMerchantIsSupported(): void
-    {
-        $testee = new MerchantCountrySupport('US');
+        $testee = new MerchantCountrySupport($merchant_country);
 
         $this->assertTrue($testee->is_supported());
     }
 
-    /**
-     * GIVEN a third party widens the unsupported-countries filter to include Brazil
-     * WHEN checking whether the v6 SDK may load for a Brazilian merchant
-     * THEN that merchant is no longer supported
-     */
-    public function testFilterCanWidenListToWithholdAnotherCountry(): void
+    public function merchant_country_provider(): array
     {
-        expectApplied(self::FILTER)->andReturn(['MX', 'BR']);
-
-        $testee = new MerchantCountrySupport('BR');
-
-        $this->assertFalse($testee->is_supported());
+        return [
+            'Mexico, the country this list used to withhold' => ['MX'],
+            'a country never withheld by this list' => ['US'],
+        ];
     }
 
     /**
-     * GIVEN a third party empties the unsupported-countries filter as an escape hatch
-     * WHEN checking whether the v6 SDK may load for a Mexican merchant
-     * THEN Mexico becomes supported again
+     * GIVEN a third party widens the unsupported-countries filter to include Brazil
+     * WHEN checking whether the v6 SDK may load for merchants in and outside Brazil
+     * THEN only the filtered-in Brazilian merchant is withheld from the v6 stack
+     *
+     * @dataProvider filtered_country_provider
      */
-    public function testFilterCanEmptyListToRestoreMexicanSupport(): void
+    public function testFilterCanWidenListToWithholdAnotherCountry(string $merchant_country, bool $expected_supported): void
     {
-        expectApplied(self::FILTER)->andReturn([]);
+        expectApplied(self::FILTER)->andReturn(['BR']);
+
+        $testee = new MerchantCountrySupport($merchant_country);
+
+        $this->assertSame($expected_supported, $testee->is_supported());
+    }
+
+    public function filtered_country_provider(): array
+    {
+        return [
+            'the filtered-in country is excluded' => ['BR', false],
+            'an unfiltered country stays supported' => ['US', true],
+        ];
+    }
+
+    /**
+     * GIVEN a third party filters the unsupported-countries list
+     * WHEN the filter receives the default value and returns it unchanged
+     * THEN the default of withholding no country is honoured
+     */
+    public function testFilterReceivesAndHonoursTheDefaultValue(): void
+    {
+        expectApplied(self::FILTER)->once()->with([])->andReturnArg(0);
 
         $testee = new MerchantCountrySupport('MX');
 

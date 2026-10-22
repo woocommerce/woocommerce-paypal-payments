@@ -2,10 +2,24 @@
  * Internal dependencies
  */
 import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
-import { annotateVisitor, test, waitForOrderStatus } from '../../../utils';
+import {
+	annotateVisitor,
+	test,
+	waitForOrderStatus,
+	waitForTransactionId,
+} from '../../../utils';
 
 export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer, merchant, orderStatus } = testOrder;
+	const {
+		title,
+		payment,
+		products,
+		customer,
+		merchant,
+		orderStatus,
+		isPayNowEnabled = true,
+		isCheckoutFormEmpty = false,
+	} = testOrder;
 
 	test(
 		title,
@@ -26,21 +40,25 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 				test.setTimeout( 3 * 60_000 ); // 3 minutes for PUI/OXXO async capture
 			}
 
-			// PUI/OXXO capture completion relies on an async PayPal webhook, which
-			// can't reach the ephemeral CI environment. In CI, skip waiting for it
-			// and finish the assertions with the order still in its synchronous,
-			// pre-capture status.
-			const skipCaptureWait = isAsyncCaptureGateway && !! process.env.CI;
-			const syncOrderStatus = gatewayTitle === 'OXXO' ? 'pending' : 'on-hold';
-
 			await test.step( `Add product(s) to the cart`, async () => {
 				await utils.fillVisitorsCart( products );
 			} );
 
 			await test.step( `Visit Checkout, make payment with ${ gatewayTitle }`, async () => {
 				await checkout.visit();
-				await checkout.completeCheckoutDetails( testOrder );
-				await checkout.payPalUi.makePayment( { merchant, payment } );
+				// Express buttons can be used before the form is filled; PayPal provides the details
+				if ( ! isCheckoutFormEmpty ) {
+					await checkout.completeCheckoutDetails( testOrder );
+				}
+				await checkout.payPalUi.makePayment( {
+					merchant,
+					payment,
+					isPayNowEnabled,
+				} );
+				if ( ! isPayNowEnabled ) {
+					// Express payment returns to checkout for review
+					await checkout.placeOrder();
+				}
 			} );
 				
 			let orderId: number;
@@ -52,15 +70,14 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 
 				orderId = await orderReceived.getOrderNumber();
 
-				if ( skipCaptureWait ) {
-					return;
-				}
-
 				await waitForOrderStatus( wooCommerceApi, orderId, {
 					expectedStatus: orderStatus,
+					timeout: isAsyncCaptureGateway ? 2.5 * 60_000 : undefined,
 				} );
-				const transactionId =
-						( await wooCommerceApi.getOrder( orderId ) ).transaction_id;
+				const transactionId = await waitForTransactionId(
+					wooCommerceApi,
+					orderId
+				);
 
 				payPalPaymentDetails = await payPalApi.getPayPalPaymentDetails(
 					transactionId,
@@ -77,10 +94,10 @@ export const transactionsOnCheckout = ( testOrder: ShopOrder ) => {
 
 			await test.step( `Assert details on order edit page`, async () => {
 				await wooCommerceOrderEdit.visit( orderId );
-				const orderEditData = skipCaptureWait
-					? { ...testOrder, orderStatus: syncOrderStatus }
-					: testOrder;
-				await wooCommerceOrderEdit.assertOrderDetails( orderEditData, payPalPaymentDetails );
+				await wooCommerceOrderEdit.assertOrderDetails(
+					testOrder,
+					payPalPaymentDetails
+				);
 			} );
 		}
 	);

@@ -33,13 +33,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 		} );
 
 	productsTable = () => this.page.locator( '#order_line_items' );
-	productRow = ( name ) => this.productsTable().getByRole( 'row', { name } );
-	productRefundQtyInput = ( name ) =>
-		this.productRow( name ).locator( '.refund_order_item_qty' );
-	productRefundTotalInput = ( name ) =>
-		this.productRow( name ).locator( '.refund_line_total' );
-	productRefundTaxInput = ( name ) =>
-		this.productRow( name ).locator( '.refund_line_tax' );
 
 	firstRefundTotalInput = () =>
 		this.productsTable().locator( '.refund_line_total' ).first();
@@ -51,20 +44,17 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	seeOXXOVoucherButton = () =>
 		this.page.getByRole( 'link', { name: 'See OXXO voucher' } ).first();
 
-	payPalPackageTrackingSection = () =>
-		this.page.locator( '#ppcp_order-tracking' );
-
-	cvv2MatchOrderNote = () =>
-		this.orderNoteContent().filter( { hasText: 'CVV2 Match: Y' } );
-	addressVerificationOrderNote = () =>
-		this.orderNoteContent().filter( {
-			hasText: 'Address Verification Result',
-		} );
-
 	notCapturedIndicator = () => this.page.getByText( 'Not captured' );
 	voidButton = () => this.page.locator( '#pcpVoid' );
 
 	// Actions
+
+	/**
+	 * Captures an authorized PayPal payment from the Order actions box.
+	 */
+	captureAuthorizedPayment = async () => {
+		await this.makeOrderAction( 'ppcp_authorize_order' );
+	};
 
 	/**
 	 * Performs refund
@@ -143,7 +133,9 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 
 		// For example: Payment via PayPal
 		await expect(
-			this.paymentVia( payment?.gateway?.titleInModal ),
+			this.paymentVia(
+				payment?.gateway?.titleInOrder ?? payment?.gateway?.titleInModal
+			),
 			`Assert payment via text is visible`
 		).toBeVisible();
 

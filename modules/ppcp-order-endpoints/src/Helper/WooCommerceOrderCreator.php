@@ -11,10 +11,12 @@ namespace WooCommerce\PayPalCommerce\OrderEndpoints\Helper;
 
 use Exception;
 use RuntimeException;
+use Throwable;
 use WC_Cart;
 use WC_Customer;
 use WC_Data_Exception;
 use WC_Order;
+use WC_Order_Item_Fee;
 use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
 use WC_Product;
@@ -90,6 +92,7 @@ class WooCommerceOrderCreator {
 	 * @param array|null       $paypal_data The PayPal Response Data.
 	 *
 	 * @throws RuntimeException If problem creating.
+	 * @throws Throwable On PHP errors, after deleting the partial order.
 	 */
 	public function create_from_paypal_order( Order $order, $cart, ?array $paypal_data = null ): WC_Order {
 		$cart_data = $cart;
@@ -110,6 +113,7 @@ class WooCommerceOrderCreator {
 			$this->configure_payment_source( $wc_order );
 			$this->configure_customer( $wc_order, $cart_data );
 			$this->configure_line_items( $wc_order, $cart_data, $payer, $shipping );
+			$this->configure_fees( $wc_order, $cart_data );
 			$this->configure_addresses( $wc_order, $payer, $shipping, $cart_data->needs_shipping() );
 			$this->configure_coupons( $wc_order, $cart_data->coupons() );
 
@@ -123,6 +127,10 @@ class WooCommerceOrderCreator {
 		} catch ( Exception $exception ) {
 			$wc_order->delete( true );
 			throw new RuntimeException( 'Failed to create WooCommerce order: ' . $exception->getMessage() );
+		} catch ( Throwable $error ) {
+			// Keep PHP errors fatal so their internal message never reaches the buyer.
+			$wc_order->delete( true );
+			throw $error;
 		}
 
 		do_action( 'woocommerce_paypal_payments_woocommerce_order_created_from_cart', $wc_order, $cart_data );
@@ -142,6 +150,14 @@ class WooCommerceOrderCreator {
 			$quantity             = $cart_item['quantity'] ?? 0;
 			$variation_attributes = $cart_item['variation'];
 
+			$product = wc_get_product( $variation_id ?: $product_id );
+			if ( ! $product ) {
+				continue;
+			}
+
+			// Session cart items have no product object, but the core hooks below expect it.
+			$cart_item['data'] = $product;
+
 			/**
 			 * Filters the order line item object, mirroring WooCommerce Core so plugins
 			 * can swap the item class before it is populated.
@@ -160,7 +176,13 @@ class WooCommerceOrderCreator {
 			);
 			$item->set_product_id( $product_id );
 			$item->set_quantity( $quantity );
-			$item->set_order( $wc_order );
+
+			// set_order() only exists since WC 10.9.
+			if ( is_object( $item ) && method_exists( $item, 'set_order' ) ) {
+				$item->set_order( $wc_order );
+			} else {
+				$item->set_order_id( $wc_order->get_id() );
+			}
 
 			if ( isset( $cart_item['bundled_by'] ) ) {
 				$item->add_meta_data( '_bundled_by', $cart_item['bundled_by'], true );
@@ -175,11 +197,6 @@ class WooCommerceOrderCreator {
 			if ( $variation_id ) {
 				$item->set_variation_id( $variation_id );
 				$item->set_variation( $variation_attributes );
-			}
-
-			$product = wc_get_product( $variation_id ?: $product_id );
-			if ( ! $product ) {
-				return;
 			}
 
 			$subtotal = apply_filters( 'woocommerce_paypal_payments_shipping_callback_cart_line_item_total', $cart_item['line_subtotal'], $cart_item );
@@ -227,6 +244,44 @@ class WooCommerceOrderCreator {
 			 * @param WC_Order              $wc_order      The order being built.
 			 */
 			do_action( 'woocommerce_checkout_create_order_line_item', $item, $cart_item_key, $cart_item, $wc_order );
+
+			$wc_order->add_item( $item );
+		}
+	}
+
+	/**
+	 * Copies the cart fees onto the order, mirroring WC_Checkout::create_order_fee_lines().
+	 *
+	 * Without this the order is built from line items, shipping and coupons alone, so a
+	 * cart fee is dropped and the order total no longer matches the amount the buyer
+	 * approved: it is charged short by a surcharge, or over by a negative fee.
+	 */
+	protected function configure_fees( WC_Order $wc_order, CartData $cart_data ): void {
+		foreach ( $cart_data->fees() as $fee_key => $fee ) {
+			$taxable = (bool) ( $fee['taxable'] ?? false );
+
+			$item = new WC_Order_Item_Fee();
+			$item->set_name( (string) ( $fee['name'] ?? '' ) );
+			$item->set_amount( (string) ( $fee['amount'] ?? 0 ) );
+			$item->set_total( (string) ( $fee['total'] ?? 0 ) );
+
+			/**
+			 * The totals are recalculated once the order is assembled, so a fee the cart
+			 * left untaxed has to say so here; the item defaults to taxable otherwise.
+			 */
+			$item->set_tax_status( $taxable ? 'taxable' : 'none' );
+			$item->set_tax_class( $taxable ? (string) ( $fee['tax_class'] ?? '' ) : '' );
+
+			/**
+			 * Fires the standard WooCommerce fee item action so third-party plugins can
+			 * augment the item. The fee is passed as an object, as WooCommerce passes it.
+			 *
+			 * @param WC_Order_Item_Fee $item     The order fee item.
+			 * @param string|int        $fee_key  The fee key.
+			 * @param object            $fee      The cart fee.
+			 * @param WC_Order          $wc_order The order being built.
+			 */
+			do_action( 'woocommerce_checkout_create_order_fee_item', $item, $fee_key, (object) $fee, $wc_order );
 
 			$wc_order->add_item( $item );
 		}

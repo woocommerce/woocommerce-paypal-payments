@@ -12,8 +12,8 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
 use Automattic\WooCommerce\Abilities\AbilityDefinition;
-use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
+use WooCommerce\PayPalCommerce\Abilities\AbilityHandlers;
+use WooCommerce\PayPalCommerce\Abilities\AbilityNames;
 
 /**
  * Registers woocommerce-paypal-payments/get-payment-methods.
@@ -27,25 +27,23 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
  */
 class GetPaymentMethods extends AbstractPpcpAbility implements AbilityDefinition {
 
-	private const REST_ROUTE = '/wc/v3/wc_paypal/payment';
-
 	public static function get_name(): string {
-		return 'woocommerce-paypal-payments/get-payment-methods';
+		return AbilityNames::GET_PAYMENT_METHODS;
 	}
 
 	public static function get_registration_args(): array {
 		return array(
 			'label'               => __( 'Get PayPal Payments payment methods', 'woocommerce-paypal-payments' ),
 			'description'         => __( 'Returns every PayPal payment gateway (PayPal, Pay Later, Card Fields/ACDC, Apple Pay, Google Pay, Venmo, Fastlane, APMs) with its enabled state, dependency edges, and any warning messages currently surfaced in the admin UI.', 'woocommerce-paypal-payments' ),
-			'category'            => self::CATEGORY_SLUG,
+			'category'            => AbilityNames::CATEGORY_SLUG,
 			'input_schema'        => array(
 				'type'                 => 'object',
 				'default'              => (object) array(),
 				'properties'           => array(),
 				'additionalProperties' => false,
 			),
-			'execute_callback'    => array( self::class, 'execute' ),
-			'permission_callback' => array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ),
+			'execute_callback'    => AbilityHandlers::callback( self::get_name() ),
+			'permission_callback' => AbilityHandlers::permission_callback(),
 			// output_schema omitted — the heterogeneous shape is documented in
 			// the audit doc; duplicating it would couple to the filterable output.
 			'meta'                => array(
@@ -60,34 +58,5 @@ class GetPaymentMethods extends AbstractPpcpAbility implements AbilityDefinition
 				),
 			),
 		);
-	}
-
-	/**
-	 * Execute callback.
-	 *
-	 * @param mixed $input Optional; ignored.
-	 * @return array|\WP_Error The unwrapped payment-methods payload or
-	 *                         WP_Error on transport / envelope failure.
-	 */
-	public static function execute( $input = null ) {
-		unset( $input );
-
-		$response = self::delegate_to_rest_controller(
-			PaymentRestEndpoint::class,
-			'GET',
-			self::REST_ROUTE
-		);
-
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		}
-
-		$unwrapped = self::unwrap_envelope( $response );
-
-		if ( is_wp_error( $unwrapped ) ) {
-			return $unwrapped;
-		}
-
-		return is_array( $unwrapped ) ? $unwrapped : array( 'data' => $unwrapped );
 	}
 }

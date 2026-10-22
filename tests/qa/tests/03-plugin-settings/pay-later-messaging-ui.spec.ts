@@ -3,6 +3,7 @@
  */
 import { expect, test } from '../../utils';
 import { merchants, storeConfigUsa, products } from '../../resources';
+import { sdkVersion } from '../../utils/helpers/sdk-version.helper';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigUsa );
@@ -52,17 +53,19 @@ test( 'PCP-4336 | Settings - Pay Later Messaging - Default UI', async ( {
 		'Assert PLM Checkout config is visible'
 	).toBeVisible();
 
-	await pcpPayLaterMessaging.expandAccordionSection( 'Home' );
-	await expect(
-		pcpPayLaterMessaging.configContainer(),
-		'Assert PLM Home config is visible'
-	).toBeVisible();
+	if ( sdkVersion() === 'v5' ) {
+		await pcpPayLaterMessaging.expandAccordionSection( 'Home' );
+		await expect(
+			pcpPayLaterMessaging.configContainer(),
+			'Assert PLM Home config is visible'
+		).toBeVisible();
 
-	await pcpPayLaterMessaging.expandAccordionSection( 'Shop' );
-	await expect(
-		pcpPayLaterMessaging.configContainer(),
-		'Assert PLM Shop config is visible'
-	).toBeVisible();
+		await pcpPayLaterMessaging.expandAccordionSection( 'Shop' );
+		await expect(
+			pcpPayLaterMessaging.configContainer(),
+			'Assert PLM Shop config is visible'
+		).toBeVisible();
+	}
 
 	await product.visit( products.simple100.slug );
 	await expect(
@@ -94,17 +97,19 @@ test( 'PCP-4336 | Settings - Pay Later Messaging - Default UI', async ( {
 		'Assert PLM is visible on classic checkout'
 	).toBeVisible();
 
-	await shop.visit();
-	await expect(
-		shop.payPalUi.payLaterMessageContainer(),
-		'Assert PLM container is not visible on shop (disabled by default)'
-	).not.toBeVisible();
+	if ( sdkVersion() === 'v5' ) {
+		await shop.visit();
+		await expect(
+			shop.payPalUi.payLaterMessageContainer(),
+			'Assert PLM container is not visible on shop (disabled by default)'
+		).not.toBeVisible();
 
-	await payPalUi.page.goto( '/' ); // home page
-	await expect(
-		payPalUi.payLaterMessageContainer(),
-		'Assert PLM container is not visible on home (disabled by default)'
-	).not.toBeVisible();
+		await payPalUi.page.goto( '/' ); // home page
+		await expect(
+			payPalUi.payLaterMessageContainer(),
+			'Assert PLM container is not visible on home (disabled by default)'
+		).not.toBeVisible();
+	}
 } );
 
 test( 'PCP-4337 | Settings - Pay Later Messaging - Disabled on all pages', async ( {
@@ -126,8 +131,10 @@ test( 'PCP-4337 | Settings - Pay Later Messaging - Disabled on all pages', async
 	await pcpPayLaterMessaging.disableMessagingForLocation( 'Product page' );
 	await pcpPayLaterMessaging.disableMessagingForLocation( 'Cart' );
 	await pcpPayLaterMessaging.disableMessagingForLocation( 'Checkout' );
-	await pcpPayLaterMessaging.disableMessagingForLocation( 'Home' );
-	await pcpPayLaterMessaging.disableMessagingForLocation( 'Shop' );
+	if ( sdkVersion() === 'v5' ) {
+		await pcpPayLaterMessaging.disableMessagingForLocation( 'Home' );
+		await pcpPayLaterMessaging.disableMessagingForLocation( 'Shop' );
+	}
 
 	await pcpPayLaterMessaging.saveChanges();
 	await pcpPayLaterMessaging.page.reload();
@@ -155,18 +162,24 @@ test( 'PCP-4337 | Settings - Pay Later Messaging - Disabled on all pages', async
 			'Assert Checkout messaging is disabled'
 		)
 		.toBeFalsy();
-	expect
-		.soft(
-			await pcpPayLaterMessaging.isMessagingForLocationEnabled( 'Home' ),
-			'Assert Home messaging is disabled'
-		)
-		.toBeFalsy();
-	expect
-		.soft(
-			await pcpPayLaterMessaging.isMessagingForLocationEnabled( 'Shop' ),
-			'Assert Shop messaging is disabled'
-		)
-		.toBeFalsy();
+	if ( sdkVersion() === 'v5' ) {
+		expect
+			.soft(
+				await pcpPayLaterMessaging.isMessagingForLocationEnabled(
+					'Home'
+				),
+				'Assert Home messaging is disabled'
+			)
+			.toBeFalsy();
+		expect
+			.soft(
+				await pcpPayLaterMessaging.isMessagingForLocationEnabled(
+					'Shop'
+				),
+				'Assert Shop messaging is disabled'
+			)
+			.toBeFalsy();
+	}
 
 	await product.visit( products.simple100.slug );
 	await expect
@@ -208,19 +221,21 @@ test( 'PCP-4337 | Settings - Pay Later Messaging - Disabled on all pages', async
 		)
 		.not.toBeVisible();
 
-	await shop.visit();
-	await expect
-		.soft(
-			shop.payPalUi.payLaterMessageContainer(),
-			'Assert PLM container is not visible on shop when disabled'
-		)
-		.not.toBeVisible();
+	if ( sdkVersion() === 'v5' ) {
+		await shop.visit();
+		await expect
+			.soft(
+				shop.payPalUi.payLaterMessageContainer(),
+				'Assert PLM container is not visible on shop when disabled'
+			)
+			.not.toBeVisible();
 
-	await payPalUi.page.goto( '/' ); // home page
-	await expect
-		.soft(
-			payPalUi.payLaterMessageContainer(),
-			'Assert PLM container is not visible on home when disabled'
-		)
-		.not.toBeVisible();
+		await payPalUi.page.goto( '/' ); // home page
+		await expect
+			.soft(
+				payPalUi.payLaterMessageContainer(),
+				'Assert PLM container is not visible on home when disabled'
+			)
+			.not.toBeVisible();
+	}
 } );

@@ -11,14 +11,11 @@ Team reference for the custom Claude Code tooling in this repo: the slash-comman
 
 **Finishing your own change**
 
-1. Edit PHP. The hooks auto-run php-review and Claude applies cleanliness fixes.
-2. `/pr-readiness` for the readiness gate.
+1. Edit PHP. The hooks auto-run the cleanliness reviewer and Claude applies its fixes.
+2. `/review-branch-before-pr` for the readiness gate.
 3. `/describe-pr` to draft and (on approval) publish the PR description.
 
-**Reviewing a teammate's PR:** `/code-review <PR-number>`, then your manual review on top.
-
-**Writing tests:** the unit-test-writer agent owns `tests/PHPUnit/`; the test rule routes work to it automatically.
-
+**Writing tests:** the test-writer agents own `tests/PHPUnit/` and the colocated Jest suites; the test rules route work to them automatically.
 
 ---
 
@@ -28,45 +25,37 @@ _Slash-commands that we manually invoke._
 
 > Claude Docs: https://code.claude.com/docs/en/skills
 
-### `/understand`
-
-Run **before** starting a complex task, to research an area and capture what you learn. Args: `[module-or-topic] [JIRA-ID]`, both optional.
-
-Recalls any existing notes, researches the code, cross-references your assumptions against it, offers an optional interview, then dispatches `note-taker` to file durable facts and task context as local notes.
-
-Source: [skills/understand/SKILL.md](../skills/understand/SKILL.md)
-
-### `/pr-readiness`
+### `/review-branch-before-pr`
 
 Run on **your own** branch before opening a PR. Args: `[JIRA-ID] [base-branch]`, both optional.
 
-Dispatches the pr-readiness agent to check test coverage, docs, and code quality, then give a ready or not-ready verdict. Does not write the PR description.
+Gathers the branch diff, commit list, and optional Jira context, then dispatches the `is-branch-ready-for-pr` agent to check test coverage, docs, and code quality and give a ready or not-ready verdict. Does not write the PR description.
 
-Source: [skills/pr-readiness/SKILL.md](../skills/pr-readiness/SKILL.md)
+Source: [skills/review-branch-before-pr/SKILL.md](../skills/review-branch-before-pr/SKILL.md)
 
 ### `/describe-pr`
 
-Run after `/pr-readiness`. Args: `[PR-number] [JIRA-ID]`, both optional.
+Run after `/review-branch-before-pr`. Args: `[JIRA-ID] [base-branch]`, both optional.
 
-Drafts a reviewer-focused PR title and description, and updates the PR via `gh pr edit` only after you approve.
+Drafts a reviewer-focused PR title and description, then creates a draft PR (`gh pr create -d`) or updates the existing one (`gh pr edit`) - only after you explicitly approve. The full house style lives next to the skill in `guideline.md`.
 
 Source: [skills/describe-pr/SKILL.md](../skills/describe-pr/SKILL.md)
 
-### `/code-review`
+### `/clean-up-code`
 
-Run on **someone else's** PR, before your manual review. Arg: `[PR-number]`.
+Run on a scope of code to make it easier to understand. Without a scope, it falls back to all uncommitted changes.
 
-Automated first pass against the shared quality standard, plus bug and test notes. Writes a report to `./temp/code-reviews`.
+Prefers renaming variables and functions over adding comments, and trims verbose comments down. Files over 400 lines are flagged for a possible split, never split automatically.
 
-Source: [skills/code-review/SKILL.md](../skills/code-review/SKILL.md)
+Source: [skills/clean-up-code/SKILL.md](../skills/clean-up-code/SKILL.md)
 
-### `/php-review`
+### `/md-writer`
 
-Run on a PHP file for an on-demand cleanliness review. Args: `[FULL|CHANGES] <file>` (scope defaults to `CHANGES`).
+Our Markdown house style: purpose and brevity, sentence-case headers, line breaks, table formatting.
 
-The manual counterpart to the automatic hook: it runs the same `php-review` agent for a more thorough pass. `CHANGES` reviews only what you changed; `FULL` reviews the whole file.
+Path-scoped to `**/*.md`, so Claude also loads it on its own whenever it creates or updates Markdown.
 
-Source: [skills/php-review/SKILL.md](../skills/php-review/SKILL.md)
+Source: [skills/md-writer/SKILL.md](../skills/md-writer/SKILL.md)
 
 ### Disabling skills you don't use
 
@@ -75,8 +64,8 @@ Every listed skill's name and description is fed into Claude's context each sess
 ```json
 {
 	"skillOverrides": {
-		"code-review": "off",
-		"pr-readiness": "name-only"
+		"clean-up-code": "off",
+		"review-branch-before-pr": "name-only"
 	}
 }
 ```
@@ -88,7 +77,7 @@ Every listed skill's name and description is fed into Claude's context each sess
 | `user-invocable-only` | nothing                   | yes            | no                |
 | `off`                 | nothing                   | no             | no                |
 
-Keys are skill names (e.g. `understand`, `describe-pr`), not paths. Omit a skill to leave it `on`.
+Keys are skill names (e.g. `describe-pr`), not paths. Omit a skill to leave it `on`. The `/skills` menu shows `user-invocable-only` as `user-only`. Plugin skills ignore this setting; manage those through `/plugin`.
 
 ---
 
@@ -98,55 +87,43 @@ _Automatically invoked by skills or hooks; can also be manually dispatched ("Use
 
 > Claude Docs: https://code.claude.com/docs/en/sub-agents
 
-### `php-review`
+### `is-branch-ready-for-pr`
 
-Read-only. Reviews changed PHP for cleanliness (function focus, comment noise, coupling, over-engineering) and suggests fixes; never edits. It runs automatically after you edit PHP (via the Stop hook), and you can also run it on demand with `/php-review`.
+Read-only. Dispatched only by the `/review-branch-before-pr` skill.
 
-Source: [agents/php-review.md](../agents/php-review.md)
+Audits the branch diff and returns a fixed-shape readiness report.
 
-### `pr-readiness`
+Source: [agents/is-branch-ready-for-pr.md](../agents/is-branch-ready-for-pr.md)
 
-Read-only. Dispatched only by the `/pr-readiness` skill.
+### `review-php-code-cleanliness`
 
-Audits the branch diff. Shares its name with the skill on purpose: the skill gathers context, the agent reviews.
+Read-only. Reviews PHP for cleanliness a linter cannot catch (function focus, comment noise, coupling, over-engineering) and suggests fixes; never edits. Runs automatically after you edit PHP (via the Stop hook), and can be dispatched manually with `review CHANGES in <file>` or `review FULL <file>`.
 
-Source: [agents/pr-readiness.md](../agents/pr-readiness.md)
+Source: [agents/review-php-code-cleanliness.md](../agents/review-php-code-cleanliness.md)
 
-### `unit-test-writer`
-
-Writes and updates PHPUnit tests in `tests/PHPUnit/`, following the project's conventions. Dispatched manually or via the test rule below.
-
-Source: [agents/unit-test-writer.md](../agents/unit-test-writer.md)
-
-### `js-unit-test-writer`
-
-Writes and updates Jest tests (the colocated `*.test.js` files next to module `resources/js` sources), following the existing JS suite's conventions. Dispatched manually.
-
-Source: [agents/js-unit-test-writer.md](../agents/js-unit-test-writer.md)
-
-### `ci`
-
-Background. Runs the project's tests and linters (PHP unit, JS unit, integration, PHPCS, PHPStan) and distills the output to a crisp pass/fail summary, keeping heavy tool output out of the main context. Use it for any test or lint run; the test-writer agents hand off verification to it.
-
-Source: [agents/ci.md](../agents/ci.md)
-
-### `copy-editor`
+### `verify-user-facing-copy`
 
 Read-only. Canonicalizes a user-facing string (sentence case, brand capitalization, concision) against the copy guidelines and returns a suggestion. The caller passes the draft plus its context; a human still has the final word. Dispatch when writing or changing UI copy.
 
-Source: [agents/copy-editor.md](../agents/copy-editor.md)
+Source: [agents/verify-user-facing-copy.md](../agents/verify-user-facing-copy.md)
 
-### `note-reader`
+### `write-php-unit-test`
 
-Read-only. Recalls your local research notes for a module or topic and returns what's relevant (or reports that none exist). Dispatched by `/understand`, by other skills, or manually.
+Writes and updates PHPUnit tests in `tests/PHPUnit/`, following the project's conventions. Dispatched manually or via the test rule below.
 
-Source: [agents/note-reader.md](../agents/note-reader.md)
+Source: [agents/write-php-unit-test.md](../agents/write-php-unit-test.md)
 
-### `note-taker`
+### `write-js-unit-test`
 
-Records what you learn into your local research notes: durable facts about a module or topic, plus looser per-task context. Dispatched by `/understand`, by other skills, or manually.
+Writes and updates Jest tests (the colocated `*.test.js` files next to module `resources/js` sources), following the existing JS suite's conventions. Dispatched manually or via the test rule below.
 
-Source: [agents/note-taker.md](../agents/note-taker.md)
+Source: [agents/write-js-unit-test.md](../agents/write-js-unit-test.md)
+
+### `ci`
+
+Runs one requested suite (PHP unit, PHP unit TDD, JS unit, integration, PHPCS, PHPStan) and distills the output to a crisp pass/fail summary, keeping heavy tool output out of the main context. Use it for any test or lint run; the test-writer agents hand off verification to it.
+
+Source: [agents/ci.md](../agents/ci.md)
 
 ---
 
@@ -157,21 +134,21 @@ _Fire automatically when Claude performs certain actions._
 > Claude Docs: https://code.claude.com/docs/en/hooks  
 > Registered in [settings.json](../settings.json)
 
-### `php-review-track.sh`
+### `track-edited-php-files.sh`
 
 PostToolUse (Edit / Write). Records which PHP files you touch this session, so only those become review candidates. Pre-existing files are left alone.
 
-Source: [hooks/php-review-track.sh](../hooks/php-review-track.sh)
+Source: [hooks/track-edited-php-files.sh](../hooks/track-edited-php-files.sh)
 
-### `php-review-stop.sh`
+### `review-edited-php-files.sh`
 
 Stop. When your turn settles, asks Claude to review each touched PHP file whose content changed since its last review. Each state is reviewed once, so the loop terminates.
 
-Source: [hooks/php-review-stop.sh](../hooks/php-review-stop.sh)
+Source: [hooks/review-edited-php-files.sh](../hooks/review-edited-php-files.sh)
 
-### Disabling the php-review hooks
+### Disabling the PHP review hooks
 
-Both hooks read `hooks/config.local.json` (gitignored). Copy `config.example.json` to `config.local.json` and set `"php-review": false` to turn them off locally. No config file, or a missing key, means enabled. The `/php-review` skill is unaffected: a manual invocation always runs.
+Both hooks read `hooks/config.local.json` (gitignored). Copy `config.example.json` to `config.local.json` and set `"php-review": false` to turn them off locally. No config file, or a missing key, means enabled. Dispatching `review-php-code-cleanliness` by hand is unaffected and always runs.
 
 ---
 
@@ -182,15 +159,15 @@ _Autoloaded by Claude, passive context._
 > Claude Docs:
 > [https://code.claude.com/docs/en/memory](https://code.claude.com/docs/en/memory#organize-rules-with-claude/rules/)
 
-### `unit-test-conventions.md`
+### `php-test-conventions.md`
 
-Loads on first read of a `tests/PHPUnit/**/*.php` file. Routes all test writing through the unit-test-writer agent instead of inline test code.
+Loads on first read of a `tests/PHPUnit/**/*.php` file. Routes all PHP test writing through the `write-php-unit-test` agent instead of inline test code.
 
-Source: [rules/unit-test-conventions.md](../rules/unit-test-conventions.md)
+Source: [rules/php-test-conventions.md](../rules/php-test-conventions.md)
 
 ### `js-test-conventions.md`
 
-Loads on first read of a `modules/**/*.test.js` file. Routes all JS test writing through the js-unit-test-writer agent instead of inline test code.
+Loads on first read of a `modules/**/*.test.js` file. Routes all JS test writing through the `write-js-unit-test` agent instead of inline test code.
 
 Source: [rules/js-test-conventions.md](../rules/js-test-conventions.md)
 
@@ -200,8 +177,8 @@ Source: [rules/js-test-conventions.md](../rules/js-test-conventions.md)
 
 _Our conventions, not a regular Claude Code folder._
 
-### code-quality.md
+### php-code-quality.md
 
-The shared code-quality rules. Single source of truth for `/code-review` and `/pr-readiness`. The php-review agent keeps a tuned subset inline and does not read this file.
+The shared code-quality rules, and the quality lens the `is-branch-ready-for-pr` agent reads before reviewing. The `review-php-code-cleanliness` agent keeps a tuned subset inline and does not read this file.
 
-Source: [code-quality.md](./code-quality.md)
+Source: [php-code-quality.md](./php-code-quality.md)

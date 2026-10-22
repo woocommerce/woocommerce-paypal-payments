@@ -25,6 +25,20 @@ export class PcpApi extends WooCommerceApiBase {
 	}
 
 	/**
+	 * Fails when a PCP endpoint reports an error.
+	 * PCP endpoints answer HTTP 200 with { success: false, message } on failure.
+	 *
+	 * @param response Parsed response of a wc_paypal/* request.
+	 * @param action   What was requested, for the error message.
+	 */
+	private assertSuccess = ( response, action: string ) => {
+		expect(
+			response?.success,
+			`Assert PCP ${ action } succeeded: ${ response?.message ?? '' }`
+		).toBe( true );
+	};
+
+	/**
 	 * Connects merchant via REST API.
 	 *
 	 * @param clientId          PayPal merchant's client ID
@@ -41,11 +55,16 @@ export class PcpApi extends WooCommerceApiBase {
 	) => {
 		// Preset onboarding options (without gatewaysSynced — sync must run after
 		// authentication so ACDC eligibility can be checked with a live connection).
-		await this.wcRequest( 'post', 'wc_paypal/onboarding', {
-			...onboardingOptions,
-			gatewaysRefreshed: true,
-			_locale: 'user',
-		} );
+		const onboardingResponse = await this.wcRequest(
+			'post',
+			'wc_paypal/onboarding',
+			{
+				...onboardingOptions,
+				gatewaysRefreshed: true,
+				_locale: 'user',
+			}
+		);
+		this.assertSuccess( onboardingResponse, 'onboarding options update' );
 		// Merchant connection request
 		const response = await this.wcRequest(
 			'post',
@@ -57,13 +76,19 @@ export class PcpApi extends WooCommerceApiBase {
 				_locale: 'user',
 			}
 		);
+		this.assertSuccess( response, 'merchant connection' );
 		// Sync gateway states now that the merchant is connected, so that
 		// eligibility checks (e.g. ACDC) use live PayPal API responses instead
 		// of returning false due to an unauthenticated state.
-		await this.wcRequest( 'post', 'wc_paypal/onboarding', {
-			gatewaysSynced: true,
-			_locale: 'user',
-		} );
+		const syncResponse = await this.wcRequest(
+			'post',
+			'wc_paypal/onboarding',
+			{
+				gatewaysSynced: true,
+				_locale: 'user',
+			}
+		);
+		this.assertSuccess( syncResponse, 'gateway sync' );
 		await this.updatePcpSettings( {
 			invoicePrefix: `${ generateRandomString( 8 ) }-`,
 		} );
@@ -84,6 +109,7 @@ export class PcpApi extends WooCommerceApiBase {
 				_locale: 'user',
 			}
 		);
+		this.assertSuccess( response, 'merchant disconnection' );
 		return response;
 	};
 
@@ -112,6 +138,7 @@ export class PcpApi extends WooCommerceApiBase {
 			...data,
 			_locale: 'user',
 		} );
+		this.assertSuccess( response, 'payment methods update' );
 		return response;
 	};
 
@@ -125,6 +152,7 @@ export class PcpApi extends WooCommerceApiBase {
 			...data,
 			_locale: 'user',
 		} );
+		this.assertSuccess( response, 'settings update' );
 		return response;
 	};
 
@@ -138,6 +166,7 @@ export class PcpApi extends WooCommerceApiBase {
 			...data,
 			_locale: 'user',
 		} );
+		this.assertSuccess( response, 'styling update' );
 		return response;
 	};
 
@@ -216,9 +245,9 @@ export class PcpApi extends WooCommerceApiBase {
 				)
 				.toBeTruthy();
 
-			// Retry up to 10 seconds to detect if the renewal was triggered,
-			// avoiding sending a duplicate webhook while the first is still processing.
-			for ( let retry = 0; retry < 10 && ! isRenewalTriggered; retry++ ) {
+			// Wait up to 30 seconds for the renewal before resending: a resend while the
+			// first webhook is still processing creates a second renewal order.
+			for ( let retry = 0; retry < 30 && ! isRenewalTriggered; retry++ ) {
 				const renewalCount =
 					await this.getSubscriptionRenewalCount( subscriptionId );
 				isRenewalTriggered = renewalCount > initialRenewalCount;

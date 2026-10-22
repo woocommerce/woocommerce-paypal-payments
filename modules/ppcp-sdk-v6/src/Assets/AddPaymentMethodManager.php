@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\SdkLocale;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -32,7 +33,6 @@ class AddPaymentMethodManager {
 
 	// Same WC credit-card-form field IDs the classic/block card fields mount
 	// into (see SdkV6Manager); rendered by the card gateway on this page too.
-	private const CARD_FIELD_NAME_ID   = 'ppcp-credit-card-gateway-card-name';
 	private const CARD_FIELD_NUMBER_ID = 'ppcp-credit-card-gateway-card-number';
 	private const CARD_FIELD_EXPIRY_ID = 'ppcp-credit-card-gateway-card-expiry';
 	private const CARD_FIELD_CVV_ID    = 'ppcp-credit-card-gateway-card-cvc';
@@ -92,6 +92,7 @@ class AddPaymentMethodManager {
 			$asset['version'],
 			true
 		);
+		wp_set_script_translations( 'wc-ppcp-sdk-v6-add-payment-method', 'woocommerce-paypal-payments' );
 
 		wp_localize_script(
 			'wc-ppcp-sdk-v6-add-payment-method',
@@ -143,7 +144,7 @@ class AddPaymentMethodManager {
 		return array(
 			'sdk_url'              => $base_url . '/web-sdk/v6/core',
 			'currency'             => get_woocommerce_currency(),
-			'locale'               => str_replace( '_', '-', get_locale() ),
+			'locale'               => SdkLocale::from_wp_locale( get_locale() ),
 			'verification_method'  => $verification_method,
 			'payment_methods_page' => wc_get_account_endpoint_url( 'payment-methods' ),
 			'button'               => array(
@@ -155,7 +156,6 @@ class AddPaymentMethodManager {
 				'payment_method' => CreditCardGateway::ID,
 				'funding_source' => 'card',
 				'fields'         => array(
-					'name'   => '#' . self::CARD_FIELD_NAME_ID,
 					'number' => '#' . self::CARD_FIELD_NUMBER_ID,
 					'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID,
 					'cvv'    => '#' . self::CARD_FIELD_CVV_ID,

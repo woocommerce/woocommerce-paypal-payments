@@ -10,6 +10,7 @@
  */
 
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange } from '../tokenRefresh';
 
 const MESSAGE_TAG_NAME = 'paypal-message';
 
@@ -194,26 +195,28 @@ function watchForWrappers( config, sdkPageType ) {
  * Builds a message Web Component, not yet in the DOM.
  *
  * Every attribute must be set before insertion: the component reads them on
- * connect.
+ * connect. Created in `doc`, whose window must have the SDK loaded, or the
+ * element is never upgraded.
  *
- * @param {Element} wrapper - The placeholder to build for.
- * @param {Object}  config  - The wc_ppcp_sdk_v6 config object.
- * @param {string}  amount  - The amount to price.
+ * @param {Document} doc              - The document to create the element in.
+ * @param {Object}   options          - The message options.
+ * @param {string}   options.amount   - The amount to price.
+ * @param {string}   options.currency - The currency code.
+ * @param {string}   options.pageType - The v6 page type.
+ * @param {Object}   options.style    - The v6 style values.
  * @return {Element} The configured element.
  */
-function createMessage( wrapper, config, amount ) {
-	const style = styleFor( wrapper, config.messages.style );
-	const element = document.createElement( MESSAGE_TAG_NAME );
-
-	// Required: without it the component lays out but never fetches, leaving an
-	// empty one-line box.
-	element.setAttribute( 'auto-bootstrap', '' );
+export function buildMessageElement(
+	doc,
+	{ amount, currency, pageType, style }
+) {
+	const element = doc.createElement( MESSAGE_TAG_NAME );
 
 	if ( amount ) {
 		element.setAttribute( 'amount', amount );
 	}
-	element.setAttribute( 'currency-code', config.currency );
-	element.setAttribute( 'page-type', pageTypeFor( wrapper, config ) );
+	element.setAttribute( 'currency-code', currency );
+	element.setAttribute( 'page-type', pageType );
 	element.setAttribute( 'logo-type', style.logoType );
 	element.setAttribute( 'logo-position', style.logoPosition );
 	element.setAttribute( 'text-color', style.textColor );
@@ -226,6 +229,50 @@ function createMessage( wrapper, config, amount ) {
 	}
 
 	return element;
+}
+
+/**
+ * Builds the message for one placeholder.
+ *
+ * @param {Element} wrapper - The placeholder to build for.
+ * @param {Object}  config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string}  amount  - The amount to price.
+ * @return {Element} The configured element.
+ */
+function createMessage( wrapper, config, amount ) {
+	return buildMessageElement( document, {
+		amount,
+		currency: config.currency,
+		pageType: pageTypeFor( wrapper, config ),
+		style: styleFor( wrapper, config.messages.style ),
+	} );
+}
+
+/**
+ * @param {Element} element - The message element.
+ */
+function fetchMessage( element ) {
+	messagesInstance
+		.fetchContent( element.getFetchContentOptions() )
+		.catch( ( error ) => {
+			// eslint-disable-next-line no-console
+			console.error( '[PPCP SDK v6] Pay Later message fetch failed', error );
+		} );
+}
+
+/**
+ * Rendered content stays; only the next fetch uses the new client token, so a
+ * token refresh shows no loading state.
+ *
+ * @param {Object} sdk    - The SDK instance.
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ */
+function setMessagesInstance( sdk, config ) {
+	// Otherwise every old instance also opens the learn-more popup on a click.
+	messagesInstance?.learnMore?.detachDefaultListener();
+	messagesInstance = sdk.createPayPalMessages( {
+		currencyCode: config.currency,
+	} );
 }
 
 /**
@@ -257,9 +304,10 @@ export async function renderMessages( config, sdkPageType ) {
 		const sdk = await loadSdkV6( config, sdkPageType );
 
 		if ( ! messagesInstance ) {
-			messagesInstance = sdk.createPayPalMessages( {
-				currencyCode: config.currency,
-			} );
+			setMessagesInstance( sdk, config );
+			onSdkInstanceChange( ( nextSdk ) =>
+				setMessagesInstance( nextSdk, config )
+			);
 		}
 
 		const amount = currentAmount( config );
@@ -268,6 +316,7 @@ export async function renderMessages( config, sdkPageType ) {
 			const element = createMessage( wrapper, config, amount );
 			wrapper.appendChild( element );
 			rendered.push( element );
+			fetchMessage( element );
 		} );
 	} finally {
 		// Released either way, so a later pass can pick these up.
@@ -304,5 +353,6 @@ export function updateMessagesAmount( amount ) {
 	rendered = rendered.filter( ( element ) => element.isConnected );
 	rendered.forEach( ( element ) => {
 		element.amount = amount;
+		fetchMessage( element );
 	} );
 }

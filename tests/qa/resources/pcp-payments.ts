@@ -18,6 +18,24 @@ const payPalVaulted: Pcp.Payment = {
 	isVaulted: true,
 };
 
+/**
+ * Shards that run concurrently must not share a PayPal buyer account to avoid each other session invalidation
+ */
+const payPalRefund: Pcp.Payment = {
+	...payPal,
+	payPalAccount: payPalAccounts.usaRefund,
+};
+
+const payPalVaulting: Pcp.Payment = {
+	...payPal,
+	payPalAccount: payPalAccounts.usaVaulting,
+};
+
+const payPalSubscription: Pcp.Payment = {
+	...payPal,
+	payPalAccount: payPalAccounts.usaSubscription,
+};
+
 const payLater: Pcp.Payment = {
 	gateway: gateways.payLater,
 	payPalAccount: payPalAccounts[ country ],
@@ -37,19 +55,36 @@ const acdc: Pcp.Payment = {
 	card: cards.mastercard,
 };
 
+const acdcVisa: Pcp.Payment = {
+	gateway: gateways.acdc,
+	card: cards.visa,
+};
+
+const acdcVisa2: Pcp.Payment = {
+	gateway: gateways.acdc,
+	card: cards.visa2,
+};
+
 const acdc3ds: Pcp.Payment = {
 	gateway: gateways.acdc3ds,
 	card: cards.visa3ds,
 };
 
+// Order payment title differs per Fastlane flow (AxoGateway / AxoManager.js)
 const fastlaneGary: Pcp.Payment = {
-	gateway: gateways.fastlane,
+	gateway: {
+		...gateways.fastlane,
+		titleInOrder: 'Fastlane Debit & Credit Cards',
+	},
 	fastlaneFlow: 'gary',
 	card: cards.visa,
 };
 
 const fastlaneRyan: Pcp.Payment = {
-	gateway: gateways.fastlane,
+	gateway: {
+		...gateways.fastlane,
+		titleInOrder: 'Debit & Credit Cards (via Fastlane by PayPal)',
+	},
 	fastlaneFlow: 'ryan',
 	fastlaneOtp: '111111',
 	card: cards.visaFastlane,
@@ -74,10 +109,15 @@ const googlePay: Pcp.Payment = {
 export const payments = {
 	payPal,
 	payPalVaulted,
+	payPalRefund,
+	payPalVaulting,
+	payPalSubscription,
 	payLater,
 	oxxo,
 	venmo,
 	acdc,
+	acdcVisa,
+	acdcVisa2,
 	acdc3ds,
 	fastlaneGary,
 	fastlaneRyan,

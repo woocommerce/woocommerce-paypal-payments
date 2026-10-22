@@ -3,22 +3,37 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Abilities\Domain;
 
-use WooCommerce\PayPalCommerce\Abilities\AbilitiesRegistrar;
+use Mockery;
+use WooCommerce\PayPalCommerce\Abilities\AbilityHandlers;
+use WooCommerce\PayPalCommerce\Abilities\AbilityNames;
+use WooCommerce\PayPalCommerce\Abilities\Handler\GetPaypalOrderHandler;
 use WooCommerce\PayPalCommerce\TestCase;
-use WP_Error;
-use function Brain\Monkey\Functions\when;
 
 /**
- * Unit tests for the GetPaypalOrder ability.
+ * Unit tests for the GetPaypalOrder ability shell.
  *
- * The container-bound + remote-PayPal-call paths in execute() are covered
- * by the Phase V integration harness; here we cover the registration
- * shape, the input-identifier validation contract, the
- * paypal_order_id format guard, the wc_order_not_found branch, and the
- * payer-PII redaction projection.
+ * PCP-6418: the shell carries no logic anymore; execute()/identifier
+ * validation/redaction moved to GetPaypalOrderHandlerTest. Here we cover
+ * only the registered shape and the AbilityHandlers binding seam.
+ *
+ * @covers \WooCommerce\PayPalCommerce\Abilities\Domain\GetPaypalOrder
  */
 class GetPaypalOrderTest extends TestCase
 {
+	public function setUp(): void
+	{
+		parent::setUp();
+
+		AbilityHandlers::set(array());
+	}
+
+	public function tearDown(): void
+	{
+		AbilityHandlers::set(array());
+
+		parent::tearDown();
+	}
+
 	public function test_get_name_uses_the_extension_namespace(): void
 	{
 		$this->assertSame(
@@ -27,13 +42,76 @@ class GetPaypalOrderTest extends TestCase
 		);
 	}
 
+	/**
+	 * GIVEN the AbilityNames constants are the single source of truth for the
+	 *       registered slugs
+	 * WHEN the shell's static get_name() is read
+	 * THEN it returns exactly AbilityNames::GET_PAYPAL_ORDER, so the
+	 * registered slug and the AbilityHandlers map key this class is looked up
+	 * under can never drift apart.
+	 */
+	public function test_get_name_matches_the_shared_ability_names_constant(): void
+	{
+		$this->assertSame(AbilityNames::GET_PAYPAL_ORDER, GetPaypalOrder::get_name());
+	}
+
+	/**
+	 * GIVEN a handler bound through the AbilityHandlers seam
+	 * WHEN the shell's execute_callback is invoked
+	 * THEN the call dispatches to that bound handler instance, with the input
+	 * forwarded.
+	 */
+	public function test_registration_args_bind_execute_callback_to_the_di_handler_instance(): void
+	{
+		$handler = Mockery::mock(GetPaypalOrderHandler::class);
+		$handler->shouldReceive('execute')
+			->once()
+			->with(array( 'paypal_order_id' => 'ORDERID1' ))
+			->andReturn(array( 'id' => 'ORDERID1' ));
+		AbilityHandlers::set(array( GetPaypalOrder::get_name() => $handler ));
+
+		$args = GetPaypalOrder::get_registration_args();
+
+		$this->assertIsCallable(
+			$args['execute_callback'],
+			'execute_callback must be invocable — the shell has no static execute() of its own anymore.'
+		);
+		$this->assertSame(
+			array( 'id' => 'ORDERID1' ),
+			($args['execute_callback'])(array( 'paypal_order_id' => 'ORDERID1' )),
+			'Invoking execute_callback must dispatch to the bound handler instance and forward its input.'
+		);
+	}
+
+	/**
+	 * GIVEN a permission callable bound through the AbilityHandlers seam
+	 * WHEN the shell's registration args are read
+	 * THEN permission_callback is exactly that bound callable — never a
+	 * hardcoded `array(AbilitiesRegistrar::class, 'can_manage_woocommerce')`
+	 * or an always-true shortcut — and it denies when the bound gate denies.
+	 */
+	public function test_registration_args_bind_permission_callback_to_the_bound_gate(): void
+	{
+		$permission = static function (): bool {
+			return false;
+		};
+		AbilityHandlers::set(array(), $permission);
+
+		$args = GetPaypalOrder::get_registration_args();
+
+		$this->assertSame($permission, $args['permission_callback']);
+		$this->assertNotSame('__return_true', $args['permission_callback']);
+		$this->assertFalse(
+			($args['permission_callback'])(),
+			'The shell must surface exactly the bound gate, including a denial, never bypass it.'
+		);
+	}
+
 	public function test_registration_args_accept_either_identifier(): void
 	{
 		$args = GetPaypalOrder::get_registration_args();
 
-		$this->assertSame(array( GetPaypalOrder::class, 'execute' ), $args['execute_callback']);
-		$this->assertSame(array( AbilitiesRegistrar::class, 'can_manage_woocommerce' ), $args['permission_callback']);
-		$this->assertSame(AbilitiesRegistrar::CATEGORY_SLUG, $args['category']);
+		$this->assertSame(AbilityNames::CATEGORY_SLUG, $args['category']);
 
 		$properties = $args['input_schema']['properties'];
 		$this->assertArrayHasKey('paypal_order_id', $properties);
@@ -46,7 +124,7 @@ class GetPaypalOrderTest extends TestCase
 		$this->assertFalse($properties['include_payer_pii']['default']);
 
 		// Neither identifier field is in the JSON-schema `required` list because
-		// the "exactly one of" constraint is enforced in the execute callback.
+		// the "exactly one of" constraint is enforced in the handler.
 		$this->assertArrayNotHasKey('required', $args['input_schema']);
 
 		$this->assertFalse($args['input_schema']['additionalProperties']);
@@ -56,142 +134,5 @@ class GetPaypalOrderTest extends TestCase
 		$this->assertTrue($args['meta']['annotations']['idempotent']);
 		$this->assertTrue($args['meta']['show_in_rest']);
 		$this->assertTrue($args['meta']['mcp']['public']);
-	}
-
-	public function test_execute_returns_error_when_no_identifier_supplied(): void
-	{
-		$result = GetPaypalOrder::execute(array());
-
-		$this->assertInstanceOf(WP_Error::class, $result);
-		$this->assertSame('woocommerce_paypal_payments_missing_identifier', $result->get_error_code());
-	}
-
-	public function test_execute_returns_error_when_wc_order_id_is_zero_and_no_paypal_id(): void
-	{
-		$result = GetPaypalOrder::execute(array( 'wc_order_id' => 0 ));
-
-		$this->assertInstanceOf(WP_Error::class, $result);
-		$this->assertSame('woocommerce_paypal_payments_missing_identifier', $result->get_error_code());
-	}
-
-	public function test_execute_returns_invalid_input_when_paypal_order_id_has_disallowed_chars(): void
-	{
-		// Path-traversal-style payload: alters the v2/checkout/orders URL path
-		// when concatenated by OrderEndpoint::order(). The format guard rejects
-		// it before reaching the endpoint.
-		$result = GetPaypalOrder::execute(array( 'paypal_order_id' => 'ORDERID/../refunds' ));
-
-		$this->assertInstanceOf(WP_Error::class, $result);
-		$this->assertSame('woocommerce_paypal_payments_invalid_input', $result->get_error_code());
-	}
-
-	public function test_execute_returns_invalid_input_when_paypal_order_id_is_lowercase(): void
-	{
-		$result = GetPaypalOrder::execute(array( 'paypal_order_id' => 'lowercase' ));
-
-		$this->assertInstanceOf(WP_Error::class, $result);
-		$this->assertSame('woocommerce_paypal_payments_invalid_input', $result->get_error_code());
-	}
-
-	public function test_execute_returns_not_found_when_wc_order_does_not_exist(): void
-	{
-		when('wc_get_order')->justReturn(false);
-
-		$result = GetPaypalOrder::execute(array( 'wc_order_id' => 999 ));
-
-		$this->assertInstanceOf(WP_Error::class, $result);
-		$this->assertSame('woocommerce_paypal_payments_not_found', $result->get_error_code());
-	}
-
-	public function test_project_order_strips_payer_block_by_default(): void
-	{
-		$payload = array(
-			'id'             => '8XR43025NW123456A',
-			'status'         => 'COMPLETED',
-			'intent'         => 'CAPTURE',
-			'payer'          => array(
-				'email_address' => 'payer@example.test',
-				'name'          => array( 'given_name' => 'Test' ),
-				'address'       => array( 'country_code' => 'US' ),
-				'birth_date'    => '1990-01-01',
-			),
-			'purchase_units' => array(
-				array(
-					'reference_id' => 'default',
-					'amount'       => array( 'currency_code' => 'USD', 'value' => '10.00' ),
-				),
-			),
-		);
-
-		$result = GetPaypalOrder::project_order($payload, false);
-
-		$this->assertArrayNotHasKey('payer', $result, 'payer block must be stripped by default.');
-		$this->assertSame('8XR43025NW123456A', $result['id']);
-		$this->assertSame('COMPLETED', $result['status']);
-		$this->assertSame('CAPTURE', $result['intent']);
-	}
-
-	public function test_project_order_strips_per_purchase_unit_shipping_address_by_default(): void
-	{
-		$payload = array(
-			'id'             => 'ORDERID',
-			'status'         => 'CREATED',
-			'purchase_units' => array(
-				array(
-					'reference_id' => 'default',
-					'shipping'     => array(
-						'name'    => array( 'full_name' => 'Test Customer' ),
-						'address' => array( 'country_code' => 'US', 'postal_code' => '94103' ),
-					),
-					'amount'       => array( 'currency_code' => 'USD', 'value' => '10.00' ),
-				),
-			),
-		);
-
-		$result = GetPaypalOrder::project_order($payload, false);
-
-		$this->assertArrayNotHasKey('shipping', $result['purchase_units'][0], 'shipping must be stripped from each purchase_unit by default.');
-		$this->assertArrayHasKey('amount', $result['purchase_units'][0], 'non-PII purchase_unit fields must survive.');
-	}
-
-	public function test_project_order_passes_payer_through_when_include_payer_pii_is_true(): void
-	{
-		$payload = array(
-			'id'    => 'ORDERID',
-			'payer' => array( 'email_address' => 'payer@example.test' ),
-		);
-
-		$result = GetPaypalOrder::project_order($payload, true);
-
-		$this->assertSame($payload, $result, 'project_order must be a passthrough when the opt-in flag is true.');
-	}
-
-	public function test_project_order_does_not_leak_synthetic_payment_source(): void
-	{
-		// Defensive regression test: today's Order::to_array() does NOT
-		// emit `payment_source`, so REDACTED_TOP_LEVEL_KEYS includes it
-		// purely as future-proofing. If a Woo Core change ever exposes
-		// payment_source through to_array(), this test asserts that the
-		// projection still strips it before the data reaches the agent
-		// — preventing a silent payer.email_address / name / address leak
-		// through that block.
-		$payload = array(
-			'id'             => 'ORDERID',
-			'status'         => 'COMPLETED',
-			'payment_source' => array(
-				'paypal' => array(
-					'email_address' => 'leaky@example.test',
-					'name'          => array( 'given_name' => 'Should Not Appear' ),
-				),
-			),
-		);
-
-		$result = GetPaypalOrder::project_order($payload, false);
-
-		$this->assertArrayNotHasKey(
-			'payment_source',
-			$result,
-			'project_order must strip payment_source even though Order::to_array() does not emit it today.'
-		);
 	}
 }

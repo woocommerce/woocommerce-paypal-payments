@@ -86,14 +86,18 @@ const PAYPAL_GATEWAY_ID = config?.id;
 // Wording for the error notices the bridges raise.
 setErrorLabels( config?.labels );
 
-// Pay Later carries a per-context merchant setting on top of eligibility;
-// renderButtons() applies the same flag for the classic stack.
+// Pay Later and Venmo carry a per-context merchant setting on top of
+// eligibility; boot.js applies the same flags for the classic stack.
 const FUNDING_SOURCES = ALL_FUNDING_SOURCES.filter( ( fundingSource ) => {
-	if ( fundingSource !== FundingSources.PAYLATER ) {
-		return true;
+	if ( fundingSource === FundingSources.PAYLATER ) {
+		return Boolean( config?.pay_later_button?.[ config.page_context ] );
 	}
 
-	return Boolean( config?.pay_later_button?.[ config.page_context ] );
+	if ( fundingSource === FundingSources.VENMO ) {
+		return Boolean( config?.venmo_button?.[ config.page_context ] );
+	}
+
+	return true;
 } );
 
 /**
@@ -130,6 +134,31 @@ function gatewayFeatures( features ) {
 	return features || [ 'products' ];
 }
 
+/**
+ * Relabels "Place order" while a redirect method is selected.
+ *
+ * The registration's own placeOrderButtonLabel is not enough: the Checkout
+ * Actions block reads the label through this filter. Same pair as v5.
+ *
+ * @param {string} gatewayId - The method whose selection changes the label.
+ * @param {string} label     - The label to show while it is selected.
+ */
+function registerPlaceOrderLabel( gatewayId, label ) {
+	if ( ! label ) {
+		return;
+	}
+
+	window.wc?.blocksCheckout?.registerCheckoutFilters?.( gatewayId, {
+		placeOrderButtonLabel: ( defaultLabel ) => {
+			const payment = window.wp?.data?.select( 'wc/store/payment' );
+
+			return payment?.getActivePaymentMethod?.() === gatewayId
+				? label
+				: defaultLabel;
+		},
+	} );
+}
+
 if ( config && config.page_context && config.continuation ) {
 	registerPaymentMethod( {
 		name: PAYPAL_GATEWAY_ID,
@@ -145,12 +174,8 @@ if ( config && config.page_context && config.continuation ) {
 		edit: createElement( V6EditorPreview, {
 			fundingSource: FundingSources.PAYPAL,
 		} ),
-		// Set explicitly so the button never reads "Proceed to PayPal", which
-		// would tell the buyer they are heading back to PayPal.
-		placeOrderButtonLabel: __(
-			'Place order',
-			'woocommerce-paypal-payments'
-		),
+		// No placeOrderButtonLabel: nothing renames the button any more, so
+		// WooCommerce's own label stands.
 		canMakePayment: () => true,
 		supports: {
 			// v5's ppcp-gateway is unregistered here, so a dropped method
@@ -259,6 +284,15 @@ if ( config && config.page_context && config.continuation ) {
 				// page-load flag, so a coupon that zeroes or un-zeroes the cart
 				// after render is honoured.
 				if ( isFreeTrialCart( config, amount ) ) {
+					// Saving from the cart yields no billing details, so a guest
+					// has to go through the checkout (mirrors the v5 block cart).
+					if (
+						config.page_context === 'cart-block' &&
+						! config.user?.is_logged
+					) {
+						return false;
+					}
+
 					return fundingSource === FundingSources.PAYPAL;
 				}
 
@@ -281,7 +315,8 @@ if ( config && config.page_context && config.continuation ) {
 		} );
 	};
 
-	for ( const fundingSource of FUNDING_SOURCES ) {
+	// Off when the block is active for other reasons, such as the Mini Cart.
+	for ( const fundingSource of config.buttons_enabled ? FUNDING_SOURCES : [] ) {
 		registerExpress( {
 			name: `ppcp-gateway-${ fundingSource }`,
 			gatewayId: PAYPAL_GATEWAY_ID,
@@ -323,6 +358,40 @@ if ( config && config.page_context && config.continuation ) {
 			features: settings.supported_features,
 		} );
 	}
+}
+
+// BCDC, redirecting rather than using the SDK: its card form only renders
+// inline, which needs an express placement that WooCommerce then disables.
+// CardButtonGateway returns PayPal's hosted checkout URL when the session holds
+// no approved order. Skipped in continuation mode, like the card fields.
+if ( config?.card_button?.block_method && ! config.continuation ) {
+	const cardButtonId = config.card_button.payment_method;
+
+	registerPaymentMethod( {
+		name: cardButtonId,
+		label: createElement( 'div', null, config.card_button.title ),
+		ariaLabel: config.card_button.title,
+		content: createElement( PayPalPlaceOrderContent, {
+			description: config.card_button.description,
+			placeOrderButtonDescription: config.placeOrderButtonDescription,
+		} ),
+		edit: createElement( PayPalPlaceOrderContent, {
+			description: config.card_button.description,
+		} ),
+		// Same belt-and-braces pair as the PayPal row: the registration property
+		// and the Checkout Actions filter both have to carry an override.
+		...( config.placeOrderButtonLabel
+			? { placeOrderButtonLabel: config.placeOrderButtonLabel }
+			: {} ),
+		canMakePayment: () => true,
+		supports: {
+			features: gatewayFeatures( config.card_button.supported_features ),
+			// PayPal's hosted card page cannot vault into WooCommerce.
+			showSaveOption: false,
+		},
+	} );
+
+	registerPlaceOrderLabel( cardButtonId, config.placeOrderButtonLabel );
 }
 
 /**
@@ -399,7 +468,7 @@ if ( config?.card_fields?.enabled && ! config.continuation ) {
 const savedPayPalEligible =
 	Boolean( config?.vault_component?.is_eligible ) && ! config?.continuation;
 const placeOrderEnabled =
-	Boolean( config?.place_order?.enabled ) && ! config?.continuation;
+	Boolean( config?.place_order_enabled ) && ! config?.continuation;
 
 /**
  * Whether the regular PayPal row may be offered for the current cart.
@@ -409,23 +478,16 @@ const placeOrderEnabled =
  * coupon applied on the checkout is taken into account. Mirrors v5's
  * paypalPaymentMethodAllowed().
  *
- * A free-trial ($0) subscription is the exception: it cannot be paid through
- * this row. The "Place order" flow redirects to a PayPal order that cannot be
- * created for a zero total, and PayPal can only vault a payment method without a
- * purchase through an approval the buyer opens from a button. So the row is
- * withheld and the express "Pay with PayPal" button (which runs that save flow)
- * is offered instead. Read live, so a coupon that zeroes or un-zeroes the cart
- * after render is honoured.
+ * A free-trial ($0) subscription is shown too: a first-time buyer's "Place order"
+ * is completed through the gateway's server-side vault-approval redirect (see
+ * PayPalGateway::process_payment), so it no longer needs the express button. It
+ * reaches this row through the has_subscriptions branch below.
  *
  * @param {Object} [cartTotals] - The canMakePayment cart totals.
  * @return {boolean} Whether the row may show.
  */
 function regularRowAllowedForCart( cartTotals ) {
 	const amount = amountFromCartTotals( cartTotals ) || config.amount;
-
-	if ( isFreeTrialCart( config, amount ) ) {
-		return false;
-	}
 
 	if ( config.has_subscriptions ) {
 		return true;
@@ -490,13 +552,17 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 		rowProps = {
 			content: createElement( PayPalPlaceOrderContent, {
 				description: config.description,
-				placeOrderButtonDescription: config.place_order.description,
+				placeOrderButtonDescription: config.placeOrderButtonDescription,
 			} ),
-			placeOrderButtonLabel: config.place_order.text,
 			// Gone on a zero-total cart that needs no payment method, but kept
 			// on a subscription cart, which needs one even at $0.
 			canMakePayment: ( { cartTotals } = {} ) =>
 				regularRowAllowedForCart( cartTotals ),
+			// The label belongs to WooCommerce, so it is only set when a filter
+			// supplies an override.
+			...( config.placeOrderButtonLabel
+				? { placeOrderButtonLabel: config.placeOrderButtonLabel }
+				: {} ),
 		};
 	} else {
 		rowProps = {
@@ -530,23 +596,12 @@ if ( savedPayPalEligible || placeOrderEnabled ) {
 		},
 	} );
 
-	// placeOrderButtonLabel above is not honoured on its own by the Checkout
-	// Actions block, which reads the label through this filter instead. Same
-	// belt-and-braces pair as v5.
+	// Only when a filter supplies an override: the label is WooCommerce's
+	// otherwise. registerPlaceOrderLabel() ignores a missing one.
 	if ( placeOrderEnabled ) {
-		const placeOrderButtonLabel = ( defaultLabel ) => {
-			const payment = window.wp?.data?.select( 'wc/store/payment' );
-
-			if ( payment?.getActivePaymentMethod?.() !== PAYPAL_GATEWAY_ID ) {
-				return defaultLabel;
-			}
-
-			return config.place_order.text;
-		};
-
-		window.wc?.blocksCheckout?.registerCheckoutFilters?.(
+		registerPlaceOrderLabel(
 			PAYPAL_GATEWAY_ID,
-			{ placeOrderButtonLabel }
+			config.placeOrderButtonLabel
 		);
 	}
 }

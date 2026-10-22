@@ -11,6 +11,8 @@ jest.mock( './utils/scriptLoaders', () => ( {
 // loadSdkV6() memoizes on window-level state (shared across webpack bundles),
 // which survives jest.resetModules(), so each test also needs its own window keys.
 let loadSdkV6;
+let onSdkInstanceChange;
+let visibilityListeners;
 
 function baseConfig( overrides = {} ) {
 	return {
@@ -30,11 +32,31 @@ beforeEach( () => {
 	delete window.__ppcpV6InstancePromise;
 	delete window.__ppcpV6ScriptPromises;
 	delete window.__ppcpV6ClientMetadataId;
+	delete window.__ppcpV6TokenRefresh;
+
+	// The token refresh never removes its visibilitychange listener, so listeners
+	// of earlier tests would fire refreshes in later ones.
+	visibilityListeners = [];
+	const originalAddEventListener = document.addEventListener.bind( document );
+	jest.spyOn( document, 'addEventListener' ).mockImplementation(
+		( type, listener, ...rest ) => {
+			if ( type === 'visibilitychange' ) {
+				visibilityListeners.push( listener );
+			}
+			originalAddEventListener( type, listener, ...rest );
+		}
+	);
+
 	( { loadSdkV6 } = require( './sdkLoader' ) );
+	( { onSdkInstanceChange } = require( './tokenRefresh' ) );
 	window.paypal = { createInstance: jest.fn().mockResolvedValue( {} ) };
 } );
 
 afterEach( () => {
+	visibilityListeners.forEach( ( listener ) =>
+		document.removeEventListener( 'visibilitychange', listener )
+	);
+	jest.restoreAllMocks();
 	delete window.paypal;
 } );
 
@@ -43,42 +65,41 @@ describe( 'loadSdkV6', () => {
 		[
 			'no optional components enabled',
 			{},
-			[ 'paypal-payments', 'venmo-payments' ],
+			[ 'paypal-payments' ],
 		],
 		[
 			'card fields enabled',
 			{ card_fields: { enabled: true } },
-			[ 'paypal-payments', 'venmo-payments', 'card-fields' ],
+			[ 'paypal-payments', 'card-fields' ],
 		],
 		[
 			'google pay enabled',
 			{ google_pay: { enabled: true } },
-			[ 'paypal-payments', 'venmo-payments', 'googlepay-payments' ],
+			[ 'paypal-payments', 'googlepay-payments' ],
 		],
 		[
 			'apple pay enabled',
 			{ apple_pay: { enabled: true } },
-			[ 'paypal-payments', 'venmo-payments', 'applepay-payments' ],
+			[ 'paypal-payments', 'applepay-payments' ],
 		],
 		[
 			'card fields and google pay both enabled',
 			{ card_fields: { enabled: true }, google_pay: { enabled: true } },
 			[
 				'paypal-payments',
-				'venmo-payments',
 				'card-fields',
 				'googlepay-payments',
 			],
 		],
 		[
-			'the card button enabled',
-			{ card_button: { enabled: true } },
-			[ 'paypal-payments', 'venmo-payments', 'paypal-guest-payments' ],
+			'the card button rendering its classic row',
+			{ card_button: { row: true } },
+			[ 'paypal-payments', 'paypal-guest-payments' ],
 		],
 		[
 			'fastlane enabled',
 			{ fastlane: { enabled: true } },
-			[ 'paypal-payments', 'venmo-payments', 'fastlane' ],
+			[ 'paypal-payments', 'fastlane' ],
 		],
 	] )( 'requests %s', async ( label, overrides, expectedComponents ) => {
 		await loadSdkV6( baseConfig( overrides ), 'checkout' );
@@ -87,6 +108,26 @@ describe( 'loadSdkV6', () => {
 			expect.objectContaining( { components: expectedComponents } )
 		);
 	} );
+
+	test.each( [
+		[ 'venmo is on for one context only', { checkout: true, cart: false }, true ],
+		[ 'venmo is on for every context', { product: true, cart: true }, true ],
+		[ 'venmo is off for every context', { checkout: false, cart: false }, false ],
+		[ 'venmo_button is an empty map', {}, false ],
+		[ 'venmo_button is missing', undefined, false ],
+	] )(
+		'requests venmo-payments only when at least one context enables it: %s',
+		async ( label, venmoButton, expected ) => {
+			await loadSdkV6(
+				baseConfig( { venmo_button: venmoButton } ),
+				'checkout'
+			);
+
+			const { components } =
+				window.paypal.createInstance.mock.calls[ 0 ][ 0 ];
+			expect( components.includes( 'venmo-payments' ) ).toBe( expected );
+		}
+	);
 
 	test( 'requests fastlane, card fields and apple pay all enabled', async () => {
 		await loadSdkV6(
@@ -105,7 +146,6 @@ describe( 'loadSdkV6', () => {
 		expect( [ ...components ].sort() ).toEqual(
 			[
 				'paypal-payments',
-				'venmo-payments',
 				'card-fields',
 				'applepay-payments',
 				'fastlane',
@@ -125,20 +165,20 @@ describe( 'loadSdkV6', () => {
 
 		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
 			expect.objectContaining( {
-				components: [ 'paypal-payments', 'venmo-payments' ],
+				components: [ 'paypal-payments' ],
 			} )
 		);
 	} );
 
-	test( 'does not request paypal-guest-payments when the card button is explicitly disabled', async () => {
+	test( 'does not request paypal-guest-payments when the card button has no classic row', async () => {
 		await loadSdkV6(
-			baseConfig( { card_button: { enabled: false } } ),
+			baseConfig( { card_button: { row: false } } ),
 			'checkout'
 		);
 
 		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
 			expect.objectContaining( {
-				components: [ 'paypal-payments', 'venmo-payments' ],
+				components: [ 'paypal-payments' ],
 			} )
 		);
 	} );
@@ -188,6 +228,23 @@ describe( 'loadSdkV6', () => {
 		);
 	} );
 
+	test( 'retries without the locale when the SDK rejects it', async () => {
+		window.paypal.createInstance
+			.mockReset()
+			.mockRejectedValueOnce(
+				Object.assign( new Error(), {
+					code: 'ERR_DEV_UNSUPPORTED_LOCALE',
+				} )
+			)
+			.mockResolvedValueOnce( {} );
+
+		await loadSdkV6( baseConfig( { locale: 'tr_TR' } ), 'checkout' );
+
+		expect(
+			window.paypal.createInstance.mock.calls[ 1 ][ 0 ]
+		).not.toHaveProperty( 'locale' );
+	} );
+
 	test( 'shares one instance across concurrent callers: one createInstance call and one client-token fetch', async () => {
 		const config = baseConfig();
 
@@ -229,5 +286,220 @@ describe( 'loadSdkV6', () => {
 
 		expect( firstId ).toEqual( expect.any( String ) );
 		expect( secondId ).toBe( firstId );
+	} );
+	describe( 'load timeout', () => {
+		const TIMEOUT_MESSAGE = 'PayPal SDK v6 did not load within 15000 ms.';
+		const neverSettles = () => new Promise( () => {} );
+
+		let onReady;
+
+		const track = ( promise ) => {
+			const state = { settled: false, error: null, value: null };
+			promise.then(
+				( value ) => {
+					state.settled = true;
+					state.value = value;
+				},
+				( error ) => {
+					state.settled = true;
+					state.error = error;
+				}
+			);
+			return state;
+		};
+
+		beforeEach( () => {
+			jest.useFakeTimers();
+			onReady = jest.fn();
+			document.addEventListener( 'ppcp-sdk-v6-ready', onReady );
+		} );
+
+		afterEach( () => {
+			document.removeEventListener( 'ppcp-sdk-v6-ready', onReady );
+			jest.useRealTimers();
+		} );
+
+		test( 'stays pending just before the limit and rejects with the timeout error at 15000 ms', async () => {
+			window.paypal.createInstance.mockImplementation( neverSettles );
+
+			const state = track( loadSdkV6( baseConfig(), 'checkout' ) );
+
+			await jest.advanceTimersByTimeAsync( 14999 );
+			expect( state.settled ).toBe( false );
+
+			await jest.advanceTimersByTimeAsync( 1 );
+			expect( state.settled ).toBe( true );
+			expect( state.error ).toEqual( new Error( TIMEOUT_MESSAGE ) );
+		} );
+
+		test( 'times out when the script never loads', async () => {
+			mockLoadScript.mockImplementation( neverSettles );
+
+			const state = track( loadSdkV6( baseConfig(), 'checkout' ) );
+			await jest.advanceTimersByTimeAsync( 15000 );
+
+			expect( state.error ).toEqual( new Error( TIMEOUT_MESSAGE ) );
+		} );
+
+		test( 'starts a fresh load on the next call after a timeout', async () => {
+			window.paypal.createInstance.mockImplementationOnce( neverSettles );
+			const freshInstance = { fresh: true };
+			window.paypal.createInstance.mockResolvedValueOnce( freshInstance );
+
+			const first = track( loadSdkV6( baseConfig(), 'checkout' ) );
+			await jest.advanceTimersByTimeAsync( 15000 );
+			expect( first.error ).toBeInstanceOf( Error );
+
+			const second = await loadSdkV6( baseConfig(), 'checkout' );
+
+			expect( second ).toBe( freshInstance );
+			expect( mockLoadScript ).toHaveBeenCalledTimes( 2 );
+			expect( mockPostJson ).toHaveBeenCalledTimes( 2 );
+			expect( window.paypal.createInstance ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test( 'drops an instance that resolves only after the timeout', async () => {
+			let resolveInstance;
+			window.paypal.createInstance.mockImplementation(
+				() =>
+					new Promise( ( resolve ) => {
+						resolveInstance = resolve;
+					} )
+			);
+
+			const state = track( loadSdkV6( baseConfig(), 'checkout' ) );
+			await jest.advanceTimersByTimeAsync( 15000 );
+			resolveInstance( { late: true } );
+			await jest.advanceTimersByTimeAsync( 1000 );
+
+			expect( onReady ).not.toHaveBeenCalled();
+			expect( state.error ).toEqual( new Error( TIMEOUT_MESSAGE ) );
+			expect( state.value ).toBeNull();
+		} );
+
+		test( 'does not start a token refresh for an instance that resolves only after the timeout', async () => {
+			mockPostJson.mockResolvedValue( {
+				client_token: 'LATE',
+				refresh_in: 240,
+				retry_in: 15,
+			} );
+			let resolveInstance;
+			window.paypal.createInstance.mockImplementation(
+				() =>
+					new Promise( ( resolve ) => {
+						resolveInstance = resolve;
+					} )
+			);
+			const listener = jest.fn();
+			onSdkInstanceChange( listener );
+
+			track( loadSdkV6( baseConfig(), 'checkout' ) );
+			await jest.advanceTimersByTimeAsync( 15000 );
+			resolveInstance( { late: true } );
+			await jest.advanceTimersByTimeAsync( 10 * 240 * 1000 );
+
+			expect( window.paypal.createInstance ).toHaveBeenCalledTimes( 1 );
+			expect( listener ).not.toHaveBeenCalled();
+		} );
+
+		test( 'dispatches ppcp-sdk-v6-ready once with the instance and leaves no timer behind when the load succeeds in time', async () => {
+			const instance = { ready: true };
+			window.paypal.createInstance.mockResolvedValue( instance );
+
+			const result = await loadSdkV6( baseConfig(), 'checkout' );
+
+			expect( result ).toBe( instance );
+			expect( onReady ).toHaveBeenCalledTimes( 1 );
+			expect( onReady.mock.calls[ 0 ][ 0 ].detail.sdkInstance ).toBe(
+				instance
+			);
+			expect( jest.getTimerCount() ).toBe( 0 );
+		} );
+
+		test( 'rejects with the original error, not the timeout one, when the load fails in time', async () => {
+			mockPostJson.mockRejectedValue(
+				new Error( 'token request failed' )
+			);
+
+			await expect(
+				loadSdkV6( baseConfig(), 'checkout' )
+			).rejects.toThrow( 'token request failed' );
+			expect( onReady ).not.toHaveBeenCalled();
+			expect( jest.getTimerCount() ).toBe( 0 );
+		} );
+	} );
+} );
+
+describe( 'client token refresh wiring', () => {
+	const REFRESH_IN = 240;
+	const REFRESH_MS = REFRESH_IN * 1000;
+
+	const tokenResponse = ( token ) => ( {
+		client_token: token,
+		refresh_in: REFRESH_IN,
+		retry_in: 15,
+	} );
+
+	const sdk1 = { name: 'sdk1' };
+	const sdk2 = { name: 'sdk2' };
+
+	const tick = ( ms ) => jest.advanceTimersByTimeAsync( ms );
+
+	beforeEach( () => {
+		jest.useFakeTimers();
+		window.paypal.createInstance
+			.mockReset()
+			.mockResolvedValueOnce( sdk1 )
+			.mockResolvedValueOnce( sdk2 );
+		mockPostJson
+			.mockReset()
+			.mockResolvedValueOnce( tokenResponse( 'T1' ) )
+			.mockResolvedValueOnce( tokenResponse( 'T2' ) );
+	} );
+
+	afterEach( () => {
+		jest.useRealTimers();
+	} );
+
+	test( 'creates a new instance with the new token and the other options unchanged', async () => {
+		await loadSdkV6(
+			baseConfig( { card_fields: { enabled: true } } ),
+			'checkout'
+		);
+		const { clientToken, ...firstOptions } =
+			window.paypal.createInstance.mock.calls[ 0 ][ 0 ];
+
+		await tick( REFRESH_MS );
+
+		expect( clientToken ).toBe( 'T1' );
+		expect( window.paypal.createInstance ).toHaveBeenCalledTimes( 2 );
+		expect( window.paypal.createInstance ).toHaveBeenLastCalledWith( {
+			...firstOptions,
+			clientToken: 'T2',
+		} );
+	} );
+
+	test( 'resolves later loadSdkV6 calls to the new instance', async () => {
+		await expect( loadSdkV6( baseConfig(), 'checkout' ) ).resolves.toBe(
+			sdk1
+		);
+
+		await tick( REFRESH_MS );
+
+		await expect( loadSdkV6( baseConfig(), 'checkout' ) ).resolves.toBe(
+			sdk2
+		);
+	} );
+
+	test( 'hands the new instance to onSdkInstanceChange() subscribers', async () => {
+		const listener = jest.fn();
+		onSdkInstanceChange( listener );
+		await loadSdkV6( baseConfig(), 'checkout' );
+
+		await tick( REFRESH_MS - 1 );
+		expect( listener ).not.toHaveBeenCalled();
+
+		await tick( 1 );
+		expect( listener ).toHaveBeenCalledWith( sdk2 );
 	} );
 } );

@@ -5,6 +5,7 @@ import { PanelBody, SelectControl } from '@wordpress/components';
 import { PayPalScriptProvider, PayPalMessages } from '@paypal/react-paypal-js';
 import { useScriptParams } from './hooks/script-params';
 import { usePreviewTimeout } from './hooks/use-preview-timeout';
+import { usePreviewController } from './hooks/use-preview-controller';
 import { PreviewPlaceholder } from './components/preview-placeholder';
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
@@ -27,6 +28,10 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 
 	const [ loaded, setLoaded ] = useState( false );
 	const timedOut = usePreviewTimeout( loaded );
+	const { containerRef, renderKey } = usePreviewController(
+		loaded,
+		setLoaded
+	);
 
 	let amount;
 	const postContent = String(
@@ -54,10 +59,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 	};
 
 	const classes = [ 'ppcp-paylater-block-preview', 'ppcp-overlay-parent' ];
-	if (
-		PcpPayLaterBlock.payLaterDisabledByVaulting ||
-		! PcpPayLaterBlock.placementEnabled
-	) {
+	if ( ! PcpPayLaterBlock.placementEnabled ) {
 		classes.push( 'ppcp-paylater-unavailable', 'block-editor-warning' );
 	}
 	const props = useBlockProps( { className: classes.join( ' ' ) } );
@@ -67,52 +69,6 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 			setAttributes( { id: `ppcp-${ clientId }` } );
 		}
 	}, [ id, clientId ] );
-
-	if ( PcpPayLaterBlock.payLaterDisabledByVaulting ) {
-		return (
-			<div { ...props }>
-				<div className="block-editor-warning__contents">
-					<p className="block-editor-warning__message">
-						{ __(
-							'Pay Later Messaging cannot be used while PayPal Vaulting is active. Disable PayPal Vaulting in the PayPal Payment settings to reactivate this block',
-							'woocommerce-paypal-payments'
-						) }
-					</p>
-					<div className="block-editor-warning__actions">
-						<span className="block-editor-warning__action">
-							<a href={ PcpPayLaterBlock.payLaterSettingsUrl }>
-								<button
-									type="button"
-									className="components-button is-primary"
-								>
-									{ __(
-										'PayPal Payments Settings',
-										'woocommerce-paypal-payments'
-									) }
-								</button>
-							</a>
-						</span>
-						<span className="block-editor-warning__action">
-							<button
-								onClick={ () =>
-									wp.data
-										.dispatch( 'core/block-editor' )
-										.removeBlock( clientId )
-								}
-								type="button"
-								className="components-button is-secondary"
-							>
-								{ __(
-									'Remove Block',
-									'woocommerce-paypal-payments'
-								) }
-							</button>
-						</span>
-					</div>
-				</div>
-			</div>
-		);
-	}
 
 	if ( ! PcpPayLaterBlock.placementEnabled ) {
 		return (
@@ -497,8 +453,11 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				</PanelBody>
 			</InspectorControls>
 			<div { ...props }>
-				<div className="ppcp-overlay-child">
-					<PayPalScriptProvider options={ urlParams }>
+				<div className="ppcp-overlay-child" ref={ containerRef }>
+					<PayPalScriptProvider
+						key={ renderKey }
+						options={ urlParams }
+					>
 						<PayPalMessages
 							style={ previewStyle }
 							forceReRender={ [ previewStyle ] }
@@ -510,9 +469,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 				<div className="ppcp-overlay-child ppcp-unclicable-overlay">
 					{ ' ' }
 					{ /* make the message not clickable */ }
-					{ ! loaded && (
-						<PreviewPlaceholder timedOut={ timedOut } />
-					) }
+					{ ! loaded && <PreviewPlaceholder timedOut={ timedOut } /> }
 				</div>
 			</div>
 		</>

@@ -4,7 +4,7 @@
  * On classic checkout Google Pay, Apple Pay and the Basic Card button are
  * gateways rather than express buttons, so each row starts hidden until it
  * proves it can pay, and its button takes the place of "Place order" while that
- * row is selected.
+ * row is selected. PayPal's own row does the same with the express buttons.
  *
  * Visibility is decided here for all of them at once rather than by each bridge
  * for itself, because the elements are shared: "Place order" and the express
@@ -18,6 +18,7 @@ import {
 	getCurrentPaymentMethod,
 	isSavedPayPalTokenSelected,
 	ORDER_BUTTON_SELECTOR,
+	PaymentContext,
 	PaymentMethods,
 } from '@ppcp-button/Helper/CheckoutMethodState';
 import { hasJQuery } from '../utils/api';
@@ -37,6 +38,12 @@ const walletRows = new Map();
  * and only this module knows which row is selected.
  */
 let expressRow = null;
+
+/**
+ * Whether the express buttons' last render left their container empty, which
+ * hands PayPal's row back to "Place order" (the gateway redirects to PayPal).
+ */
+let expressFailed = false;
 
 /**
  * Whether the checkout events are already being listened to, so the
@@ -70,6 +77,9 @@ function revealGateway( methodId ) {
 /**
  * Shows or hides one element, leaving an absent one alone.
  *
+ * Hidden with !important, so a theme's display rule cannot bring "Place order"
+ * back next to the button that replaces it.
+ *
  * @param {?string}  selector - The element's selector.
  * @param {boolean}  visible  - Whether it should be shown.
  */
@@ -79,39 +89,60 @@ function setVisible( selector, visible ) {
 	}
 
 	const element = document.querySelector( selector );
-	if ( element ) {
-		element.style.display = visible ? '' : 'none';
+	if ( ! element ) {
+		return;
+	}
+
+	if ( visible ) {
+		element.style.removeProperty( 'display' );
+	} else {
+		element.style.setProperty( 'display', 'none', 'important' );
 	}
 }
 
 /**
- * The button container belonging to a payment-method row, if this module owns one.
+ * Whether PayPal's row is paid with the express buttons.
+ *
+ * Only for a NEW payment, since a saved PayPal token is completed through the
+ * vault component and "Place order", and only until a render fails.
  *
  * @param {?string} methodId - The selected WC payment method id.
- * @return {?string} The container's selector, or null for any other row.
+ * @return {boolean} False when the row is paid through "Place order".
  */
-function rowContainer( methodId ) {
+function paysWithExpressButtons( methodId ) {
+	return (
+		PaymentMethods.PAYPAL === methodId &&
+		! isSavedPayPalTokenSelected() &&
+		! expressFailed
+	);
+}
+
+/**
+ * Whether the selected row's own button takes the place of "Place order".
+ *
+ * @param {?string} methodId - The selected WC payment method id.
+ * @return {boolean} False for a row that is paid through "Place order".
+ */
+function replacesPlaceOrder( methodId ) {
 	if ( walletRows.has( methodId ) ) {
-		return walletRows.get( methodId );
+		return hasRenderedButton( walletRows.get( methodId ) );
 	}
 
-	// PayPal's express buttons stand in for "Place order" only for a NEW payment.
-	// A saved PayPal token is completed through the vault component and "Place
-	// order", so its row offers no express button and keeps "Place order".
-	if ( PaymentMethods.PAYPAL === methodId ) {
-		return isSavedPayPalTokenSelected() ? null : expressRow;
-	}
-
-	return null;
+	// The container only has to exist, since the buttons are still loading into it
+	// on the first pass; a failed render is reported by setExpressButtonsFailed().
+	return (
+		paysWithExpressButtons( methodId ) &&
+		!! expressRow &&
+		!! document.querySelector( expressRow )
+	);
 }
 
 /**
  * Whether a container actually holds a button the buyer could press.
  *
  * Asked rather than assumed, because it is what makes hiding "Place order" safe:
- * a row whose button never rendered (an ineligible wallet, or the continuation
- * flow, where the approved order is completed through the form) keeps it, instead
- * of leaving the buyer with no way to pay at all.
+ * a wallet whose button never rendered keeps it, instead of leaving the buyer
+ * with no way to pay at all.
  *
  * @param {?string} selector - The container's selector.
  * @return {boolean} False when the container is absent or empty.
@@ -140,45 +171,23 @@ function updateVisibility() {
 	}
 
 	// The express buttons pay for PayPal's row only; left showing, they offer a
-	// PayPal payment while a wallet row is selected. A selected saved PayPal token
-	// is paid through the vault component and "Place order", so the express buttons
-	// hide for it too, the same as for any other non-PayPal row.
-	setVisible(
-		expressRow,
-		PaymentMethods.PAYPAL === selected && ! isSavedPayPalTokenSelected()
-	);
+	// PayPal payment while another row is selected. After a failed render this
+	// hides their empty container too.
+	setVisible( expressRow, paysWithExpressButtons( selected ) );
 
 	// Answered once for all rows, not per wallet: each wallet asking only "am I
 	// selected" meant the last one to run always won, so selecting the first
 	// wallet left "Place order" showing next to its button.
-	setVisible(
-		ORDER_BUTTON_SELECTOR,
-		! hasRenderedButton( rowContainer( selected ) )
-	);
+	setVisible( ORDER_BUTTON_SELECTOR, ! replacesPlaceOrder( selected ) );
 }
 
 /**
- * Registers a wallet row and keeps the payment controls mutually exclusive.
+ * Keeps the decision current on the checkout events that change it.
  *
- * @param {Object}  args                  - The row being registered.
- * @param {string}  args.methodId         - The WC payment method id.
- * @param {string}  args.wrapperSelector  - Selector of the wallet button's container.
- * @param {?string} [args.expressSelector] - Selector of the express buttons'
- *                                           container, which PayPal's row owns.
+ * WooCommerce rebuilds "Place order" on updated_checkout, and the selection can
+ * change without a rebuild.
  */
-function syncGatewayVisibility( {
-	methodId,
-	wrapperSelector,
-	expressSelector,
-} ) {
-	walletRows.set( methodId, wrapperSelector );
-
-	if ( expressSelector ) {
-		expressRow = expressSelector;
-	}
-
-	updateVisibility();
-
+function listen() {
 	if ( listening || ! hasJQuery() ) {
 		return;
 	}
@@ -200,6 +209,34 @@ function syncGatewayVisibility( {
 }
 
 /**
+ * Lets the express buttons take the place of "Place order" on PayPal's row.
+ *
+ * Only where they render: in the continuation flow PayPal's row completes the
+ * approved order through "Place order".
+ *
+ * @param {Object} config - The wc_ppcp_sdk_v6 config object.
+ */
+export function placeExpressButtons( config ) {
+	if ( ! PaymentContext.Gateways.includes( config.page_context ) ) {
+		return;
+	}
+
+	expressRow = config.wrapper;
+	listen();
+	updateVisibility();
+}
+
+/**
+ * Records whether the express buttons' last render left their container empty.
+ *
+ * @param {boolean} failed - True when no button rendered.
+ */
+export function setExpressButtonsFailed( failed ) {
+	expressFailed = failed;
+	updateVisibility();
+}
+
+/**
  * Places a wallet that is its own payment-method row, if it is one.
  *
  * The reveal and the exclusivity sync are one step for the bridges: a revealed row
@@ -207,17 +244,14 @@ function syncGatewayVisibility( {
  * nothing in the express contexts, where the wallet has no row of its own.
  *
  * @param {?Object} gateway - The { id, wrapper } of the wallet's row.
- * @param {Object}  config  - The wc_ppcp_sdk_v6 config object.
  */
-export function revealMethodGateway( gateway, config ) {
+export function revealMethodGateway( gateway ) {
 	if ( ! gateway ) {
 		return;
 	}
 
 	revealGateway( gateway.id );
-	syncGatewayVisibility( {
-		methodId: gateway.id,
-		wrapperSelector: gateway.wrapper,
-		expressSelector: config.wrapper,
-	} );
+	walletRows.set( gateway.id, gateway.wrapper );
+	listen();
+	updateVisibility();
 }

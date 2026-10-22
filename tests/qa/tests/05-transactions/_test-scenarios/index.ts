@@ -3,5 +3,7 @@ export * from './checkout.scenario';
 export * from './classic-cart.scenario';
 export * from './classic-checkout.scenario';
 export * from './classic-product.scenario';
+export * from './mini-cart.scenario';
 export * from './pay-by-link.scenario';
 export * from './product.scenario';
+export * from './capture-authorized.scenario';

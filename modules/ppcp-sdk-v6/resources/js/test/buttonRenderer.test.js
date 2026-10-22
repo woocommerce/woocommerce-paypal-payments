@@ -2,9 +2,87 @@
 // resolve; the button click path is not exercised here.
 jest.mock( '../utils/errorHandler', () => ( { handleError: jest.fn() } ) );
 
-import { createMethodButton, renderButtons } from '../components/buttonRenderer';
+const mockSetSdkBusy = jest.fn();
+jest.mock( '../tokenRefresh', () => ( {
+	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
+} ) );
+
+import {
+	createMethodButton,
+	createPreviewButton,
+	renderButtons,
+} from '../components/buttonRenderer';
 
 const noop = () => {};
+
+const isSdkBusy = () => mockSetSdkBusy.mock.calls.at( -1 )?.[ 0 ] === true;
+const flush = () => new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
+
+beforeEach( () => {
+	mockSetSdkBusy.mockClear();
+} );
+
+describe( 'a click on a rendered button', () => {
+	test.each( [ 'paypal', 'venmo', 'paylater' ] )(
+		'a %s button holds a pending SDK swap while the flow runs, and leaves the release to the session callbacks',
+		async ( method ) => {
+			const session = { start: jest.fn().mockResolvedValue( undefined ) };
+			const button = createMethodButton( {
+				method,
+				styles: {},
+				session,
+				createOrderFn: noop,
+				payLaterDetails: { productCode: 'PAYLATER' },
+			} );
+
+			button.click();
+			expect( isSdkBusy() ).toBe( true );
+
+			await flush();
+			expect( isSdkBusy() ).toBe( true );
+		}
+	);
+
+	test.each( [ 'paypal', 'venmo', 'paylater' ] )(
+		'a %s button releases the pending SDK swap when session.start() rejects',
+		async ( method ) => {
+			const session = {
+				start: jest.fn().mockRejectedValue( new Error( 'no popup' ) ),
+			};
+			const button = createMethodButton( {
+				method,
+				styles: {},
+				session,
+				createOrderFn: noop,
+				payLaterDetails: { productCode: 'PAYLATER' },
+			} );
+
+			button.click();
+			await flush();
+
+			expect( isSdkBusy() ).toBe( false );
+		}
+	);
+
+	test( 'releases the pending SDK swap when the onClick hook throws', async () => {
+		const session = { start: jest.fn() };
+		const button = createMethodButton( {
+			method: 'paypal',
+			styles: {},
+			session,
+			createOrderFn: noop,
+			onClick: () => {
+				throw new Error( 'hook failed' );
+			},
+		} );
+
+		button.click();
+		await flush();
+
+		expect( isSdkBusy() ).toBe( false );
+		expect( session.start ).not.toHaveBeenCalled();
+	} );
+} );
 
 describe( 'createMethodButton', () => {
 	test( 'sets pay later product details as properties before returning', () => {
@@ -95,6 +173,85 @@ describe( 'createMethodButton', () => {
 		} );
 
 		expect( button ).toBeNull();
+	} );
+} );
+
+describe( 'createPreviewButton', () => {
+	test( 'returns null for an unknown method', () => {
+		const button = createPreviewButton( document, {
+			method: 'nope',
+			styles: {},
+		} );
+
+		expect( button ).toBeNull();
+	} );
+
+	test.each( [
+		[ 'paypal', 'paypal-button', 'pay' ],
+		[ 'venmo', 'venmo-button', 'pay' ],
+		[ 'paylater', 'paypal-pay-later-button', '' ],
+	] )(
+		'creates a %s element with the %s type attribute',
+		( method, tagName, type ) => {
+			const button = createPreviewButton( document, {
+				method,
+				styles: {},
+			} );
+
+			expect( button.tagName.toLowerCase() ).toBe( tagName );
+			expect( button.getAttribute( 'type' ) ).toBe( type || null );
+		}
+	);
+
+	test( 'applies colour, height and border radius to the element', () => {
+		const button = createPreviewButton( document, {
+			method: 'paypal',
+			styles: {
+				colorClass: 'paypal-blue',
+				height: '35px',
+				borderRadius: '8px',
+			},
+		} );
+
+		expect( button.className ).toBe( 'paypal-blue' );
+		expect( button.style.height ).toBe( '35px' );
+		expect(
+			button.style.getPropertyValue( '--paypal-button-border-radius' )
+		).toBe( '8px' );
+	} );
+
+	test( 'sets the border radius on the property the Venmo element actually reads', () => {
+		const venmo = createPreviewButton( document, {
+			method: 'venmo',
+			styles: { borderRadius: '30px' },
+		} );
+
+		expect(
+			venmo.style.getPropertyValue( '--venmo-button-border-radius' )
+		).toBe( '30px' );
+		expect(
+			venmo.style.getPropertyValue( '--paypal-button-border-radius' )
+		).toBe( '' );
+	} );
+
+	test( 'creates the element in the given document, not the top-level one', () => {
+		const fakeElement = {
+			setAttribute: jest.fn(),
+			style: { setProperty: jest.fn() },
+		};
+		const fakeDoc = {
+			createElement: jest.fn( () => fakeElement ),
+		};
+
+		const button = createPreviewButton( fakeDoc, {
+			method: 'paypal',
+			styles: { colorClass: 'paypal-blue' },
+		} );
+
+		expect( fakeDoc.createElement ).toHaveBeenCalledWith( 'paypal-button' );
+		expect( button ).toBe( fakeElement );
+		expect( button.setAttribute ).toHaveBeenCalledWith( 'type', 'pay' );
+		expect( button.className ).toBe( 'paypal-blue' );
 	} );
 } );
 

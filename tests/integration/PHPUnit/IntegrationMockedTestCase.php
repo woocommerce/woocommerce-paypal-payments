@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CleansTestData;
 use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreateTestOrders;
 use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreateTestProducts;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -30,10 +31,17 @@ class IntegrationMockedTestCase extends TestCase
 {
     use MockeryPHPUnitIntegration, CreateTestOrders, CreateTestProducts, CleansTestData;
 
+    /**
+     * @var int[]
+     */
+    private array $tokenCustomerIds = [];
+
     public function setUp(): void
     {
         parent::setUp();
         $this->customer_id = $this->createCustomerIfNotExists();
+        $this->tokenCustomerIds = [$this->customer_id];
+        $this->purgePaymentTokens();
         $this->createTestProducts();
         $this->createTestCoupons();
     }
@@ -42,15 +50,29 @@ class IntegrationMockedTestCase extends TestCase
     {
         // This cleans up everything created during tests
         $this->cleanupTestData();
+        $this->purgePaymentTokens();
 	    wc_clear_notices();
         parent::tearDown();
     }
 
     /**
-     * @param array<string, callable> $overriddenServices
+     * Boots the plugin with the given services and/or extensions replaced.
+     *
+     * Overriding a service id is not always enough: a service that another module extends
+     * via `extensions.php` is rebuilt by that extension, which may discard the override
+     * entirely (`woocommerce.logger.woocommerce` is one such service). Registering the
+     * replacement as an extension instead wins, because this module is added last and its
+     * extensions therefore run last.
+     *
+     * @param array<string, callable> $overriddenServices Service id => factory.
+     * @param array<string, callable> $overriddenExtensions Service id => extender, called
+     *                                                      with ($previous, $container).
      * @return ContainerInterface
      */
-    protected function bootstrapModule(array $overriddenServices = []): ContainerInterface
+    protected function bootstrapModule(
+        array $overriddenServices = [],
+        array $overriddenExtensions = []
+    ): ContainerInterface
     {
         $overriddenServices = array_merge([
             'http.redirector' => function () {
@@ -59,17 +81,25 @@ class IntegrationMockedTestCase extends TestCase
         ], $overriddenServices);
 
 
-        $module = new class ($overriddenServices) implements ServiceModule, ExecutableModule {
+        $module = new class ($overriddenServices, $overriddenExtensions) implements ServiceModule, ExtendingModule, ExecutableModule {
             use ModuleClassNameIdTrait;
 
-            public function __construct(array $services)
+            private $extensions;
+
+            public function __construct(array $services, array $extensions = [])
             {
                 $this->services = $services;
+                $this->extensions = $extensions;
             }
 
             public function services(): array
             {
                 return $this->services;
+            }
+
+            public function extensions(): array
+            {
+                return $this->extensions;
             }
 
             public function run(ContainerInterface $c): bool
@@ -109,6 +139,7 @@ class IntegrationMockedTestCase extends TestCase
     public function createAPaymentTokenForTheCustomer(int $customer_id = 1, $gateway_id = 'ppcp-gateway'): WC_Payment_Token_CC
     {
         $this->createCustomerIfNotExists($customer_id);
+        $this->tokenCustomerIds[] = $customer_id;
 
         $token = new WC_Payment_Token_CC();
         $token->set_token('test_token_' . uniqid()); // Unique token ID
@@ -134,6 +165,27 @@ class IntegrationMockedTestCase extends TestCase
         }
 
         return $token;
+    }
+
+    /**
+     * Queries the database directly: WC_Payment_Tokens::get_customer_tokens() is
+     * paginated and skips tokens of unregistered gateways.
+     */
+    private function purgePaymentTokens(): void
+    {
+        global $wpdb;
+
+        foreach (array_unique($this->tokenCustomerIds) as $customer_id) {
+            $wpdb->query($wpdb->prepare(
+                "DELETE meta FROM {$wpdb->prefix}woocommerce_payment_tokenmeta meta
+                INNER JOIN {$wpdb->prefix}woocommerce_payment_tokens tokens
+                    ON meta.payment_token_id = tokens.token_id
+                WHERE tokens.user_id = %d",
+                $customer_id
+            ));
+            $wpdb->delete($wpdb->prefix . 'woocommerce_payment_tokens', ['user_id' => $customer_id], ['%d']);
+        }
+        wp_cache_flush();
     }
 
     /**
@@ -250,7 +302,13 @@ class IntegrationMockedTestCase extends TestCase
             $auth_status = \Mockery::mock(\WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus::class)->shouldIgnoreMissing();
 
             $auth_status->shouldReceive('name')->andReturn($capture_success ? 'CREATED' : 'DENIED');
-            $auth_status->shouldReceive('is')->andReturn($capture_success);
+            $auth_status->shouldReceive('is')->andReturnUsing(
+                static function (string $status) use ($capture_success): bool {
+                    return $capture_success
+                        ? $status === \WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus::CREATED
+                        : $status === \WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus::DENIED;
+                }
+            );
             $authorization->shouldReceive('status')->andReturn($auth_status);
             $payments->shouldReceive('authorizations')->andReturn([$authorization]);
             $payments->shouldReceive('captures')->andReturn([]);

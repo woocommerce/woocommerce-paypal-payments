@@ -10,7 +10,7 @@ The store pushes batches of products to PayPal on a schedule, so agents know wha
 | Products per batch | 50             | `woocommerce_paypal_payments_store_sync_batch_size`                |
 | Stale threshold    | Roughly 5 days | `woocommerce_paypal_payments_store_sync_expired_product_timestamp` |
 
-1. The interval is only read when the recurring job is first scheduled, so changing it later has no effect until the job is unscheduled.
+1. The interval is only read when the recurring job is first scheduled, so changing it later has no effect until the job is unscheduled. The first run happens one interval after the job is scheduled.
 2. A batch size of `0` or less produces an empty batch, which pauses the feed without unscheduling it.
 
 ## Which products appear
@@ -153,7 +153,11 @@ Source: [`src/Helper/ProductManager.php`](https://github.com/woocommerce/woocomm
  * Fires after a sync run, whether it succeeded or not.
  *
  * $result carries batch_id, status (success, validation_errors, api_error, empty),
- * pushed, synced, failed, and error_message.
+ * pushed, synced, failed, error_message, and failed_items.
+ *
+ * failed_items has one item per error that PayPal reported:
+ * array( 'product_id' => 12, 'variant_id' => 34, 'error' => 'description must pass ...' ).
+ * For a simple product, variant_id is the product ID.
  */
 add_action(
 	'woocommerce_paypal_payments_store_sync_ingestion_completed',

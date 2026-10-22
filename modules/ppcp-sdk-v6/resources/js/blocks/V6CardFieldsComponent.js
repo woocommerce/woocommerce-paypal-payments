@@ -18,6 +18,7 @@ import {
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { loadSdkV6 } from '../sdkLoader';
+import { onSdkInstanceChange, setSdkBusy } from '../tokenRefresh';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
 import {
 	createCardSetupToken,
@@ -31,6 +32,7 @@ import { V6CardFieldContainer } from './V6CardFieldContainer';
 import { amountFromBilling } from '../utils/amount';
 import { isFreeTrialCart } from '../utils/freeTrial';
 import { hasCheckoutValidationErrors } from './checkoutValidation';
+import { trackFieldState, fieldStateError } from '../cardFields/fieldState';
 import {
 	CARD_DECLINE_MESSAGE,
 	CARD_SAVE_DECLINE_MESSAGE,
@@ -48,16 +50,9 @@ const FIELD_LABELS = {
 	cvv: __( 'CVV', 'woocommerce-paypal-payments' ),
 };
 
-const CARD_NAME_LABEL = __(
-	'Cardholder name (optional)',
-	'woocommerce-paypal-payments'
-);
-
 // Each event payload carries the state of all three fields, so these four
 // events keep every label in sync.
 const FIELD_STATE_EVENTS = [ 'focus', 'blur', 'empty', 'notempty' ];
-
-const NAME_FIELD_ID = 'ppcp-sdk-v6-card-name';
 
 /**
  * Creates the order, confirms it through the card session (which runs 3D
@@ -70,7 +65,6 @@ const NAME_FIELD_ID = 'ppcp-sdk-v6-card-name';
  * @param {Object}  args.session           - The v6 card-fields session.
  * @param {Object}  args.responseTypes     - The Blocks response-type constants.
  * @param {boolean} args.savePaymentMethod - Whether to vault the card.
- * @param {string} args.cardName       - The cardholder name (v6 has no name field).
  * @param {Object} [args.billingAddress] - Billing address for AVS/3D Secure.
  * @return {Promise<Object>} A Blocks onPaymentSetup response object.
  */
@@ -80,7 +74,6 @@ async function submitCardPayment( {
 	session,
 	responseTypes,
 	savePaymentMethod,
-	cardName,
 	billingAddress,
 } ) {
 	if ( ! session ) {
@@ -97,7 +90,6 @@ async function submitCardPayment( {
 		const { orderId } = await createCardOrder(
 			config,
 			context,
-			cardName,
 			savePaymentMethod
 		);
 		const result = billingAddress
@@ -229,7 +221,6 @@ export function V6CardFieldsComponent( {
 
 	const context = config.page_context;
 	const methodId = config.card_fields.payment_method;
-	const hasNameField = Boolean( config.card_fields.name_field );
 
 	const hasSubscriptions = Boolean( config.has_subscriptions );
 
@@ -238,10 +229,9 @@ export function V6CardFieldsComponent( {
 	const isFreeTrial = isFreeTrialCart( config, amountFromBilling( billing ) );
 
 	const [ session, setSession ] = useState( null );
+	const getFieldStateRef = useRef( null );
 	const [ inputStyle, setInputStyle ] = useState( null );
 	const [ textStyle, setTextStyle ] = useState( null );
-	const [ cardName, setCardName ] = useState( '' );
-	const [ nameFocused, setNameFocused ] = useState( false );
 	const [ floatingLabel, setFloatingLabel ] = useState( false );
 	const [ fieldStates, setFieldStates ] = useState( {} );
 	const referenceRef = useRef( null );
@@ -252,29 +242,38 @@ export function V6CardFieldsComponent( {
 	const savePaymentRef = useLatestRef(
 		Boolean( shouldSavePayment ) || hasSubscriptions
 	);
-	const cardNameRef = useLatestRef( cardName );
 
 	// The native save option is suppressed on a subscription cart (see
 	// checkout-block.js), which shows this component's own locked checkbox.
 	const isVaultingEnabled = Boolean( config.card_fields.is_vaulting_enabled );
 	const showLockedSaveOption = hasSubscriptions && isVaultingEnabled;
 
-	// The v6 SDK uses the billing address for AVS / 3D Secure.
+	// Billing address for the card submit: countryCode is required, postalCode optional.
 	const billingAddress = billing?.billingAddress || billing?.billingData;
+	const countryCode = billingAddress?.country?.trim();
 	const postalCode = billingAddress?.postcode?.trim();
 	const billingRef = useLatestRef(
-		postalCode
+		countryCode
 			? {
-					postalCode,
-					...( billingAddress?.country
-						? { countryCode: billingAddress.country }
-						: {} ),
+					countryCode,
+					...( postalCode ? { postalCode } : {} ),
 			  }
 			: null
 	);
 
-	// One card session for the component's lifetime: the SDK cannot dispose a
-	// session, so it must not be recreated on ordinary re-renders.
+	// A new SDK instance mounts new fields. Card data the buyer entered is
+	// lost, which is clearer than a declined payment later.
+	const [ sdkGeneration, setSdkGeneration ] = useState( 0 );
+	useEffect(
+		() =>
+			onSdkInstanceChange( () =>
+				setSdkGeneration( ( generation ) => generation + 1 )
+			),
+		[]
+	);
+
+	// One card session per SDK instance: the SDK cannot dispose a session, so
+	// it must not be recreated on ordinary re-renders.
 	useEffect( () => {
 		let active = true;
 
@@ -284,6 +283,7 @@ export function V6CardFieldsComponent( {
 				? sdk.createCardFieldsSavePaymentSession()
 				: sdk.createCardFieldsOneTimePaymentSession();
 			if ( active ) {
+				getFieldStateRef.current = trackFieldState( cardSession );
 				setSession( cardSession );
 			}
 		} )().catch( ( error ) => {
@@ -294,7 +294,7 @@ export function V6CardFieldsComponent( {
 		return () => {
 			active = false;
 		};
-	}, [ config, context, isFreeTrial ] );
+	}, [ config, context, isFreeTrial, sdkGeneration ] );
 
 	// v6 returns unstyled field elements, so their styling is derived from a real
 	// block text input on the page, or a hidden reference input when there is
@@ -324,6 +324,9 @@ export function V6CardFieldsComponent( {
 		if ( ! session || ! floatingLabel ) {
 			return undefined;
 		}
+
+		// The fields of a new session start empty.
+		setFieldStates( {} );
 
 		let listening = true;
 		const handler = ( payload ) => {
@@ -368,7 +371,7 @@ export function V6CardFieldsComponent( {
 			return undefined;
 		}
 
-		return onPaymentSetup( () => {
+		return onPaymentSetup( async () => {
 			// The onCheckoutValidation check ran earlier and its verdict can go
 			// stale, so re-check right before calling PayPal.
 			if ( hasCheckoutValidationErrors() ) {
@@ -378,22 +381,40 @@ export function V6CardFieldsComponent( {
 				};
 			}
 
-			return isFreeTrial
-				? submitCardSave( {
-						config,
-						session: sessionRef.current,
-						responseTypes,
-				  } )
-				: submitCardPayment( {
-						config,
-						context,
-						session: sessionRef.current,
-						responseTypes,
-						savePaymentMethod: savePaymentRef.current,
-						cardName: cardNameRef.current?.trim() || '',
-						// null when no billing address is available.
-						billingAddress: billingRef.current,
-				  } );
+			// Without a session, the submit below reports that the form is not ready.
+			const getFieldState = getFieldStateRef.current;
+			const fieldError =
+				getFieldState &&
+				fieldStateError( getFieldState(), config.labels );
+			if ( fieldError ) {
+				return {
+					type: responseTypes.ERROR,
+					message: fieldError,
+				};
+			}
+
+			// No new fields while 3D Secure runs in the current ones.
+			setSdkBusy( true );
+
+			try {
+				return await ( isFreeTrial
+					? submitCardSave( {
+							config,
+							session: sessionRef.current,
+							responseTypes,
+					  } )
+					: submitCardPayment( {
+							config,
+							context,
+							session: sessionRef.current,
+							responseTypes,
+							savePaymentMethod: savePaymentRef.current,
+							// null when no billing address is available.
+							billingAddress: billingRef.current,
+					  } ) );
+			} finally {
+				setSdkBusy( false );
+			}
 		} );
 	}, [
 		onPaymentSetup,
@@ -453,15 +474,6 @@ export function V6CardFieldsComponent( {
 		} );
 	}, [ onCheckoutFail, activePaymentMethod, methodId, responseTypes ] );
 
-	const nameFieldClassName = [
-		'ppcp-sdk-v6-card-field',
-		'ppcp-sdk-v6-card-field--name',
-		floatingLabel && 'wc-block-components-text-input',
-		floatingLabel && ( nameFocused || cardName !== '' ) && 'is-active',
-	]
-		.filter( Boolean )
-		.join( ' ' );
-
 	const fieldsReady = session && inputStyle && textStyle;
 
 	return createElement(
@@ -488,37 +500,6 @@ export function V6CardFieldsComponent( {
 			createElement(
 				Fragment,
 				null,
-				// The SDK has no name component, so this is a plain input whose
-				// value is forwarded to create-order.
-				hasNameField &&
-					createElement(
-						'div',
-						{
-							className: nameFieldClassName,
-						},
-						createElement( 'input', {
-							id: NAME_FIELD_ID,
-							type: 'text',
-							className: 'input-text',
-							value: cardName,
-							onChange: ( event ) =>
-								setCardName( event.target.value ),
-							onFocus: () => setNameFocused( true ),
-							onBlur: () => setNameFocused( false ),
-							placeholder: floatingLabel
-								? undefined
-								: CARD_NAME_LABEL,
-							style: { width: '100%', ...inputStyle },
-						} ),
-						// A real input, so this label uses for/id where the
-						// hosted fields' labels are aria-hidden.
-						floatingLabel &&
-							createElement(
-								'label',
-								{ htmlFor: NAME_FIELD_ID },
-								CARD_NAME_LABEL
-							)
-					),
 				createElement( V6CardFieldContainer, {
 					session,
 					type: 'number',

@@ -25,7 +25,6 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
-use WooCommerce\PayPalCommerce\SdkV6\Helper\RateLimiter;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedQuote;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedShippingRate;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\RecordedTaxBasis;
@@ -178,7 +177,8 @@ return array(
 			$container->get( 'sdk-v6.google-pay-config' ),
 			$container->get( 'sdk-v6.apple-pay-config' ),
 			$container->get( 'sdk-v6.fastlane-config' ),
-			$container->get( 'sdk-v6.card-field-styles' )
+			$container->get( 'sdk-v6.card-field-styles' ),
+			$container->get( 'button.helper.disabled-funding-sources' )
 		);
 	},
 
@@ -206,8 +206,7 @@ return array(
 		return new ClientTokenEndpoint(
 			$container->get( 'order-endpoints.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.sdk-client-token' ),
-			$container->get( 'sdk-v6.rate-limiter' )
+			$container->get( 'api.sdk-client-token' )
 		);
 	},
 
@@ -243,24 +242,16 @@ return array(
 		);
 	},
 
-	'sdk-v6.rate-limiter'               => static function (): RateLimiter {
-		return new RateLimiter(
-			'ppcp_sdk_v6_rl_',
-			10,
-			60
-		);
-	},
-
-	'sdk-v6.blocks.place-order-data'    => static function ( ContainerInterface $container ): callable {
-		// The non-express PayPal row's state. A callable, since neither the cart
-		// nor the filtered values below are settled while the container is built.
+	'sdk-v6.blocks.place-order-enabled' => static function ( ContainerInterface $container ): callable {
+		// Whether the non-express PayPal row is offered. A callable, since neither
+		// the cart nor the filtered value below is settled while the container is built.
 		$settings_provider = $container->get( 'settings.settings-provider' );
 		assert( $settings_provider instanceof SettingsProvider );
 
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
-		return static function () use ( $container, $settings_provider, $subscription_helper ): array {
+		return static function () use ( $container, $settings_provider, $subscription_helper ): bool {
 			/**
 			 * Whether to offer the non-express PayPal method.
 			 *
@@ -279,11 +270,7 @@ return array(
 
 			$usable_for_cart = ! $subscription_helper->cart_contains_subscription() || $can_vault;
 
-			return array(
-				'enabled'     => $offer_method && $usable_for_cart,
-				'text'        => (string) $container->get( 'wcgateway.place-order-button-text' ),
-				'description' => (string) $container->get( 'wcgateway.place-order-button-description' ),
-			);
+			return $offer_method && $usable_for_cart;
 		};
 	},
 
@@ -302,7 +289,7 @@ return array(
 			$has_vault ? $container->get( 'vault-component.data' ) : null,
 			$has_vault ? $container->get( 'vault-component.eligibility.check' ) : null,
 			$container->get( 'button.client_id' ),
-			$container->get( 'sdk-v6.blocks.place-order-data' )
+			$container->get( 'sdk-v6.blocks.place-order-enabled' )
 		);
 	},
 

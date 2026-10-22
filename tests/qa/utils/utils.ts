@@ -18,7 +18,12 @@ import {
 	ClassicCheckout,
 	OrderReceived,
 } from './frontend';
-import { subscriptionsPlugin, pcpPlugin, ShopConfig } from '../resources';
+import {
+	subscriptionsPlugin,
+	pcpPlugin,
+	ShopConfig,
+	ShopProduct,
+} from '../resources';
 import { getCustomerStorageStateName } from './helpers/';
 import urls from './urls';
 
@@ -90,11 +95,23 @@ export class Utils {
 	 * - Clears cart.
 	 * - Adds provided products.
 	 *
+	 * Variable products are added as the variation from `variationToSelect`.
+	 *
 	 * @param products
 	 */
-	fillVisitorsCart = async ( products: WooCommerce.CreateProduct[] ) => {
-		const cartProducts =
-			await this.wooCommerceUtils.createCartProducts( products );
+	fillVisitorsCart = async ( products: ShopProduct[] ) => {
+		const cartProducts = [];
+		// One by one: createCartProducts() does not keep the input order
+		for ( const product of products ) {
+			const [ cartProduct ] =
+				await this.wooCommerceUtils.createCartProducts( [ product ] );
+			cartProducts.push( {
+				...cartProduct,
+				variation: Object.entries( product.variationToSelect ?? {} ).map(
+					( [ attribute, value ] ) => ( { attribute, value } )
+				),
+			} );
+		}
 		await this.visitorWooCommerceApi.clearCart();
 		await this.visitorWooCommerceApi.addProductsToCart( cartProducts );
 	};
@@ -174,6 +191,11 @@ export class Utils {
 
 		if ( enableSubscriptionsPlugin === true ) {
 			await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
+			
+			await this.wooCommerceApi.updateSubscriptionsSettings( {
+				woocommerce_subscriptions_enable_simple_subscription: 'yes',
+				woocommerce_subscriptions_enable_variable_subscription: 'yes',
+			} );
 		}
 
 		if ( enableSubscriptionsPlugin === false ) {

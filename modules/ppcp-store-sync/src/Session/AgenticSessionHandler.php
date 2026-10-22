@@ -36,7 +36,6 @@ class AgenticSessionHandler {
 		}
 
 		$this->session = new AgenticWcSession();
-		$this->session->init();
 	}
 
 	/**
@@ -58,7 +57,6 @@ class AgenticSessionHandler {
 	public function create_cart_session( PayPalCart $cart, string $ec_token ): string {
 		$session_key = $this->generate_session_id();
 
-		// Create a new empty session with our custom ID.
 		$this->session->create_session_with_id( $session_key );
 
 		$data = array(
@@ -114,7 +112,6 @@ class AgenticSessionHandler {
 	 * @return bool True on success.
 	 */
 	public function update_cart_session( string $session_id, PayPalCart $cart, ?string $ec_token = null ): bool {
-		// Load the session first.
 		$existing = $this->load_cart_session( $session_id );
 		if ( ! $existing ) {
 			return false;
@@ -140,16 +137,13 @@ class AgenticSessionHandler {
 	 * @return bool True on success, false if session not found or cleanup failed.
 	 */
 	public function destroy_cart_session( string $session_id ): bool {
-		// First verify the session exists by trying to load it.
 		if ( ! $this->session->load_session_by_id( $session_id ) ) {
 			return false;
 		}
 
-		// Clear the agentic commerce data from the session.
 		$this->session->set( self::SESSION_KEY, null );
 		$this->session->save_data();
 
-		// Destroy the entire session to clean up completely.
 		$this->session->delete_session( $session_id );
 
 		return true;
