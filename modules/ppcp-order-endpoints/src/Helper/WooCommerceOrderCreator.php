@@ -127,6 +127,12 @@ class WooCommerceOrderCreator
             $variation_id = $cart_item['variation_id'] ?? 0;
             $quantity = $cart_item['quantity'] ?? 0;
             $variation_attributes = $cart_item['variation'];
+            $product = wc_get_product($variation_id ?: $product_id);
+            if (!$product) {
+                continue;
+            }
+            // Session cart items have no product object, but the core hooks below expect it.
+            $cart_item['data'] = $product;
             /**
              * Filters the order line item object, mirroring WooCommerce Core so plugins
              * can swap the item class before it is populated.
@@ -157,10 +163,6 @@ class WooCommerceOrderCreator
             if ($variation_id) {
                 $item->set_variation_id($variation_id);
                 $item->set_variation($variation_attributes);
-            }
-            $product = wc_get_product($variation_id ?: $product_id);
-            if (!$product) {
-                return;
             }
             $subtotal = apply_filters('woocommerce_paypal_payments_shipping_callback_cart_line_item_total', $cart_item['line_subtotal'], $cart_item);
             $item->set_name($product->get_name());

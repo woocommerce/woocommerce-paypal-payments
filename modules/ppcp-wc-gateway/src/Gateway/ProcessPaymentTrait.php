@@ -40,9 +40,24 @@ trait ProcessPaymentTrait
         }
         $this->session_handler->destroy_session_data();
         WC()->session->set('ppcp_subscription_id', '');
+        WC()->session->set('ppcp_vault_component_order', '');
         WC()->session->set('ppcp_delete_wc_order_on_payment_failure', \false);
         wc_add_notice($error->getMessage(), 'error');
         return array('result' => 'failure', 'redirect' => wc_get_checkout_url(), 'errorMessage' => $error->getMessage());
+    }
+    /**
+     * A payer action at capture comes after the wallet sheet closed, so the wallet cannot run it.
+     */
+    protected function handle_wallet_payer_action(WC_Order $wc_order, PayPalApiException $error): ?array
+    {
+        if (!$error->has_detail('PAYER_ACTION_REQUIRED')) {
+            return null;
+        }
+        $payment_source = $wc_order->get_meta(\WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY);
+        if (!in_array($payment_source, array('apple_pay', 'google_pay'), \true)) {
+            return null;
+        }
+        return $this->handle_payment_failure($wc_order, new Exception(__('We could not complete the payment. Try again or choose a different payment method.', 'woocommerce-paypal-payments'), $error->getCode(), $error));
     }
     /**
      * Handles the payment completion.
@@ -58,6 +73,7 @@ trait ProcessPaymentTrait
         }
         $this->session_handler->destroy_session_data();
         WC()->session->set('ppcp_subscription_id', '');
+        WC()->session->set('ppcp_vault_component_order', '');
         return array('result' => 'success', 'redirect' => $url);
     }
     /**

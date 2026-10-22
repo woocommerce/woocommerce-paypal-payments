@@ -324,28 +324,37 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC
             WC()->session->set('ppcp_card_payment_token_for_free_trial', null);
             return $this->handle_payment_failure(null, new GatewayGenericException(new Exception('WC order was not found.')));
         }
+        /**
+         * A vaulted card staged during checkout completes the order without a
+         * PayPal capture, so the order itself must be the free trial the vault
+         * was staged for. Both markers are consumed before that check, so they
+         * belong to this order only and never reach the next one in the same
+         * session.
+         */
         $guest_card_payment_for_free_trial = WC()->session->get('ppcp_guest_payment_for_free_trial') ?? null;
-        WC()->session->get('ppcp_guest_payment_for_free_trial', null);
-        if (is_object($guest_card_payment_for_free_trial)) {
-            $customer_id = $guest_card_payment_for_free_trial->customer->id ?? '';
-            if ($customer_id) {
-                update_user_meta($wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id);
-            }
-            if (isset($guest_card_payment_for_free_trial->payment_source->card)) {
-                $this->wc_payment_tokens->create_payment_token_card($wc_order->get_customer_id(), $guest_card_payment_for_free_trial);
-                $wc_order->payment_complete();
-                return $this->handle_payment_success($wc_order);
-            }
-        }
         $card_payment_token_for_free_trial = WC()->session->get('ppcp_card_payment_token_for_free_trial') ?? null;
+        WC()->session->set('ppcp_guest_payment_for_free_trial', null);
         WC()->session->set('ppcp_card_payment_token_for_free_trial', null);
-        if ($card_payment_token_for_free_trial) {
-            $tokens = WC_Payment_Tokens::get_customer_tokens(get_current_user_id());
-            foreach ($tokens as $token) {
-                if ($token->get_id() === (int) $card_payment_token_for_free_trial) {
+        if ($this->is_free_trial_order($wc_order)) {
+            if (is_object($guest_card_payment_for_free_trial)) {
+                $customer_id = $guest_card_payment_for_free_trial->customer->id ?? '';
+                if ($customer_id) {
+                    update_user_meta($wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id);
+                }
+                if (isset($guest_card_payment_for_free_trial->payment_source->card)) {
+                    $this->wc_payment_tokens->create_payment_token_card($wc_order->get_customer_id(), $guest_card_payment_for_free_trial);
                     $wc_order->payment_complete();
-                    $wc_order->add_payment_token($token);
                     return $this->handle_payment_success($wc_order);
+                }
+            }
+            if ($card_payment_token_for_free_trial) {
+                $tokens = WC_Payment_Tokens::get_customer_tokens(get_current_user_id());
+                foreach ($tokens as $token) {
+                    if ($token->get_id() === (int) $card_payment_token_for_free_trial) {
+                        $wc_order->payment_complete();
+                        $wc_order->add_payment_token($token);
+                        return $this->handle_payment_success($wc_order);
+                    }
                 }
             }
         }

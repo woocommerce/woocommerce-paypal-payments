@@ -16,7 +16,7 @@ class ReturnUrlFactory
      *  'order_id`, 'purchase_units' etc.
      * @param array<string, string> $custom_query_args Additional query args to add into the URL.
      *
-     * @throws RuntimeException When required data is missing for the context.
+     * @throws RuntimeException When the pay-now order cannot be found.
      */
     public function from_context(string $context, array $request_data = array(), array $custom_query_args = array()): string
     {
@@ -30,16 +30,7 @@ class ReturnUrlFactory
             case 'mini-cart':
                 return wc_get_cart_url();
             case 'product':
-                if (!empty($request_data['purchase_units']) && is_array($request_data['purchase_units'])) {
-                    $first_unit = reset($request_data['purchase_units']);
-                    if (!empty($first_unit['items']) && is_array($first_unit['items'])) {
-                        $first_item = reset($first_unit['items']);
-                        if (!empty($first_item['url'])) {
-                            return $first_item['url'];
-                        }
-                    }
-                }
-                throw new RuntimeException('Product URL is required but not provided in the request data.');
+                return $this->product_url_from_request($request_data) ?? $this->product_url_from_cart() ?? wc_get_cart_url();
             case 'pay-now':
                 if (!empty($request_data['order_id'])) {
                     $order = wc_get_order($request_data['order_id']);
@@ -51,5 +42,48 @@ class ReturnUrlFactory
             default:
                 return wc_get_checkout_url();
         }
+    }
+    /**
+     * The URL of the first item in the posted purchase units.
+     *
+     * Absent whenever the sanitizer ditched the items, e.g. when a negative fee
+     * leaves them out of step with the item total.
+     *
+     * @param array<string, mixed> $request_data The request parameters.
+     */
+    private function product_url_from_request(array $request_data): ?string
+    {
+        $units = $request_data['purchase_units'] ?? null;
+        if (!is_array($units) || !$units) {
+            return null;
+        }
+        $first_unit = reset($units);
+        $items = is_array($first_unit) ? $first_unit['items'] ?? null : null;
+        if (!is_array($items) || !$items) {
+            return null;
+        }
+        $first_item = reset($items);
+        $url = is_array($first_item) ? $first_item['url'] ?? '' : '';
+        return is_string($url) && $url ? $url : null;
+    }
+    /**
+     * The permalink of the first product in the cart.
+     *
+     * On the product page the viewed product has just replaced the cart contents,
+     * so this is the page the buyer started from.
+     */
+    private function product_url_from_cart(): ?string
+    {
+        if (!function_exists('WC') || !isset(WC()->cart)) {
+            return null;
+        }
+        foreach (WC()->cart->get_cart() as $cart_item) {
+            $product = $cart_item['data'] ?? null;
+            if ($product instanceof \WC_Product) {
+                $url = $product->get_permalink();
+                return $url ? $url : null;
+            }
+        }
+        return null;
     }
 }

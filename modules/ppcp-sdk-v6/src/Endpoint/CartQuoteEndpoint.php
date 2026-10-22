@@ -83,6 +83,7 @@ class CartQuoteEndpoint extends AbstractCartEndpoint
         $shipping = $this->address_from_request($data, 'address');
         $billing = $this->address_from_request($data, 'billing_address');
         $expected_total = $this->text_field($data, 'expected_total');
+        $exact_total = !empty($data['exact_total']);
         $this->apply_shipping_address($shipping);
         $this->record_tax_basis($shipping, $billing);
         // Settles WooCommerce's rate-key baseline for the new destination, so the
@@ -93,7 +94,7 @@ class CartQuoteEndpoint extends AbstractCartEndpoint
             $this->apply_rate($rate_id);
         }
         $quote = $this->quote();
-        if ($expected_total && $this->exceeds($quote['total'], $expected_total)) {
+        if ($expected_total && $this->refuses($quote['total'], $expected_total, $exact_total)) {
             $this->send_refusal($quote['total'], $expected_total, $billing);
             return;
         }
@@ -105,7 +106,7 @@ class CartQuoteEndpoint extends AbstractCartEndpoint
         wp_send_json_success($quote);
     }
     /**
-     * Refuses a total higher than the sheet displayed, and tells the shopper why.
+     * Refuses a total the sheet did not display, and tells the shopper why.
      *
      * Leads with the reassurance, because the sheet has just failed at the moment of
      * paying. Names the country and the new total, so the retry is not a second
@@ -161,7 +162,11 @@ class CartQuoteEndpoint extends AbstractCartEndpoint
         }
     }
     /**
-     * Whether the total exceeds what the sheet displayed.
+     * Whether the total cannot be charged for what the sheet displayed.
+     *
+     * A higher total is always refused. A lower one only for an exact total: a wallet
+     * whose token is bound to the displayed amount fails at PayPal for any other
+     * order amount.
      *
      * In cents, not the shop's precision: both sides come from AmountFactory, which
      * always formats to two decimals, so scaling by a zero-decimal currency would
@@ -170,10 +175,13 @@ class CartQuoteEndpoint extends AbstractCartEndpoint
      *
      * @param string $total    The total this request produced.
      * @param string $expected The total the sheet displayed.
+     * @param bool   $exact    Whether only the displayed total can be charged.
      */
-    private function exceeds(string $total, string $expected): bool
+    private function refuses(string $total, string $expected, bool $exact): bool
     {
-        return (int) round((float) $total * 100) > (int) round((float) $expected * 100);
+        $total_cents = (int) round((float) $total * 100);
+        $expected_cents = (int) round((float) $expected * 100);
+        return $exact ? $total_cents !== $expected_cents : $total_cents > $expected_cents;
     }
     /**
      * Reads a posted address, keeping only the fields WooCommerce prices from.

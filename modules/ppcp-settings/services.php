@@ -266,7 +266,8 @@ return array(
             // The module registers its services only behind its feature flag, so
             // presence means v6 is active; has() does not instantiate it. Per-page
             // ownership is moot: one admin screen configures every page.
-            $container->has('sdk-v6.owns-current-page')
+            $container->has('sdk-v6.owns-current-page'),
+            $container->get('wcgateway.is-plugin-settings-page')
         );
     },
     'settings.service.data-migration' => static fn(ContainerInterface $c): MigrationManager => new MigrationManager($c->get('settings.service.data-migration.general-settings'), $c->get('settings.service.data-migration.settings-tab'), $c->get('settings.service.data-migration.styling'), $c->get('settings.service.data-migration.payment-settings'), $c->get('settings.service.data-migration.fastlane'), $c->get('settings.data.onboarding'), $c->get('woocommerce.logger.woocommerce')),

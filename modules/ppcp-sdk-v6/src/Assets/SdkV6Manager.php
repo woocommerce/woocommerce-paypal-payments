@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\FastlaneConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\GooglePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessagesEligibility;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\MessageStyleMapper;
+use WooCommerce\PayPalCommerce\SdkV6\Helper\SdkLocale;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -42,6 +43,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FreeProductHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
@@ -49,6 +51,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 class SdkV6Manager
 {
     use FreeTrialHandlerTrait;
+    use FreeProductHandlerTrait;
     public const WRAPPER_ID = 'ppc-button-ppcp-gateway-v6';
     public const MINI_CART_WRAPPER_ID = 'ppc-button-minicart-v6';
     public const GOOGLE_PAY_WRAPPER_ID = 'ppc-button-ppcp-googlepay-v6';
@@ -209,6 +212,7 @@ class SdkV6Manager
         }
         $asset = $this->asset_getter->get_asset_data('boot.js', $this->version);
         wp_register_script('wc-ppcp-sdk-v6-boot', $script_url, $asset['dependencies'], $asset['version'], \true);
+        wp_set_script_translations('wc-ppcp-sdk-v6-boot', 'woocommerce-paypal-payments');
         wp_localize_script('wc-ppcp-sdk-v6-boot', 'wc_ppcp_sdk_v6', $this->script_data());
         wp_enqueue_script('wc-ppcp-sdk-v6-boot');
         // Lays out the express buttons inside the wrappers render_wrapper()
@@ -245,8 +249,9 @@ class SdkV6Manager
         // turns the total zero once the button adds it - too late for the client.
         $product_enabled = $this->settings_status->is_smart_button_enabled_for_location('product');
         // pay-now is driven by the existing WC order rather than the cart, so
-        // the zero-total guard does not apply to it.
-        return array('product' => $product_enabled && !$this->is_free_trial_product(), 'cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('cart'), 'checkout' => ($needs_payment || $free_trial_checkout) && $this->settings_status->is_smart_button_enabled_for_location('checkout'), 'pay-now' => $this->settings_status->is_smart_button_enabled_for_location('pay-now'), 'mini-cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('mini-cart'));
+        // the zero-total guard does not apply to it. The mini-cart checks it at
+        // render time instead (see render_mini_cart_wrapper()).
+        return array('product' => $product_enabled && !$this->is_free_trial_product() && !$this->is_unpayable_free_product(), 'cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('cart'), 'checkout' => ($needs_payment || $free_trial_checkout) && $this->settings_status->is_smart_button_enabled_for_location('checkout'), 'pay-now' => $this->settings_status->is_smart_button_enabled_for_location('pay-now'), 'mini-cart' => $this->settings_status->is_smart_button_enabled_for_location('mini-cart'));
     }
     /**
      * Whether the current cart still needs payment.
@@ -321,9 +326,16 @@ class SdkV6Manager
     }
     /**
      * Renders the mini-cart button wrapper.
+     *
+     * The zero-total check runs here, not when the hook is registered: the
+     * mini-cart fragment of an AJAX add-to-cart renders after the cart changes,
+     * but the hook is registered before, while the cart can still be empty.
      */
     public function render_mini_cart_wrapper(): void
     {
+        if (!$this->cart_needs_payment()) {
+            return;
+        }
         echo '<p class="woocommerce-mini-cart__buttons buttons">';
         echo '<span id="' . esc_attr(self::MINI_CART_WRAPPER_ID) . '"></span>';
         echo '</p>';
@@ -518,27 +530,16 @@ class SdkV6Manager
         if ($this->is_fastlane_enabled($page_location)) {
             return \true;
         }
-        // Home and shop, where v5 places a Pay Later message and v6 has no
-        // message hook of its own yet. Whether v5 rendered there came down to the
-        // unrelated mini-cart setting: with the mini-cart on, the fallback below
-        // claimed the page and v5 went dark; with it off, v5 stayed and drew the
-        // banner. Claim the page either way, so one stack owns messaging
-        // everywhere rather than v6 and v5 splitting it per page. The message is
-        // withheld until v6 can draw it itself, at which point should_load_messages()
-        // above claims the page first and this branch stops being reached.
-        //
-        // Scoped to the empty page context so the block and page-context
-        // locations keep deciding without consulting messaging, as
-        // testShouldLoadOnCurrentPageInBlockContextsIsUnaffectedByMessagingEligibility
-        // pins.
+        // Home and shop: claim the page when Pay Later messaging is on, so the
+        // mini-cart fallback below does not decide whether v5 owns messaging.
+        // messages_render_hook() has no hook there yet, so nothing draws. Page
+        // contexts decide messaging in should_load_messages().
         $message_location = $page_location ? '' : $this->context->location();
         if ($message_location && $this->settings_status->is_pay_later_messaging_enabled_for_location($message_location)) {
             return \true;
         }
-        // Sitewide, because the mini-cart can appear on any page as either the
-        // classic "Cart" widget or the block Mini-Cart, and is_active_widget()
-        // only detects the classic one. boot.js renders into the mini-cart
-        // wrapper only where that wrapper exists.
+        // Sitewide: the mini-cart can appear on any page, and is_active_widget()
+        // does not detect the block Mini-Cart.
         return $this->settings_status->is_smart_button_enabled_for_location('mini-cart') || $this->any_placement_renders('mini-cart');
     }
     /**
@@ -1024,11 +1025,12 @@ class SdkV6Manager
         $data = array(
             'sdk_url' => $base_url . '/web-sdk/v6/core',
             'page_context' => $page_context,
+            'buttons_enabled' => $page_context && $this->settings_status->is_smart_button_enabled_for_location($page_context),
             'currency' => get_woocommerce_currency(),
             'amount' => $this->transaction_amount(),
             'buyer_country' => $buyer_country,
             'merchant_country' => $this->merchant_country,
-            'locale' => str_replace('_', '-', get_locale()),
+            'locale' => SdkLocale::from_wp_locale(get_locale()),
             'vaulting_enabled' => $this->vaulting_enabled,
             'final_review' => $this->final_review_enabled,
             'is_free_trial_cart' => $this->free_trial_helper->is_free_trial_cart(),
@@ -1067,6 +1069,8 @@ class SdkV6Manager
                 // internal and untranslated, so they must not reach the buyer.
                 'card_declined' => __('The card could not be charged. Please check the details or try a different card.', 'woocommerce-paypal-payments'),
                 'shipping_unserviceable' => __('Cannot ship to the selected address.', 'woocommerce-paypal-payments'),
+                'fields_empty' => __('Card payment details are missing. Please fill in all required fields.', 'woocommerce-paypal-payments'),
+                'fields_not_valid' => __('Unfortunately, your credit card details are not valid.', 'woocommerce-paypal-payments'),
                 // The Apple Pay sheet itemises the total with these.
                 'subtotal' => __('Subtotal', 'woocommerce-paypal-payments'),
                 'shipping' => __('Shipping', 'woocommerce-paypal-payments'),
@@ -1251,7 +1255,8 @@ class SdkV6Manager
      *
      * The product page judges the product rather than the cart, because the product
      * is what gets bought there: it is added to the cart on click, so the cart's
-     * current contents describe a basket that is about to be replaced.
+     * current contents describe a basket that is about to be replaced. The store
+     * must still ship at all, or the sheet would ask for an address it cannot price.
      *
      * @param string $context The context to judge.
      * @return bool
@@ -1275,6 +1280,10 @@ class SdkV6Manager
             return \true;
         }
         if ('product' === $context) {
+            // The store-wide gates of WC_Cart::needs_shipping().
+            if (!wc_shipping_enabled() || 0 === wc_get_shipping_method_count(\true)) {
+                return \false;
+            }
             $product = wc_get_product();
             return $product instanceof WC_Product && !$product->is_virtual() && !$product->is_downloadable();
         }

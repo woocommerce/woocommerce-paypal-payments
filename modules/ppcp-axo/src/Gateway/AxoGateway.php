@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
@@ -112,6 +113,10 @@ class AxoGateway extends WC_Payment_Gateway
      */
     protected $settings_model;
     /**
+     * Issues the single-use secret that the 3DS return URL carries.
+     */
+    protected ReturnUrlSecret $return_url_secret;
+    /**
      * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway configuration.
      * @param SessionHandler            $session_handler             The Session Handler.
      * @param OrderProcessor            $order_processor             The Order processor.
@@ -124,8 +129,11 @@ class AxoGateway extends WC_Payment_Gateway
      * @param LoggerInterface           $logger                      The logger.
      * @param ExperienceContextBuilder  $experience_context_builder  The experience context builder.
      * @param SettingsModel             $settings_model              The settings model.
+     * @param ReturnUrlSecret|null      $return_url_secret           Issues the return URL secret.
+     *                                                               Defaults to a real instance, so the
+     *                                                               3DS return URL always carries proof.
      */
-    public function __construct(CardPaymentsConfiguration $dcc_configuration, SessionHandler $session_handler, OrderProcessor $order_processor, array $card_icons, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, TransactionUrlProvider $transaction_url_provider, Environment $environment, LoggerInterface $logger, ExperienceContextBuilder $experience_context_builder, SettingsModel $settings_model)
+    public function __construct(CardPaymentsConfiguration $dcc_configuration, SessionHandler $session_handler, OrderProcessor $order_processor, array $card_icons, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, TransactionUrlProvider $transaction_url_provider, Environment $environment, LoggerInterface $logger, ExperienceContextBuilder $experience_context_builder, SettingsModel $settings_model, ?ReturnUrlSecret $return_url_secret = null)
     {
         $this->id = self::ID;
         $this->dcc_configuration = $dcc_configuration;
@@ -134,6 +142,7 @@ class AxoGateway extends WC_Payment_Gateway
         $this->card_icons = $card_icons;
         $this->experience_context_builder = $experience_context_builder;
         $this->settings_model = $settings_model;
+        $this->return_url_secret = $return_url_secret ?? new ReturnUrlSecret();
         $this->method_title = __('Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments');
         $this->method_description = __('Fastlane accelerates the checkout experience for guest shoppers and autofills their details so they can pay in seconds. When enabled, Fastlane is presented as the default payment method for guests.', 'woocommerce-paypal-payments');
         if (apply_filters('woocommerce_paypal_payments_axo_gateway_should_update_enabled', \true)) {
@@ -141,7 +150,12 @@ class AxoGateway extends WC_Payment_Gateway
             $this->update_option('enabled', $is_axo_enabled ? 'yes' : 'no');
         }
         $description = $this->get_option('description', __('Enter your email address above to continue.', 'woocommerce-paypal-payments'));
-        $this->title = apply_filters('woocommerce_paypal_payments_axo_gateway_title', $this->dcc_configuration->gateway_title($this->get_option('title', $this->method_title)), $this);
+        // Fastlane's own title wins; the card gateway's is only inherited by a
+        // store that never set one, which is what reading it as a fallback used
+        // to do in reverse.
+        $own_title = $this->get_option('title', '');
+        $title = $own_title ?: $this->dcc_configuration->gateway_title($this->method_title);
+        $this->title = apply_filters('woocommerce_paypal_payments_axo_gateway_title', $title, $this);
         $this->description = apply_filters('woocommerce_paypal_payments_axo_gateway_description', $description, $this);
         $this->init_form_fields();
         $this->init_settings();
@@ -196,6 +210,10 @@ class AxoGateway extends WC_Payment_Gateway
             // If 3DS verification is required, redirect with token in return URL.
             if ($payer_action) {
                 $return_url = add_query_arg('token', $order->id(), home_url(WC_AJAX::get_endpoint(ReturnUrlEndpoint::ENDPOINT)));
+                // ReturnUrlEndpoint refuses a return with no proof. build_order_data()
+                // already bound a secret to this same order, so reuse it: issuing a
+                // second one would replace it and invalidate the URL built there.
+                $return_url = add_query_arg('ppcp_return_nonce', $this->return_url_secret->secret_for($order->id()), $return_url);
                 $redirect_url = add_query_arg('redirect_uri', rawurlencode($return_url), $payer_action);
                 return array('result' => 'success', 'redirect' => $redirect_url);
             }
