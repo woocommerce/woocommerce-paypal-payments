@@ -280,12 +280,7 @@ class SubscriptionHelper {
 			return '';
 		}
 
-		$subscription_mode_disabled = (bool) apply_filters(
-			'woocommerce_paypal_payments_subscription_mode_disabled',
-			false
-		);
-
-		if ( $subscription_mode_disabled ) {
+		if ( $this->is_mode_disabled_by_filter() ) {
 			return self::SUBSCRIPTION_MODE_VALUE_DISABLED;
 		}
 
@@ -298,6 +293,13 @@ class SubscriptionHelper {
 		return $save_paypal_and_venmo
 			? self::SUBSCRIPTION_MODE_VALUE_VAULTING
 			: self::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
+	}
+
+	private function is_mode_disabled_by_filter(): bool {
+		return (bool) apply_filters(
+			'woocommerce_paypal_payments_subscription_mode_disabled',
+			false
+		);
 	}
 
 	/**
