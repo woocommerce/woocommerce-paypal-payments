@@ -300,6 +300,58 @@ describe( 'createSession', () => {
 		} );
 	} );
 
+	describe( 'commit', () => {
+		const payNowConfig = ( overrides = {} ) => ( {
+			shipping: {},
+			pay_now_contexts: [ 'checkout', 'pay-now' ],
+			...overrides,
+		} );
+
+		test.each( [
+			[ 'paypal', 'checkout', true ],
+			[ 'paypal', 'pay-now', true ],
+			[ 'paypal', 'cart', false ],
+			[ 'paylater', 'checkout', true ],
+			[ 'paylater', 'cart', false ],
+		] )(
+			'%s in the %s context gets commit: %s',
+			( method, context, expected ) => {
+				const sdk = fakeSdk();
+
+				createSession( sdk, method, payNowConfig(), context );
+
+				expect( sdk.capture.config.commit ).toBe( expected );
+			}
+		);
+
+		test.each( [ 'venmo', 'googlepay', 'applepay', 'card' ] )(
+			'%s gets no commit key even when its context is a pay-now context',
+			( method ) => {
+				const sdk = fakeSdk();
+
+				createSession( sdk, method, payNowConfig(), 'checkout' );
+
+				expect( sdk.capture.config ).not.toHaveProperty( 'commit' );
+			}
+		);
+
+		test.each( [ 'paypal', 'paylater' ] )(
+			'%s gets no commit key when pay_now_contexts is absent',
+			( method ) => {
+				const sdk = fakeSdk();
+
+				createSession(
+					sdk,
+					method,
+					payNowConfig( { pay_now_contexts: undefined } ),
+					'checkout'
+				);
+
+				expect( sdk.capture.config ).not.toHaveProperty( 'commit' );
+			}
+		);
+	} );
+
 	describe( 'card', () => {
 		test( 'is created through createPayPalGuestOneTimePaymentSession', () => {
 			const sdk = fakeSdk();

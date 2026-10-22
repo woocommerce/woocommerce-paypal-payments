@@ -190,7 +190,7 @@ class SdkV6ManagerTest extends TestCase
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
     }
 
-    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null, bool $wcs_plugin_active = false): SdkV6Manager
+    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null, bool $wcs_plugin_active = false, array $pay_now_contexts = ['checkout', 'pay-now']): SdkV6Manager
     {
         $class_name = $wcs_plugin_active ? TestableSdkV6ManagerWithWcsActive::class : SdkV6Manager::class;
 
@@ -219,7 +219,8 @@ class SdkV6ManagerTest extends TestCase
 	        $this->apple_pay_config,
 	        $this->fastlane_config,
 	        $this->card_field_styles,
-	        $this->disabled_funding_sources
+	        $this->disabled_funding_sources,
+	        $pay_now_contexts
         );
     }
 
@@ -726,6 +727,23 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame('FR', $data['merchant_country']);
         $this->assertSame('DE', $data['buyer_country']);
+    }
+
+    /**
+     * GIVEN a configured list of contexts in which the PayPal popup commits the payment
+     * WHEN the SDK bootstrap data is generated
+     * THEN pay_now_contexts carries that list exactly as configured, so the front end can
+     *      decide the popup's commit flag per context
+     */
+    public function testScriptDataIncludesPayNowContextsAsConfigured(): void
+    {
+        $pay_now_contexts = ['checkout', 'pay-now', 'cart', 'product', 'mini-cart'];
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, false, $pay_now_contexts);
+        $data   = $testee->script_data();
+
+        $this->assertSame($pay_now_contexts, $data['pay_now_contexts']);
     }
 
     /**

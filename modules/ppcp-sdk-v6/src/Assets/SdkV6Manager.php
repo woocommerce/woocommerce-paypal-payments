@@ -137,6 +137,13 @@ class SdkV6Manager {
 	private DisabledFundingSources $disabled_funding_sources;
 
 	/**
+	 * Contexts whose PayPal orders complete in the popup.
+	 *
+	 * @var string[]
+	 */
+	private array $pay_now_contexts;
+
+	/**
 	 * Every method this module places, in the order their rows are printed.
 	 *
 	 * @var MethodPlacement[]
@@ -198,7 +205,8 @@ class SdkV6Manager {
 		ApplePayConfig $apple_pay_config,
 		FastlaneConfig $fastlane_config,
 		CardFieldStyles $card_field_styles,
-		DisabledFundingSources $disabled_funding_sources
+		DisabledFundingSources $disabled_funding_sources,
+		array $pay_now_contexts
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -224,6 +232,7 @@ class SdkV6Manager {
 		$this->fastlane_config             = $fastlane_config;
 		$this->card_field_styles           = $card_field_styles;
 		$this->disabled_funding_sources    = $disabled_funding_sources;
+		$this->pay_now_contexts            = $pay_now_contexts;
 
 		$this->placements = array(
 			new MethodPlacement(
@@ -1251,6 +1260,7 @@ class SdkV6Manager {
 			'locale'              => SdkLocale::from_wp_locale( get_locale() ),
 			'vaulting_enabled'    => $this->vaulting_enabled,
 			'final_review'        => $this->final_review_enabled,
+			'pay_now_contexts'    => $this->pay_now_contexts,
 			'is_free_trial_cart'  => $this->free_trial_helper->is_free_trial_cart(),
 			'cart_needs_vaulting' => $this->free_trial_helper->cart_requires_vaulting(),
 			'has_subscriptions'   => $this->subscription_helper->cart_contains_subscription(),
