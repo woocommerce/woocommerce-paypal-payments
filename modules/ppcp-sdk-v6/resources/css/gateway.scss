@@ -39,3 +39,11 @@
 		pointer-events: none;
 	}
 }
+
+// Caps the gateway icons (e.g. the ACDC card logos), whose SVGs ship at very
+// different intrinsic sizes. v5 ships the same rule in ppcp-button's
+// hosted-fields.css, but that stylesheet is not enqueued on v6 pages.
+#payment ul.payment_methods [class*="payment_method_ppcp-"] label img {
+	max-height: 25px;
+	display: inline-block;
+}

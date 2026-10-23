@@ -102,6 +102,14 @@ class AddPaymentMethodManager {
 
 		wp_enqueue_script( 'wc-ppcp-sdk-v6-add-payment-method' );
 
+		// Sizes the gateway icons; shares SdkV6Manager's handle so it loads once.
+		wp_enqueue_style(
+			'wc-ppcp-sdk-v6-gateway',
+			$this->asset_getter->get_asset_url( 'gateway.css' ),
+			array(),
+			$this->asset_getter->get_asset_data( 'gateway.css', $this->version )['version']
+		);
+
 		// v5's smart-button stylesheet (which carries this rule) is suppressed
 		// on this page, so the v6 boot's method-visibility toggling of
 		// #place_order needs the rule shipped here.
