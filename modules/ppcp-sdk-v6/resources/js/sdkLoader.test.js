@@ -101,6 +101,26 @@ describe( 'loadSdkV6', () => {
 			{ fastlane: { enabled: true } },
 			[ 'paypal-payments', 'fastlane' ],
 		],
+		[
+			'a native subscription context that allows the button',
+			{ native_subscription: { checkout: true } },
+			[ 'paypal-payments', 'paypal-subscriptions' ],
+		],
+		[
+			'one allowed native subscription context among blocked ones',
+			{ native_subscription: { checkout: false, 'mini-cart': true } },
+			[ 'paypal-payments', 'paypal-subscriptions' ],
+		],
+		[
+			'native subscription contexts that all block the button',
+			{ native_subscription: { checkout: false, cart: false } },
+			[ 'paypal-payments' ],
+		],
+		[
+			'an empty native subscription map',
+			{ native_subscription: {} },
+			[ 'paypal-payments' ],
+		],
 	] )( 'requests %s', async ( label, overrides, expectedComponents ) => {
 		await loadSdkV6( baseConfig( overrides ), 'checkout' );
 

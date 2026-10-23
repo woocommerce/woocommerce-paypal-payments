@@ -179,7 +179,8 @@ return array(
 			$container->get( 'sdk-v6.fastlane-config' ),
 			$container->get( 'sdk-v6.card-field-styles' ),
 			$container->get( 'button.helper.disabled-funding-sources' ),
-			$container->get( 'order-endpoints.pay-now-contexts' )
+			$container->get( 'order-endpoints.pay-now-contexts' ),
+			$container->get( 'button.early-wc-checkout-validation-enabled' )
 		);
 	},
 

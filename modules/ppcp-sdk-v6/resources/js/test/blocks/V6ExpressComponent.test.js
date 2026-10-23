@@ -37,13 +37,41 @@ const mockApproveOrder = jest.fn();
 const mockCreateOrder = jest.fn();
 const mockUpdateShipping = jest.fn();
 const mockAssign = jest.fn();
+const mockCreateSubscription = jest.fn();
+const mockApproveSubscription = jest.fn();
+const mockApproveSubscriptionInSession = jest.fn();
+const mockGetSubscriber = jest.fn();
 jest.mock( '../../endpointsAdapter', () => ( {
+	createSubscription: ( ...args ) => mockCreateSubscription( ...args ),
+	approveSubscription: ( ...args ) => mockApproveSubscription( ...args ),
+	approveSubscriptionInSession: ( ...args ) =>
+		mockApproveSubscriptionInSession( ...args ),
+	getSubscriber: ( ...args ) => mockGetSubscriber( ...args ),
 	getOrder: ( ...args ) => mockGetOrder( ...args ),
 	approveOrderInSession: ( ...args ) => mockApproveInSession( ...args ),
 	approveOrder: ( ...args ) => mockApproveOrder( ...args ),
 	createOrder: ( ...args ) => mockCreateOrder( ...args ),
 	updateShipping: ( ...args ) => mockUpdateShipping( ...args ),
 	navigation: { assign: ( ...args ) => mockAssign( ...args ) },
+} ) );
+
+let capturedSubscriptionHandlers = null;
+const mockCreateSubscriptionSession = jest.fn(
+	( sdk, config, context, handlers ) => {
+		capturedSubscriptionHandlers = handlers;
+		return { fake: 'subscription-session' };
+	}
+);
+jest.mock( '../../sessions/subscriptionSession', () => ( {
+	createSubscriptionSession: ( ...args ) =>
+		mockCreateSubscriptionSession( ...args ),
+} ) );
+
+const mockPrefillFromSubscriber = jest.fn();
+jest.mock( '../../blocks/prefillAddresses', () => ( {
+	...jest.requireActual( '../../blocks/prefillAddresses' ),
+	prefillFromPayPalSubscriber: ( ...args ) =>
+		mockPrefillFromSubscriber( ...args ),
 } ) );
 
 const mockButtonContainer = jest.fn( () => null );
@@ -151,6 +179,13 @@ beforeEach( () => {
 	capturedSaveSessionHandlers = null;
 	mockCreateFreeTrialPayPalSession.mockClear();
 	mockCreateVaultSetupToken.mockReset();
+	capturedSubscriptionHandlers = null;
+	mockCreateSubscriptionSession.mockClear();
+	mockCreateSubscription.mockReset();
+	mockApproveSubscription.mockReset().mockResolvedValue( undefined );
+	mockApproveSubscriptionInSession.mockReset().mockResolvedValue( undefined );
+	mockGetSubscriber.mockReset().mockResolvedValue( {} );
+	mockPrefillFromSubscriber.mockReset().mockResolvedValue( undefined );
 
 	onPaymentSetup = jest.fn( ( cb ) => {
 		paymentSetupCb = cb;
@@ -917,6 +952,265 @@ describe( 'V6ExpressComponent', () => {
 			props.createOrderFn();
 			expect( mockCreateOrder ).toHaveBeenCalled();
 			expect( mockCreateVaultSetupToken ).not.toHaveBeenCalled();
+		} );
+	} );
+
+	describe( 'native PayPal Subscription', () => {
+		const subscriptionConfig = ( overrides = {} ) => ( {
+			...config,
+			native_subscription: { 'checkout-block': true },
+			...overrides,
+		} );
+
+		const renderSubscription = async ( props = {} ) => {
+			const result = renderComponent( {
+				config: subscriptionConfig(),
+				...props,
+			} );
+			await waitFor( () =>
+				expect( mockCreateSubscriptionSession ).toHaveBeenCalled()
+			);
+			return result;
+		};
+
+		const approveWith = ( subscriptionId = 'I-SUB', orderId = 'TOKEN1' ) =>
+			act( async () => {
+				await capturedSubscriptionHandlers.onApprove(
+					subscriptionId,
+					orderId
+				);
+			} );
+
+		test( 'creates the subscription session and not a one-time session', async () => {
+			await renderSubscription();
+
+			expect( mockCreateSession ).not.toHaveBeenCalled();
+			await waitFor( () =>
+				expect(
+					mockButtonContainer.mock.calls.at( -1 )[ 0 ].session
+				).toEqual( { fake: 'subscription-session' } )
+			);
+		} );
+
+		test( 'renders the subscribe button whose start creates a subscription', async () => {
+			const cfg = subscriptionConfig();
+			renderComponent( { config: cfg } );
+			await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
+
+			const props = mockButtonContainer.mock.calls.at( -1 )[ 0 ];
+			props.createOrderFn();
+
+			expect( props.buttonType ).toBe( 'subscribe' );
+			expect( mockCreateSubscription ).toHaveBeenCalledWith(
+				cfg,
+				'checkout-block'
+			);
+			expect( mockCreateOrder ).not.toHaveBeenCalled();
+		} );
+
+		test( 'does not use the free-trial path even when the cart total is zero', async () => {
+			await renderSubscription( {
+				config: subscriptionConfig( {
+					amount: '0.00',
+					cart_needs_vaulting: true,
+					is_free_trial_cart: true,
+				} ),
+			} );
+
+			expect( mockCreateFreeTrialPayPalSession ).not.toHaveBeenCalled();
+			await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
+			mockButtonContainer.mock.calls.at( -1 )[ 0 ].createOrderFn();
+			expect( mockCreateVaultSetupToken ).not.toHaveBeenCalled();
+			expect( mockCreateSubscription ).toHaveBeenCalled();
+		} );
+
+		test.each( [
+			[ 'a non-PayPal funding source', { fundingSource: 'venmo' } ],
+			[
+				'a context missing from the native map',
+				{ config: subscriptionConfig( { native_subscription: { cart: true } } ) },
+			],
+			[
+				'no native subscription config',
+				{ config: { ...config, native_subscription: undefined } },
+			],
+		] )( 'keeps the one-time order flow for %s', async ( label, props ) => {
+			renderComponent( {
+				activePaymentMethod: 'ppcp-gateway-venmo',
+				config: subscriptionConfig(),
+				...props,
+			} );
+
+			await waitFor( () => expect( mockCreateSession ).toHaveBeenCalled() );
+
+			expect( mockCreateSubscriptionSession ).not.toHaveBeenCalled();
+			await waitFor( () => expect( mockButtonContainer ).toHaveBeenCalled() );
+			const buttonProps = mockButtonContainer.mock.calls.at( -1 )[ 0 ];
+			expect( buttonProps.buttonType ).toBeUndefined();
+			buttonProps.createOrderFn();
+			expect( mockCreateOrder ).toHaveBeenCalled();
+			expect( mockCreateSubscription ).not.toHaveBeenCalled();
+		} );
+
+		describe( 'on approval', () => {
+			test( 'the cart block approves the subscription and completes without submitting the checkout store', async () => {
+				const cfg = subscriptionConfig( {
+					page_context: 'cart-block',
+					native_subscription: { 'cart-block': true },
+				} );
+				const onSubmit = jest.fn();
+				await renderSubscription( { config: cfg, onSubmit } );
+
+				await approveWith( 'I-SUB', 'TOKEN1' );
+
+				expect( mockApproveSubscription ).toHaveBeenCalledWith(
+					cfg,
+					'cart-block',
+					'I-SUB',
+					'TOKEN1'
+				);
+				expect( mockGetSubscriber ).not.toHaveBeenCalled();
+				expect( onSubmit ).not.toHaveBeenCalled();
+			} );
+
+			test( 'the checkout block prefills the subscriber address, approves into the session, then submits', async () => {
+				const subscriber = { email_address: 'jane@example.test' };
+				mockGetSubscriber.mockResolvedValue( subscriber );
+				const order = [];
+				mockGetSubscriber.mockImplementation( async () => {
+					order.push( 'get' );
+					return subscriber;
+				} );
+				mockPrefillFromSubscriber.mockImplementation( async () => {
+					order.push( 'prefill' );
+				} );
+				mockApproveSubscriptionInSession.mockImplementation(
+					async () => {
+						order.push( 'approve' );
+					}
+				);
+				const onSubmit = jest.fn( () => order.push( 'submit' ) );
+				const cfg = subscriptionConfig();
+				await renderSubscription( {
+					config: cfg,
+					onSubmit,
+					shippingData: { needsShipping: true },
+				} );
+
+				await approveWith( 'I-SUB', 'TOKEN1' );
+
+				expect( order ).toEqual( [ 'get', 'prefill', 'approve', 'submit' ] );
+				expect( mockGetSubscriber ).toHaveBeenCalledWith( cfg, 'I-SUB' );
+				expect( mockPrefillFromSubscriber ).toHaveBeenCalledWith(
+					subscriber,
+					{ needsShipping: true, reflectInUi: true }
+				);
+				expect( mockApproveSubscriptionInSession ).toHaveBeenCalledWith(
+					cfg,
+					'I-SUB',
+					'TOKEN1'
+				);
+				expect( mockApproveSubscription ).not.toHaveBeenCalled();
+			} );
+
+			test( 'reports needsShipping false for a cart that does not ship', async () => {
+				await renderSubscription();
+
+				await approveWith();
+
+				expect( mockPrefillFromSubscriber ).toHaveBeenCalledWith(
+					expect.anything(),
+					{ needsShipping: false, reflectInUi: true }
+				);
+			} );
+
+			test.each( [
+				[ 'fetching the subscriber', mockGetSubscriber ],
+				[ 'prefilling the address', mockPrefillFromSubscriber ],
+				[
+					'approving into the session',
+					mockApproveSubscriptionInSession,
+				],
+			] )(
+				'a failure %s reports the error, releases the express UI, rethrows and does not submit',
+				async ( label, failingMock ) => {
+					failingMock.mockRejectedValue( new Error( 'boom' ) );
+					const onError = jest.fn();
+					const onClose = jest.fn();
+					const onSubmit = jest.fn();
+					await renderSubscription( { onError, onClose, onSubmit } );
+
+					await act( async () => {
+						await expect(
+							capturedSubscriptionHandlers.onApprove(
+								'I-SUB',
+								'TOKEN1'
+							)
+						).rejects.toThrow( 'boom' );
+					} );
+
+					expect( onError ).toHaveBeenCalledWith( 'boom' );
+					expect( onClose ).toHaveBeenCalledTimes( 1 );
+					expect( onSubmit ).not.toHaveBeenCalled();
+				}
+			);
+
+			test( 'a failed cart block approval reports the error, releases the express UI and rethrows', async () => {
+				mockApproveSubscription.mockRejectedValue( new Error( 'mismatch' ) );
+				const onError = jest.fn();
+				const onClose = jest.fn();
+				await renderSubscription( {
+					config: subscriptionConfig( {
+						page_context: 'cart-block',
+						native_subscription: { 'cart-block': true },
+					} ),
+					onError,
+					onClose,
+				} );
+
+				await act( async () => {
+					await expect(
+						capturedSubscriptionHandlers.onApprove( 'I-SUB', 'TOKEN1' )
+					).rejects.toThrow( 'mismatch' );
+				} );
+
+				expect( onError ).toHaveBeenCalledWith( 'mismatch' );
+				expect( onClose ).toHaveBeenCalledTimes( 1 );
+			} );
+
+			test( 'a failed checkout after the approval lands the buyer on the review page', async () => {
+				await renderSubscription();
+				await waitFor( () => expect( checkoutFailCb ).not.toBeNull() );
+
+				await approveWith();
+				expect( mockAssign ).not.toHaveBeenCalled();
+
+				checkoutFailCb();
+
+				expect( mockAssign.mock.calls[ 0 ][ 0 ] ).toContain(
+					'ppcp-continuation-redirect='
+				);
+			} );
+		} );
+
+		test( 'cancelling releases the express UI', async () => {
+			const onClose = jest.fn();
+			await renderSubscription( { onClose } );
+
+			capturedSubscriptionHandlers.onCancel();
+
+			expect( onClose ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'a session error is reported and releases the express UI', async () => {
+			const onError = jest.fn();
+			const onClose = jest.fn();
+			await renderSubscription( { onError, onClose } );
+
+			capturedSubscriptionHandlers.onError( new Error( 'sdk error' ) );
+
+			expect( onError ).toHaveBeenCalledWith( 'sdk error' );
+			expect( onClose ).toHaveBeenCalledTimes( 1 );
 		} );
 	} );
 } );

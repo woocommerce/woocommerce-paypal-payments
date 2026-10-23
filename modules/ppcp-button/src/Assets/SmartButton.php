@@ -16,7 +16,6 @@ use WC_Payment_Tokens;
 use WC_Product;
 use WC_Product_Variable;
 use WC_Product_Variation;
-use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
@@ -39,6 +38,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Button\Helper\SubscriptionCustomId;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
@@ -55,7 +55,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
-use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 
 /**
  * Class SmartButton
@@ -1001,26 +1000,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 *
 	 * @return array
 	 */
-	/**
-	 * The session-bound custom_id used to tie a PayPal subscription/order to the
-	 * current shopper. Mirrors the value stamped on cart orders by
-	 * PurchaseUnitFactory::from_wc_cart(); both must stay in sync so that
-	 * ApproveSubscriptionEndpoint can validate ownership on approval.
-	 *
-	 * @return string
-	 */
-	private function subscription_custom_id(): string {
-		$session = WC()->session;
-		if ( $session instanceof WC_Session_Handler ) {
-			$session_id = $session->get_customer_unique_id();
-			if ( $session_id ) {
-				return CustomIds::CUSTOMER_ID_PREFIX . $session_id;
-			}
-		}
-
-		return '';
-	}
-
 	public function script_data(): array {
 		$is_free_trial_cart = $this->is_free_trial_cart();
 		$is_acdc_enabled    = $this->dcc_configuration->is_acdc_enabled();
@@ -1115,7 +1094,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
-			'subscription_custom_id'                  => $this->subscription_custom_id(),
+			'subscription_custom_id'                  => SubscriptionCustomId::for_current_session(),
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'variable_paypal_subscription_variation_from_cart' => $this->subscription_helper->paypal_subscription_variation_from_cart(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),

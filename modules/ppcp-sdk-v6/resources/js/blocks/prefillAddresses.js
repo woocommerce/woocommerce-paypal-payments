@@ -4,7 +4,10 @@
  * @package
  */
 
-import { paypalOrderToWcAddresses } from './address';
+import {
+	paypalOrderToWcAddresses,
+	paypalSubscriberToWcAddresses,
+} from './address';
 
 /**
  * Merges incoming fields over existing ones, ignoring empty incoming values.
@@ -34,11 +37,40 @@ function mergeAddress( existing = {}, incoming = {} ) {
  * @param {boolean} [options.reflectInUi]   - Also push into the Blocks form state.
  * @return {Promise<void>} Resolves once the cart has been updated.
  */
-export async function prefillFromPayPalOrder(
-	order,
+export async function prefillFromPayPalOrder( order, options ) {
+	await prefillAddresses( paypalOrderToWcAddresses( order ), options );
+}
+
+/**
+ * Persists a PayPal subscriber's address to the WC cart, optionally reflecting
+ * it in the Blocks UI.
+ *
+ * @param {Object}  subscriber              - The subscriber (Subscriptions v1 shape).
+ * @param {Object}  [options]               - Options.
+ * @param {boolean} [options.needsShipping] - Whether the cart ships.
+ * @param {boolean} [options.reflectInUi]   - Also push into the Blocks form state.
+ * @return {Promise<void>} Resolves once the cart has been updated.
+ */
+export async function prefillFromPayPalSubscriber( subscriber, options ) {
+	await prefillAddresses(
+		paypalSubscriberToWcAddresses( subscriber ),
+		options
+	);
+}
+
+/**
+ * Merges PayPal-derived addresses over the cart's and stores them.
+ *
+ * @param {Object}  paypal                  - The PayPal-derived { billingAddress, shippingAddress }.
+ * @param {Object}  [options]               - Options.
+ * @param {boolean} [options.needsShipping] - Whether the cart ships.
+ * @param {boolean} [options.reflectInUi]   - Also push into the Blocks form state.
+ * @return {Promise<void>} Resolves once the cart has been updated.
+ */
+async function prefillAddresses(
+	paypal,
 	{ needsShipping = false, reflectInUi = false } = {}
 ) {
-	const paypal = paypalOrderToWcAddresses( order );
 	const current = wp.data.select( 'wc/store/cart' )?.getCustomerData?.() || {};
 
 	const billingAddress = mergeAddress(

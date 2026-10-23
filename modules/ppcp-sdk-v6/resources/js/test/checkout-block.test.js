@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockRegisterExpressPaymentMethod = jest.fn();
 const mockRegisterPaymentMethod = jest.fn();
 const mockRegisterCheckoutFilters = jest.fn();
@@ -19,8 +21,11 @@ jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
 } ) );
 const mockCheckEligibility = jest.fn();
+const mockCheckSubscriptionEligibility = jest.fn();
 jest.mock( '../eligibility', () => ( {
 	checkEligibility: ( ...args ) => mockCheckEligibility( ...args ),
+	checkSubscriptionEligibility: ( ...args ) =>
+		mockCheckSubscriptionEligibility( ...args ),
 } ) );
 jest.mock( '../utils/errorHandler', () => ( { setErrorLabels: jest.fn() } ) );
 jest.mock( '../blocks/V6ExpressComponent', () => ( {
@@ -356,6 +361,107 @@ describe( 'checkout-block', () => {
 			);
 
 			expect( results ).toEqual( [ true, true, true, true, true ] );
+		} );
+	} );
+
+	describe( 'canMakePayment on a native PayPal Subscription page', () => {
+		const NAMES = [
+			'ppcp-gateway-paypal',
+			'ppcp-gateway-venmo',
+			'ppcp-gateway-paylater',
+			'ppcp-googlepay',
+			'ppcp-applepay',
+		];
+		const nativeConfig = ( nativeSubscription, overrides = {} ) =>
+			baseConfig( { native_subscription: nativeSubscription, ...overrides } );
+		const canMake = ( name, cartTotals ) =>
+			expressCallFor( name ).canMakePayment( { cartTotals } );
+
+		beforeEach( () => {
+			mockLoadSdkV6.mockResolvedValue( {} );
+			mockCheckEligibility.mockResolvedValue( {
+				paypal: true,
+				venmo: true,
+				paylater: true,
+				googlepay: true,
+				applepay: true,
+			} );
+			mockCheckSubscriptionEligibility.mockResolvedValue( true );
+		} );
+
+		test( 'offers PayPal alone when the subscription button may render and the buyer is eligible', async () => {
+			loadCheckoutBlock( nativeConfig( { checkout: true } ) );
+
+			const results = await Promise.all( NAMES.map( ( n ) => canMake( n ) ) );
+
+			expect( results ).toEqual( [ true, false, false, false, false ] );
+		} );
+
+		test( 'offers nothing when the subscription button may not render', async () => {
+			loadCheckoutBlock( nativeConfig( { checkout: false } ) );
+
+			const results = await Promise.all( NAMES.map( ( n ) => canMake( n ) ) );
+
+			expect( results ).toEqual( [ false, false, false, false, false ] );
+			expect( mockCheckSubscriptionEligibility ).not.toHaveBeenCalled();
+		} );
+
+		test( 'denies PayPal when the buyer is not eligible for a subscription', async () => {
+			mockCheckSubscriptionEligibility.mockResolvedValue( false );
+			loadCheckoutBlock( nativeConfig( { checkout: true } ) );
+
+			await expect( canMake( 'ppcp-gateway-paypal' ) ).resolves.toBe( false );
+		} );
+
+		test( 'decides before the free trial: a $0 native cart still follows the subscription rules', async () => {
+			loadCheckoutBlock(
+				nativeConfig(
+					{ checkout: true },
+					{ cart_needs_vaulting: true, amount: '0.00' }
+				)
+			);
+			const cartTotals = { total_price: '0', currency_minor_unit: 2 };
+
+			await expect(
+				canMake( 'ppcp-gateway-paypal', cartTotals )
+			).resolves.toBe( true );
+			expect( mockCheckSubscriptionEligibility ).toHaveBeenCalled();
+		} );
+
+		test( 'does not run the amount-based eligibility check', async () => {
+			loadCheckoutBlock( nativeConfig( { checkout: true } ) );
+
+			await canMake( 'ppcp-gateway-paypal' );
+
+			expect( mockCheckEligibility ).not.toHaveBeenCalled();
+		} );
+
+		test( 'a page context outside the map keeps the ordinary eligibility rules', async () => {
+			loadCheckoutBlock( nativeConfig( { cart: true } ) );
+
+			const results = await Promise.all( NAMES.map( ( n ) => canMake( n ) ) );
+
+			expect( results ).toEqual( [ true, true, true, true, true ] );
+			expect( mockCheckSubscriptionEligibility ).not.toHaveBeenCalled();
+		} );
+
+		test( 'asks the subscription eligibility once per page', async () => {
+			loadCheckoutBlock( nativeConfig( { checkout: true } ) );
+
+			await canMake( 'ppcp-gateway-paypal' );
+			await canMake( 'ppcp-gateway-paypal' );
+
+			expect( mockCheckSubscriptionEligibility ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'a failed eligibility check resolves false and is retried on the next update', async () => {
+			mockCheckSubscriptionEligibility
+				.mockRejectedValueOnce( new Error( 'sdk failed' ) )
+				.mockResolvedValue( true );
+			loadCheckoutBlock( nativeConfig( { checkout: true } ) );
+
+			await expect( canMake( 'ppcp-gateway-paypal' ) ).resolves.toBe( false );
+			await expect( canMake( 'ppcp-gateway-paypal' ) ).resolves.toBe( true );
 		} );
 	} );
 

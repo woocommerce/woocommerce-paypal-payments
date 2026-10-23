@@ -33,8 +33,17 @@ jest.mock( '../cardButton/renderCardButton', () => ( {
 } ) );
 
 const mockCheckEligibility = jest.fn();
+const mockCheckSubscriptionEligibility = jest.fn();
 jest.mock( '../eligibility', () => ( {
 	checkEligibility: ( ...args ) => mockCheckEligibility( ...args ),
+	checkSubscriptionEligibility: ( ...args ) =>
+		mockCheckSubscriptionEligibility( ...args ),
+} ) );
+
+const mockCreateSubscriptionSession = jest.fn();
+jest.mock( '../sessions/subscriptionSession', () => ( {
+	createSubscriptionSession: ( ...args ) =>
+		mockCreateSubscriptionSession( ...args ),
 } ) );
 
 const mockCreateSession = jest.fn();
@@ -69,9 +78,11 @@ jest.mock( '../methods/methodRegistry', () => ( {
 } ) );
 
 const mockCreateOrder = jest.fn();
+const mockCreateSubscription = jest.fn();
 const mockFetchCartTotal = jest.fn();
 jest.mock( '../endpointsAdapter', () => ( {
 	createOrder: ( ...args ) => mockCreateOrder( ...args ),
+	createSubscription: ( ...args ) => mockCreateSubscription( ...args ),
 	fetchCartTotal: ( ...args ) => mockFetchCartTotal( ...args ),
 } ) );
 
@@ -204,6 +215,8 @@ beforeEach( () => {
 		payLaterDetails: null,
 	} );
 	mockCreateSession.mockReturnValue( {} );
+	mockCheckSubscriptionEligibility.mockResolvedValue( true );
+	mockCreateSubscriptionSession.mockReturnValue( {} );
 	mockRenderWallets.mockResolvedValue();
 	mockInitCardFields.mockResolvedValue();
 	mockInitMessages.mockResolvedValue( 0 );
@@ -435,6 +448,253 @@ describe( 'boot', () => {
 			expect( renderedWrapperIds() ).toContain(
 				MINI_CART_WRAPPER_SELECTOR.slice( 1 )
 			);
+		} );
+	} );
+
+	describe( 'native PayPal Subscription', () => {
+		const subscriptionSession = { name: 'subscription-session' };
+		const pageCall = () =>
+			mockRenderButtons.mock.calls.find(
+				( [ options ] ) =>
+					options.wrapper.id === WRAPPER_SELECTOR.slice( 1 )
+			)[ 0 ];
+
+		beforeEach( () => {
+			mockCreateSubscriptionSession.mockReturnValue( subscriptionSession );
+			mockCreateFreeTrialPayPalSession.mockReturnValue( {
+				name: 'free-trial-session',
+			} );
+		} );
+
+		const miniCartCall = () =>
+			mockRenderButtons.mock.calls.find(
+				( [ options ] ) =>
+					options.wrapper.id === MINI_CART_WRAPPER_SELECTOR.slice( 1 )
+			)?.[ 0 ];
+
+		test( 'renders only the subscription session, checked for recurring eligibility', async () => {
+			buildDom();
+			boot( baseConfig( { native_subscription: { checkout: true } } ) );
+			await flush();
+
+			expect( pageCall().sessions ).toEqual( {
+				paypal: subscriptionSession,
+			} );
+			expect( mockCheckSubscriptionEligibility ).toHaveBeenCalledWith(
+				expect.anything(),
+				{ currencyCode: 'USD' }
+			);
+			expect( mockCreateSubscriptionSession ).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.anything(),
+				'checkout'
+			);
+		} );
+
+		test( 'renders no PayPal button when the buyer is not eligible for a subscription', async () => {
+			mockCheckSubscriptionEligibility.mockResolvedValue( false );
+
+			buildDom();
+			boot( baseConfig( { native_subscription: { checkout: true } } ) );
+			await flush();
+
+			expect( pageCall().sessions ).toEqual( {} );
+			expect( mockCreateSubscriptionSession ).not.toHaveBeenCalled();
+		} );
+
+		test( 'renders the buttons with the subscribe type', async () => {
+			buildDom();
+			boot( baseConfig( { native_subscription: { checkout: true } } ) );
+			await flush();
+
+			expect( pageCall().buttonType ).toBe( 'subscribe' );
+		} );
+
+		test( 'creates no sessions for a native context that does not allow the button', async () => {
+			buildDom();
+			boot( baseConfig( { native_subscription: { checkout: false } } ) );
+			await flush();
+
+			expect( pageCall().sessions ).toEqual( {} );
+			expect( mockCheckSubscriptionEligibility ).not.toHaveBeenCalled();
+			expect( mockCreateSubscriptionSession ).not.toHaveBeenCalled();
+			expect( mockCreateSession ).not.toHaveBeenCalledWith(
+				expect.anything(),
+				expect.anything(),
+				expect.anything(),
+				'checkout'
+			);
+		} );
+
+		test( 'a context outside the map keeps its normal sessions and button type', async () => {
+			buildDom();
+			boot( baseConfig( { native_subscription: { cart: true } } ) );
+			await flush();
+
+			expect( pageCall().buttonType ).toBeUndefined();
+			expect( Object.keys( pageCall().sessions ) ).toEqual( [ 'paypal' ] );
+			expect( mockCreateSubscriptionSession ).not.toHaveBeenCalled();
+		} );
+
+		describe( 'mini-cart target', () => {
+			test( 'follows its own entry, not the page context: a non-native page with an allowed native mini-cart', async () => {
+				buildDom();
+				boot(
+					baseConfig( {
+						page_context: 'product',
+						wrapper: WRAPPER_SELECTOR,
+						native_subscription: { 'mini-cart': true },
+					} )
+				);
+				await flush();
+
+				expect( miniCartCall().sessions ).toEqual( {
+					paypal: subscriptionSession,
+				} );
+				expect( miniCartCall().buttonType ).toBe( 'subscribe' );
+
+				const page = mockRenderButtons.mock.calls.find(
+					( [ options ] ) =>
+						options.wrapper.id === WRAPPER_SELECTOR.slice( 1 )
+				)[ 0 ];
+				expect( page.buttonType ).toBeUndefined();
+				expect( page.sessions ).not.toEqual( {
+					paypal: subscriptionSession,
+				} );
+				expect( mockCheckEligibility ).toHaveBeenCalled();
+			} );
+
+			test( 'a native page with a non-native mini-cart gives the mini-cart normal sessions', async () => {
+				buildDom();
+				boot(
+					baseConfig( { native_subscription: { checkout: true } } )
+				);
+				await flush();
+
+				expect( pageCall().buttonType ).toBe( 'subscribe' );
+				expect( miniCartCall().buttonType ).toBeUndefined();
+				expect( miniCartCall().sessions ).not.toEqual( {
+					paypal: subscriptionSession,
+				} );
+			} );
+
+			test( 'gets no sessions when its entry does not allow the button', async () => {
+				buildDom();
+				boot(
+					baseConfig( {
+						native_subscription: { checkout: true, 'mini-cart': false },
+					} )
+				);
+				await flush();
+
+				expect( miniCartCall().sessions ).toEqual( {} );
+			} );
+		} );
+
+		test( 'leaves the button type alone when subscriptions are not native', async () => {
+			buildDom();
+			boot( baseConfig() );
+			await flush();
+
+			expect( pageCall().buttonType ).toBeUndefined();
+		} );
+
+		test( 'starts the session by creating a subscription, not an order', async () => {
+			mockCreateSubscription.mockResolvedValue( {
+				subscriptionId: 'I-SUB',
+			} );
+
+			buildDom();
+			boot( baseConfig( { native_subscription: { checkout: true } } ) );
+			await flush();
+
+			const start = pageCall().createOrderForFunding( 'paypal' );
+
+			await expect( start() ).resolves.toEqual( {
+				subscriptionId: 'I-SUB',
+			} );
+			expect( mockCreateSubscription ).toHaveBeenCalledWith(
+				expect.objectContaining( {
+					native_subscription: { checkout: true },
+				} ),
+				'checkout'
+			);
+			expect( mockCreateOrder ).not.toHaveBeenCalled();
+		} );
+
+		test( 'renders no wallet buttons for a native target', async () => {
+			buildDom();
+			boot( baseConfig( { native_subscription: { checkout: true } } ) );
+			await flush();
+
+			expect( mockRenderButtons ).toHaveBeenCalled();
+			expect( mockRenderWallets ).not.toHaveBeenCalledWith(
+				expect.objectContaining( { context: 'checkout' } )
+			);
+		} );
+
+		test( 'still renders wallets for a target that is not native', async () => {
+			buildDom();
+			boot( baseConfig( { native_subscription: { checkout: true } } ) );
+			await flush();
+
+			expect( mockRenderWallets ).toHaveBeenCalledWith(
+				expect.objectContaining( { context: 'mini-cart' } )
+			);
+		} );
+
+		test( 'skips the free-trial save flow for a native context even when the cart is a free trial', async () => {
+			buildDom();
+			boot(
+				baseConfig( {
+					native_subscription: { checkout: true, 'mini-cart': true },
+					cart_needs_vaulting: true,
+					amount: '0.00',
+				} )
+			);
+			await flush();
+
+			expect( mockCreateFreeTrialPayPalSession ).not.toHaveBeenCalled();
+			expect( pageCall().sessions ).toEqual( {
+				paypal: subscriptionSession,
+			} );
+			expect( miniCartCall().sessions ).toEqual( {
+				paypal: subscriptionSession,
+			} );
+		} );
+
+		test( 'applies the free-trial rules only to the contexts that are not native', async () => {
+			buildDom();
+			boot(
+				baseConfig( {
+					native_subscription: { 'mini-cart': true },
+					cart_needs_vaulting: true,
+					amount: '0.00',
+				} )
+			);
+			await flush();
+
+			expect( mockCreateFreeTrialPayPalSession ).toHaveBeenCalled();
+			expect( pageCall().sessions ).toEqual( {
+				paypal: { name: 'free-trial-session' },
+			} );
+			expect( miniCartCall().sessions ).toEqual( {
+				paypal: subscriptionSession,
+			} );
+		} );
+
+		test( 'still skips a non-native mini-cart on a free-trial cart', async () => {
+			buildDom();
+			boot(
+				baseConfig( {
+					native_subscription: { checkout: true },
+					cart_needs_vaulting: true,
+					amount: '0.00',
+				} )
+			);
+			await flush();
+
+			expect( miniCartCall() ).toBeUndefined();
 		} );
 	} );
 

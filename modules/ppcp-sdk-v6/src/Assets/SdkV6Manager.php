@@ -18,7 +18,11 @@ use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\FrontendLogEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\GetSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
@@ -85,6 +89,12 @@ class SdkV6Manager {
 	 */
 	private const CONTEXTS_WITH_GATEWAY_ROWS = array( 'checkout', 'pay-now' );
 
+	/**
+	 * The render places a native PayPal Subscription context maps to. The block
+	 * contexts have none: Blocks registers its methods client-side.
+	 */
+	private const NATIVE_SUBSCRIPTION_PLACES = array( 'product', 'cart', 'checkout', 'pay-now', 'mini-cart' );
+
 	// Existing WC credit-card-form field IDs the v6 card fields mount into; see
 	// CardFieldsModule's woocommerce_credit_card_form_fields filter.
 	private const CARD_FIELD_NUMBER_ID = 'ppcp-credit-card-gateway-card-number';
@@ -142,6 +152,11 @@ class SdkV6Manager {
 	 * @var string[]
 	 */
 	private array $pay_now_contexts;
+
+	/**
+	 * Whether the checkout form is validated before a PayPal flow starts.
+	 */
+	private bool $early_checkout_validation;
 
 	/**
 	 * Every method this module places, in the order their rows are printed.
@@ -206,7 +221,8 @@ class SdkV6Manager {
 		FastlaneConfig $fastlane_config,
 		CardFieldStyles $card_field_styles,
 		DisabledFundingSources $disabled_funding_sources,
-		array $pay_now_contexts
+		array $pay_now_contexts,
+		bool $early_checkout_validation = false
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -233,6 +249,7 @@ class SdkV6Manager {
 		$this->card_field_styles           = $card_field_styles;
 		$this->disabled_funding_sources    = $disabled_funding_sources;
 		$this->pay_now_contexts            = $pay_now_contexts;
+		$this->early_checkout_validation   = $early_checkout_validation;
 
 		$this->placements = array(
 			new MethodPlacement(
@@ -315,21 +332,6 @@ class SdkV6Manager {
 	 * @return array<string, bool> Location => enabled (product, cart, checkout, pay-now, mini-cart).
 	 */
 	public function determine_render_places(): array {
-		// Native PayPal Subscriptions defer to v5 (see should_load_on_current_page);
-		// print no v6 wrappers so the classic page hands off cleanly. These render
-		// hooks key on the smart-button locations rather than that method, so they
-		// need this guard explicitly. Every location is returned false (rather than
-		// an empty array) to keep the array shape callers index into.
-		if ( $this->is_native_paypal_subscription_page() ) {
-			return array(
-				'product'   => false,
-				'cart'      => false,
-				'checkout'  => false,
-				'pay-now'   => false,
-				'mini-cart' => false,
-			);
-		}
-
 		$needs_payment = $this->cart_needs_payment();
 
 		// A free-trial ($0) subscription cart needs no one-time payment, so
@@ -346,13 +348,24 @@ class SdkV6Manager {
 		// pay-now is driven by the existing WC order rather than the cart, so
 		// the zero-total guard does not apply to it. The mini-cart checks it at
 		// render time instead (see render_mini_cart_wrapper()).
-		return array(
+		$places = array(
 			'product'   => $product_enabled && ! $this->is_free_trial_product() && ! $this->is_unpayable_free_product(),
 			'cart'      => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
 			'checkout'  => ( $needs_payment || $free_trial_checkout ) && $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ),
 			'pay-now'   => $this->settings_status->is_smart_button_enabled_for_location( 'pay-now' ),
 			'mini-cart' => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 		);
+
+		// A native PayPal Subscription pays its plan, not the cart total, so the
+		// zero-total and free-trial guards above do not apply to it; where its
+		// button may not render, nothing does.
+		foreach ( $this->native_subscription_contexts() as $context => $allowed ) {
+			if ( in_array( $context, self::NATIVE_SUBSCRIPTION_PLACES, true ) ) {
+				$places[ $context ] = $allowed && $this->settings_status->is_smart_button_enabled_for_location( $context );
+			}
+		}
+
+		return $places;
 	}
 
 	/**
@@ -624,15 +637,6 @@ class SdkV6Manager {
 	 * The uncached answer for should_load_on_current_page().
 	 */
 	private function resolve_should_load(): bool {
-		// Native PayPal Subscriptions (subscriptions_api mode) have no v6 path: v6
-		// can only carry a subscription by vaulting, which that mode disables. Hand
-		// the whole page back to the v5 stack, which creates the subscription via
-		// actions.subscription.create. Checked before every other gate so it also
-		// overrides the sitewide mini-cart fallback below.
-		if ( $this->is_native_paypal_subscription_page() ) {
-			return false;
-		}
-
 		$page_location = $this->get_page_context();
 		if ( $page_location && $this->settings_status->is_smart_button_enabled_for_location( $page_location ) ) {
 			return true;
@@ -767,19 +771,62 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether the current page involves a native PayPal Subscription that the v5
-	 * stack must handle: subscriptions_api mode with a subscription in the current
-	 * context. v6 has no native-subscription flow (it can only carry a subscription
-	 * by vaulting, which this mode disables), so it defers the page to v5.
+	 * The native PayPal Subscription contexts on this page, each mapped to whether
+	 * the subscription button may render there.
+	 *
+	 * In subscriptions_api mode a context is native when what it pays holds a
+	 * subscription: the viewed product on the product page, the order on the
+	 * pay-for-order page, the cart everywhere else, the mini-cart included. Such
+	 * a context renders the button only with a plan to subscribe to, and a cart
+	 * only when the subscription is its sole item, as on v5. The pay-for-order
+	 * page never does: plans are resolved from the cart, which does not hold the
+	 * order being paid.
+	 *
+	 * @return array<string, bool> Context => whether the button may render.
 	 */
-	private function is_native_paypal_subscription_page(): bool {
+	private function native_subscription_contexts(): array {
 		if ( SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS !== ( $this->get_subscriptions_mode )() ) {
-			return false;
+			return array();
 		}
 
-		return $this->subscription_helper->current_product_is_subscription()
-			|| $this->subscription_helper->cart_contains_subscription()
-			|| $this->subscription_helper->order_pay_contains_subscription();
+		$contexts          = array();
+		$page_context      = $this->get_page_context();
+		$cart_subscription = $this->subscription_helper->cart_contains_subscription();
+
+		if ( 'product' === $page_context ) {
+			if ( $this->subscription_helper->current_product_is_subscription() ) {
+				$contexts['product'] = $this->product_has_subscription_plan();
+			}
+		} elseif ( 'pay-now' === $page_context ) {
+			if ( $this->subscription_helper->order_pay_contains_subscription() ) {
+				$contexts['pay-now'] = false;
+			}
+		} elseif ( $page_context && $cart_subscription ) {
+			$contexts[ $page_context ] = $this->subscription_helper->checkout_subscription_product_allowed();
+		}
+
+		if ( $cart_subscription ) {
+			$contexts['mini-cart'] = $this->subscription_helper->checkout_subscription_product_allowed();
+		}
+
+		return $contexts;
+	}
+
+	/**
+	 * Whether the viewed product, or one of its variations, has a PayPal plan.
+	 */
+	private function product_has_subscription_plan(): bool {
+		if ( '' !== $this->subscription_helper->paypal_subscription_id() ) {
+			return true;
+		}
+
+		foreach ( $this->subscription_helper->variable_paypal_subscription_variations() as $variation ) {
+			if ( ! empty( $variation['subscription_plan'] ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -1264,6 +1311,10 @@ class SdkV6Manager {
 			'is_free_trial_cart'  => $this->free_trial_helper->is_free_trial_cart(),
 			'cart_needs_vaulting' => $this->free_trial_helper->cart_requires_vaulting(),
 			'has_subscriptions'   => $this->subscription_helper->cart_contains_subscription(),
+			// Contexts paying a native PayPal Subscription, mapped to whether its
+			// button may render; see utils/nativeSubscription.js.
+			'native_subscription' => $this->native_subscription_contexts(),
+			'early_validation'    => $this->early_checkout_validation,
 			/**
 			 * 3DS/SCA contingency for the card save (setup-token) flow used on a
 			 * free-trial card checkout. Filtered like the add-payment-method page.
@@ -1301,6 +1352,22 @@ class SdkV6Manager {
 				'approve_order'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
+				),
+				'create_subscription'            => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreateSubscriptionEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreateSubscriptionEndpoint::nonce() ),
+				),
+				'approve_subscription'           => array(
+					'endpoint' => \WC_AJAX::get_endpoint( ApproveSubscriptionEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( ApproveSubscriptionEndpoint::nonce() ),
+				),
+				'get_subscription'               => array(
+					'endpoint' => \WC_AJAX::get_endpoint( GetSubscriptionEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( GetSubscriptionEndpoint::nonce() ),
+				),
+				'validate_checkout'              => array(
+					'endpoint' => \WC_AJAX::get_endpoint( ValidateCheckoutEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( ValidateCheckoutEndpoint::nonce() ),
 				),
 				'get_order'                      => array(
 					'endpoint' => \WC_AJAX::get_endpoint( GetOrderEndpoint::ENDPOINT ),
