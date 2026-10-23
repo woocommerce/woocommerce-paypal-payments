@@ -11,9 +11,16 @@ use WC_Order;
 use WC_Order_Item_Fee;
 use WC_Order_Item_Product;
 use WC_Product;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Phone;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PhoneWithType;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
@@ -24,6 +31,7 @@ use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 /**
  * Test double simulating a WC 10.9+ order item class, which declares set_order()
@@ -690,6 +698,229 @@ class WooCommerceOrderCreatorTest extends TestCase {
 		$method->invoke( $sut, $wc_order, $payer, null, false );
 
 		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN a wallet order (Apple Pay or Google Pay) with a PayPal payer that has a phone
+	 * AND a browser payer with its own name, email and phone
+	 * WHEN the WC order is created
+	 * THEN the billing contact is the browser payer as a whole
+	 * AND the billing phone is the browser phone, reduced to digits and at most 14 of them
+	 * AND the PayPal payer is ignored, including its phone
+	 *
+	 * @dataProvider wallet_billing_provider
+	 */
+	public function test_billing_uses_browser_payer_as_a_whole_for_wallet_orders(
+		string $payment_source,
+		string $browser_phone,
+		string $expected_phone
+	): void {
+		$addresses = $this->create_wc_order_addresses(
+			$this->create_payer( '5551234' ),
+			null,
+			$this->create_browser_payer_data( $browser_phone ),
+			$payment_source
+		);
+
+		$this->assertSame(
+			array( 'Wallet', 'Buyer', 'wallet@example.com', $expected_phone ),
+			$this->billing_contact( $addresses )
+		);
+	}
+
+	public function wallet_billing_provider(): array {
+		return array(
+			'apple pay uses the normalized browser phone'  => array( 'apple_pay', '+1 (555) 123-4567', '15551234567' ),
+			'google pay uses the normalized browser phone' => array( 'google_pay', '+1 (555) 123-4567', '15551234567' ),
+			'browser phone is cut to 14 digits'            => array( 'apple_pay', '123456789012345678', '12345678901234' ),
+		);
+	}
+
+	/**
+	 * GIVEN a non-wallet order (PayPal) with a PayPal payer that has a phone
+	 * AND a browser payer with different contact data
+	 * WHEN the WC order is created
+	 * THEN the billing contact is the PayPal payer unchanged, including its phone
+	 * AND the browser payer is ignored
+	 */
+	public function test_billing_uses_paypal_payer_unchanged_for_non_wallet_orders(): void {
+		$addresses = $this->create_wc_order_addresses(
+			$this->create_payer( '+1 (555) 123-4567' ),
+			null,
+			$this->create_browser_payer_data( '9998887' ),
+			'paypal'
+		);
+
+		$this->assertSame(
+			array( 'Jane', 'Doe', 'jane@example.com', '+1 (555) 123-4567' ),
+			$this->billing_contact( $addresses )
+		);
+	}
+
+	/**
+	 * GIVEN an order without a PayPal payer
+	 * AND a browser payer with its own name, email and phone
+	 * WHEN the WC order is created
+	 * THEN the billing contact is the browser payer
+	 * AND the billing phone is reduced to digits
+	 */
+	public function test_billing_uses_normalized_browser_payer_when_paypal_sent_no_payer(): void {
+		$addresses = $this->create_wc_order_addresses(
+			null,
+			null,
+			$this->create_browser_payer_data( '+1 (555) 123-4567' )
+		);
+
+		$this->assertSame(
+			array( 'Wallet', 'Buyer', 'wallet@example.com', '15551234567' ),
+			$this->billing_contact( $addresses )
+		);
+	}
+
+	/**
+	 * GIVEN a PayPal shipping address that may or may not carry a phone
+	 * AND a browser shipping address (wallet data) that may or may not carry a phone
+	 * AND a PayPal payer with a billing phone
+	 * WHEN the WC order is created
+	 * THEN the shipping phone is the PayPal shipping phone when PayPal sent one
+	 * AND otherwise the browser shipping phone, reduced to digits
+	 * AND empty when neither has one, never falling back to the billing phone
+	 *
+	 * @dataProvider shipping_phone_provider
+	 */
+	public function test_shipping_phone_comes_from_paypal_shipping_or_normalized_browser_data(
+		?string $paypal_shipping_phone,
+		?string $browser_phone,
+		string $expected
+	): void {
+		$shipping = new Shipping(
+			'Jane Doe',
+			new Address( 'US', '1 Main St', '', 'NY', 'NYC', '10001' ),
+			null,
+			null === $paypal_shipping_phone ? null : new Phone( $paypal_shipping_phone )
+		);
+
+		$paypal_data = null === $browser_phone
+			? null
+			: array( 'shipping_address' => array( 'phone_number' => array( 'national_number' => $browser_phone ) ) );
+
+		$addresses = $this->create_wc_order_addresses( $this->create_payer( '5550000' ), $shipping, $paypal_data );
+
+		$this->assertSame( $expected, $addresses['shipping']['phone'] );
+	}
+
+	public function shipping_phone_provider(): array {
+		return array(
+			'PayPal shipping phone wins over the browser phone' => array( '5551234', '9998887', '5551234' ),
+			'browser phone fills in when PayPal has none'       => array( null, '+1 555 987-6543', '15559876543' ),
+			'no phone anywhere leaves the phone empty'          => array( null, null, '' ),
+		);
+	}
+
+	private function create_payer( ?string $phone ): Payer {
+		return new Payer(
+			new PayerName( 'Jane', 'Doe' ),
+			'jane@example.com',
+			'PAYER1',
+			null,
+			null,
+			null === $phone ? null : new PhoneWithType( 'HOME', new Phone( $phone ) )
+		);
+	}
+
+	private function create_browser_payer_data( string $phone ): array {
+		return array(
+			'payer' => array(
+				'name'          => array(
+					'given_name' => 'Wallet',
+					'surname'    => 'Buyer',
+				),
+				'email_address' => 'wallet@example.com',
+				'phone'         => array(
+					'phone_type'   => 'MOBILE',
+					'phone_number' => array( 'national_number' => $phone ),
+				),
+			),
+		);
+	}
+
+	/**
+	 * @return array{string, string, string, string} First name, last name, email and phone.
+	 */
+	private function billing_contact( array $addresses ): array {
+		$billing = $addresses['billing'];
+
+		return array( $billing['first_name'], $billing['last_name'], $billing['email'], $billing['phone'] );
+	}
+
+	/**
+	 * Returns the billing and shipping addresses written to the created WC order.
+	 *
+	 * @return array{billing: array, shipping: array}
+	 */
+	private function create_wc_order_addresses(
+		?Payer $payer,
+		?Shipping $shipping,
+		?array $paypal_data,
+		?string $payment_source_name = null
+	): array {
+		$written = array(
+			'billing'  => array(),
+			'shipping' => array(),
+		);
+
+		$wc_order = Mockery::mock( WC_Order::class )->shouldIgnoreMissing();
+		$wc_order->shouldReceive( 'set_billing_address' )->andReturnUsing(
+			static function ( array $address ) use ( &$written ): void {
+				$written['billing'] = $address;
+			}
+		);
+		$wc_order->shouldReceive( 'set_shipping_address' )->andReturnUsing(
+			static function ( array $address ) use ( &$written ): void {
+				$written['shipping'] = $address;
+			}
+		);
+
+		$purchase_unit = Mockery::mock( PurchaseUnit::class );
+		$purchase_unit->shouldReceive( 'shipping' )->andReturn( $shipping );
+
+		$order = Mockery::mock( Order::class );
+		$order->shouldReceive( 'payer' )->andReturn( $payer );
+		$order->shouldReceive( 'payment_source' )->andReturn(
+			null === $payment_source_name ? null : new PaymentSource( $payment_source_name, new \stdClass() )
+		);
+		$order->shouldReceive( 'purchase_units' )->andReturn( $shipping ? array( $purchase_unit ) : array() );
+
+		$session_handler = Mockery::mock( SessionHandler::class );
+		$session_handler->shouldReceive( 'funding_source' )->andReturn( null );
+
+		$current_user     = new \stdClass();
+		$current_user->ID = 0;
+
+		$wc_holder           = new \stdClass();
+		$wc_holder->customer = null;
+
+		when( 'wc_create_order' )->justReturn( $wc_order );
+		when( 'wp_get_current_user' )->justReturn( $current_user );
+		when( 'WC' )->justReturn( $wc_holder );
+		when( 'wp_json_encode' )->alias( 'json_encode' );
+
+		$sut = new WooCommerceOrderCreator(
+			Mockery::mock( FundingSourceRenderer::class ),
+			$session_handler,
+			Mockery::mock( SubscriptionHelper::class ),
+			Mockery::mock( CartDataFactory::class ),
+			Mockery::mock( ShippingFactory::class ),
+			new PayerFactory( Mockery::mock( AddressFactory::class ) )
+		);
+
+		$sut->create_from_paypal_order(
+			$order,
+			new CartData( array(), array(), false, 0, 'cart-hash' ),
+			$paypal_data
+		);
+
+		return $written;
 	}
 
 	/**
