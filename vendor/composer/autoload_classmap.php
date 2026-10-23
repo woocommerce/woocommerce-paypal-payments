@@ -170,6 +170,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ErrorResponse' => $baseDir . '/modules/ppcp-api-client/src/Helper/ErrorResponse.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\FailureRegistry' => $baseDir . '/modules/ppcp-api-client/src/Helper/FailureRegistry.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\InMemoryCache' => $baseDir . '/modules/ppcp-api-client/src/Helper/InMemoryCache.php',
+    'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\InvoicePrefixGetter' => $baseDir . '/modules/ppcp-api-client/src/Helper/InvoicePrefixGetter.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ItemTrait' => $baseDir . '/modules/ppcp-api-client/src/Helper/ItemTrait.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\MoneyFormatter' => $baseDir . '/modules/ppcp-api-client/src/Helper/MoneyFormatter.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\OrderHelper' => $baseDir . '/modules/ppcp-api-client/src/Helper/OrderHelper.php',

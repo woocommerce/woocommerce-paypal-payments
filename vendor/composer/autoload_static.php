@@ -387,6 +387,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ErrorResponse' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/ErrorResponse.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\FailureRegistry' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/FailureRegistry.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\InMemoryCache' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/InMemoryCache.php',
+        'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\InvoicePrefixGetter' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/InvoicePrefixGetter.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\ItemTrait' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/ItemTrait.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\MoneyFormatter' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/MoneyFormatter.php',
         'WooCommerce\\PayPalCommerce\\ApiClient\\Helper\\OrderHelper' => __DIR__ . '/../..' . '/modules/ppcp-api-client/src/Helper/OrderHelper.php',

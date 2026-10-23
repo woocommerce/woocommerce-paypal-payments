@@ -62,7 +62,6 @@ return array('webhook.registrar' => static function (ContainerInterface $contain
     return new \WooCommerce\PayPalCommerce\Webhooks\IncomingWebhookEndpoint($webhook_endpoint, $webhook, $logger, $verify_request, $webhook_event_factory, $simulation, $last_webhook_storage, ...$handler);
 }, 'webhook.endpoint.handler' => static function (ContainerInterface $container): array {
     $logger = $container->get('woocommerce.logger.woocommerce');
-    $prefix = $container->get('api.prefix');
     $order_endpoint = $container->get('api.endpoint.order');
     $authorized_payments_processor = $container->get('wcgateway.processor.authorized-payments');
     $refund_fees_updater = $container->get('wcgateway.helper.refund-fees-updater');

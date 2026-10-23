@@ -8,6 +8,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\InvoicePrefixGetter;
 /**
  * Class CustomerRepository
  */
@@ -17,15 +18,15 @@ class CustomerRepository
     /**
      * The prefix.
      *
-     * @var string
+     * @var InvoicePrefixGetter
      */
     protected $prefix;
     /**
      * CustomerRepository constructor.
      *
-     * @param string $prefix The prefix.
+     * @param InvoicePrefixGetter $prefix The prefix.
      */
-    public function __construct(string $prefix)
+    public function __construct(InvoicePrefixGetter $prefix)
     {
         $this->prefix = $prefix;
     }
@@ -42,7 +43,7 @@ class CustomerRepository
             if (is_string($guest_customer_id) && $guest_customer_id) {
                 return $guest_customer_id;
             }
-            $unique_id = substr($this->prefix . strrev(uniqid()), 0, self::CLIENT_ID_MAX_LENGTH);
+            $unique_id = substr($this->prefix->get() . strrev(uniqid()), 0, self::CLIENT_ID_MAX_LENGTH);
             assert(is_string($unique_id));
             WC()->session->set('ppcp_guest_customer_id', $unique_id);
             return $unique_id;
@@ -51,7 +52,7 @@ class CustomerRepository
         if ($guest_customer_id) {
             return $guest_customer_id;
         }
-        return get_user_meta($user_id, 'ppcp_customer_id', \true) ?: $this->prefix . (string) $user_id;
+        return get_user_meta($user_id, 'ppcp_customer_id', \true) ?: $this->prefix->get() . (string) $user_id;
     }
     /**
      * Returns the real, PayPal-generated customer ID for the given user, or an
