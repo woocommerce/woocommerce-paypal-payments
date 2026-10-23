@@ -150,6 +150,50 @@ function paypalAddress( source, addressLines ) {
 }
 
 /**
+ * Normalizes a wallet phone the way PayPal accepts it: digits only, at most 14.
+ *
+ * @param {string} [phoneNumber] - The phone as the wallet returns it.
+ * @return {string|undefined} The national number, or undefined when empty.
+ */
+function nationalNumber( phoneNumber ) {
+	const digits = ( phoneNumber || '' ).replace( /\D/g, '' ).slice( 0, 14 );
+
+	return digits || undefined;
+}
+
+/**
+ * Maps a wallet phone to the PayPal payer phone shape.
+ *
+ * @param {string} [phoneNumber] - The phone as the wallet returns it.
+ * @return {Object|undefined} The PayPal phone, or undefined when empty.
+ */
+function paypalPayerPhone( phoneNumber ) {
+	const number = nationalNumber( phoneNumber );
+
+	if ( ! number ) {
+		return undefined;
+	}
+
+	return { phone_type: 'HOME', phone_number: { national_number: number } };
+}
+
+/**
+ * Maps a wallet phone to the PayPal shipping phone shape.
+ *
+ * @param {string} [phoneNumber] - The phone as the wallet returns it.
+ * @return {Object|undefined} The PayPal phone, or undefined when empty.
+ */
+function paypalShippingPhone( phoneNumber ) {
+	const number = nationalNumber( phoneNumber );
+
+	if ( ! number ) {
+		return undefined;
+	}
+
+	return { national_number: number };
+}
+
+/**
  * Maps a Google Pay address to the PayPal address shape.
  *
  * @param {Object} data - A Google Pay address (billingAddress or shippingAddress).
@@ -161,6 +205,8 @@ function googlePayAddress( data ) {
 
 /**
  * Derives the PayPal payer from a Google Pay payment response.
+ *
+ * Google asks for a phone only with the shipping address.
  *
  * @param {Object} response - The Google Pay payment response.
  * @return {Object} The PayPal payer.
@@ -178,6 +224,7 @@ export function googlePayPayer( response ) {
 			surname,
 		},
 		address: googlePayAddress( billing ),
+		phone: paypalPayerPhone( response?.shippingAddress?.phoneNumber ),
 	};
 }
 
@@ -200,6 +247,9 @@ export function googlePayShippingAddress( response ) {
 			full_name: shipping?.name,
 		},
 		address: googlePayAddress( shipping ),
+		phone_number: paypalShippingPhone(
+			response?.shippingAddress?.phoneNumber
+		),
 	};
 }
 
@@ -247,6 +297,7 @@ export function applePayPayer( payment ) {
 			surname: billing?.familyName,
 		},
 		address: applePayAddress( billing ),
+		phone: paypalPayerPhone( shipping?.phoneNumber ),
 	};
 }
 
@@ -255,7 +306,8 @@ export function applePayPayer( payment ) {
  *
  * Falls back to the billing contact when the shipping one carries no postal
  * address, which is the classic checkout sheet: it asks only for an email and
- * phone, and a physical-goods order still needs somewhere to ship.
+ * phone, and a physical-goods order still needs somewhere to ship. Apple asks
+ * for the phone only on the shipping contact.
  *
  * @param {Object} payment - The ApplePayPayment from onpaymentauthorized.
  * @return {Object} The PayPal shipping address.
@@ -270,6 +322,9 @@ export function applePayShippingAddress( payment ) {
 			full_name: applePayFullName( shipping ),
 		},
 		address: applePayAddress( shipping ),
+		phone_number: paypalShippingPhone(
+			payment?.shippingContact?.phoneNumber
+		),
 	};
 }
 
