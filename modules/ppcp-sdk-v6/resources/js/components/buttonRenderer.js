@@ -9,8 +9,9 @@ import { FundingSources } from '../utils/fundingSources';
 import { setSdkBusy } from '../tokenRefresh';
 
 /**
- * @typedef {() => Promise<{orderId: string}>} OrderCreator
- * A function resolving to the created PayPal order id.
+ * @typedef {() => Promise<Object>} OrderCreator
+ * A function resolving to what the session starts with: the created PayPal order
+ * id, or the subscription id for a subscription session.
  */
 
 /**
@@ -138,6 +139,7 @@ function createButton(
  * @param {OrderCreator} options.createOrderFn     - Returns the created order id.
  * @param {Object}       [options.payLaterDetails] - Pay Later product details.
  * @param {() => void}   [options.onClick]         - Called on click before the session starts.
+ * @param {string}       [options.buttonType]      - Overrides the element's type attribute.
  * @return {?HTMLElement} The configured button element, or null.
  */
 export function createMethodButton( {
@@ -147,6 +149,7 @@ export function createMethodButton( {
 	createOrderFn,
 	payLaterDetails,
 	onClick,
+	buttonType,
 } ) {
 	const element = BUTTON_ELEMENTS[ method ];
 	if ( ! element ) {
@@ -162,7 +165,7 @@ export function createMethodButton( {
 
 	const button = createButton(
 		element.tagName,
-		element.type,
+		buttonType || element.type,
 		element.radiusProperty,
 		styles,
 		session,
@@ -215,6 +218,7 @@ export function createPreviewButton( doc, { method, styles } ) {
  * @param {OrderCreatorFactory} options.createOrderForFunding - Builds a createOrder function per funding source.
  * @param {Object}              [options.payLaterDetails]     - Pay Later product details.
  * @param {boolean}             [options.payLaterEnabled]     - Whether the merchant offers Pay Later here.
+ * @param {string}              [options.buttonType]          - Overrides each element's type attribute.
  * @return {HTMLElement[]} Array of rendered button elements.
  */
 export function renderButtons( {
@@ -224,6 +228,7 @@ export function renderButtons( {
 	createOrderForFunding,
 	payLaterDetails,
 	payLaterEnabled = false,
+	buttonType,
 } ) {
 	wrapper.innerHTML = '';
 
@@ -246,6 +251,7 @@ export function renderButtons( {
 			session: sessions[ method ],
 			createOrderFn: createOrderForFunding( method ),
 			payLaterDetails,
+			buttonType,
 		} );
 		if ( ! button ) {
 			continue;

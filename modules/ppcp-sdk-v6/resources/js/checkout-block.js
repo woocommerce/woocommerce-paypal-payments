@@ -22,7 +22,7 @@ import { createElement } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { __, sprintf } from '@wordpress/i18n';
 import { loadSdkV6 } from './sdkLoader';
-import { checkEligibility } from './eligibility';
+import { checkEligibility, checkSubscriptionEligibility } from './eligibility';
 import { V6ExpressComponent } from './blocks/V6ExpressComponent';
 import { V6WalletComponent } from './blocks/V6WalletComponent';
 import { V6ContinuationComponent } from './blocks/V6ContinuationComponent';
@@ -39,6 +39,10 @@ import { FundingSources } from './utils/fundingSources';
 import { fundingSourceLabel } from './utils/fundingSourceLabel';
 import { amountFromCartTotals } from './utils/amount';
 import { isFreeTrialCart } from './utils/freeTrial';
+import {
+	isNativeSubscription,
+	subscriptionButtonAllowed,
+} from './utils/nativeSubscription';
 import { setErrorLabels } from './utils/errorHandler';
 import {
 	methodConfig,
@@ -220,6 +224,32 @@ if ( config && config.page_context && config.continuation ) {
 		return cached.eligibility;
 	};
 
+	// Amount-independent, so asked once per page.
+	let subscriptionEligibility = null;
+	const getSubscriptionEligibility = () => {
+		if ( ! subscriptionEligibility ) {
+			subscriptionEligibility = loadSdkV6( config, config.page_context )
+				.then( ( sdk ) =>
+					checkSubscriptionEligibility( sdk, {
+						currencyCode: config.currency,
+					} )
+				)
+				.catch( ( error ) => {
+					// eslint-disable-next-line no-console
+					console.error(
+						'[ppcp-sdk-v6] subscription eligibility check failed',
+						error
+					);
+
+					// Cleared, so the next update asks again.
+					subscriptionEligibility = null;
+
+					return false;
+				} );
+		}
+		return subscriptionEligibility;
+	};
+
 	/**
 	 * Registers one express button, for a PayPal funding source or a wallet.
 	 *
@@ -271,6 +301,23 @@ if ( config && config.page_context && config.continuation ) {
 			canMakePayment: async ( { cartTotals } = {} ) => {
 				if ( isDeviceCapable && ! isDeviceCapable() ) {
 					return false;
+				}
+
+				// A native PayPal Subscription offers PayPal alone, and only
+				// where its subscription button may render. Checked before the
+				// free trial: the plan carries the trial.
+				if ( isNativeSubscription( config, config.page_context ) ) {
+					if (
+						fundingSource !== FundingSources.PAYPAL ||
+						! subscriptionButtonAllowed(
+							config,
+							config.page_context
+						)
+					) {
+						return false;
+					}
+
+					return getSubscriptionEligibility();
 				}
 
 				const amount =

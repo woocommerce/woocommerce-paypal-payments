@@ -14,7 +14,7 @@
 
 import { loadSdkV6 } from './sdkLoader';
 import { onSdkInstanceChange } from './tokenRefresh';
-import { checkEligibility } from './eligibility';
+import { checkEligibility, checkSubscriptionEligibility } from './eligibility';
 import {
 	createSession,
 	SUPPORTED_METHODS as METHODS,
@@ -27,11 +27,20 @@ import {
 	MERCHANT_PRESENTED_METHODS,
 } from './methods/methodRegistry';
 import { FundingSources } from './utils/fundingSources';
-import { createOrder, fetchCartTotal } from './endpointsAdapter';
+import {
+	createOrder,
+	createSubscription,
+	fetchCartTotal,
+} from './endpointsAdapter';
 import {
 	createFreeTrialPayPalSession,
 	createVaultSetupToken,
 } from './sessions/freeTrialSave';
+import { createSubscriptionSession } from './sessions/subscriptionSession';
+import {
+	isNativeSubscription,
+	subscriptionButtonAllowed,
+} from './utils/nativeSubscription';
 import { initCardFields } from './cardFields/renderer';
 import { initCardButton } from './cardButton/renderCardButton';
 import { hasJQuery } from './utils/api';
@@ -72,8 +81,22 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	const FREE_TRIAL_CONTEXTS = [ 'checkout', 'pay-now' ];
 	function isFreeTrialSave( context ) {
 		return (
-			isFreeTrialCart( config, amount ) &&
+			isFreeTrialFlow( context ) &&
 			FREE_TRIAL_CONTEXTS.includes( context )
+		);
+	}
+
+	/**
+	 * Whether the free-trial save flow applies to a context. A native PayPal
+	 * Subscription never takes it: its plan carries the trial.
+	 *
+	 * @param {string} context - The target context.
+	 * @return {boolean} True when a $0 cart is vaulted instead of purchased.
+	 */
+	function isFreeTrialFlow( context ) {
+		return (
+			! isNativeSubscription( config, context ) &&
+			isFreeTrialCart( config, amount )
 		);
 	}
 
@@ -180,6 +203,33 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 	async function createSessions( context ) {
 		const sdk = await loadSdkV6( config, sdkPageType );
 
+		// Native PayPal Subscription: only PayPal has a subscription session, and
+		// its button creates the subscription (see renderInto). Where it may not
+		// render, the context offers no PayPal button at all.
+		if ( isNativeSubscription( config, context ) ) {
+			if ( ! subscriptionButtonAllowed( config, context ) ) {
+				return { payLaterDetails: null, map: {} };
+			}
+
+			const eligible = await checkSubscriptionEligibility( sdk, {
+				currencyCode: config.currency,
+			} );
+
+			return {
+				payLaterDetails: null,
+				map: eligible
+					? {
+							[ FundingSources.PAYPAL ]:
+								createSubscriptionSession(
+									sdk,
+									config,
+									context
+								),
+					  }
+					: {},
+			};
+		}
+
 		// Free trial: only the PayPal save session, whose approval stores a token
 		// and submits the checkout form (see renderTarget's createOrderForFunding).
 		if ( isFreeTrialSave( context ) ) {
@@ -275,7 +325,7 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		// A free trial can only be saved where a checkout form follows; elsewhere
 		// (e.g. the block mini-cart) the wrapper stays empty.
 		if (
-			isFreeTrialCart( config, amount ) &&
+			isFreeTrialFlow( target.context ) &&
 			! FREE_TRIAL_CONTEXTS.includes( target.context )
 		) {
 			return;
@@ -288,6 +338,29 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 				setExpressButtonsFailed( wrapper.childElementCount === 0 );
 			}
 		}
+	}
+
+	/**
+	 * Builds the function whose promise starts a session: the subscription to
+	 * approve, the free trial's setup token, or else the order to pay.
+	 *
+	 * @param {string} context       - The target context.
+	 * @param {string} fundingSource - The funding source of the button.
+	 * @return {() => Promise<Object>} Resolves to what session.start() expects.
+	 */
+	function startPromiseFor( context, fundingSource ) {
+		if ( isNativeSubscription( config, context ) ) {
+			return () => createSubscription( config, context );
+		}
+
+		if (
+			isFreeTrialSave( context ) &&
+			fundingSource === FundingSources.PAYPAL
+		) {
+			return () => createVaultSetupToken( config );
+		}
+
+		return () => createOrder( config, context, fundingSource );
 	}
 
 	/**
@@ -307,16 +380,20 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 			sessions: map,
 			styles: config.button_styles[ target.context ] || {},
 			createOrderForFunding: ( fundingSource ) =>
-				isFreeTrialSave( target.context ) &&
-				fundingSource === FundingSources.PAYPAL
-					? // Free trial starts the save session with a setup token.
-					  () => createVaultSetupToken( config )
-					: () => createOrder( config, target.context, fundingSource ),
+				startPromiseFor( target.context, fundingSource ),
 			payLaterDetails,
 			payLaterEnabled: Boolean(
 				config.pay_later_button?.[ target.context ]
 			),
+			buttonType: isNativeSubscription( config, target.context )
+				? 'subscribe'
+				: undefined,
 		} );
+
+		// Wallets cannot carry a native subscription.
+		if ( isNativeSubscription( config, target.context ) ) {
+			return;
+		}
 
 		await renderMethods( {
 			wrapper,

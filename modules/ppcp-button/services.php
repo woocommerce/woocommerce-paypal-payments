@@ -17,10 +17,12 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\GetSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
@@ -197,6 +199,22 @@ return array(
 			$container->get( 'api.endpoint.billing-subscriptions' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wc-subscriptions.helper' )
+		);
+	},
+	'button.endpoint.create-subscription'         => static function ( ContainerInterface $container ): CreateSubscriptionEndpoint {
+		return new CreateSubscriptionEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.billing-subscriptions' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'button.subscriptions-mode' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'button.endpoint.get-subscription'            => static function ( ContainerInterface $container ): GetSubscriptionEndpoint {
+		return new GetSubscriptionEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.billing-subscriptions' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'button.helper.context'                       => static function ( ContainerInterface $container ): Context {

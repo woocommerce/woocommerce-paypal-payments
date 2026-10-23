@@ -10,11 +10,13 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\PreservesPluginOptions;
 
 /**
  * Tests for PaymentSettingsMigration, specifically the allow_local_apm_gateways fix.
  */
 class PaymentSettingsMigrationTest extends TestCase {
+	use PreservesPluginOptions;
 
 	protected const OLD_SETTINGS_OPTION = 'woocommerce-ppcp-settings';
 
@@ -27,6 +29,16 @@ class PaymentSettingsMigrationTest extends TestCase {
 	 * @var array
 	 */
 	private array $local_apms;
+
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+		self::preservePluginOptions();
+	}
+
+	public static function tearDownAfterClass(): void {
+		self::restorePluginOptions();
+		parent::tearDownAfterClass();
+	}
 
 	public function setUp(): void {
 		parent::setUp();

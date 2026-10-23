@@ -17,14 +17,23 @@ import {
 import {
 	approveOrder,
 	approveOrderInSession,
+	approveSubscription,
+	approveSubscriptionInSession,
 	createOrder,
+	createSubscription,
 	getOrder,
+	getSubscriber,
 	navigation,
 } from '../endpointsAdapter';
+import { createSubscriptionSession } from '../sessions/subscriptionSession';
+import { isNativeSubscription } from '../utils/nativeSubscription';
 import { continuationRedirectUrl } from '../utils/continuation';
 import { FundingSources } from '../utils/fundingSources';
 import { paypalOrderToWcAddresses } from './address';
-import { prefillFromPayPalOrder } from './prefillAddresses';
+import {
+	prefillFromPayPalOrder,
+	prefillFromPayPalSubscriber,
+} from './prefillAddresses';
 import { buildBlocksShippingHandlers } from './blocksShippingHandlers';
 import { V6ButtonContainer } from './V6ButtonContainer';
 import { amountFromBilling } from '../utils/amount';
@@ -75,9 +84,17 @@ export function V6ExpressComponent( {
 	// Pay Later thresholds are amount-sensitive, so follow the live cart total.
 	const amount = amountFromBilling( billing ) || config.amount;
 
-	// Vaulted through the save flow instead of a one-time order. Only PayPal is
+	// Subscribes to a PayPal plan instead of paying an order. Only PayPal is
 	// offered on such carts (see checkout-block.js), so guard on it.
+	const isSubscription =
+		isNativeSubscription( config, context ) &&
+		fundingSource === FundingSources.PAYPAL;
+
+	// Vaulted through the save flow instead of a one-time order. Only PayPal is
+	// offered on such carts (see checkout-block.js), so guard on it. The plan
+	// of a native subscription carries its own trial.
 	const isFreeTrial =
+		! isSubscription &&
 		isFreeTrialCart( config, amount ) &&
 		fundingSource === FundingSources.PAYPAL;
 
@@ -183,6 +200,51 @@ export function V6ExpressComponent( {
 		}
 	};
 
+	/**
+	 * Completes an approved native PayPal Subscription.
+	 *
+	 * The block cart has no checkout form, so it completes like the classic
+	 * cart. The checkout stores the subscriber's address before approving:
+	 * approval records the cart hash, which an address change made afterwards
+	 * could invalidate. It then submits directly, whatever the final-review
+	 * setting, since there is no order left to review (as on v5).
+	 *
+	 * @param {string} subscriptionId - The approved PayPal subscription id.
+	 * @param {string} orderId        - The checkout token it was approved under.
+	 */
+	const approveSubscriptionFlow = async ( subscriptionId, orderId ) => {
+		try {
+			if ( context === 'cart-block' ) {
+				await approveSubscription(
+					config,
+					context,
+					subscriptionId,
+					orderId
+				);
+				return;
+			}
+
+			const subscriber = await getSubscriber( config, subscriptionId );
+			await prefillFromPayPalSubscriber( subscriber, {
+				needsShipping,
+				reflectInUi: true,
+			} );
+
+			await approveSubscriptionInSession(
+				config,
+				subscriptionId,
+				orderId
+			);
+
+			continuationOnErrorRef.current = true;
+			onSubmit();
+		} catch ( error ) {
+			failFlow( error );
+			// Rethrown so the SDK leaves the popup in a retryable state.
+			throw error;
+		}
+	};
+
 	// The session reads handlers through a ref so changing prop identities do
 	// not rebuild it. Written in an effect: ref mutation during render is unsafe.
 	const callbacksRef = useRef( {} );
@@ -190,6 +252,7 @@ export function V6ExpressComponent( {
 	useEffect( () => {
 		callbacksRef.current = {
 			onApprove: approve,
+			onSubscriptionApprove: approveSubscriptionFlow,
 			onError: failFlow,
 			onCancel: () => {
 				if ( onClose ) {
@@ -214,6 +277,21 @@ export function V6ExpressComponent( {
 
 	useEffect( () => {
 		if ( ! sdk ) {
+			return undefined;
+		}
+
+		if ( isSubscription ) {
+			setSession(
+				createSubscriptionSession( sdk, config, context, {
+					onApprove: ( subscriptionId, orderId ) =>
+						callbacksRef.current.onSubscriptionApprove(
+							subscriptionId,
+							orderId
+						),
+					onError: ( error ) => callbacksRef.current.onError( error ),
+					onCancel: () => callbacksRef.current.onCancel(),
+				} )
+			);
 			return undefined;
 		}
 
@@ -257,7 +335,15 @@ export function V6ExpressComponent( {
 
 		// No teardown: the SDK cannot dispose a session, so every extra
 		// dependency here abandons one and remounts the button. Keep it narrow.
-	}, [ sdk, method, needsShipping, config, context, isFreeTrial ] );
+	}, [
+		sdk,
+		method,
+		needsShipping,
+		config,
+		context,
+		isFreeTrial,
+		isSubscription,
+	] );
 
 	useEffect( () => {
 		if ( activePaymentMethod !== methodId ) {
@@ -330,6 +416,18 @@ export function V6ExpressComponent( {
 		return null;
 	}
 
+	// What the session starts with: the subscription to approve, the free
+	// trial's setup token, or else the order to pay.
+	const startFn = () => {
+		if ( isSubscription ) {
+			return () => createSubscription( config, context );
+		}
+		if ( isFreeTrial ) {
+			return () => createVaultSetupToken( config );
+		}
+		return () => createOrder( config, context, fundingSource );
+	};
+
 	// Block sizing controls win over the plugin settings, and arrive unitless
 	// where ButtonStyleMapper emits CSS strings.
 	const styles = {
@@ -346,12 +444,9 @@ export function V6ExpressComponent( {
 		method,
 		session,
 		styles,
-		// Free trial starts the save session with a setup token instead of an
-		// order; both resolve to the shape session.start() expects.
-		createOrderFn: isFreeTrial
-			? () => createVaultSetupToken( config )
-			: () => createOrder( config, context, fundingSource ),
+		createOrderFn: startFn(),
 		payLaterDetails: eligibility?.payLaterDetails,
 		onClick,
+		buttonType: isSubscription ? 'subscribe' : undefined,
 	} );
 }

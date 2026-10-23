@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\Tests\Integration\Settings\Service\Migratio
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsMigration;
 use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\PreservesPluginOptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
@@ -14,6 +15,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigrati
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\FastlaneSettingsMigration;
 
 abstract class AbstractMigrationManager extends TestCase {
+	use PreservesPluginOptions;
 
 	protected const OLD_SETTINGS_OPTION = 'woocommerce-ppcp-settings';
 	protected const NEW_GENERAL_SETTINGS_OPTION = 'woocommerce-ppcp-data-common';
@@ -23,12 +25,14 @@ abstract class AbstractMigrationManager extends TestCase {
 
 	public static function setUpBeforeClass(): void {
 		parent::setUpBeforeClass();
+		self::preservePluginOptions();
 
 		add_filter( 'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled', '__return_false' );
 	}
 
 	public static function tearDownAfterClass(): void {
 		remove_filter( 'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled', '__return_false' );
+		self::restorePluginOptions();
 		parent::tearDownAfterClass();
 	}
 

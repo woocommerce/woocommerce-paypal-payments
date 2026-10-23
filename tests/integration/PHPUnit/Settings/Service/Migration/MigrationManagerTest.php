@@ -12,11 +12,23 @@ namespace WooCommerce\PayPalCommerce\Tests\Integration\Settings\Service\Migratio
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\PreservesPluginOptions;
 
 class MigrationManagerTest extends TestCase {
+	use PreservesPluginOptions;
 
 	private MigrationManager $migration_manager;
 	private OnboardingProfile $onboarding_profile;
+
+	public static function setUpBeforeClass(): void {
+		parent::setUpBeforeClass();
+		self::preservePluginOptions();
+	}
+
+	public static function tearDownAfterClass(): void {
+		self::restorePluginOptions();
+		parent::tearDownAfterClass();
+	}
 
 	protected function setUp(): void {
 		parent::setUp();

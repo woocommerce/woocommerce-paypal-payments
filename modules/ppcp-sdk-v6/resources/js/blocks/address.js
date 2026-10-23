@@ -89,6 +89,34 @@ function paypalPayerToWc( payer ) {
 }
 
 /**
+ * Derives WC billing and shipping addresses from a PayPal subscriber, who has
+ * one address only: it serves as both, as on v5.
+ *
+ * @param {Object} subscriber - The subscriber (Subscriptions v1 shape).
+ * @return {{billingAddress: Object, shippingAddress: Object}} WC addresses.
+ */
+export function paypalSubscriberToWcAddresses( subscriber ) {
+	const shipping = subscriber?.shipping_address;
+	const address = shipping?.address
+		? paypalAddressToWc( shipping.address )
+		: {};
+
+	const shippingAddress = {
+		...address,
+		first_name: subscriber?.name?.given_name ?? '',
+		last_name: subscriber?.name?.surname ?? '',
+	};
+
+	return {
+		billingAddress: {
+			...shippingAddress,
+			email: subscriber?.email_address ?? '',
+		},
+		shippingAddress,
+	};
+}
+
+/**
  * Derives WC billing and shipping addresses from a PayPal order.
  *
  * @param {Object} order - The PayPal order (Orders v2 shape).

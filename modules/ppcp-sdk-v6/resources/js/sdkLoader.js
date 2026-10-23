@@ -9,6 +9,7 @@ import { createSdkInstance } from './utils/createSdkInstance';
 import { loadScript } from './utils/scriptLoaders';
 import { methodSdkComponents } from './methods/methodRegistry';
 import { startTokenRefresh } from './tokenRefresh';
+import { needsSubscriptionComponent } from './utils/nativeSubscription';
 
 const INSTANCE_KEY = '__ppcpV6InstancePromise';
 const METADATA_ID_KEY = '__ppcpV6ClientMetadataId';
@@ -135,6 +136,9 @@ async function createInstance( config, context ) {
 	}
 
 	const components = [ 'paypal-payments' ];
+	if ( needsSubscriptionComponent( config ) ) {
+		components.push( 'paypal-subscriptions' );
+	}
 	// One instance serves the page and the mini-cart.
 	if ( Object.values( config.venmo_button || {} ).some( Boolean ) ) {
 		components.push( 'venmo-payments' );

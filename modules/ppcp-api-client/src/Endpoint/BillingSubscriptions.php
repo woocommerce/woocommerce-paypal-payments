@@ -57,6 +57,56 @@ class BillingSubscriptions {
 	}
 
 	/**
+	 * Creates a subscription against the given plan, pending the payer's approval.
+	 *
+	 * @param string $plan_id   The billing plan ID.
+	 * @param string $custom_id The custom ID to stamp on the subscription.
+	 *
+	 * @return stdClass
+	 *
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function create( string $plan_id, string $custom_id ): stdClass {
+		$data = array(
+			'plan_id' => $plan_id,
+		);
+		if ( $custom_id ) {
+			$data['custom_id'] = $custom_id;
+		}
+
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v1/billing/subscriptions';
+		$args   = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization'     => 'Bearer ' . $bearer->token(),
+				'Content-Type'      => 'application/json',
+				'Prefer'            => 'return=representation',
+				// Keeps the retry after an auth failure from creating a second subscription.
+				'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
+			),
+			'body'    => wp_json_encode( $data ),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
+			throw new RuntimeException( 'Not able to create subscription.' );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 201 !== $status_code || ! $json instanceof stdClass || empty( $json->id ) ) {
+			throw new PayPalApiException(
+				$json instanceof stdClass ? $json : null,
+				$status_code
+			);
+		}
+
+		return $json;
+	}
+
+	/**
 	 * Suspends a subscription.
 	 *
 	 * @param string $id Subscription ID.
