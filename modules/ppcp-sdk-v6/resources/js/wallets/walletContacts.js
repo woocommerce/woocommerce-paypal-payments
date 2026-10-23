@@ -150,31 +150,22 @@ function paypalAddress( source, addressLines ) {
 }
 
 /**
- * Normalizes a wallet phone the way PayPal accepts it: digits only, at most 14.
- *
- * @param {string} [phoneNumber] - The phone as the wallet returns it.
- * @return {string|undefined} The national number, or undefined when empty.
- */
-function nationalNumber( phoneNumber ) {
-	const digits = ( phoneNumber || '' ).replace( /\D/g, '' ).slice( 0, 14 );
-
-	return digits || undefined;
-}
-
-/**
  * Maps a wallet phone to the PayPal payer phone shape.
+ *
+ * Sent as the wallet returns it: the server normalizes it.
  *
  * @param {string} [phoneNumber] - The phone as the wallet returns it.
  * @return {Object|undefined} The PayPal phone, or undefined when empty.
  */
 function paypalPayerPhone( phoneNumber ) {
-	const number = nationalNumber( phoneNumber );
-
-	if ( ! number ) {
+	if ( ! phoneNumber ) {
 		return undefined;
 	}
 
-	return { phone_type: 'HOME', phone_number: { national_number: number } };
+	return {
+		phone_type: 'HOME',
+		phone_number: { national_number: phoneNumber },
+	};
 }
 
 /**
@@ -184,13 +175,11 @@ function paypalPayerPhone( phoneNumber ) {
  * @return {Object|undefined} The PayPal phone, or undefined when empty.
  */
 function paypalShippingPhone( phoneNumber ) {
-	const number = nationalNumber( phoneNumber );
-
-	if ( ! number ) {
+	if ( ! phoneNumber ) {
 		return undefined;
 	}
 
-	return { national_number: number };
+	return { national_number: phoneNumber };
 }
 
 /**

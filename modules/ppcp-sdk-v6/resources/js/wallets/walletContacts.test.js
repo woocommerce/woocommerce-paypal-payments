@@ -490,21 +490,13 @@ describe( 'phone mapping', () => {
 				withGooglePhones( { shipping: '+1 (555) 010-0199' } )
 			);
 
-			expect( payer.phone ).toEqual( homePhone( '15550100199' ) );
+			expect( payer.phone ).toEqual( homePhone( '+1 (555) 010-0199' ) );
 		} );
 
 		test( 'omits the phone when there is none', () => {
 			const payer = googlePayPayer( withGooglePhones( {} ) );
 
 			expect( payer.phone ).toBeUndefined();
-		} );
-
-		test( 'cuts the number to 14 digits', () => {
-			const payer = googlePayPayer(
-				withGooglePhones( { shipping: '123456789012345678' } )
-			);
-
-			expect( payer.phone ).toEqual( homePhone( '12345678901234' ) );
 		} );
 	} );
 
@@ -515,7 +507,7 @@ describe( 'phone mapping', () => {
 			);
 
 			expect( shipping.phone_number ).toEqual( {
-				national_number: '15550100199',
+				national_number: '+1 (555) 010-0199',
 			} );
 		} );
 
@@ -532,7 +524,7 @@ describe( 'phone mapping', () => {
 				withApplePhones( { shipping: '+1 (555) 010-0199' } )
 			);
 
-			expect( payer.phone ).toEqual( homePhone( '15550100199' ) );
+			expect( payer.phone ).toEqual( homePhone( '+1 (555) 010-0199' ) );
 		} );
 
 		test( 'gives no phone when only the billing phone is present', () => {
@@ -552,7 +544,7 @@ describe( 'phone mapping', () => {
 			);
 
 			expect( shipping.phone_number ).toEqual( {
-				national_number: '15550100199',
+				national_number: '+1 (555) 010-0199',
 			} );
 		} );
 
