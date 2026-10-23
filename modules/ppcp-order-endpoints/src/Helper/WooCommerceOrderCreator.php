@@ -361,6 +361,7 @@ class WooCommerceOrderCreator {
 		if ( $shipping ) {
 			$address = $shipping->address();
 			if ( $address ) {
+				$shipping_phone   = $shipping->phone_number();
 				$shipping_address = array(
 					'first_name' => $shipping->name(),
 					'last_name'  => '',
@@ -370,6 +371,7 @@ class WooCommerceOrderCreator {
 					'state'      => $address->admin_area_1(),
 					'postcode'   => $address->postal_code(),
 					'country'    => $address->country_code(),
+					'phone'      => $shipping_phone ? $shipping_phone->national_number() : '',
 				);
 			}
 
@@ -605,6 +607,17 @@ class WooCommerceOrderCreator {
 			);
 			$shipping_address_data                      = json_decode( wp_json_encode( $paypal_data['shipping_address'] ) ?: '' );
 			$shipping                                   = $this->shipping_factory->from_paypal_response( $shipping_address_data );
+		}
+
+		if ( $shipping ) {
+			$phone         = $shipping->phone_number();
+			$browser_phone = $paypal_data['shipping_address']['phone_number']['national_number'] ?? null;
+
+			if ( ! $phone && is_string( $browser_phone ) ) {
+				$phone = new Phone( $browser_phone );
+			}
+
+			$shipping->set_phone_number( $this->normalized_phone( $phone ) );
 		}
 
 		return apply_filters(
