@@ -1,9 +1,0 @@
-{
-    "redefinable-internals": [
-        "json_decode",
-        "filter_input",
-        "gmdate",
-        "strtotime",
-        "time"
-    ]
-}
