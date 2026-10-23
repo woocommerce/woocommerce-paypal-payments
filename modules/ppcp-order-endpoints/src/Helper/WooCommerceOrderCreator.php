@@ -25,6 +25,8 @@ use WC_Subscriptions_Product;
 use WC_Tax;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Phone;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PhoneWithType;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
@@ -518,19 +520,68 @@ class WooCommerceOrderCreator {
 	/**
 	 * Get the Payer from the PayPal order with fallback to the PayPal response data.
 	 *
+	 * Wallet orders use the browser payer: the PayPal order holds only what the
+	 * browser passed on confirmation, and that has no phone.
+	 *
 	 * @param Order      $order The PayPal Order.
 	 * @param array|null $paypal_data The PayPal Response data.
 	 *
 	 * @return Payer|null The Payer object or null if no payer information is available.
 	 */
 	private function get_payer( Order $order, ?array $paypal_data = null ): ?Payer {
-		$payer = $order->payer();
-		if ( is_null( $payer ) && isset( $paypal_data['payer'] ) ) {
-			$payer_data = json_decode( wp_json_encode( $paypal_data['payer'] ) ?: '' );
-			$payer      = $this->payer_factory->from_paypal_response( $payer_data );
+		$payer             = $order->payer();
+		$use_browser_payer = isset( $paypal_data['payer'] ) && ( ! $payer || $this->is_wallet_order( $order ) );
+		if ( ! $use_browser_payer ) {
+			return $payer;
 		}
 
-		return $payer;
+		$payer_data    = json_decode( wp_json_encode( $paypal_data['payer'] ) ?: '' );
+		$browser_payer = $this->payer_factory->from_paypal_response( $payer_data );
+		$browser_payer->set_phone( $this->normalized_payer_phone( $browser_payer->phone() ) );
+
+		return $browser_payer;
+	}
+
+	private function is_wallet_order( Order $order ): bool {
+		$payment_source = $order->payment_source();
+
+		if ( ! $payment_source ) {
+			return false;
+		}
+
+		return in_array( $payment_source->name(), array( 'apple_pay', 'google_pay' ), true );
+	}
+
+	private function normalized_payer_phone( ?PhoneWithType $phone ): ?PhoneWithType {
+		if ( ! $phone ) {
+			return null;
+		}
+
+		$national_phone = $this->normalized_phone( $phone->phone() );
+
+		if ( ! $national_phone ) {
+			return null;
+		}
+
+		return new PhoneWithType( $phone->type(), $national_phone );
+	}
+
+	/**
+	 * PayPal accepts digits only, at most 14.
+	 */
+	private function normalized_phone( ?Phone $phone ): ?Phone {
+		if ( ! $phone ) {
+			return null;
+		}
+
+		$clean_number    = (string) preg_replace( '/\D/', '', $phone->national_number() );
+		$national_number = substr( $clean_number, 0, 14 );
+
+		if ( '' === $national_number ) {
+			return null;
+		}
+
+		return new Phone( $national_number );
 	}
 
 	/**
