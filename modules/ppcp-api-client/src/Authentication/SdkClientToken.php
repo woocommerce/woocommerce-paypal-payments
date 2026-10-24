@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\TokenUnavailableException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WP_Error;
 
@@ -29,6 +30,11 @@ class SdkClientToken {
 	public const RATE_LIMIT_SCOPE = 'sdk-client-token';
 
 	private const ROTATE_AFTER_SECONDS = 60;
+
+	/**
+	 * Seconds a caller waits before asking again while the plugin is not connected.
+	 */
+	private const NOT_CONNECTED_RETRY_AFTER = 300;
 
 	private string $host;
 
@@ -63,6 +69,7 @@ class SdkClientToken {
 	 * @return string
 	 *
 	 * @throws PayPalApiException If the request fails.
+	 * @throws TokenUnavailableException If the plugin is not connected or requests are paused.
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function sdk_client_token(): string {
@@ -78,6 +85,7 @@ class SdkClientToken {
 	 * @return array{token: string, expires_in: int}
 	 *
 	 * @throws PayPalApiException If the request fails.
+	 * @throws TokenUnavailableException If the plugin is not connected or requests are paused.
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function sdk_client_token_data(): array {
@@ -118,16 +126,17 @@ class SdkClientToken {
 	 * @return array{token: string, expires_at: int}
 	 *
 	 * @throws PayPalApiException If the request fails.
+	 * @throws TokenUnavailableException If the plugin is not connected or requests are paused.
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	private function request_token( string $domain, string $cache_key ): array {
 		if ( $this->client_credentials->is_empty() ) {
-			throw new RuntimeException( 'Cannot request a PayPal client token without a client ID and secret.' );
+			throw new TokenUnavailableException( 'Cannot request a PayPal client token without a client ID and secret.', self::NOT_CONNECTED_RETRY_AFTER );
 		}
 
 		$wait = $this->rate_limiter->retry_after_seconds( self::RATE_LIMIT_SCOPE );
 		if ( null !== $wait ) {
-			throw new RuntimeException( sprintf( 'PayPal token requests are paused for %d more seconds after a previous failure.', $wait ) );
+			throw new TokenUnavailableException( sprintf( 'PayPal token requests are paused for %d more seconds after a previous failure.', $wait ), $wait );
 		}
 
 		$url = sprintf(

@@ -12,12 +12,14 @@ jest.mock( './utils/scriptLoaders', () => ( {
 // which survives jest.resetModules(), so each test also needs its own window keys.
 let loadSdkV6;
 let onSdkInstanceChange;
-let visibilityListeners;
+let pageListeners;
+
+const PAGE_EVENTS = [ 'visibilitychange', 'online', 'pageshow' ];
 
 function baseConfig( overrides = {} ) {
 	return {
 		sdk_url: 'https://example.test/sdk.js',
-		ajax: { client_token: { endpoint: '/token', nonce: 'n' } },
+		ajax: { client_token: { endpoint: '/token' } },
 		locale: 'en_US',
 		...overrides,
 	};
@@ -29,23 +31,24 @@ beforeEach( () => {
 	mockLoadScript.mockReset();
 	mockLoadScript.mockResolvedValue( undefined );
 	mockPostJson.mockResolvedValue( { client_token: 'TOKEN' } );
-	delete window.__ppcpV6InstancePromise;
-	delete window.__ppcpV6ScriptPromises;
-	delete window.__ppcpV6ClientMetadataId;
-	delete window.__ppcpV6TokenRefresh;
+	Object.keys( window )
+		.filter( ( key ) => key.startsWith( '__ppcpV6' ) )
+		.forEach( ( key ) => delete window[ key ] );
 
-	// The token refresh never removes its visibilitychange listener, so listeners
-	// of earlier tests would fire refreshes in later ones.
-	visibilityListeners = [];
-	const originalAddEventListener = document.addEventListener.bind( document );
-	jest.spyOn( document, 'addEventListener' ).mockImplementation(
-		( type, listener, ...rest ) => {
-			if ( type === 'visibilitychange' ) {
-				visibilityListeners.push( listener );
+	// The loader and the token refresh never remove their page listeners, so
+	// listeners of earlier tests would act in later ones.
+	pageListeners = [];
+	for ( const target of [ document, window ] ) {
+		const original = target.addEventListener.bind( target );
+		jest.spyOn( target, 'addEventListener' ).mockImplementation(
+			( type, listener, ...rest ) => {
+				if ( PAGE_EVENTS.includes( type ) ) {
+					pageListeners.push( [ target, type, listener ] );
+				}
+				original( type, listener, ...rest );
 			}
-			originalAddEventListener( type, listener, ...rest );
-		}
-	);
+		);
+	}
 
 	( { loadSdkV6 } = require( './sdkLoader' ) );
 	( { onSdkInstanceChange } = require( './tokenRefresh' ) );
@@ -53,8 +56,8 @@ beforeEach( () => {
 } );
 
 afterEach( () => {
-	visibilityListeners.forEach( ( listener ) =>
-		document.removeEventListener( 'visibilitychange', listener )
+	pageListeners.forEach( ( [ target, type, listener ] ) =>
+		target.removeEventListener( type, listener )
 	);
 	jest.restoreAllMocks();
 	delete window.paypal;
@@ -341,7 +344,7 @@ describe( 'loadSdkV6', () => {
 			expect( state.error ).toEqual( new Error( TIMEOUT_MESSAGE ) );
 		} );
 
-		test( 'starts a fresh load on the next call after a timeout', async () => {
+		test( 'starts a fresh load on the first call after the wait that follows a timeout', async () => {
 			window.paypal.createInstance.mockImplementationOnce( neverSettles );
 			const freshInstance = { fresh: true };
 			window.paypal.createInstance.mockResolvedValueOnce( freshInstance );
@@ -350,6 +353,7 @@ describe( 'loadSdkV6', () => {
 			await jest.advanceTimersByTimeAsync( 15000 );
 			expect( first.error ).toBeInstanceOf( Error );
 
+			await jest.advanceTimersByTimeAsync( 5000 );
 			const second = await loadSdkV6( baseConfig(), 'checkout' );
 
 			expect( second ).toBe( freshInstance );
@@ -426,6 +430,250 @@ describe( 'loadSdkV6', () => {
 			).rejects.toThrow( 'token request failed' );
 			expect( onReady ).not.toHaveBeenCalled();
 			expect( jest.getTimerCount() ).toBe( 0 );
+		} );
+	} );
+
+	describe( 'after a failed load', () => {
+		const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+		const failure = ( status, extra = {} ) =>
+			Object.assign(
+				new Error( 'token request failed' ),
+				status ? { status } : {},
+				extra
+			);
+
+		const failedLoad = () =>
+			expect( loadSdkV6( baseConfig(), 'checkout' ) ).rejects.toThrow();
+
+		const attempt = () =>
+			loadSdkV6( baseConfig(), 'checkout' ).then(
+				() => true,
+				() => false
+			);
+
+		beforeEach( () => {
+			jest.useFakeTimers();
+		} );
+
+		afterEach( () => {
+			jest.useRealTimers();
+		} );
+
+		test( 'answers every caller during the wait with the last error, without a new token request', async () => {
+			const error = failure( 500 );
+			mockPostJson.mockRejectedValue( error );
+			await failedLoad();
+
+			const callers = Array.from( { length: 20 }, () =>
+				loadSdkV6( baseConfig(), 'checkout' ).catch( ( e ) => e )
+			);
+
+			await expect( Promise.all( callers ) ).resolves.toEqual(
+				Array( 20 ).fill( error )
+			);
+			expect( mockPostJson ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'loads again once the wait has passed, and waits twice as long after the next failure', async () => {
+			mockPostJson.mockRejectedValue( failure( 500 ) );
+			await failedLoad();
+
+			await jest.advanceTimersByTimeAsync( 4999 );
+			await failedLoad();
+			expect( mockPostJson ).toHaveBeenCalledTimes( 1 );
+
+			await jest.advanceTimersByTimeAsync( 1 );
+			await failedLoad();
+			expect( mockPostJson ).toHaveBeenCalledTimes( 2 );
+
+			await jest.advanceTimersByTimeAsync( 9999 );
+			await failedLoad();
+			expect( mockPostJson ).toHaveBeenCalledTimes( 2 );
+
+			await jest.advanceTimersByTimeAsync( 1 );
+			mockPostJson.mockResolvedValueOnce( { client_token: 'TOKEN' } );
+			await expect( attempt() ).resolves.toBe( true );
+			expect( mockPostJson ).toHaveBeenCalledTimes( 3 );
+		} );
+
+		test( 'shares one token request among the callers that arrive when the wait ends', async () => {
+			mockPostJson.mockRejectedValueOnce( failure( 500 ) );
+			await failedLoad();
+			await jest.advanceTimersByTimeAsync( 5000 );
+
+			const callers = Array.from( { length: 20 }, attempt );
+
+			await expect( Promise.all( callers ) ).resolves.toEqual(
+				Array( 20 ).fill( true )
+			);
+			expect( mockPostJson ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test( 'keeps trying while the endpoint fails, at most once a minute, though callers keep asking', async () => {
+			const requestedAt = [];
+			mockPostJson.mockImplementation( async () => {
+				requestedAt.push( Date.now() );
+				throw failure( 500 );
+			} );
+
+			for ( let seconds = 0; seconds < 600; seconds += 5 ) {
+				await attempt();
+				await jest.advanceTimersByTimeAsync( 5000 );
+			}
+
+			const gaps = requestedAt
+				.slice( 1 )
+				.map( ( at, i ) => ( at - requestedAt[ i ] ) / 1000 );
+			expect( gaps ).toEqual( [
+				5, 10, 20, 40, 60, 60, 60, 60, 60, 60, 60, 60,
+			] );
+		} );
+
+		test( 'loads the SDK once the endpoint recovers from an outage of several minutes', async () => {
+			const recoversAt = Date.now() + 5 * 60 * 1000;
+			mockPostJson.mockImplementation( async () => {
+				if ( Date.now() < recoversAt ) {
+					throw failure( 500 );
+				}
+				return { client_token: 'TOKEN' };
+			} );
+
+			let loaded = false;
+			for (
+				let seconds = 0;
+				seconds < 7 * 60 && ! loaded;
+				seconds += 5
+			) {
+				loaded = await attempt();
+				await jest.advanceTimersByTimeAsync( 5000 );
+			}
+
+			expect( loaded ).toBe( true );
+		} );
+
+		test( 'waits as long as the server asks when that is longer than the backoff', async () => {
+			mockPostJson.mockRejectedValueOnce(
+				failure( 503, { retryIn: 120 } )
+			);
+			await failedLoad();
+
+			await jest.advanceTimersByTimeAsync( 119999 );
+			await failedLoad();
+			expect( mockPostJson ).toHaveBeenCalledTimes( 1 );
+
+			await jest.advanceTimersByTimeAsync( 1 );
+			await expect( attempt() ).resolves.toBe( true );
+		} );
+
+		test.each( [
+			[ 'a failure without an answer', undefined ],
+			[ 'a request timeout', 408 ],
+			[ 'a rate limit', 429 ],
+			[ 'a server error', 500 ],
+		] )(
+			'keeps trying after %s, also when it repeats',
+			async ( label, status ) => {
+				mockPostJson.mockRejectedValue( failure( status ) );
+
+				for ( const wait of [ 0, 5000, 10000, 20000 ] ) {
+					await jest.advanceTimersByTimeAsync( wait );
+					await attempt();
+				}
+
+				expect( mockPostJson ).toHaveBeenCalledTimes( 4 );
+			}
+		);
+
+		test( 'counts a load that times out as a failure and waits before the next one', async () => {
+			window.paypal.createInstance.mockImplementationOnce(
+				() => new Promise( () => {} )
+			);
+			const first = attempt();
+			await jest.advanceTimersByTimeAsync( 15000 );
+			await expect( first ).resolves.toBe( false );
+
+			await expect( attempt() ).resolves.toBe( false );
+			expect( mockPostJson ).toHaveBeenCalledTimes( 1 );
+
+			await jest.advanceTimersByTimeAsync( 5000 );
+			await expect( attempt() ).resolves.toBe( true );
+			expect( mockPostJson ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test.each( [
+			[ 'a blocked request', 403 ],
+			[ 'a missing endpoint', 404 ],
+		] )(
+			'stops loading for the page view after %s (%d) twice in a row',
+			async ( label, status ) => {
+				mockPostJson.mockRejectedValue( failure( status ) );
+				await failedLoad();
+				await jest.advanceTimersByTimeAsync( 5000 );
+				await failedLoad();
+
+				await jest.advanceTimersByTimeAsync( ONE_DAY_MS );
+				window.dispatchEvent( new Event( 'online' ) );
+				await failedLoad();
+
+				expect( mockPostJson ).toHaveBeenCalledTimes( 2 );
+			}
+		);
+
+		test( 'keeps trying when a single 4xx answer is followed by a different failure', async () => {
+			mockPostJson
+				.mockRejectedValueOnce( failure( 403 ) )
+				.mockRejectedValueOnce( failure( 500 ) )
+				.mockRejectedValueOnce( failure( 403 ) );
+
+			for ( const wait of [ 0, 5000, 10000, 20000 ] ) {
+				await jest.advanceTimersByTimeAsync( wait );
+				await attempt();
+			}
+
+			expect( mockPostJson ).toHaveBeenCalledTimes( 4 );
+		} );
+
+		test.each( [
+			[ 'the browser is back online', () => new Event( 'online' ) ],
+			[
+				'the page is restored from the back/forward cache',
+				() =>
+					Object.assign( new Event( 'pageshow' ), {
+						persisted: true,
+					} ),
+			],
+		] )( 'loads at once when %s', async ( label, event ) => {
+			mockPostJson.mockRejectedValueOnce( new TypeError( 'offline' ) );
+			await failedLoad();
+
+			window.dispatchEvent( event() );
+
+			await expect( attempt() ).resolves.toBe( true );
+			expect( mockPostJson ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test( 'keeps the wait on a page show that is not a restore', async () => {
+			mockPostJson.mockRejectedValueOnce( failure( 500 ) );
+			await failedLoad();
+
+			window.dispatchEvent(
+				Object.assign( new Event( 'pageshow' ), { persisted: false } )
+			);
+
+			await expect( attempt() ).resolves.toBe( false );
+			expect( mockPostJson ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'also waits after the SDK script fails to load', async () => {
+			mockLoadScript.mockRejectedValueOnce(
+				new Error( 'script blocked' )
+			);
+			await failedLoad();
+
+			await failedLoad();
+
+			expect( mockLoadScript ).toHaveBeenCalledTimes( 1 );
 		} );
 	} );
 } );
