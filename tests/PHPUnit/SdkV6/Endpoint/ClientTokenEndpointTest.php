@@ -10,26 +10,13 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
-use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\TokenUnavailableException;
 use WooCommerce\PayPalCommerce\TestCase;
 use Brain\Monkey\Filters;
 use function Brain\Monkey\Functions\expect;
 
-/**
- * Stands in for the request termination that wp_send_json_error() performs in
- * WordPress (via wp_die()), which the Brain Monkey stub does not reproduce on its own.
- */
-class RequestTerminated extends \Exception {
-}
-
 class ClientTokenEndpointTest extends TestCase {
 	use MockeryPHPUnitIntegration;
-
-	/**
-	 * @var RequestData&Mockery\MockInterface
-	 */
-	private $request_data;
 
 	/**
 	 * @var LoggerInterface&Mockery\MockInterface
@@ -46,57 +33,32 @@ class ClientTokenEndpointTest extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->request_data     = Mockery::mock( RequestData::class );
+		$_SERVER['REQUEST_METHOD'] = 'POST';
+
 		$this->logger           = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
 		$this->sdk_client_token = Mockery::mock( SdkClientToken::class );
 
 		$this->sut = new ClientTokenEndpoint(
-			$this->request_data,
 			$this->logger,
 			$this->sdk_client_token
 		);
 	}
 
-	/**
-	 * GIVEN a request whose nonce fails validation
-	 * WHEN the request is handled
-	 * THEN the shopper is answered with a 400 error
-	 * AND no client token is ever requested, because in WordPress wp_send_json_error()
-	 * ends the request; the stub is made to end it the same way, so a missing
-	 * `return` after that call is caught here instead of in production.
-	 */
-	public function test_invalid_nonce_answers_400_without_requesting_a_token(): void {
-		$this->request_data->shouldReceive( 'read_request' )
-			->with( ClientTokenEndpoint::nonce() )
-			->andThrow( new NonceValidationException( 'The nonce is invalid.' ) );
+	public function tearDown(): void {
+		unset( $_SERVER['REQUEST_METHOD'] );
 
-		$this->sdk_client_token->shouldNotReceive( 'sdk_client_token_data' );
-
-		expect( 'wp_send_json_error' )
-			->once()
-			->with(
-				array( 'message' => 'The nonce is invalid.' ),
-				400
-			)
-			->andThrow( new RequestTerminated() );
-		expect( 'wp_send_json_success' )->never();
-
-		$this->expectException( RequestTerminated::class );
-
-		$this->sut->handle_request();
+		parent::tearDown();
 	}
 
 	/**
-	 * GIVEN a validated request
-	 * WHEN the SDK client token generator produces a token
-	 * THEN the shopper is answered with that token
-	 * AND the seconds until the browser refreshes it
-	 * AND the seconds until the browser retries after a failed refresh
+	 * GIVEN a page served from a full-page cache, which carries no usable nonce
+	 * WHEN the page requests the client token
+	 * THEN the shopper is answered with the token
+	 * AND no nonce is verified, so the age of the cached page does not matter
 	 */
-	public function test_valid_request_answers_with_the_generated_client_token(): void {
-		$this->request_data->shouldReceive( 'read_request' )
-			->with( ClientTokenEndpoint::nonce() )
-			->andReturn( array() );
+	public function test_answers_without_verifying_a_nonce(): void {
+		expect( 'wp_verify_nonce' )->never();
+		expect( 'check_ajax_referer' )->never();
 
 		$this->sdk_client_token->shouldReceive( 'sdk_client_token_data' )
 			->andReturn(
@@ -121,7 +83,109 @@ class ClientTokenEndpointTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN a validated request and a token with a given lifetime
+	 * GIVEN a request that is not a POST, such as a crawler, a prefetch or an image tag
+	 * WHEN the request is handled
+	 * THEN it is answered with 405
+	 * AND no client token is requested
+	 *
+	 * @dataProvider non_post_method_provider
+	 */
+	public function test_non_post_request_answers_405_without_requesting_a_token( ?string $method ): void {
+		if ( null === $method ) {
+			unset( $_SERVER['REQUEST_METHOD'] );
+		} else {
+			$_SERVER['REQUEST_METHOD'] = $method;
+		}
+
+		$this->sdk_client_token->shouldNotReceive( 'sdk_client_token_data' );
+
+		expect( 'wp_send_json_error' )
+			->once()
+			->with( array( 'message' => 'Method not allowed.' ), 405 );
+		expect( 'wp_send_json_success' )->never();
+
+		$this->sut->handle_request();
+	}
+
+	public function non_post_method_provider(): array {
+		return array(
+			'GET'               => array( 'GET' ),
+			'HEAD'              => array( 'HEAD' ),
+			'PUT'               => array( 'PUT' ),
+			'no request method' => array( null ),
+		);
+	}
+
+	/**
+	 * GIVEN a store that is not connected, or token requests paused after a PayPal failure
+	 * WHEN the client token is requested
+	 * THEN the shopper is answered with 503 and the seconds to wait before asking again
+	 * AND the wait is never below 10 seconds
+	 * AND nothing is written to the error log, because anonymous requests reach this in volume
+	 *
+	 * @dataProvider token_unavailable_provider
+	 */
+	public function test_unavailable_token_answers_503_with_the_wait_and_no_error_log( int $retry_after, int $expected_retry_in ): void {
+		$this->sdk_client_token->shouldReceive( 'sdk_client_token_data' )
+			->andThrow( new TokenUnavailableException( 'Paused.', $retry_after ) );
+
+		$this->logger->shouldNotReceive( 'error' );
+
+		expect( 'wp_send_json_error' )
+			->once()
+			->with(
+				array(
+					'message'  => 'Client token temporarily unavailable.',
+					'retry_in' => $expected_retry_in,
+				),
+				503
+			);
+		expect( 'wp_send_json_success' )->never();
+
+		$this->sut->handle_request();
+	}
+
+	public function token_unavailable_provider(): array {
+		return array(
+			'a pause of 120 seconds is passed on'     => array( 120, 120 ),
+			'the not-connected wait is passed on'     => array( 300, 300 ),
+			'a pause of 3 seconds becomes 10 seconds' => array( 3, 10 ),
+			'a pause that just ended becomes 10'      => array( 0, 10 ),
+		);
+	}
+
+	/**
+	 * GIVEN a request for the client token
+	 * WHEN the SDK client token generator produces a token
+	 * THEN the shopper is answered with that token
+	 * AND the seconds until the browser refreshes it
+	 * AND the seconds until the browser retries after a failed refresh
+	 */
+	public function test_valid_request_answers_with_the_generated_client_token(): void {
+		$this->sdk_client_token->shouldReceive( 'sdk_client_token_data' )
+			->andReturn(
+				array(
+					'token'      => 'a-client-token',
+					'expires_in' => 3540,
+				)
+			);
+
+		expect( 'wp_send_json_success' )
+			->once()
+			->with(
+				array(
+					'client_token' => 'a-client-token',
+					'refresh_in'   => 3480,
+					'retry_in'     => 10,
+				)
+			);
+		expect( 'wp_send_json_error' )->never();
+
+		$this->sut->handle_request();
+	}
+
+	/**
+	 * GIVEN a request for the client token and a token with a given lifetime
 	 * WHEN the request is handled
 	 * THEN the browser refreshes the token 60 seconds before it expires
 	 * AND waits at least 10 seconds when the lifetime is 60 seconds or less
@@ -129,10 +193,6 @@ class ClientTokenEndpointTest extends TestCase {
 	 * @dataProvider token_lifetime_provider
 	 */
 	public function test_refresh_happens_shortly_before_the_token_expires( int $expires_in, int $expected_refresh_in ): void {
-		$this->request_data->shouldReceive( 'read_request' )
-			->with( ClientTokenEndpoint::nonce() )
-			->andReturn( array() );
-
 		$this->sdk_client_token->shouldReceive( 'sdk_client_token_data' )
 			->andReturn(
 				array(
@@ -165,7 +225,7 @@ class ClientTokenEndpointTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN a validated request and a token that stays valid for 3540 seconds
+	 * GIVEN a request for the client token and a token that stays valid for 3540 seconds
 	 * WHEN a filter changes the seconds until the browser refreshes the token
 	 * THEN the shopper is answered with the filtered value, if it is shorter
 	 * AND never with a value longer than the computed one
@@ -176,10 +236,6 @@ class ClientTokenEndpointTest extends TestCase {
 	 * @dataProvider refresh_in_filter_provider
 	 */
 	public function test_filtered_refresh_delay_is_never_longer_than_computed_or_below_minimum( $filtered_value, int $expected_refresh_in ): void {
-		$this->request_data->shouldReceive( 'read_request' )
-			->with( ClientTokenEndpoint::nonce() )
-			->andReturn( array() );
-
 		$this->sdk_client_token->shouldReceive( 'sdk_client_token_data' )
 			->andReturn(
 				array(
@@ -223,7 +279,7 @@ class ClientTokenEndpointTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN a validated request
+	 * GIVEN a request for the client token
 	 * WHEN generating the client token fails
 	 * THEN the shopper is answered with a generic 500 error, never the exception detail
 	 * AND the exception detail is written to the error log instead
@@ -231,10 +287,6 @@ class ClientTokenEndpointTest extends TestCase {
 	 * @dataProvider token_generation_failure_provider
 	 */
 	public function test_token_generation_failure_answers_500_with_a_generic_message( string $exception_class, string $expected_logged_detail ): void {
-		$this->request_data->shouldReceive( 'read_request' )
-			->with( ClientTokenEndpoint::nonce() )
-			->andReturn( array() );
-
 		$exception = $this->build_failure( $exception_class, $expected_logged_detail );
 
 		$this->sdk_client_token->shouldReceive( 'sdk_client_token_data' )->andThrow( $exception );

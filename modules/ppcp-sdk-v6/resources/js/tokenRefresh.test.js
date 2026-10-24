@@ -33,30 +33,34 @@ const setVisibility = ( state ) =>
 
 const tick = ( ms ) => jest.advanceTimersByTimeAsync( ms );
 
-let visibilityListeners;
+let pageListeners;
+
+const PAGE_EVENTS = [ 'visibilitychange', 'online' ];
 
 beforeEach( () => {
 	jest.useFakeTimers();
 	setVisibility( 'visible' );
 	delete window.__ppcpV6TokenRefresh;
 
-	// The handler never removes its visibilitychange listener, so listeners of
-	// earlier tests would fire refreshes in later ones.
-	visibilityListeners = [];
-	const originalAddEventListener = document.addEventListener.bind( document );
-	jest.spyOn( document, 'addEventListener' ).mockImplementation(
-		( type, listener, ...rest ) => {
-			if ( type === 'visibilitychange' ) {
-				visibilityListeners.push( listener );
+	// The handler never removes its page listeners, so listeners of earlier
+	// tests would fire refreshes in later ones.
+	pageListeners = [];
+	for ( const target of [ document, window ] ) {
+		const original = target.addEventListener.bind( target );
+		jest.spyOn( target, 'addEventListener' ).mockImplementation(
+			( type, listener, ...rest ) => {
+				if ( PAGE_EVENTS.includes( type ) ) {
+					pageListeners.push( [ target, type, listener ] );
+				}
+				original( type, listener, ...rest );
 			}
-			originalAddEventListener( type, listener, ...rest );
-		}
-	);
+		);
+	}
 } );
 
 afterEach( () => {
-	visibilityListeners.forEach( ( listener ) =>
-		document.removeEventListener( 'visibilitychange', listener )
+	pageListeners.forEach( ( [ target, type, listener ] ) =>
+		target.removeEventListener( type, listener )
 	);
 	jest.restoreAllMocks();
 	jest.useRealTimers();
@@ -272,11 +276,96 @@ describe( 'TokenRefreshHandler', () => {
 			expect( listener ).toHaveBeenCalledWith( sdk2 );
 		} );
 
-		test( 'keeps retrying after retry_in on repeated failures', async () => {
+		test( 'retries at retry_in while the token is valid, then waits twice as long per failure, up to 300 seconds', async () => {
+			const triedAt = [];
+			const renewInstance = jest.fn( async () => {
+				triedAt.push( Date.now() );
+				throw new Error( 'down' );
+			} );
+			handler.start( renewInstance, tokenData() );
+
+			await tick( REFRESH_MS );
+			await tick( 1200 * 1000 );
+
+			const gaps = triedAt
+				.slice( 1 )
+				.map( ( at, i ) => ( at - triedAt[ i ] ) / 1000 );
+			expect( gaps ).toEqual( [
+				15, 15, 15, 15, 15, 30, 60, 120, 240, 300, 300,
+			] );
+		} );
+
+		test( 'renews the instance once the endpoint recovers from an outage of ten minutes', async () => {
+			let recoversAt = Infinity;
+			const renewInstance = jest.fn( async () => {
+				if ( Date.now() < recoversAt ) {
+					throw new Error( 'down' );
+				}
+				return renewed( sdk2 );
+			} );
+			const listener = jest.fn();
+			handler.subscribe( listener );
+			handler.start( renewInstance, tokenData() );
+
+			await tick( REFRESH_MS );
+			recoversAt = Date.now() + 10 * 60 * 1000;
+			await tick( 10 * 60 * 1000 + 300 * 1000 );
+
+			expect( listener ).toHaveBeenCalledWith( sdk2 );
+		} );
+
+		test( 'waits as long as the server asks when that is longer than retry_in', async () => {
 			const renewInstance = jest
 				.fn()
-				.mockRejectedValueOnce( new Error( 'down' ) )
-				.mockRejectedValueOnce( new Error( 'down' ) )
+				.mockRejectedValueOnce(
+					Object.assign( new Error( 'paused' ), {
+						status: 503,
+						retryIn: 120,
+					} )
+				)
+				.mockResolvedValueOnce( renewed( sdk2 ) );
+			const listener = jest.fn();
+			handler.subscribe( listener );
+			handler.start( renewInstance, tokenData() );
+
+			await tick( REFRESH_MS );
+			await tick( 120000 - 1 );
+			expect( listener ).not.toHaveBeenCalled();
+
+			await tick( 1 );
+			expect( listener ).toHaveBeenCalledWith( sdk2 );
+		} );
+
+		test.each( [
+			[ 'a blocked request', 403 ],
+			[ 'a missing endpoint', 404 ],
+		] )(
+			'stops refreshing after %s (%d) twice in a row, also when the tab becomes visible or the browser is back online',
+			async ( label, status ) => {
+				const renewInstance = jest
+					.fn()
+					.mockRejectedValue(
+						Object.assign( new Error( 'rejected' ), { status } )
+					);
+				handler.start( renewInstance, tokenData() );
+
+				await tick( REFRESH_MS );
+				await tick( RETRY_MS );
+				await tick( 24 * 60 * 60 * 1000 );
+				document.dispatchEvent( new Event( 'visibilitychange' ) );
+				window.dispatchEvent( new Event( 'online' ) );
+				await tick( 0 );
+
+				expect( renewInstance ).toHaveBeenCalledTimes( 2 );
+			}
+		);
+
+		test( 'keeps refreshing after a single 4xx answer', async () => {
+			const renewInstance = jest
+				.fn()
+				.mockRejectedValueOnce(
+					Object.assign( new Error( 'blocked' ), { status: 403 } )
+				)
 				.mockResolvedValueOnce( renewed( sdk2 ) );
 			const listener = jest.fn();
 			handler.subscribe( listener );
@@ -284,10 +373,70 @@ describe( 'TokenRefreshHandler', () => {
 
 			await tick( REFRESH_MS );
 			await tick( RETRY_MS );
-			expect( listener ).not.toHaveBeenCalled();
 
-			await tick( RETRY_MS );
 			expect( listener ).toHaveBeenCalledWith( sdk2 );
+		} );
+
+		test.each( [ undefined, 408, 429, 500, 503 ] )(
+			'tries again after a failure with status %s',
+			async ( status ) => {
+				const renewInstance = jest
+					.fn()
+					.mockRejectedValueOnce(
+						Object.assign( new Error( 'failed' ), { status } )
+					)
+					.mockResolvedValueOnce( renewed( sdk2 ) );
+				const listener = jest.fn();
+				handler.subscribe( listener );
+				handler.start( renewInstance, tokenData() );
+
+				await tick( REFRESH_MS );
+				await tick( RETRY_MS );
+
+				expect( listener ).toHaveBeenCalledWith( sdk2 );
+			}
+		);
+
+		test.each( [
+			[
+				'the browser is back online',
+				() => window.dispatchEvent( new Event( 'online' ) ),
+			],
+			[
+				'the tab becomes visible',
+				() => document.dispatchEvent( new Event( 'visibilitychange' ) ),
+			],
+		] )(
+			'retries a failing refresh at once when %s, leaving one planned refresh',
+			async ( label, wake ) => {
+				const renewInstance = jest
+					.fn()
+					.mockRejectedValueOnce( new TypeError( 'offline' ) )
+					.mockResolvedValueOnce( renewed( sdk2 ) )
+					.mockResolvedValueOnce( renewed( sdk3 ) );
+				const listener = jest.fn();
+				handler.subscribe( listener );
+				handler.start( renewInstance, tokenData() );
+				await tick( REFRESH_MS );
+
+				wake();
+				await tick( 0 );
+				expect( listener ).toHaveBeenCalledWith( sdk2 );
+				expect( jest.getTimerCount() ).toBe( 1 );
+
+				await tick( RETRY_MS );
+				expect( renewInstance ).toHaveBeenCalledTimes( 2 );
+			}
+		);
+
+		test( 'does not refresh early when the browser is back online and nothing failed', async () => {
+			const renewInstance = jest.fn().mockResolvedValue( renewed( sdk2 ) );
+			handler.start( renewInstance, tokenData() );
+
+			window.dispatchEvent( new Event( 'online' ) );
+			await tick( 0 );
+
+			expect( renewInstance ).not.toHaveBeenCalled();
 		} );
 
 		test( 'uses the retry_in of the latest response after a successful refresh', async () => {
@@ -311,7 +460,9 @@ describe( 'TokenRefreshHandler', () => {
 		} );
 
 		test( 'still notifies the other subscribers when one subscriber throws', async () => {
-			const renewInstance = jest.fn().mockResolvedValue( renewed( sdk2 ) );
+			const renewInstance = jest
+				.fn()
+				.mockResolvedValue( renewed( sdk2 ) );
 			const after = jest.fn();
 			handler.subscribe( () => {
 				throw new Error( 'subscriber failed' );

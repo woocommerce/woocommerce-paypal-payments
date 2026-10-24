@@ -205,7 +205,6 @@ return array(
 
 	'sdk-v6.endpoint.client-token'      => static function ( ContainerInterface $container ): ClientTokenEndpoint {
 		return new ClientTokenEndpoint(
-			$container->get( 'order-endpoints.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.sdk-client-token' )
 		);

@@ -43,6 +43,32 @@ describe( 'postJson', () => {
 		} );
 	} );
 
+	test( 'carries the wait the server asks for on the error', async () => {
+		global.fetch = jest.fn().mockResolvedValue( {
+			status: 503,
+			json: async () => ( {
+				success: false,
+				data: { message: 'Unavailable.', retry_in: 120 },
+			} ),
+		} );
+
+		await expect( postJson( { endpoint: '/e' } ) ).rejects.toMatchObject( {
+			status: 503,
+			retryIn: 120,
+		} );
+	} );
+
+	test( 'sends no nonce field for an endpoint configured without one', async () => {
+		global.fetch = jest.fn().mockResolvedValue( {
+			json: async () => ( { success: true, data: {} } ),
+		} );
+
+		await postJson( { endpoint: '/e' } );
+
+		const [ , options ] = global.fetch.mock.calls[ 0 ];
+		expect( JSON.parse( options.body ) ).toEqual( {} );
+	} );
+
 	test( 'does not mark message-less failures as user facing', async () => {
 		global.fetch = jest.fn().mockResolvedValue( {
 			json: async () => ( { success: false } ),

@@ -13,10 +13,23 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\TokenUnavailableException;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
-use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
-use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 
+/**
+ * Answers POST requests without verifying a nonce.
+ *
+ * The token is browser-safe, bound to the shop's domain and the same for every
+ * visitor, so a caller gets nothing a visitor's browser does not already get.
+ * An unauthenticated caller can at most trigger the existing once-per-60-seconds
+ * rotation per domain in SdkClientToken, plus a short burst while its cache is
+ * cold. A nonce adds no protection on top: for logged-out visitors it is created
+ * for user 0 (see RequestData::nonce_fix()), so every visitor holds the same
+ * usable value (as modules/ppcp-sdk-v6/docs/wallets.md notes for the frontend
+ * log), and CartScriptParamsEndpoint is a read-only endpoint without one too.
+ * What it does do is expire in pages served from a full-page cache, which then
+ * cannot load the SDK.
+ */
 class ClientTokenEndpoint implements EndpointInterface {
 
 	public const ENDPOINT = 'ppc-sdk-v6-client-token';
@@ -28,27 +41,28 @@ class ClientTokenEndpoint implements EndpointInterface {
 	 */
 	private const MIN_REFRESH_DELAY = 10;
 
-	private RequestData $request_data;
 	private LoggerInterface $logger;
 	private SdkClientToken $sdk_client_token;
 
 	public function __construct(
-		RequestData $request_data,
 		LoggerInterface $logger,
 		SdkClientToken $sdk_client_token
 	) {
-		$this->request_data     = $request_data;
 		$this->logger           = $logger;
 		$this->sdk_client_token = $sdk_client_token;
 	}
 
 	public function handle_request(): void {
-		try {
-			$this->request_data->read_request( self::nonce() );
-		} catch ( NonceValidationException $error ) {
-			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
+		// A GET would let crawlers, prefetchers and image tags start token requests.
+		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] ) {
+			$this->send_token();
+			return;
 		}
 
+		wp_send_json_error( array( 'message' => 'Method not allowed.' ), 405 );
+	}
+
+	private function send_token(): void {
 		try {
 			$token = $this->sdk_client_token->sdk_client_token_data();
 
@@ -76,6 +90,16 @@ class ClientTokenEndpoint implements EndpointInterface {
 					'retry_in'     => self::MIN_REFRESH_DELAY,
 				)
 			);
+		} catch ( TokenUnavailableException $exception ) {
+			// An expected state that anonymous requests reach in volume, so no error log per request.
+			$this->logger->debug( 'SDK v6 client token unavailable: ' . $exception->getMessage() );
+			wp_send_json_error(
+				array(
+					'message'  => 'Client token temporarily unavailable.',
+					'retry_in' => max( self::MIN_REFRESH_DELAY, $exception->retry_after() ),
+				),
+				503
+			);
 		} catch ( PayPalApiException $exception ) {
 			$this->logger->error( 'SDK v6 client token PayPal API error: ' . $exception->getMessage() );
 			wp_send_json_error( array( 'message' => 'Failed to generate client token.' ), 500 );
@@ -85,6 +109,9 @@ class ClientTokenEndpoint implements EndpointInterface {
 		}
 	}
 
+	/**
+	 * Required by EndpointInterface; this endpoint verifies no nonce.
+	 */
 	public static function nonce(): string {
 		return self::ENDPOINT;
 	}
