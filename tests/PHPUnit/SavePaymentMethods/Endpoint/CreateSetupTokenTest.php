@@ -278,6 +278,37 @@ class CreateSetupTokenTest extends TestCase {
 	}
 
 	/**
+	 * GIVEN PayPal rejects the setup token request (e.g. the app lacks the vault scope)
+	 * WHEN handle_request() is called
+	 * THEN the shopper receives the generic error response
+	 * AND the failure reason is logged once as an error
+	 */
+	public function test_setup_token_failure_returns_generic_error_and_logs_reason(): void {
+		$this->request_data
+			->shouldReceive( 'read_request' )
+			->once()
+			->andReturn( array( 'payment_method' => 'ppcp-gateway' ) );
+
+		when( 'get_user_meta' )->justReturn( '' );
+
+		$this->tokens_endpoint
+			->shouldReceive( 'setup_tokens' )
+			->once()
+			->andThrow( new \RuntimeException( 'NOT_AUTHORIZED' ) );
+
+		$this->setup_token_binding->shouldNotReceive( 'bind' );
+
+		$this->logger
+			->shouldReceive( 'error' )
+			->once()
+			->with( Mockery::pattern( '/NOT_AUTHORIZED/' ) );
+
+		expect( 'wp_send_json_error' )->once()->withNoArgs();
+
+		$this->sut->handle_request();
+	}
+
+	/**
 	 * GIVEN a nonce validation failure
 	 * WHEN handle_request() is called
 	 * THEN wp_send_json_error() is called with a message array and HTTP 400 status
