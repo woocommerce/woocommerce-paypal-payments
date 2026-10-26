@@ -4,18 +4,19 @@ import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 /**
  * Sets up a class toggle based on the isGuest state for the express payment block.
- * This hides the express payment methods if the user is authenticated (Ryan flow).
+ * This hides the express payment methods and their "Or continue below" separator
+ * if the user is authenticated (Ryan flow).
  *
  * @return {Function} Unsubscribe function for cleanup.
  */
 export const setupAuthenticationClassToggle = () => {
 	const targetSelector =
-		'.wc-block-components-express-payment--checkout, .wp-block-woocommerce-checkout-express-payment-block';
+		'.wc-block-components-express-payment--checkout, .wp-block-woocommerce-checkout-express-payment-block, .wc-block-components-express-payment-continue-rule--checkout';
 	const authClass = 'wc-block-axo-is-authenticated';
 
 	const updateAuthenticationClass = () => {
-		const targetElement = document.querySelector( targetSelector );
-		if ( ! targetElement ) {
+		const targetElements = document.querySelectorAll( targetSelector );
+		if ( ! targetElements.length ) {
 			log(
 				`Authentication class target element not found: ${ targetSelector }`,
 				'warn'
@@ -25,11 +26,9 @@ export const setupAuthenticationClassToggle = () => {
 
 		const isGuest = select( STORE_NAME ).getIsGuest();
 
-		if ( ! isGuest ) {
-			targetElement.classList.add( authClass );
-		} else {
-			targetElement.classList.remove( authClass );
-		}
+		targetElements.forEach( ( targetElement ) =>
+			targetElement.classList.toggle( authClass, ! isGuest )
+		);
 	};
 
 	// Initial update
