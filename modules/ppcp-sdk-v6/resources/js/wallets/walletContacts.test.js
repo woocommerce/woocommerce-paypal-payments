@@ -447,6 +447,122 @@ describe( 'applePayWcBillingAddress', () => {
 	} );
 } );
 
+const homePhone = ( nationalNumber ) => ( {
+	phone_type: 'HOME',
+	phone_number: { national_number: nationalNumber },
+} );
+
+const withGooglePhones = ( { shipping, billing } ) => {
+	const base = googlePayResponse();
+	const billingAddress = {
+		...base.paymentMethodData.info.billingAddress,
+		...( billing !== undefined && { phoneNumber: billing } ),
+	};
+
+	return {
+		...base,
+		paymentMethodData: { info: { billingAddress } },
+		...( shipping !== undefined && {
+			shippingAddress: { ...billingAddress, phoneNumber: shipping },
+		} ),
+	};
+};
+
+const withApplePhones = ( { shipping, billing } ) => {
+	const base = applePayPayment();
+
+	return {
+		billingContact: {
+			...base.billingContact,
+			...( billing !== undefined && { phoneNumber: billing } ),
+		},
+		shippingContact: {
+			...base.shippingContact,
+			...( shipping !== undefined && { phoneNumber: shipping } ),
+		},
+	};
+};
+
+describe( 'phone mapping', () => {
+	describe( 'googlePayPayer()', () => {
+		test( 'maps the shipping phone to a HOME phone', () => {
+			const payer = googlePayPayer(
+				withGooglePhones( { shipping: '+1 (555) 010-0199' } )
+			);
+
+			expect( payer.phone ).toEqual( homePhone( '+1 (555) 010-0199' ) );
+		} );
+
+		test( 'omits the phone when there is none', () => {
+			const payer = googlePayPayer( withGooglePhones( {} ) );
+
+			expect( payer.phone ).toBeUndefined();
+		} );
+	} );
+
+	describe( 'googlePayShippingAddress()', () => {
+		test( 'maps the shipping phone to a national number', () => {
+			const shipping = googlePayShippingAddress(
+				withGooglePhones( { shipping: '+1 (555) 010-0199' } )
+			);
+
+			expect( shipping.phone_number ).toEqual( {
+				national_number: '+1 (555) 010-0199',
+			} );
+		} );
+
+		test( 'omits the phone when there is none', () => {
+			const shipping = googlePayShippingAddress( withGooglePhones( {} ) );
+
+			expect( shipping.phone_number ).toBeUndefined();
+		} );
+	} );
+
+	describe( 'applePayPayer()', () => {
+		test( 'maps the shipping phone to a HOME phone', () => {
+			const payer = applePayPayer(
+				withApplePhones( { shipping: '+1 (555) 010-0199' } )
+			);
+
+			expect( payer.phone ).toEqual( homePhone( '+1 (555) 010-0199' ) );
+		} );
+
+		test( 'gives no phone when only the billing phone is present', () => {
+			const payer = applePayPayer(
+				withApplePhones( { billing: '222' } )
+			);
+
+			expect( payer.phone ).toBeUndefined();
+		} );
+
+	} );
+
+	describe( 'applePayShippingAddress()', () => {
+		test( 'maps the shipping phone to a national number', () => {
+			const shipping = applePayShippingAddress(
+				withApplePhones( { shipping: '+1 (555) 010-0199' } )
+			);
+
+			expect( shipping.phone_number ).toEqual( {
+				national_number: '+1 (555) 010-0199',
+			} );
+		} );
+
+		test( 'keeps the shipping phone when the address falls back to the billing contact', () => {
+			const payment = withApplePhones( { shipping: '111' } );
+			delete payment.shippingContact.countryCode;
+
+			const shipping = applePayShippingAddress( payment );
+
+			expect( shipping.address.country_code ).toBe( 'US' );
+			expect( shipping.phone_number ).toEqual( {
+				national_number: '111',
+			} );
+		} );
+
+	} );
+} );
+
 const wcAddress = ( overrides = {} ) => ( {
 	country: 'US',
 	state: 'IA',
