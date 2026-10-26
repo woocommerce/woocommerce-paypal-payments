@@ -217,6 +217,7 @@ class AddPaymentMethodManagerTest extends TestCase
         $this->asset_getter->shouldReceive('get_asset_data')
             ->with('boot-add-payment-method.js', '1.0.0')
             ->andReturn(['dependencies' => ['wp-data'], 'version' => 'deadbeef']);
+        $this->stub_gateway_stylesheet_asset();
 
         expect('wp_register_script')
             ->once()
@@ -240,15 +241,77 @@ class AddPaymentMethodManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a logged-in buyer with vaulting enabled on the add-payment-method page
+     * WHEN the bootstrap script is enqueued
+     * THEN the v6 gateway stylesheet is enqueued once with the version webpack recorded for it
+     * AND this does not conflict with the inline-style handle also enqueued on this page
+     */
+    public function testEnqueueEnqueuesGatewayStylesheetWithAssetVersion(): void
+    {
+        when('is_user_logged_in')->justReturn(true);
+        $this->context->shouldReceive('is_add_payment_method_page')->andReturn(true);
+
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->settings_provider->shouldReceive('three_d_secure_enum')->andReturn('SCA_ALWAYS');
+        when('apply_filters')->alias(static fn (string $filter, $value) => $value);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('wc_get_account_endpoint_url')->justReturn('https://example.com/my-account/payment-methods');
+        when('wp_create_nonce')->justReturn('nonce');
+        when('wp_register_script')->justReturn(true);
+        when('wp_set_script_translations')->justReturn(true);
+        when('wp_localize_script')->justReturn(true);
+        when('wp_enqueue_script')->justReturn(null);
+        when('wp_register_style')->justReturn(true);
+        when('wp_add_inline_style')->justReturn(null);
+
+        $this->asset_getter->shouldReceive('get_asset_url')
+            ->with('boot-add-payment-method.js')
+            ->andReturn('https://example.com/assets/boot-add-payment-method.js');
+        $this->asset_getter->shouldReceive('get_asset_data')
+            ->with('boot-add-payment-method.js', '1.0.0')
+            ->andReturn(['dependencies' => [], 'version' => 'deadbeef']);
+        $this->stub_gateway_stylesheet_asset();
+
+        expect('wp_enqueue_style')
+            ->once()
+            ->with(
+                'wc-ppcp-sdk-v6-gateway',
+                'https://example.com/assets/gateway.css',
+                [],
+                'cafebabe'
+            );
+        expect('wp_enqueue_style')
+            ->zeroOrMoreTimes()
+            ->with('wc-ppcp-sdk-v6-add-payment-method');
+
+        $testee = $this->createTestee(true, true);
+        $testee->enqueue();
+
+        $this->addToAssertionCount(1);
+    }
+
+    private function stub_gateway_stylesheet_asset(): void
+    {
+        $this->asset_getter->shouldReceive('get_asset_url')
+            ->with('gateway.css')
+            ->andReturn('https://example.com/assets/gateway.css');
+        $this->asset_getter->shouldReceive('get_asset_data')
+            ->with('gateway.css', '1.0.0')
+            ->andReturn(['dependencies' => [], 'version' => 'cafebabe']);
+    }
+
+    /**
      * GIVEN the add-payment-method surfaces should not load on the current page
      * WHEN enqueue() is called
-     * THEN no script is registered — the method returns before touching the asset getter
+     * THEN no script or stylesheet is enqueued — the method returns before touching the asset getter
      */
     public function testEnqueueDoesNothingWhenShouldNotLoadOnCurrentPage(): void
     {
         when('is_user_logged_in')->justReturn(false);
 
         expect('wp_register_script')->never();
+        expect('wp_enqueue_style')->never();
 
         $testee = $this->createTestee(true, true);
         $testee->enqueue();
