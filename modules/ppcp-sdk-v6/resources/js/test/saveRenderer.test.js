@@ -19,21 +19,8 @@ jest.mock( '@ppcp-button/Helper/CheckoutMethodState', () => ( {
 } ) );
 
 const mockLoadSdkV6 = jest.fn();
-const mockSetSdkBusy = jest.fn();
-let mockInstanceListeners = [];
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
-} ) );
-jest.mock( '../tokenRefresh', () => ( {
-	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
-	onSdkInstanceChange: ( callback ) => {
-		mockInstanceListeners.push( callback );
-		return () => {
-			mockInstanceListeners = mockInstanceListeners.filter(
-				( listener ) => listener !== callback
-			);
-		};
-	},
 } ) );
 
 const mockPostJson = jest.fn();
@@ -111,7 +98,6 @@ function makeCardSession( { state = 'succeeded', id = 'session' } = {} ) {
 
 beforeEach( () => {
 	jest.clearAllMocks();
-	mockInstanceListeners = [];
 	mockPostJson.mockReset();
 	mockLoadSdkV6.mockReset();
 	mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-credit-card-gateway' );
@@ -119,104 +105,6 @@ beforeEach( () => {
 
 afterEach( () => {
 	document.body.innerHTML = '';
-} );
-
-const emitSdkInstanceChange = () =>
-	mockInstanceListeners.forEach( ( listener ) => listener( {} ) );
-
-describe( 'initCardSaveFields after an SDK instance change', () => {
-	test( 'mounts the fields again from a new save session, and the next submit uses it', async () => {
-		buildAddPaymentMethodDom();
-		const oldSession = makeCardSession( { id: 'old' } );
-		const newSession = makeCardSession( { id: 'new' } );
-		mockLoadSdkV6
-			.mockResolvedValueOnce( {
-				createCardFieldsSavePaymentSession: () => oldSession,
-			} )
-			.mockResolvedValueOnce( {
-				createCardFieldsSavePaymentSession: () => newSession,
-			} );
-		mockPostJson
-			.mockResolvedValueOnce( { id: 'SETUP1' } )
-			.mockResolvedValueOnce( {} );
-
-		initCardSaveFields( baseConfig() );
-		await flushPromises();
-		emitSdkInstanceChange();
-		await flushPromises();
-
-		const fields = [
-			...document.querySelectorAll( '.ppcp-sdk-v6-card-field' ),
-		];
-		expect( fields ).toHaveLength( 3 );
-		expect( fields.every( ( f ) => f.dataset.session === 'new' ) ).toBe(
-			true
-		);
-
-		document.querySelector( '#place_order' ).click();
-		await flushPromises();
-
-		expect( newSession.submit ).toHaveBeenCalledWith( 'SETUP1' );
-		expect( oldSession.submit ).not.toHaveBeenCalled();
-	} );
-
-	describe( 'SDK busy flag during a submit', () => {
-		let resolveSubmit;
-
-		async function startSubmit() {
-			buildAddPaymentMethodDom();
-			const cardSession = makeCardSession();
-			cardSession.submit.mockReturnValue(
-				new Promise( ( resolve ) => {
-					resolveSubmit = resolve;
-				} )
-			);
-			mockLoadSdkV6.mockResolvedValue( {
-				createCardFieldsSavePaymentSession: () => cardSession,
-			} );
-			mockPostJson
-				.mockResolvedValueOnce( { id: 'SETUP1' } )
-				.mockResolvedValueOnce( {} );
-			initCardSaveFields( baseConfig() );
-			await flushPromises();
-
-			document.querySelector( '#place_order' ).click();
-			await flushPromises();
-		}
-
-		test.each( [
-			[ 'fails', { state: 'failed' } ],
-			[ 'is canceled', { state: 'canceled' } ],
-		] )( 'is held until a submit that %s ends', async ( _label, result ) => {
-			await startSubmit();
-			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( true );
-
-			resolveSubmit( result );
-			await flushPromises();
-
-			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( false );
-		} );
-
-		test( 'is released when the submit throws', async () => {
-			await startSubmit();
-			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( true );
-
-			resolveSubmit( Promise.reject( new Error( 'boom' ) ) );
-			await flushPromises();
-
-			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( false );
-		} );
-
-		test( 'is released after a successful submit navigates away', async () => {
-			await startSubmit();
-
-			resolveSubmit( { state: 'succeeded' } );
-			await flushPromises();
-
-			expect( mockNavigationAssign ).toHaveBeenCalled();
-			expect( mockSetSdkBusy ).toHaveBeenLastCalledWith( false );
-		} );
-	} );
 } );
 
 describe( 'initCardSaveFields', () => {

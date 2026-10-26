@@ -1,9 +1,9 @@
 /**
- * Renews the PayPal SDK v6 instance before its client token expires.
+ * Gives the PayPal SDK v6 instance a new client token before the current one
+ * expires.
  *
- * The SDK cannot change the token of an existing instance, and every object
- * created from an instance keeps its token. So the page gets a new instance,
- * and each consumer creates its objects again from it.
+ * The SDK updates the instance and the sessions created from it in place, so
+ * rendered buttons, card fields and running payment flows keep working.
  *
  * @package
  */
@@ -12,26 +12,26 @@ const HANDLER_KEY = '__ppcpV6TokenRefresh';
 
 export class TokenRefreshHandler {
 	constructor() {
-		this.listeners = [];
 		this.timer = null;
 		this.refreshAt = 0;
 		this.retryIn = undefined;
 		this.refreshing = false;
-		this.busy = false;
-		this.pendingInstance = null;
-		this.renewInstance = null;
+		this.sdkInstance = null;
+		this.fetchTokenData = null;
 	}
 
 	/**
 	 * A background tab or a sleeping device delays timers, so a visible tab
 	 * also refreshes when the planned time has passed.
 	 *
-	 * @param {Function} renewInstance - Resolves to { sdkInstance, tokenData }
-	 *                                 with a new token.
-	 * @param {Object}   tokenData     - The client token endpoint response.
+	 * @param {Object}   sdkInstance    - The SDK instance to update.
+	 * @param {Function} fetchTokenData - Resolves to a new client token
+	 *                                  endpoint response.
+	 * @param {Object}   tokenData      - The client token endpoint response.
 	 */
-	start( renewInstance, tokenData ) {
-		this.renewInstance = renewInstance;
+	start( sdkInstance, fetchTokenData, tokenData ) {
+		this.sdkInstance = sdkInstance;
+		this.fetchTokenData = fetchTokenData;
 
 		document.addEventListener( 'visibilitychange', () => {
 			if (
@@ -44,34 +44,6 @@ export class TokenRefreshHandler {
 		} );
 
 		this.planNextRefresh( tokenData );
-	}
-
-	/**
-	 * @param {Function} callback - Receives the new SDK instance.
-	 * @return {Function} Removes the callback again.
-	 */
-	subscribe( callback ) {
-		this.listeners.push( callback );
-
-		return () => {
-			const index = this.listeners.indexOf( callback );
-			if ( index >= 0 ) {
-				this.listeners.splice( index, 1 );
-			}
-		};
-	}
-
-	/**
-	 * @param {boolean} busy - Whether a payment flow runs.
-	 */
-	setBusy( busy ) {
-		this.busy = Boolean( busy );
-
-		if ( ! this.busy && this.pendingInstance ) {
-			const sdkInstance = this.pendingInstance;
-			this.pendingInstance = null;
-			this.notify( sdkInstance );
-		}
 	}
 
 	/**
@@ -104,14 +76,9 @@ export class TokenRefreshHandler {
 		this.refreshing = true;
 
 		try {
-			const { sdkInstance, tokenData } = await this.renewInstance();
+			const tokenData = await this.fetchTokenData();
+			this.sdkInstance.updateClientToken( tokenData.client_token );
 			this.planNextRefresh( tokenData );
-
-			if ( this.busy ) {
-				this.pendingInstance = sdkInstance;
-			} else {
-				this.notify( sdkInstance );
-			}
 		} catch ( error ) {
 			// eslint-disable-next-line no-console
 			console.error( '[PPCP SDK v6] Client token refresh failed', error );
@@ -119,21 +86,6 @@ export class TokenRefreshHandler {
 		} finally {
 			this.refreshing = false;
 		}
-	}
-
-	/**
-	 * @param {Object} sdkInstance - The new SDK instance.
-	 */
-	notify( sdkInstance ) {
-		// A copy, because a listener can remove itself.
-		[ ...this.listeners ].forEach( ( listener ) => {
-			try {
-				listener( sdkInstance );
-			} catch ( error ) {
-				// eslint-disable-next-line no-console
-				console.error( '[PPCP SDK v6]', error );
-			}
-		} );
 	}
 }
 
@@ -152,57 +104,11 @@ function handler() {
 }
 
 /**
- * @param {Function} renewInstance - Resolves to { sdkInstance, tokenData } with
- *                                 a new token.
- * @param {Object}   tokenData     - The client token endpoint response.
+ * @param {Object}   sdkInstance    - The SDK instance to update.
+ * @param {Function} fetchTokenData - Resolves to a new client token endpoint
+ *                                  response.
+ * @param {Object}   tokenData      - The client token endpoint response.
  */
-export function startTokenRefresh( renewInstance, tokenData ) {
-	handler().start( renewInstance, tokenData );
-}
-
-/**
- * An object that must outlive the client token is created again from the new
- * instance.
- *
- * @param {Function} callback - Receives the new SDK instance.
- * @return {Function} Removes the callback again.
- */
-export function onSdkInstanceChange( callback ) {
-	return handler().subscribe( callback );
-}
-
-/**
- * While a payment flow runs, the listeners get a new instance only after it
- * ends, because they replace the objects the flow uses.
- *
- * @param {boolean} busy - Whether a payment flow runs.
- */
-export function setSdkBusy( busy ) {
-	handler().setBusy( busy );
-}
-
-/**
- * Wraps the callbacks of a session config that end the payment flow, so the
- * flow releases the busy state when the callback is done.
- *
- * @param {Object} sessionConfig - The session config.
- * @return {Object} The same config.
- */
-export function releasingSdkBusy( sessionConfig ) {
-	for ( const name of [ 'onApprove', 'onCancel', 'onError' ] ) {
-		const callback = sessionConfig[ name ];
-		if ( 'function' !== typeof callback ) {
-			continue;
-		}
-
-		sessionConfig[ name ] = async ( ...args ) => {
-			try {
-				return await callback( ...args );
-			} finally {
-				setSdkBusy( false );
-			}
-		};
-	}
-
-	return sessionConfig;
+export function startTokenRefresh( sdkInstance, fetchTokenData, tokenData ) {
+	handler().start( sdkInstance, fetchTokenData, tokenData );
 }

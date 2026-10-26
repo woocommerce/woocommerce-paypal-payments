@@ -28,7 +28,20 @@ class SdkClientToken {
 	 */
 	public const RATE_LIMIT_SCOPE = 'sdk-client-token';
 
-	private const ROTATE_AFTER_SECONDS = 60;
+	/**
+	 * The share of a token's lifetime after which one request gets a new token.
+	 */
+	private const ROTATE_AFTER_PERCENT = 12.5;
+
+	/**
+	 * Seconds until the next request tries again after a failed rotation.
+	 */
+	private const ROTATION_RETRY_SECONDS = 60;
+
+	/**
+	 * Seconds a served token must stay valid at least.
+	 */
+	private const MIN_SERVED_LIFETIME = 120;
 
 	private string $host;
 
@@ -94,7 +107,7 @@ class SdkClientToken {
 			return $this->token_data( $cached );
 		}
 
-		$this->cache->set( $cache_key . '-fresh', 1, self::ROTATE_AFTER_SECONDS );
+		$this->cache->set( $cache_key . '-fresh', 1, self::ROTATION_RETRY_SECONDS );
 
 		try {
 			return $this->token_data( $this->request_token( $domain, $cache_key ) );
@@ -170,13 +183,15 @@ class SdkClientToken {
 			'expires_at' => time() + $expires_in,
 		);
 
-		// Stop serving the token shortly before it expires, so the SDK can still use it.
-		if ( $expires_in > 150 ) {
-			$expires_in -= 30;
+		$rotate_after = max( 1, (int) ( $expires_in * self::ROTATE_AFTER_PERCENT / 100 ) );
+
+		// Stop serving the token before it expires, so the page can still render with it.
+		if ( $expires_in > 2 * self::MIN_SERVED_LIFETIME ) {
+			$expires_in -= self::MIN_SERVED_LIFETIME;
 		}
 
 		$this->cache->set( $cache_key, $token, $expires_in );
-		$this->cache->set( $cache_key . '-fresh', 1, self::ROTATE_AFTER_SECONDS );
+		$this->cache->set( $cache_key . '-fresh', 1, $rotate_after );
 		$this->rate_limiter->clear( self::RATE_LIMIT_SCOPE );
 
 		return $token;

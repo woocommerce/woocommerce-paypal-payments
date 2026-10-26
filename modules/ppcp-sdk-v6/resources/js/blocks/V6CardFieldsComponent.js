@@ -18,7 +18,6 @@ import {
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { loadSdkV6 } from '../sdkLoader';
-import { onSdkInstanceChange, setSdkBusy } from '../tokenRefresh';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
 import {
 	createCardSetupToken,
@@ -261,17 +260,6 @@ export function V6CardFieldsComponent( {
 			: null
 	);
 
-	// A new SDK instance mounts new fields. Card data the buyer entered is
-	// lost, which is clearer than a declined payment later.
-	const [ sdkGeneration, setSdkGeneration ] = useState( 0 );
-	useEffect(
-		() =>
-			onSdkInstanceChange( () =>
-				setSdkGeneration( ( generation ) => generation + 1 )
-			),
-		[]
-	);
-
 	// One card session per SDK instance: the SDK cannot dispose a session, so
 	// it must not be recreated on ordinary re-renders.
 	useEffect( () => {
@@ -294,7 +282,7 @@ export function V6CardFieldsComponent( {
 		return () => {
 			active = false;
 		};
-	}, [ config, context, isFreeTrial, sdkGeneration ] );
+	}, [ config, context, isFreeTrial ] );
 
 	// v6 returns unstyled field elements, so their styling is derived from a real
 	// block text input on the page, or a hidden reference input when there is
@@ -393,28 +381,21 @@ export function V6CardFieldsComponent( {
 				};
 			}
 
-			// No new fields while 3D Secure runs in the current ones.
-			setSdkBusy( true );
-
-			try {
-				return await ( isFreeTrial
-					? submitCardSave( {
-							config,
-							session: sessionRef.current,
-							responseTypes,
-					  } )
-					: submitCardPayment( {
-							config,
-							context,
-							session: sessionRef.current,
-							responseTypes,
-							savePaymentMethod: savePaymentRef.current,
-							// null when no billing address is available.
-							billingAddress: billingRef.current,
-					  } ) );
-			} finally {
-				setSdkBusy( false );
-			}
+			return isFreeTrial
+				? submitCardSave( {
+						config,
+						session: sessionRef.current,
+						responseTypes,
+				  } )
+				: submitCardPayment( {
+						config,
+						context,
+						session: sessionRef.current,
+						responseTypes,
+						savePaymentMethod: savePaymentRef.current,
+						// null when no billing address is available.
+						billingAddress: billingRef.current,
+				  } );
 		} );
 	}, [
 		onPaymentSetup,
