@@ -24,6 +24,8 @@ use WC_Subscriptions_Product;
 use WC_Tax;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Phone;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PhoneWithType;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
@@ -273,7 +275,8 @@ class WooCommerceOrderCreator
         if ($shipping) {
             $address = $shipping->address();
             if ($address) {
-                $shipping_address = array('first_name' => $shipping->name(), 'last_name' => '', 'address_1' => $address->address_line_1(), 'address_2' => $address->address_line_2(), 'city' => $address->admin_area_2(), 'state' => $address->admin_area_1(), 'postcode' => $address->postal_code(), 'country' => $address->country_code());
+                $shipping_phone = $shipping->phone_number();
+                $shipping_address = array('first_name' => $shipping->name(), 'last_name' => '', 'address_1' => $address->address_line_1(), 'address_2' => $address->address_line_2(), 'city' => $address->admin_area_2(), 'state' => $address->admin_area_1(), 'postcode' => $address->postal_code(), 'country' => $address->country_code(), 'phone' => $shipping_phone ? $shipping_phone->national_number() : '');
             }
             $shipping_options = $shipping->options()[0] ?? '';
         }
@@ -396,6 +399,9 @@ class WooCommerceOrderCreator
     /**
      * Get the Payer from the PayPal order with fallback to the PayPal response data.
      *
+     * Wallet orders take a missing phone from the browser payer: the PayPal order
+     * holds only what the browser passed on confirmation, and that has no phone.
+     *
      * @param Order      $order The PayPal Order.
      * @param array|null $paypal_data The PayPal Response data.
      *
@@ -404,11 +410,89 @@ class WooCommerceOrderCreator
     private function get_payer(Order $order, ?array $paypal_data = null): ?Payer
     {
         $payer = $order->payer();
-        if (is_null($payer) && isset($paypal_data['payer'])) {
-            $payer_data = json_decode(wp_json_encode($paypal_data['payer']) ?: '');
-            $payer = $this->payer_factory->from_paypal_response($payer_data);
+        $browser_payer = $this->browser_payer($paypal_data);
+        if (!$payer) {
+            return $browser_payer;
+        }
+        if ($browser_payer && !$payer->phone() && $this->is_wallet_order($order)) {
+            $payer->set_phone($browser_payer->phone());
         }
         return $payer;
+    }
+    /**
+     * Builds the payer the browser posted from the fields it sends.
+     *
+     * Values that are not strings are dropped: this is request data, and the
+     * entities it feeds are strictly typed.
+     *
+     * @param array|null $paypal_data The PayPal Response data.
+     */
+    private function browser_payer(?array $paypal_data): ?Payer
+    {
+        $payer_data = $paypal_data['payer'] ?? null;
+        if (!is_array($payer_data)) {
+            return null;
+        }
+        $data = (object) $this->string_fields($payer_data, array('email_address'));
+        $data->name = (object) $this->string_fields($payer_data['name'] ?? null, array('given_name', 'surname'));
+        if (is_array($payer_data['address'] ?? null)) {
+            $data->address = (object) $this->string_fields($payer_data['address'], array('country_code', 'address_line_1', 'address_line_2', 'admin_area_1', 'admin_area_2', 'postal_code'));
+        }
+        $phone = $payer_data['phone'] ?? null;
+        $national_number = $phone['phone_number']['national_number'] ?? null;
+        if (is_string($national_number)) {
+            $data->phone = (object) (array('phone_number' => (object) array('national_number' => $national_number)) + $this->string_fields($phone, array('phone_type')));
+        }
+        $browser_payer = $this->payer_factory->from_paypal_response($data);
+        $browser_payer->set_phone($this->normalized_payer_phone($browser_payer->phone()));
+        return $browser_payer;
+    }
+    /**
+     * Picks the given keys whose values are strings.
+     *
+     * @param mixed    $data The request data.
+     * @param string[] $keys The keys to keep.
+     */
+    private function string_fields($data, array $keys): array
+    {
+        if (!is_array($data)) {
+            return array();
+        }
+        return array_filter(array_intersect_key($data, array_flip($keys)), 'is_string');
+    }
+    private function is_wallet_order(Order $order): bool
+    {
+        $payment_source = $order->payment_source();
+        if (!$payment_source) {
+            return \false;
+        }
+        return in_array($payment_source->name(), array('apple_pay', 'google_pay'), \true);
+    }
+    private function normalized_payer_phone(?PhoneWithType $phone): ?PhoneWithType
+    {
+        if (!$phone) {
+            return null;
+        }
+        $national_phone = $this->normalized_phone($phone->phone());
+        if (!$national_phone) {
+            return null;
+        }
+        return new PhoneWithType($phone->type(), $national_phone);
+    }
+    /**
+     * PayPal accepts digits only, at most 14.
+     */
+    private function normalized_phone(?Phone $phone): ?Phone
+    {
+        if (!$phone) {
+            return null;
+        }
+        $clean_number = (string) preg_replace('/\D/', '', $phone->national_number());
+        $national_number = substr($clean_number, 0, 14);
+        if ('' === $national_number) {
+            return null;
+        }
+        return new Phone($national_number);
     }
     /**
      * Get the Shipping information from the PayPal order with fallback to the PayPal response data.
@@ -428,6 +512,14 @@ class WooCommerceOrderCreator
             }, $shipping->options());
             $shipping_address_data = json_decode(wp_json_encode($paypal_data['shipping_address']) ?: '');
             $shipping = $this->shipping_factory->from_paypal_response($shipping_address_data);
+        }
+        if ($shipping) {
+            $phone = $shipping->phone_number();
+            $browser_phone = $paypal_data['shipping_address']['phone_number']['national_number'] ?? null;
+            if (!$phone && is_string($browser_phone)) {
+                $phone = new Phone($browser_phone);
+            }
+            $shipping->set_phone_number($this->normalized_phone($phone));
         }
         return apply_filters('woocommerce_paypal_payments_order_creator_get_shipping', $shipping, $order, $paypal_data);
     }

@@ -150,6 +150,10 @@ class Payer
     {
         return $this->phone;
     }
+    public function set_phone(?\WooCommerce\PayPalCommerce\ApiClient\Entity\PhoneWithType $phone): void
+    {
+        $this->phone = $phone;
+    }
     /**
      * Returns the tax info.
      *
