@@ -876,6 +876,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\WcGateway\\Notice\\UnsupportedCurrencyAdminNotice' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Notice/UnsupportedCurrencyAdminNotice.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\AuthorizedPaymentsProcessor' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Processor/AuthorizedPaymentsProcessor.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\CreditCardOrderInfoHandlingTrait' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Processor/CreditCardOrderInfoHandlingTrait.php',
+        'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\FeesMetaTrait' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Processor/FeesMetaTrait.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\OrderMetaTrait' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Processor/OrderMetaTrait.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\OrderProcessor' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Processor/OrderProcessor.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\PaymentsStatusHandlingTrait' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Processor/PaymentsStatusHandlingTrait.php',

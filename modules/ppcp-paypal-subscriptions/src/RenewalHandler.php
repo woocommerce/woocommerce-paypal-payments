@@ -12,6 +12,8 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Data_Exception;
 use WC_Order;
 use WC_Subscription;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerReceivableBreakdown;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\FeesMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 /**
  * Class RenewalHandler
@@ -19,6 +21,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 class RenewalHandler
 {
     use TransactionIdHandlingTrait;
+    use FeesMetaTrait;
     /**
      * The logger.
      *
@@ -37,12 +40,13 @@ class RenewalHandler
     /**
      * Process subscription renewal.
      *
-     * @param WC_Subscription[] $subscriptions WC Subscriptions.
-     * @param string            $transaction_id PayPal transaction ID.
+     * @param WC_Subscription[]              $subscriptions WC Subscriptions.
+     * @param string                         $transaction_id PayPal transaction ID.
+     * @param SellerReceivableBreakdown|null $breakdown The sale's fee breakdown, stored on the order it is booked to.
      * @return void
      * @throws WC_Data_Exception If something goes wrong while setting payment method.
      */
-    public function process(array $subscriptions, string $transaction_id): void
+    public function process(array $subscriptions, string $transaction_id, ?SellerReceivableBreakdown $breakdown = null): void
     {
         foreach ($subscriptions as $subscription) {
             if ($this->is_for_renewal_order($subscription)) {
@@ -53,6 +57,9 @@ class RenewalHandler
                     $renewal_order->set_payment_method($subscription->get_payment_method());
                     $renewal_order->payment_complete();
                     $this->update_transaction_id($transaction_id, $renewal_order, $this->logger);
+                    if ($breakdown) {
+                        $this->store_paypal_fees($renewal_order, $breakdown);
+                    }
                     break;
                 }
             }
@@ -62,6 +69,9 @@ class RenewalHandler
                 $subscription->update_meta_data('_ppcp_is_subscription_renewal', 'true');
                 $subscription->save_meta_data();
                 $this->update_transaction_id($transaction_id, $parent_order, $this->logger);
+                if ($breakdown) {
+                    $this->store_paypal_fees($parent_order, $breakdown);
+                }
             }
         }
     }

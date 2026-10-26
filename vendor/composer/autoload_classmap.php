@@ -659,6 +659,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\WcGateway\\Notice\\UnsupportedCurrencyAdminNotice' => $baseDir . '/modules/ppcp-wc-gateway/src/Notice/UnsupportedCurrencyAdminNotice.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\AuthorizedPaymentsProcessor' => $baseDir . '/modules/ppcp-wc-gateway/src/Processor/AuthorizedPaymentsProcessor.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\CreditCardOrderInfoHandlingTrait' => $baseDir . '/modules/ppcp-wc-gateway/src/Processor/CreditCardOrderInfoHandlingTrait.php',
+    'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\FeesMetaTrait' => $baseDir . '/modules/ppcp-wc-gateway/src/Processor/FeesMetaTrait.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\OrderMetaTrait' => $baseDir . '/modules/ppcp-wc-gateway/src/Processor/OrderMetaTrait.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\OrderProcessor' => $baseDir . '/modules/ppcp-wc-gateway/src/Processor/OrderProcessor.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Processor\\PaymentsStatusHandlingTrait' => $baseDir . '/modules/ppcp-wc-gateway/src/Processor/PaymentsStatusHandlingTrait.php',
