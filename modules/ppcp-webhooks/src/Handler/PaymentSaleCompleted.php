@@ -11,6 +11,9 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
 use WC_Data_Exception;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerReceivableBreakdown;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerReceivableBreakdownFactory;
 use WooCommerce\PayPalCommerce\PayPalSubscriptions\RenewalHandler;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -36,15 +39,19 @@ class PaymentSaleCompleted implements RequestHandler {
 	 */
 	private $logger;
 
+	private SellerReceivableBreakdownFactory $breakdown_factory;
+
 	/**
 	 * PaymentSaleCompleted constructor.
 	 *
-	 * @param LoggerInterface $logger The logger.
-	 * @param RenewalHandler  $renewal_handler Renewal handler.
+	 * @param LoggerInterface                  $logger The logger.
+	 * @param RenewalHandler                   $renewal_handler Renewal handler.
+	 * @param SellerReceivableBreakdownFactory $breakdown_factory Builds the sale's fee breakdown.
 	 */
-	public function __construct( LoggerInterface $logger, RenewalHandler $renewal_handler ) {
-		$this->logger          = $logger;
-		$this->renewal_handler = $renewal_handler;
+	public function __construct( LoggerInterface $logger, RenewalHandler $renewal_handler, SellerReceivableBreakdownFactory $breakdown_factory ) {
+		$this->logger            = $logger;
+		$this->renewal_handler   = $renewal_handler;
+		$this->breakdown_factory = $breakdown_factory;
 	}
 
 	/**
@@ -107,12 +114,73 @@ class PaymentSaleCompleted implements RequestHandler {
 		$subscriptions = wcs_get_subscriptions( $args );
 		if ( $subscriptions ) {
 			try {
-				$this->renewal_handler->process( $subscriptions, $transaction_id );
+				$this->renewal_handler->process(
+					$subscriptions,
+					$transaction_id,
+					$this->sale_breakdown( (array) $request['resource'] )
+				);
 			} catch ( WC_Data_Exception $exception ) {
 				return $this->failure_response( 'Could not update payment method.' );
 			}
 		}
 
 		return $this->success_response();
+	}
+
+	/**
+	 * The sale's fee breakdown, in the shape a capture's seller_receivable_breakdown
+	 * has, so FeesRenderer shows it like any other PayPal payment.
+	 *
+	 * A sale reports its gross amount and fee but no net amount, which is derived
+	 * here. Webhook data is untrusted: an incomplete or inconsistent sale yields
+	 * no breakdown, and the order is then processed without fees.
+	 *
+	 * @param array $resource The webhook's sale resource.
+	 */
+	private function sale_breakdown( array $resource ): ?SellerReceivableBreakdown {
+		$total        = $resource['amount']['total'] ?? null;
+		$currency     = $resource['amount']['currency'] ?? null;
+		$fee          = $resource['transaction_fee']['value'] ?? null;
+		$fee_currency = $resource['transaction_fee']['currency'] ?? null;
+
+		if (
+			! is_numeric( $total )
+			|| ! is_numeric( $fee )
+			|| ! is_string( $currency )
+			|| '' === $currency
+			|| $fee_currency !== $currency
+		) {
+			$this->logger->debug( 'PAYMENT.SALE.COMPLETED carries no usable amount or fee; the order is processed without PayPal fees.' );
+
+			return null;
+		}
+
+		// The net amount keeps the gross amount's precision, so zero-decimal
+		// currencies stay whole.
+		$decimals = strlen( (string) substr( (string) strrchr( (string) $total, '.' ), 1 ) );
+		$net      = number_format( (float) $total - (float) $fee, $decimals, '.', '' );
+
+		try {
+			return $this->breakdown_factory->from_paypal_response(
+				(object) array(
+					'gross_amount' => (object) array(
+						'value'         => (string) $total,
+						'currency_code' => $currency,
+					),
+					'paypal_fee'   => (object) array(
+						'value'         => (string) $fee,
+						'currency_code' => $currency,
+					),
+					'net_amount'   => (object) array(
+						'value'         => $net,
+						'currency_code' => $currency,
+					),
+				)
+			);
+		} catch ( RuntimeException $exception ) {
+			$this->logger->debug( 'Could not build the PayPal fee breakdown of a sale: ' . $exception->getMessage() );
+
+			return null;
+		}
 	}
 }
