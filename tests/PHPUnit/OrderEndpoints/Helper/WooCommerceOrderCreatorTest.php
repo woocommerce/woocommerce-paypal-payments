@@ -701,29 +701,28 @@ class WooCommerceOrderCreatorTest extends TestCase {
 	}
 
 	/**
-	 * GIVEN a wallet order (Apple Pay or Google Pay) with a PayPal payer that has a phone
+	 * GIVEN a wallet order (Apple Pay or Google Pay) with a PayPal payer that has no phone
 	 * AND a browser payer with its own name, email and phone
 	 * WHEN the WC order is created
-	 * THEN the billing contact is the browser payer as a whole
+	 * THEN the billing name and email stay those of the PayPal payer
 	 * AND the billing phone is the browser phone, reduced to digits and at most 14 of them
-	 * AND the PayPal payer is ignored, including its phone
 	 *
 	 * @dataProvider wallet_billing_provider
 	 */
-	public function test_billing_uses_browser_payer_as_a_whole_for_wallet_orders(
+	public function test_billing_takes_missing_paypal_payer_phone_from_browser_for_wallet_orders(
 		string $payment_source,
 		string $browser_phone,
 		string $expected_phone
 	): void {
 		$addresses = $this->create_wc_order_addresses(
-			$this->create_payer( '5551234' ),
+			$this->create_payer( null ),
 			null,
 			$this->create_browser_payer_data( $browser_phone ),
 			$payment_source
 		);
 
 		$this->assertSame(
-			array( 'Wallet', 'Buyer', 'wallet@example.com', $expected_phone ),
+			array( 'Jane', 'Doe', 'jane@example.com', $expected_phone ),
 			$this->billing_contact( $addresses )
 		);
 	}
@@ -733,6 +732,127 @@ class WooCommerceOrderCreatorTest extends TestCase {
 			'apple pay uses the normalized browser phone'  => array( 'apple_pay', '+1 (555) 123-4567', '15551234567' ),
 			'google pay uses the normalized browser phone' => array( 'google_pay', '+1 (555) 123-4567', '15551234567' ),
 			'browser phone is cut to 14 digits'            => array( 'apple_pay', '123456789012345678', '12345678901234' ),
+		);
+	}
+
+	/**
+	 * GIVEN a wallet order with a PayPal payer that already has a phone
+	 * AND a browser payer with a different phone
+	 * WHEN the WC order is created
+	 * THEN the billing contact is the PayPal payer unchanged, including its phone
+	 * AND the browser payer is ignored
+	 */
+	public function test_billing_keeps_paypal_payer_phone_for_wallet_orders(): void {
+		$addresses = $this->create_wc_order_addresses(
+			$this->create_payer( '5551234' ),
+			null,
+			$this->create_browser_payer_data( '9998887' ),
+			'apple_pay'
+		);
+
+		$this->assertSame(
+			array( 'Jane', 'Doe', 'jane@example.com', '5551234' ),
+			$this->billing_contact( $addresses )
+		);
+	}
+
+	/**
+	 * GIVEN a wallet order with a PayPal payer that has no phone
+	 * AND no browser payer data
+	 * WHEN the WC order is created
+	 * THEN the billing phone is empty
+	 */
+	public function test_billing_phone_is_empty_for_wallet_orders_without_any_phone(): void {
+		$addresses = $this->create_wc_order_addresses(
+			$this->create_payer( null ),
+			null,
+			null,
+			'apple_pay'
+		);
+
+		$this->assertSame(
+			array( 'Jane', 'Doe', 'jane@example.com', '' ),
+			$this->billing_contact( $addresses )
+		);
+	}
+
+	/**
+	 * GIVEN an order without a PayPal payer
+	 * AND browser payer data in which one field has an unexpected type
+	 * WHEN the WC order is created
+	 * THEN the order is created without error
+	 * AND the malformed field is left empty
+	 * AND the valid sibling fields are kept
+	 *
+	 * @dataProvider malformed_browser_payer_provider
+	 *
+	 * @param array $payer_overrides Replaces fields of an otherwise valid browser payer.
+	 * @param array $expected        First name, last name, email, phone, country and city.
+	 */
+	public function test_malformed_browser_payer_fields_are_dropped_without_error(
+		array $payer_overrides,
+		array $expected
+	): void {
+		$paypal_data          = $this->create_browser_payer_data( '+1 (555) 123-4567' );
+		$paypal_data['payer'] = array_replace( $paypal_data['payer'], $payer_overrides );
+
+		$addresses = $this->create_wc_order_addresses( null, null, $paypal_data );
+
+		$this->assertSame(
+			$expected,
+			array_merge( $this->billing_contact( $addresses ), array( $addresses['billing']['country'], $addresses['billing']['city'] ) )
+		);
+	}
+
+	public function malformed_browser_payer_provider(): array {
+		$phone = array(
+			'phone_type'   => 'MOBILE',
+			'phone_number' => array( 'national_number' => '+1 (555) 123-4567' ),
+		);
+
+		return array(
+			'email as an integer'                    => array(
+				array( 'email_address' => 123 ),
+				array( 'Wallet', 'Buyer', '', '15551234567', '', '' ),
+			),
+			'name as a string'                       => array(
+				array( 'name' => 'Wallet Buyer' ),
+				array( '', '', 'wallet@example.com', '15551234567', '', '' ),
+			),
+			'given name as an array'                 => array(
+				array(
+					'name' => array(
+						'given_name' => array( 'Wallet' ),
+						'surname'    => 'Buyer',
+					),
+				),
+				array( '', 'Buyer', 'wallet@example.com', '15551234567', '', '' ),
+			),
+			'address as a string'                    => array(
+				array( 'address' => 'NYC' ),
+				array( 'Wallet', 'Buyer', 'wallet@example.com', '15551234567', '', '' ),
+			),
+			'country code as an integer'             => array(
+				array(
+					'address' => array(
+						'country_code' => 1,
+						'admin_area_2' => 'NYC',
+					),
+				),
+				array( 'Wallet', 'Buyer', 'wallet@example.com', '15551234567', '', 'NYC' ),
+			),
+			'phone as a string'                      => array(
+				array( 'phone' => '5551234' ),
+				array( 'Wallet', 'Buyer', 'wallet@example.com', '', '', '' ),
+			),
+			'national number as an integer'          => array(
+				array( 'phone' => array( 'phone_number' => array( 'national_number' => 5551234 ) ) ),
+				array( 'Wallet', 'Buyer', 'wallet@example.com', '', '', '' ),
+			),
+			'phone type as an array keeps the phone' => array(
+				array( 'phone' => array( 'phone_type' => array( 'MOBILE' ) ) + $phone ),
+				array( 'Wallet', 'Buyer', 'wallet@example.com', '15551234567', '', '' ),
+			),
 		);
 	}
 
@@ -911,7 +1031,7 @@ class WooCommerceOrderCreatorTest extends TestCase {
 			Mockery::mock( SubscriptionHelper::class ),
 			Mockery::mock( CartDataFactory::class ),
 			Mockery::mock( ShippingFactory::class ),
-			new PayerFactory( Mockery::mock( AddressFactory::class ) )
+			new PayerFactory( new AddressFactory() )
 		);
 
 		$sut->create_from_paypal_order(

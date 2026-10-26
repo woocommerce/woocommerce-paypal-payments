@@ -522,8 +522,8 @@ class WooCommerceOrderCreator {
 	/**
 	 * Get the Payer from the PayPal order with fallback to the PayPal response data.
 	 *
-	 * Wallet orders use the browser payer: the PayPal order holds only what the
-	 * browser passed on confirmation, and that has no phone.
+	 * Wallet orders take a missing phone from the browser payer: the PayPal order
+	 * holds only what the browser passed on confirmation, and that has no phone.
 	 *
 	 * @param Order      $order The PayPal Order.
 	 * @param array|null $paypal_data The PayPal Response data.
@@ -531,17 +531,71 @@ class WooCommerceOrderCreator {
 	 * @return Payer|null The Payer object or null if no payer information is available.
 	 */
 	private function get_payer( Order $order, ?array $paypal_data = null ): ?Payer {
-		$payer             = $order->payer();
-		$use_browser_payer = isset( $paypal_data['payer'] ) && ( ! $payer || $this->is_wallet_order( $order ) );
-		if ( ! $use_browser_payer ) {
-			return $payer;
+		$payer         = $order->payer();
+		$browser_payer = $this->browser_payer( $paypal_data );
+
+		if ( ! $payer ) {
+			return $browser_payer;
 		}
 
-		$payer_data    = json_decode( wp_json_encode( $paypal_data['payer'] ) ?: '' );
-		$browser_payer = $this->payer_factory->from_paypal_response( $payer_data );
+		if ( $browser_payer && ! $payer->phone() && $this->is_wallet_order( $order ) ) {
+			$payer->set_phone( $browser_payer->phone() );
+		}
+
+		return $payer;
+	}
+
+	/**
+	 * Builds the payer the browser posted from the fields it sends.
+	 *
+	 * Values that are not strings are dropped: this is request data, and the
+	 * entities it feeds are strictly typed.
+	 *
+	 * @param array|null $paypal_data The PayPal Response data.
+	 */
+	private function browser_payer( ?array $paypal_data ): ?Payer {
+		$payer_data = $paypal_data['payer'] ?? null;
+		if ( ! is_array( $payer_data ) ) {
+			return null;
+		}
+
+		$data       = (object) $this->string_fields( $payer_data, array( 'email_address' ) );
+		$data->name = (object) $this->string_fields( $payer_data['name'] ?? null, array( 'given_name', 'surname' ) );
+
+		if ( is_array( $payer_data['address'] ?? null ) ) {
+			$data->address = (object) $this->string_fields(
+				$payer_data['address'],
+				array( 'country_code', 'address_line_1', 'address_line_2', 'admin_area_1', 'admin_area_2', 'postal_code' )
+			);
+		}
+
+		$phone           = $payer_data['phone'] ?? null;
+		$national_number = $phone['phone_number']['national_number'] ?? null;
+		if ( is_string( $national_number ) ) {
+			$data->phone = (object) (
+				array( 'phone_number' => (object) array( 'national_number' => $national_number ) )
+				+ $this->string_fields( $phone, array( 'phone_type' ) )
+			);
+		}
+
+		$browser_payer = $this->payer_factory->from_paypal_response( $data );
 		$browser_payer->set_phone( $this->normalized_payer_phone( $browser_payer->phone() ) );
 
 		return $browser_payer;
+	}
+
+	/**
+	 * Picks the given keys whose values are strings.
+	 *
+	 * @param mixed    $data The request data.
+	 * @param string[] $keys The keys to keep.
+	 */
+	private function string_fields( $data, array $keys ): array {
+		if ( ! is_array( $data ) ) {
+			return array();
+		}
+
+		return array_filter( array_intersect_key( $data, array_flip( $keys ) ), 'is_string' );
 	}
 
 	private function is_wallet_order( Order $order ): bool {
