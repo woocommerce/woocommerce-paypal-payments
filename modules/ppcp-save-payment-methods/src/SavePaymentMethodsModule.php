@@ -413,8 +413,8 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 				 */
 				add_action(
 					'woocommerce_add_payment_method_form_bottom',
-					function () {
-						if ( ! is_user_logged_in() || ! is_add_payment_method_page() ) {
+					function () use ( $c ) {
+						if ( ! is_user_logged_in() || ! is_add_payment_method_page() || ! $this->can_save_paypal( $c ) ) {
 							return;
 						}
 
@@ -574,6 +574,18 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 		}
 
 		return $localized_script_data;
+	}
+
+	/**
+	 * Whether PayPal can be saved: the setting is on and the API credentials carry the vault scope.
+	 *
+	 * Manually connected REST apps can lack that scope, and PayPal then rejects every setup token.
+	 */
+	private function can_save_paypal( ContainerInterface $c ): bool {
+		$settings_provider = $c->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		return $settings_provider->save_paypal_and_venmo() && $c->get( 'wcgateway.helper.vaulting-scope' );
 	}
 
 	/**
