@@ -422,6 +422,19 @@ class SavePaymentMethodsModule implements ServiceModule, ExecutableModule {
 					}
 				);
 
+				add_filter(
+					'woocommerce_available_payment_gateways',
+					function ( $gateways ) use ( $c ) {
+						if ( ! is_array( $gateways ) || ! is_add_payment_method_page() || $this->can_save_paypal( $c ) ) {
+							return $gateways;
+						}
+
+						unset( $gateways[ PayPalGateway::ID ] );
+
+						return $gateways;
+					}
+				);
+
 				add_action(
 					'wc_ajax_' . CreateSetupToken::ENDPOINT,
 					static function () use ( $c ) {
