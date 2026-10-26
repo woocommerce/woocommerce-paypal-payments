@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint;
 
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
@@ -29,6 +30,9 @@ class CreateSetupTokenTest extends TestCase {
 	/** @var SetupTokenBinding&\Mockery\MockInterface */
 	private $setup_token_binding;
 
+	/** @var LoggerInterface&\Mockery\MockInterface */
+	private $logger;
+
 	/** @var CreateSetupToken */
 	private $sut;
 
@@ -41,10 +45,13 @@ class CreateSetupTokenTest extends TestCase {
 		$this->setup_token_binding = Mockery::mock( SetupTokenBinding::class );
 		$this->setup_token_binding->shouldReceive( 'bind' )->byDefault();
 
+		$this->logger = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
+
 		$this->sut = new CreateSetupToken(
 			$this->request_data,
 			$this->tokens_endpoint,
-			$this->setup_token_binding
+			$this->setup_token_binding,
+			$this->logger
 		);
 
 		// Common WP stubs used by handle_request(). get_user_meta is intentionally
