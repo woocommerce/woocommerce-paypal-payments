@@ -12,8 +12,9 @@ Team reference for the custom Claude Code tooling in this repo: the slash-comman
 **Finishing your own change**
 
 1. Edit PHP. The hooks auto-run PHPCS and the cleanliness reviewer, and Claude applies the fixes.
-2. `/review-branch-before-pr` for the readiness gate.
-3. `/describe-pr` to draft and (on approval) publish the PR description.
+2. `/commit-loop` to split the changes into small commits.
+3. `/review-branch-before-pr` for the readiness gate.
+4. `/describe-pr` to draft and (on approval) publish the PR description.
 
 **Writing tests:** the test-writer agents own `tests/PHPUnit/`, `tests/integration/`, and the colocated Jest suites; the test rules route work to them automatically.
 
@@ -48,6 +49,14 @@ Run on a scope of code to make it easier to understand. Without a scope, it fall
 Prefers renaming over comments, and deletes, rewrites, or keeps each comment; it never only shortens one. Files over 400 lines are flagged for a possible split, never split automatically.
 
 Source: [skills/clean-up-code/SKILL.md](../skills/clean-up-code/SKILL.md)
+
+### `/commit-loop`
+
+Run when the work is done and the changes are uncommitted. Splits them into small, isolated units and stages one unit at a time, with a suggested commit message.
+
+You review and commit each unit by hand. Claude never commits, amends, or pushes, and does not run lint or tests unless you ask.
+
+Source: [skills/commit-loop/SKILL.md](../skills/commit-loop/SKILL.md)
 
 ### `/md-writer`
 
