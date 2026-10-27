@@ -53,7 +53,7 @@ Four behaviours of that class:
 - A failure arms a cool-down keyed on `sdk-client-token`; requests during it throw instead of reaching PayPal.
 - The domain comes from `home_url()`, not the request host, so a site whose `home_url()` disagrees with the host the buyer is on fails domain validation.
 
-[`ClientTokenEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Endpoint/ClientTokenEndpoint.php) exposes it behind a nonce. PayPal errors are logged with detail and answered with a generic message.
+[`ClientTokenEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Endpoint/ClientTokenEndpoint.php) exposes it to POST requests without a nonce. The token is browser-safe, bound to the domain and the same for every visitor, so a caller gets nothing a visitor's browser does not; at most it triggers the once-per-60-seconds rotation above. A nonce printed into a full-page cached page would expire while the cached copy is still served. While the plugin is not connected or token requests are paused, the endpoint answers 503 with `retry_in`, the seconds to wait, and logs at debug level only. PayPal errors are logged with detail and answered with a generic message.
 
 ### Token scope
 
@@ -100,6 +100,10 @@ The core bundle carries only `createInstance()` and `findEligibleMethods()`. Ses
 `loadSdkV6()` memoizes the instance promise on `window.__ppcpV6InstancePromise`, and [`loadScript()`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/resources/js/utils/scriptLoaders.js) memoizes per-URL promises on `window.__ppcpV6ScriptPromises`. Module scope would not do: each webpack bundle gets its own copy of the module, and the `ppcp-axo` bundle asking for Fastlane has to reuse the instance this module's bootstrap created, or the SDK script loads twice and its custom elements fail to register.
 
 Both caches clear their entry on failure so a retry can insert a fresh tag. A second caller of a failed load therefore sees the original error rather than a new attempt.
+
+A failed load is not retried at once. Many callers ask for the instance on DOM and cart events (the Pay Later messages `MutationObserver`, WooCommerce fragment and checkout updates, block cart changes), so `loadSdkV6()` keeps the failure on `window.__ppcpV6LoadFailure` and answers them with its error until a wait has passed: 5 seconds after the first failure, doubled per failure up to 60 seconds, and at least the `retry_in` the server sent. There is no attempt limit, so a page recovers from an outage of any length at no more than one request a minute, and only when a caller asks. Two 4xx answers in a row other than 408 and 429 stop the loads until the page is reloaded. An `online` event, or a `pageshow` that restores the page from the back/forward cache, ends a wait early.
+
+A failed token refresh is retried after `retry_in` while the current token is still valid, then after a wait that doubles per failure up to 300 seconds, with no attempt limit. Two 4xx answers in a row end the refreshes. A failing refresh is retried at once when the tab becomes visible or the browser is back online.
 
 Once the instance exists, `ppcp-sdk-v6-ready` fires once on `document` with the instance in `detail.sdkInstance`.
 

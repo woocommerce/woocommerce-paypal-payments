@@ -138,10 +138,7 @@ class AddPaymentMethodManagerTest extends TestCase
             ClientTokenEndpoint::ENDPOINT,
             $data['ajax']['client_token']['endpoint']
         );
-        $this->assertSame(
-            'nonce-' . ClientTokenEndpoint::nonce(),
-            $data['ajax']['client_token']['nonce']
-        );
+        $this->assertArrayNotHasKey('nonce', $data['ajax']['client_token']);
 
         $this->assertSame(
             CreateSetupToken::ENDPOINT,

@@ -8,7 +8,16 @@
  * @package
  */
 
+import { backoffDelay, isRetryable } from './utils/retry';
+
 const HANDLER_KEY = '__ppcpV6TokenRefresh';
+
+// The refresh is planned this long before the token expires; mirrors
+// ClientTokenEndpoint::REFRESH_BEFORE_EXPIRY.
+const REFRESH_BEFORE_EXPIRY_MS = 60000;
+const MAX_RETRY_SECONDS = 300;
+// After this many 4xx answers in a row the page stops refreshing.
+const MAX_REJECTIONS = 2;
 
 export class TokenRefreshHandler {
 	constructor() {
@@ -16,6 +25,11 @@ export class TokenRefreshHandler {
 		this.timer = null;
 		this.refreshAt = 0;
 		this.retryIn = undefined;
+		this.expiresAt = 0;
+		this.failing = false;
+		this.lateFailures = 0;
+		this.rejections = 0;
+		this.stopped = false;
 		this.refreshing = false;
 		this.busy = false;
 		this.pendingInstance = null;
@@ -24,7 +38,9 @@ export class TokenRefreshHandler {
 
 	/**
 	 * A background tab or a sleeping device delays timers, so a visible tab
-	 * also refreshes when the planned time has passed.
+	 * also refreshes when the planned time has passed. A failing refresh is
+	 * tried again at once when the tab becomes visible or the browser is back
+	 * online, rather than at the end of its wait.
 	 *
 	 * @param {Function} renewInstance - Resolves to { sdkInstance, tokenData }
 	 *                                 with a new token.
@@ -34,11 +50,17 @@ export class TokenRefreshHandler {
 		this.renewInstance = renewInstance;
 
 		document.addEventListener( 'visibilitychange', () => {
+			const due = this.refreshAt && Date.now() >= this.refreshAt;
 			if (
 				document.visibilityState === 'visible' &&
-				this.refreshAt &&
-				Date.now() >= this.refreshAt
+				( due || this.failing )
 			) {
+				this.refresh();
+			}
+		} );
+
+		window.addEventListener( 'online', () => {
+			if ( this.failing ) {
 				this.refresh();
 			}
 		} );
@@ -80,6 +102,7 @@ export class TokenRefreshHandler {
 	planNextRefresh( tokenData ) {
 		this.retryIn = tokenData.retry_in;
 		this.scheduleRefresh( tokenData.refresh_in );
+		this.expiresAt = this.refreshAt + REFRESH_BEFORE_EXPIRY_MS;
 	}
 
 	/**
@@ -97,14 +120,56 @@ export class TokenRefreshHandler {
 		this.timer = setTimeout( () => this.refresh(), delay );
 	}
 
+	/**
+	 * Plans no further refresh, also not on a visibility or online event.
+	 */
+	stop() {
+		clearTimeout( this.timer );
+		this.timer = null;
+		this.refreshAt = 0;
+		this.stopped = true;
+	}
+
+	/**
+	 * While the current token is still valid a failed refresh is retried after
+	 * retry_in; once it has expired, twice as long after each further failure,
+	 * up to MAX_RETRY_SECONDS, and never sooner than the server asks for.
+	 *
+	 * @param {Error} error - Why the refresh failed.
+	 * @return {number} Seconds until the next attempt.
+	 */
+	retryDelay( error ) {
+		let seconds = this.retryIn;
+		if ( Date.now() >= this.expiresAt ) {
+			this.lateFailures += 1;
+			seconds = backoffDelay(
+				this.lateFailures,
+				this.retryIn,
+				MAX_RETRY_SECONDS
+			);
+		}
+
+		return Math.max( seconds, Number( error?.retryIn ) || 0 );
+	}
+
+	/**
+	 * A failed refresh is retried without a limit, since the instance is
+	 * useless once its token expires. Only MAX_REJECTIONS 4xx answers in a row,
+	 * such as a firewall that blocks the endpoint, end the refreshes.
+	 */
 	async refresh() {
-		if ( this.refreshing ) {
+		if ( this.refreshing || this.stopped ) {
 			return;
 		}
 		this.refreshing = true;
+		// Whatever triggered this attempt, it replaces the planned one.
+		clearTimeout( this.timer );
 
 		try {
 			const { sdkInstance, tokenData } = await this.renewInstance();
+			this.failing = false;
+			this.lateFailures = 0;
+			this.rejections = 0;
 			this.planNextRefresh( tokenData );
 
 			if ( this.busy ) {
@@ -115,7 +180,14 @@ export class TokenRefreshHandler {
 		} catch ( error ) {
 			// eslint-disable-next-line no-console
 			console.error( '[PPCP SDK v6] Client token refresh failed', error );
-			this.scheduleRefresh( this.retryIn );
+			this.failing = true;
+			this.rejections = isRetryable( error ) ? 0 : this.rejections + 1;
+
+			if ( this.rejections >= MAX_REJECTIONS ) {
+				this.stop();
+			} else {
+				this.scheduleRefresh( this.retryDelay( error ) );
+			}
 		} finally {
 			this.refreshing = false;
 		}

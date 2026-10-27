@@ -173,7 +173,6 @@ class AddPaymentMethodManager {
 			'ajax'                 => array(
 				'client_token'         => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ClientTokenEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( ClientTokenEndpoint::nonce() ),
 				),
 				'create_setup_token'   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),

@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SdkV6\Blocks\V6PaymentMethod;
+use WooCommerce\PayPalCommerce\SdkV6\Endpoint\ClientTokenEndpoint;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ApplePayConfig;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\ButtonStyleMapper;
 use WooCommerce\PayPalCommerce\SdkV6\Helper\CardFieldStyles;
@@ -1973,6 +1974,22 @@ class SdkV6ManagerTest extends TestCase
         $data   = $testee->script_data();
 
         $this->assertSame('SCA_ALWAYS', $data['verification_method']);
+    }
+
+    /**
+     * GIVEN a page whose HTML a full-page cache may keep for longer than a nonce lives
+     * WHEN the SDK bootstrap data is generated
+     * THEN the client token endpoint is printed without a nonce
+     */
+    public function testScriptDataPrintsTheClientTokenEndpointWithoutANonce(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        when('wp_create_nonce')->alias(static fn (string $action) => 'nonce-' . $action);
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame(ClientTokenEndpoint::ENDPOINT, $data['ajax']['client_token']['endpoint']);
+        $this->assertArrayNotHasKey('nonce', $data['ajax']['client_token']);
     }
 
     /**

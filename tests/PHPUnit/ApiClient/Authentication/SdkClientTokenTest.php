@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\TokenUnavailableException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
@@ -233,24 +234,49 @@ class SdkClientTokenTest extends TestCase
         ];
     }
 
+    /**
+     * GIVEN a store without PayPal credentials and no cached token
+     * WHEN a client token is requested
+     * THEN PayPal is not asked
+     * AND the failure says the token is unavailable and to ask again in 300 seconds
+     */
     public function testEmptyCredentialsShortCircuit()
     {
         $this->credentials->shouldReceive('is_empty')->andReturn(true);
 
         expect('wp_remote_get')->never();
 
-        $this->expectException(RuntimeException::class);
-        $this->sut->sdk_client_token();
+        $exception = $this->catchTokenUnavailable();
+        $this->assertSame(300, $exception->retry_after());
     }
 
+    /**
+     * GIVEN token requests paused for 60 more seconds and no cached token
+     * WHEN a client token is requested
+     * THEN PayPal is not asked
+     * AND the failure says the token is unavailable for the remaining 60 seconds
+     */
     public function testBlockedReturnsFastWithoutRequest()
     {
         $this->retryAfter = 60;
 
         expect('wp_remote_get')->never();
 
-        $this->expectException(RuntimeException::class);
-        $this->sut->sdk_client_token();
+        $exception = $this->catchTokenUnavailable();
+        $this->assertSame(60, $exception->retry_after());
+    }
+
+    private function catchTokenUnavailable(): TokenUnavailableException
+    {
+        try {
+            $this->sut->sdk_client_token();
+        } catch (TokenUnavailableException $exception) {
+            $this->assertInstanceOf(RuntimeException::class, $exception);
+
+            return $exception;
+        }
+
+        $this->fail('Expected a TokenUnavailableException.');
     }
 
     public function test429RegistersFailureAndThrows()
