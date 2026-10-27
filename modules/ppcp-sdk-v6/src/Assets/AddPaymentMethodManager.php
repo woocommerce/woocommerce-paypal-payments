@@ -46,6 +46,7 @@ class AddPaymentMethodManager {
 	private SettingsProvider $settings_provider;
 
 	private CardFieldStyles $card_field_styles;
+	private string $bn_code;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -55,7 +56,8 @@ class AddPaymentMethodManager {
 		bool $paypal_vaulting_enabled,
 		bool $card_vaulting_enabled,
 		SettingsProvider $settings_provider,
-		CardFieldStyles $card_field_styles
+		CardFieldStyles $card_field_styles,
+		string $bn_code
 	) {
 		$this->asset_getter            = $asset_getter;
 		$this->version                 = $version;
@@ -65,6 +67,7 @@ class AddPaymentMethodManager {
 		$this->card_vaulting_enabled   = $card_vaulting_enabled;
 		$this->settings_provider       = $settings_provider;
 		$this->card_field_styles       = $card_field_styles;
+		$this->bn_code                 = $bn_code;
 	}
 
 	/**
@@ -153,6 +156,7 @@ class AddPaymentMethodManager {
 			'sdk_url'              => $base_url . '/web-sdk/v6/core',
 			'currency'             => get_woocommerce_currency(),
 			'locale'               => SdkLocale::from_wp_locale( get_locale() ),
+			'bn_code'              => $this->bn_code,
 			'verification_method'  => $verification_method,
 			'payment_methods_page' => wc_get_account_endpoint_url( 'payment-methods' ),
 			'button'               => array(
