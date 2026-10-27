@@ -14,7 +14,6 @@ import { releaseCartShipping } from '../endpointsAdapter';
 import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { handleError } from '../utils/errorHandler';
-import { setSdkBusy } from '../tokenRefresh';
 import { loadGoogleSdk } from '../utils/scriptLoaders';
 import { revealMethodGateway } from '../methods/gatewayPlacement';
 import { renderIsObsolete } from '../methods/renderOverrides';
@@ -149,7 +148,6 @@ export async function renderGooglePay( {
 			return;
 		}
 		paying = true;
-		setSdkBusy( true );
 
 		// Claims the surface's express UI; onSheetClosed() releases it again.
 		overrides.onClick?.();
@@ -221,7 +219,6 @@ export async function renderGooglePay( {
 			overrides.onSheetClosed?.();
 		} finally {
 			paying = false;
-			setSdkBusy( false );
 			spinner?.unblock();
 		}
 	}

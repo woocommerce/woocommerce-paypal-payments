@@ -2,11 +2,6 @@
 // resolve; the button click path is not exercised here.
 jest.mock( '../utils/errorHandler', () => ( { handleError: jest.fn() } ) );
 
-const mockSetSdkBusy = jest.fn();
-jest.mock( '../tokenRefresh', () => ( {
-	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
-} ) );
-
 import {
 	createMethodButton,
 	createPreviewButton,
@@ -15,16 +10,11 @@ import {
 
 const noop = () => {};
 
-const isSdkBusy = () => mockSetSdkBusy.mock.calls.at( -1 )?.[ 0 ] === true;
 const flush = () => new Promise( ( resolve ) => setTimeout( resolve, 0 ) );
-
-beforeEach( () => {
-	mockSetSdkBusy.mockClear();
-} );
 
 describe( 'a click on a rendered button', () => {
 	test.each( [ 'paypal', 'venmo', 'paylater' ] )(
-		'a %s button holds a pending SDK swap while the flow runs, and leaves the release to the session callbacks',
+		'a %s button starts the session',
 		async ( method ) => {
 			const session = { start: jest.fn().mockResolvedValue( undefined ) };
 			const button = createMethodButton( {
@@ -36,35 +26,13 @@ describe( 'a click on a rendered button', () => {
 			} );
 
 			button.click();
-			expect( isSdkBusy() ).toBe( true );
-
 			await flush();
-			expect( isSdkBusy() ).toBe( true );
+
+			expect( session.start ).toHaveBeenCalledTimes( 1 );
 		}
 	);
 
-	test.each( [ 'paypal', 'venmo', 'paylater' ] )(
-		'a %s button releases the pending SDK swap when session.start() rejects',
-		async ( method ) => {
-			const session = {
-				start: jest.fn().mockRejectedValue( new Error( 'no popup' ) ),
-			};
-			const button = createMethodButton( {
-				method,
-				styles: {},
-				session,
-				createOrderFn: noop,
-				payLaterDetails: { productCode: 'PAYLATER' },
-			} );
-
-			button.click();
-			await flush();
-
-			expect( isSdkBusy() ).toBe( false );
-		}
-	);
-
-	test( 'releases the pending SDK swap when the onClick hook throws', async () => {
+	test( 'does not start the session when the onClick hook throws', async () => {
 		const session = { start: jest.fn() };
 		const button = createMethodButton( {
 			method: 'paypal',
@@ -79,7 +47,6 @@ describe( 'a click on a rendered button', () => {
 		button.click();
 		await flush();
 
-		expect( isSdkBusy() ).toBe( false );
 		expect( session.start ).not.toHaveBeenCalled();
 	} );
 } );

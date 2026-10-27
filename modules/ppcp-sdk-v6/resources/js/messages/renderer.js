@@ -10,7 +10,6 @@
  */
 
 import { loadSdkV6 } from '../sdkLoader';
-import { onSdkInstanceChange } from '../tokenRefresh';
 
 const MESSAGE_TAG_NAME = 'paypal-message';
 
@@ -261,21 +260,6 @@ function fetchMessage( element ) {
 }
 
 /**
- * Rendered content stays; only the next fetch uses the new client token, so a
- * token refresh shows no loading state.
- *
- * @param {Object} sdk    - The SDK instance.
- * @param {Object} config - The wc_ppcp_sdk_v6 config object.
- */
-function setMessagesInstance( sdk, config ) {
-	// Otherwise every old instance also opens the learn-more popup on a click.
-	messagesInstance?.learnMore?.detachDefaultListener();
-	messagesInstance = sdk.createPayPalMessages( {
-		currencyCode: config.currency,
-	} );
-}
-
-/**
  * Fills every unclaimed placeholder with a message, once.
  *
  * The SDK is only loaded when there is something to render, so a page with no
@@ -304,10 +288,9 @@ export async function renderMessages( config, sdkPageType ) {
 		const sdk = await loadSdkV6( config, sdkPageType );
 
 		if ( ! messagesInstance ) {
-			setMessagesInstance( sdk, config );
-			onSdkInstanceChange( ( nextSdk ) =>
-				setMessagesInstance( nextSdk, config )
-			);
+			messagesInstance = sdk.createPayPalMessages( {
+				currencyCode: config.currency,
+			} );
 		}
 
 		const amount = currentAmount( config );

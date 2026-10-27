@@ -13,7 +13,6 @@
  */
 
 import { loadSdkV6 } from './sdkLoader';
-import { onSdkInstanceChange } from './tokenRefresh';
 import { checkEligibility } from './eligibility';
 import {
 	createSession,
@@ -23,7 +22,6 @@ import { renderButtons } from './components/buttonRenderer';
 import { renderMethods } from './methods/renderMethods';
 import {
 	isMethodEnabled,
-	methodConfig,
 	MERCHANT_PRESENTED_METHODS,
 } from './methods/methodRegistry';
 import { FundingSources } from './utils/fundingSources';
@@ -482,19 +480,6 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		}
 	}
 
-	function renderWithNewSessions() {
-		discardSessions( [
-			...targets.map( ( target ) => target.wrapperSelector ),
-			...MERCHANT_PRESENTED_METHODS.map(
-				( method ) => methodConfig( config, method )?.gateway?.wrapper
-			),
-			config.card_button?.row && config.card_button.wrapper,
-		] );
-
-		renderAll();
-		initCardButtonSafely();
-	}
-
 	function initialRender() {
 		renderAll();
 		initCardFieldsSafely();
@@ -503,7 +488,6 @@ const ELIGIBILITY_REFRESH_DEBOUNCE_MS = 300;
 		trackProductTotal();
 		initProductButtonGate( config );
 		placeExpressButtons( config );
-		onSdkInstanceChange( renderWithNewSessions );
 		onBlockCartTotalChange( refreshEligibilityDebounced );
 	}
 

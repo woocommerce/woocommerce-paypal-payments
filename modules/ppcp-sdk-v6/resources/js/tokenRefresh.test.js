@@ -1,28 +1,15 @@
-import {
-	TokenRefreshHandler,
-	startTokenRefresh,
-	onSdkInstanceChange,
-	setSdkBusy,
-	releasingSdkBusy,
-} from './tokenRefresh';
+import { TokenRefreshHandler, startTokenRefresh } from './tokenRefresh';
 
 const REFRESH_IN = 240;
 const RETRY_IN = 15;
 const REFRESH_MS = REFRESH_IN * 1000;
 const RETRY_MS = RETRY_IN * 1000;
 
-const sdk2 = { name: 'sdk2' };
-const sdk3 = { name: 'sdk3' };
-
 const tokenData = ( overrides = {} ) => ( {
+	client_token: 'TOKEN',
 	refresh_in: REFRESH_IN,
 	retry_in: RETRY_IN,
 	...overrides,
-} );
-
-const renewed = ( sdkInstance, overrides = {} ) => ( {
-	sdkInstance,
-	tokenData: tokenData( overrides ),
 } );
 
 const setVisibility = ( state ) =>
@@ -34,11 +21,13 @@ const setVisibility = ( state ) =>
 const tick = ( ms ) => jest.advanceTimersByTimeAsync( ms );
 
 let visibilityListeners;
+let sdkInstance;
 
 beforeEach( () => {
 	jest.useFakeTimers();
 	setVisibility( 'visible' );
 	delete window.__ppcpV6TokenRefresh;
+	sdkInstance = { updateClientToken: jest.fn() };
 
 	// The handler never removes its visibilitychange listener, so listeners of
 	// earlier tests would fire refreshes in later ones.
@@ -71,45 +60,49 @@ describe( 'TokenRefreshHandler', () => {
 	} );
 
 	describe( 'start()', () => {
-		test( 'notifies subscribers with the renewed instance after refresh_in', async () => {
-			const renewInstance = jest.fn().mockResolvedValue( renewed( sdk2 ) );
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
+		test( 'updates the instance with the fetched token after refresh_in', async () => {
+			const fetchTokenData = jest
+				.fn()
+				.mockResolvedValue( tokenData( { client_token: 'NEW' } ) );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
 
 			await tick( REFRESH_MS - 1 );
-			expect( listener ).not.toHaveBeenCalled();
+			expect( sdkInstance.updateClientToken ).not.toHaveBeenCalled();
 
 			await tick( 1 );
-			expect( listener ).toHaveBeenCalledWith( sdk2 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith(
+				'NEW'
+			);
 		} );
 
-		test( 'plans the next refresh from the refresh_in of the renewed token', async () => {
-			const renewInstance = jest
+		test( 'plans the next refresh from the refresh_in of the new token', async () => {
+			const fetchTokenData = jest
 				.fn()
-				.mockResolvedValueOnce( renewed( sdk2, { refresh_in: 60 } ) )
-				.mockResolvedValueOnce( renewed( sdk3 ) );
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
+				.mockResolvedValueOnce(
+					tokenData( { client_token: 'T2', refresh_in: 60 } )
+				)
+				.mockResolvedValueOnce( tokenData( { client_token: 'T3' } ) );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
 			await tick( REFRESH_MS );
-			expect( listener ).toHaveBeenCalledTimes( 1 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledTimes( 1 );
 
 			await tick( 60000 - 1 );
-			expect( listener ).toHaveBeenCalledTimes( 1 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledTimes( 1 );
 
 			await tick( 1 );
-			expect( listener ).toHaveBeenCalledTimes( 2 );
-			expect( listener ).toHaveBeenLastCalledWith( sdk3 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledTimes( 2 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenLastCalledWith(
+				'T3'
+			);
 		} );
 
 		test( 'plans no refresh when the token data gives no refresh_in', async () => {
-			const renewInstance = jest.fn().mockResolvedValue( renewed( sdk2 ) );
-			handler.start( renewInstance, {} );
+			const fetchTokenData = jest.fn().mockResolvedValue( tokenData() );
+			handler.start( sdkInstance, fetchTokenData, {} );
 
 			await tick( 24 * 60 * 60 * 1000 );
 
-			expect( renewInstance ).not.toHaveBeenCalled();
+			expect( sdkInstance.updateClientToken ).not.toHaveBeenCalled();
 		} );
 	} );
 
@@ -134,10 +127,8 @@ describe( 'TokenRefreshHandler', () => {
 				expectedCalls: 0,
 			},
 		] )( '$name', async ( { state, elapsed, expectedCalls } ) => {
-			const renewInstance = jest.fn().mockResolvedValue( renewed( sdk2 ) );
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
+			const fetchTokenData = jest.fn().mockResolvedValue( tokenData() );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
 
 			// Moves the clock without firing the timer, like a sleeping device.
 			jest.setSystemTime( Date.now() + elapsed );
@@ -145,107 +136,28 @@ describe( 'TokenRefreshHandler', () => {
 			document.dispatchEvent( new Event( 'visibilitychange' ) );
 			await tick( 0 );
 
-			expect( listener ).toHaveBeenCalledTimes( expectedCalls );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledTimes(
+				expectedCalls
+			);
 		} );
 
-		test( 'creates only one new instance when several triggers overlap', async () => {
+		test( 'fetches only once when several triggers overlap', async () => {
 			let release;
-			const renewInstance = jest.fn().mockReturnValue(
+			const fetchTokenData = jest.fn().mockReturnValue(
 				new Promise( ( resolve ) => {
 					release = resolve;
 				} )
 			);
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
 
 			jest.setSystemTime( Date.now() + REFRESH_MS );
 			document.dispatchEvent( new Event( 'visibilitychange' ) );
 			document.dispatchEvent( new Event( 'visibilitychange' ) );
-			release( renewed( sdk2 ) );
+			release( tokenData() );
 			await tick( 0 );
 
-			expect( listener ).toHaveBeenCalledTimes( 1 );
-			expect( renewInstance ).toHaveBeenCalledTimes( 1 );
-		} );
-	} );
-
-	describe( 'subscribe()', () => {
-		test( 'stops notifying a subscriber after the returned function ran', async () => {
-			const renewInstance = jest.fn().mockResolvedValue( renewed( sdk2 ) );
-			const removed = jest.fn();
-			const kept = jest.fn();
-			const unsubscribe = handler.subscribe( removed );
-			handler.subscribe( kept );
-			handler.start( renewInstance, tokenData() );
-
-			unsubscribe();
-			await tick( REFRESH_MS );
-
-			expect( removed ).not.toHaveBeenCalled();
-			expect( kept ).toHaveBeenCalledWith( sdk2 );
-		} );
-	} );
-
-	describe( 'setBusy()', () => {
-		test( 'holds the renewed instance until busy ends, then notifies once with it', async () => {
-			const renewInstance = jest.fn().mockResolvedValue( renewed( sdk2 ) );
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
-
-			handler.setBusy( true );
-			await tick( REFRESH_MS );
-			expect( listener ).not.toHaveBeenCalled();
-
-			handler.setBusy( false );
-			expect( listener ).toHaveBeenCalledTimes( 1 );
-			expect( listener ).toHaveBeenCalledWith( sdk2 );
-
-			handler.setBusy( false );
-			expect( listener ).toHaveBeenCalledTimes( 1 );
-		} );
-
-		test( 'notifies at once when the refresh completes after busy ended', async () => {
-			const renewInstance = jest.fn().mockResolvedValue( renewed( sdk2 ) );
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
-
-			handler.setBusy( true );
-			handler.setBusy( false );
-			await tick( REFRESH_MS );
-
-			expect( listener ).toHaveBeenCalledWith( sdk2 );
-		} );
-
-		test( 'notifies nobody when busy ends without a refresh in between', () => {
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( jest.fn(), tokenData() );
-
-			handler.setBusy( true );
-			handler.setBusy( false );
-
-			expect( listener ).not.toHaveBeenCalled();
-		} );
-
-		test( 'keeps only the latest renewed instance when several refreshes finish while busy', async () => {
-			const renewInstance = jest
-				.fn()
-				.mockResolvedValueOnce( renewed( sdk2 ) )
-				.mockResolvedValueOnce( renewed( sdk3 ) );
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
-
-			handler.setBusy( true );
-			await tick( REFRESH_MS );
-			await tick( REFRESH_MS );
-			handler.setBusy( false );
-
-			expect( listener ).toHaveBeenCalledTimes( 1 );
-			expect( listener ).toHaveBeenCalledWith( sdk3 );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledTimes( 1 );
 		} );
 	} );
 
@@ -253,200 +165,108 @@ describe( 'TokenRefreshHandler', () => {
 		// Required here, not imported: the helper registers hooks on load, and an import would silence the whole file.
 		require( '@ppcp-test/helpers/silenceConsole' );
 
-		test( 'notifies nobody after a failed refresh and tries again after retry_in', async () => {
-			const renewInstance = jest
+		test( 'tries again after retry_in when the fetch rejects', async () => {
+			const fetchTokenData = jest
 				.fn()
 				.mockRejectedValueOnce( new Error( 'token endpoint down' ) )
-				.mockResolvedValueOnce( renewed( sdk2 ) );
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
+				.mockResolvedValueOnce( tokenData( { client_token: 'NEW' } ) );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
 
 			await tick( REFRESH_MS );
-			expect( listener ).not.toHaveBeenCalled();
+			expect( sdkInstance.updateClientToken ).not.toHaveBeenCalled();
 
 			await tick( RETRY_MS - 1 );
-			expect( listener ).not.toHaveBeenCalled();
+			expect( sdkInstance.updateClientToken ).not.toHaveBeenCalled();
 
 			await tick( 1 );
-			expect( listener ).toHaveBeenCalledWith( sdk2 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith(
+				'NEW'
+			);
+		} );
+
+		test( 'stops refreshing when updateClientToken throws', async () => {
+			sdkInstance.updateClientToken.mockImplementation( () => {
+				throw new Error( 'invalid JWT' );
+			} );
+			const fetchTokenData = jest.fn().mockResolvedValue( tokenData() );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
+
+			await tick( REFRESH_MS );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
+
+			await tick( RETRY_MS );
+			await tick( REFRESH_MS * 10 );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'does not refresh on a later visibilitychange after updateClientToken throws', async () => {
+			sdkInstance.updateClientToken.mockImplementation( () => {
+				throw new Error( 'invalid JWT' );
+			} );
+			const fetchTokenData = jest.fn().mockResolvedValue( tokenData() );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
+			await tick( REFRESH_MS );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
+
+			jest.setSystemTime( Date.now() + REFRESH_MS * 10 );
+			setVisibility( 'visible' );
+			document.dispatchEvent( new Event( 'visibilitychange' ) );
+			await tick( 0 );
+
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
 		} );
 
 		test( 'keeps retrying after retry_in on repeated failures', async () => {
-			const renewInstance = jest
+			const fetchTokenData = jest
 				.fn()
 				.mockRejectedValueOnce( new Error( 'down' ) )
 				.mockRejectedValueOnce( new Error( 'down' ) )
-				.mockResolvedValueOnce( renewed( sdk2 ) );
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
+				.mockResolvedValueOnce( tokenData( { client_token: 'NEW' } ) );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
 
 			await tick( REFRESH_MS );
 			await tick( RETRY_MS );
-			expect( listener ).not.toHaveBeenCalled();
+			expect( sdkInstance.updateClientToken ).not.toHaveBeenCalled();
 
 			await tick( RETRY_MS );
-			expect( listener ).toHaveBeenCalledWith( sdk2 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith(
+				'NEW'
+			);
 		} );
 
 		test( 'uses the retry_in of the latest response after a successful refresh', async () => {
-			const renewInstance = jest
+			const fetchTokenData = jest
 				.fn()
-				.mockResolvedValueOnce( renewed( sdk2, { retry_in: 5 } ) )
+				.mockResolvedValueOnce( tokenData( { retry_in: 5 } ) )
 				.mockRejectedValueOnce( new Error( 'down' ) )
-				.mockResolvedValueOnce( renewed( sdk3 ) );
-			const listener = jest.fn();
-			handler.subscribe( listener );
-			handler.start( renewInstance, tokenData() );
+				.mockResolvedValueOnce( tokenData() );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
 			await tick( REFRESH_MS );
-			expect( listener ).toHaveBeenCalledTimes( 1 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledTimes( 1 );
 
 			await tick( REFRESH_MS );
 			await tick( 5000 - 1 );
-			expect( listener ).toHaveBeenCalledTimes( 1 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledTimes( 1 );
 
 			await tick( 1 );
-			expect( listener ).toHaveBeenCalledTimes( 2 );
-		} );
-
-		test( 'still notifies the other subscribers when one subscriber throws', async () => {
-			const renewInstance = jest.fn().mockResolvedValue( renewed( sdk2 ) );
-			const after = jest.fn();
-			handler.subscribe( () => {
-				throw new Error( 'subscriber failed' );
-			} );
-			handler.subscribe( after );
-			handler.start( renewInstance, tokenData() );
-
-			await tick( REFRESH_MS );
-
-			expect( after ).toHaveBeenCalledWith( sdk2 );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledTimes( 2 );
 		} );
 	} );
 } );
 
-describe( 'page-wide handler', () => {
-	test( 'delivers the renewed instance to subscribers of onSdkInstanceChange()', async () => {
-		const listener = jest.fn();
-		onSdkInstanceChange( listener );
+describe( 'startTokenRefresh()', () => {
+	test( 'refreshes the instance through the page-wide handler', async () => {
 		startTokenRefresh(
-			jest.fn().mockResolvedValue( renewed( sdk2 ) ),
+			sdkInstance,
+			jest.fn().mockResolvedValue( tokenData( { client_token: 'NEW' } ) ),
 			tokenData()
 		);
 
 		await tick( REFRESH_MS );
 
-		expect( listener ).toHaveBeenCalledWith( sdk2 );
-	} );
-
-	test( 'stops notifying a subscriber after the function from onSdkInstanceChange() ran', async () => {
-		const removed = jest.fn();
-		const kept = jest.fn();
-		const unsubscribe = onSdkInstanceChange( removed );
-		onSdkInstanceChange( kept );
-		startTokenRefresh(
-			jest.fn().mockResolvedValue( renewed( sdk2 ) ),
-			tokenData()
+		expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith( 'NEW' );
+		expect( window.__ppcpV6TokenRefresh ).toBeInstanceOf(
+			TokenRefreshHandler
 		);
-
-		unsubscribe();
-		await tick( REFRESH_MS );
-
-		expect( removed ).not.toHaveBeenCalled();
-		expect( kept ).toHaveBeenCalledWith( sdk2 );
-	} );
-
-	test( 'holds the renewed instance while setSdkBusy( true ) is in effect', async () => {
-		const listener = jest.fn();
-		onSdkInstanceChange( listener );
-		startTokenRefresh(
-			jest.fn().mockResolvedValue( renewed( sdk2 ) ),
-			tokenData()
-		);
-
-		setSdkBusy( true );
-		await tick( REFRESH_MS );
-		expect( listener ).not.toHaveBeenCalled();
-
-		setSdkBusy( false );
-		expect( listener ).toHaveBeenCalledWith( sdk2 );
-	} );
-
-} );
-
-describe( 'releasingSdkBusy()', () => {
-	async function holdRenewedInstance() {
-		const listener = jest.fn();
-		onSdkInstanceChange( listener );
-		startTokenRefresh(
-			jest.fn().mockResolvedValue( renewed( sdk2 ) ),
-			tokenData()
-		);
-
-		setSdkBusy( true );
-		await tick( REFRESH_MS );
-
-		return listener;
-	}
-
-	test( 'hands the new instance to subscribers only after the callback resolved, and keeps its result', async () => {
-		const listener = await holdRenewedInstance();
-		let finish;
-		const { onApprove } = releasingSdkBusy( {
-			onApprove: () =>
-				new Promise( ( resolve ) => {
-					finish = resolve;
-				} ),
-		} );
-
-		const result = onApprove();
-		await Promise.resolve();
-		expect( listener ).not.toHaveBeenCalled();
-
-		finish( 'callback result' );
-
-		await expect( result ).resolves.toBe( 'callback result' );
-		expect( listener ).toHaveBeenCalledTimes( 1 );
-		expect( listener ).toHaveBeenCalledWith( sdk2 );
-	} );
-
-	test( 'hands the new instance to subscribers after the callback threw, and rejects with the same error', async () => {
-		const listener = await holdRenewedInstance();
-		const failure = new Error( 'callback failed' );
-
-		const { onError } = releasingSdkBusy( {
-			onError: () => {
-				throw failure;
-			},
-		} );
-
-		await expect( onError() ).rejects.toBe( failure );
-		expect( listener ).toHaveBeenCalledWith( sdk2 );
-	} );
-
-	test.each( [ 'onApprove', 'onCancel', 'onError' ] )(
-		'releases busy after %s and passes its arguments on',
-		async ( name ) => {
-			const listener = await holdRenewedInstance();
-			const callback = jest.fn().mockResolvedValue( 'ok' );
-			const config = releasingSdkBusy( { [ name ]: callback } );
-
-			await expect( config[ name ]( 'a', 'b' ) ).resolves.toBe( 'ok' );
-			expect( callback ).toHaveBeenCalledWith( 'a', 'b' );
-			expect( listener ).toHaveBeenCalledWith( sdk2 );
-		}
-	);
-
-	test( 'returns the same config, leaves other keys untouched and adds no missing callback', () => {
-		const onShippingAddressChange = jest.fn();
-		const config = { onShippingAddressChange, onApprove: jest.fn() };
-
-		const result = releasingSdkBusy( config );
-
-		expect( result ).toBe( config );
-		expect( result.onShippingAddressChange ).toBe( onShippingAddressChange );
-		expect( result ).not.toHaveProperty( 'onCancel' );
-		expect( result ).not.toHaveProperty( 'onError' );
 	} );
 } );
