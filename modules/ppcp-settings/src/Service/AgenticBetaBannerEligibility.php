@@ -69,6 +69,10 @@ class AgenticBetaBannerEligibility {
 		return $result;
 	}
 
+	private function is_eligible_country( string $country ): bool {
+		return in_array( $country, self::ELIGIBLE_COUNTRIES, true );
+	}
+
 	private function has_eligible_shipping_zone(): bool {
 		$rest_of_world_zone = new \WC_Shipping_Zone( 0 );
 		if ( ! empty( $rest_of_world_zone->get_shipping_methods( true ) ) ) {
@@ -95,10 +99,6 @@ class AgenticBetaBannerEligibility {
 		}
 
 		return false;
-	}
-
-	private function is_eligible_country( string $country ): bool {
-		return in_array( $country, self::ELIGIBLE_COUNTRIES, true );
 	}
 
 	private function is_eligible_location( \stdClass $location ): bool {
