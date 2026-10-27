@@ -78,6 +78,11 @@ class SdkV6Manager
      * The contexts that print a payment-method radio list a method can own a row in.
      */
     private const CONTEXTS_WITH_GATEWAY_ROWS = array('checkout', 'pay-now');
+    /**
+     * PayPal-specific country codes mapped to the ISO 3166-1 code the wallet
+     * APIs (ApplePaySession, Google Pay) accept.
+     */
+    private const PAYPAL_TO_ISO_COUNTRY = array('C2' => 'CN');
     // Existing WC credit-card-form field IDs the v6 card fields mount into; see
     // CardFieldsModule's woocommerce_credit_card_form_fields filter.
     private const CARD_FIELD_NUMBER_ID = 'ppcp-credit-card-gateway-card-number';
@@ -1038,7 +1043,7 @@ class SdkV6Manager
             'currency' => get_woocommerce_currency(),
             'amount' => $this->transaction_amount(),
             'buyer_country' => $buyer_country,
-            'merchant_country' => $this->merchant_country,
+            'merchant_country' => $this->iso_merchant_country(),
             'locale' => SdkLocale::from_wp_locale(get_locale()),
             'bn_code' => $this->bn_code,
             'vaulting_enabled' => $this->vaulting_enabled,
@@ -1317,6 +1322,14 @@ class SdkV6Manager
         }
         $countries = WC()->countries;
         return $countries ? array_keys($countries->get_shipping_countries()) : array();
+    }
+    /**
+     * The merchant country as an ISO 3166-1 code. The raw PayPal value (e.g. `C2`
+     * for China) stays as-is elsewhere, since eligibility lists match on it.
+     */
+    private function iso_merchant_country(): string
+    {
+        return self::PAYPAL_TO_ISO_COUNTRY[$this->merchant_country] ?? $this->merchant_country;
     }
     /**
      * The amount eligibility is checked against, which moves Pay Later
