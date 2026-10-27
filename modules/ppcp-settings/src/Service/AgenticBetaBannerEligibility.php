@@ -70,8 +70,8 @@ class AgenticBetaBannerEligibility {
 	}
 
 	private function has_eligible_shipping_zone(): bool {
-		$default_zone = new \WC_Shipping_Zone( 0 );
-		if ( ! empty( $default_zone->get_shipping_methods( true ) ) ) {
+		$rest_of_world_zone = new \WC_Shipping_Zone( 0 );
+		if ( ! empty( $rest_of_world_zone->get_shipping_methods( true ) ) ) {
 			return true;
 		}
 
