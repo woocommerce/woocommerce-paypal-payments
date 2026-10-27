@@ -21,6 +21,7 @@ class AgenticBetaBannerEligibility {
 	private const REQUIRED_ORDER_COUNT   = 50;
 	private const ORDER_LOOKBACK_DAYS    = 90;
 	private const TRANSIENT_KEY          = 'ppcp_agentic_banner_base_eligible';
+	private const ELIGIBLE_COUNTRIES     = array( 'US' );
 
 	private GeneralSettings $general_settings;
 	private string $store_country;
@@ -57,8 +58,9 @@ class AgenticBetaBannerEligibility {
 
 	/**
 	 * Returns true when the store-level conditions are met: PHP >= 8.1, merchant
-	 * connected, US store with a US shipping zone, and sufficient product/order
-	 * counts. The result is cached for 10 minutes to avoid repeated DB queries.
+	 * connected, merchant and store in an eligible country, a US shipping zone,
+	 * and sufficient product/order counts. The result is cached for 10 minutes
+	 * to avoid repeated DB queries.
 	 *
 	 * @return bool
 	 */
@@ -73,7 +75,8 @@ class AgenticBetaBannerEligibility {
 		}
 
 		$result = $this->general_settings->is_merchant_connected()
-			&& $this->store_country === 'US'
+			&& $this->is_eligible_country( $this->general_settings->get_merchant_data()->merchant_country )
+			&& $this->is_eligible_country( $this->store_country )
 			&& $this->has_us_shipping_zone()
 			&& $this->has_enough_products()
 			&& $this->has_enough_recent_orders();
@@ -119,6 +122,10 @@ class AgenticBetaBannerEligibility {
 		}
 
 		return false;
+	}
+
+	private function is_eligible_country( string $country ): bool {
+		return in_array( $country, self::ELIGIBLE_COUNTRIES, true );
 	}
 
 	/**
