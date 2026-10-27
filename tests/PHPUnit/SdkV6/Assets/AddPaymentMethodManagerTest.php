@@ -40,7 +40,8 @@ class AddPaymentMethodManagerTest extends TestCase
 
     private function createTestee(
         bool $paypal_vaulting_enabled = false,
-        bool $card_vaulting_enabled = false
+        bool $card_vaulting_enabled = false,
+        string $bn_code = 'Woo_PPCP'
     ): AddPaymentMethodManager {
         return new AddPaymentMethodManager(
             $this->asset_getter,
@@ -50,7 +51,8 @@ class AddPaymentMethodManagerTest extends TestCase
             $paypal_vaulting_enabled,
             $card_vaulting_enabled,
             $this->settings_provider,
-            $this->card_field_styles
+            $this->card_field_styles,
+            $bn_code
         );
     }
 
