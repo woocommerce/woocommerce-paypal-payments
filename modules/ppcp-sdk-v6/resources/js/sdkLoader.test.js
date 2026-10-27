@@ -287,6 +287,26 @@ describe( 'loadSdkV6', () => {
 		expect( firstId ).toEqual( expect.any( String ) );
 		expect( secondId ).toBe( firstId );
 	} );
+
+	test( 'passes config.bn_code as partnerAttributionId', async () => {
+		await loadSdkV6( baseConfig( { bn_code: 'Woo_PPCP' } ), 'checkout' );
+
+		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
+			expect.objectContaining( { partnerAttributionId: 'Woo_PPCP' } )
+		);
+	} );
+
+	test.each( [
+		[ 'bn_code is missing', {} ],
+		[ 'bn_code is an empty string', { bn_code: '' } ],
+	] )( 'omits partnerAttributionId when %s', async ( label, overrides ) => {
+		await loadSdkV6( baseConfig( overrides ), 'checkout' );
+
+		expect(
+			window.paypal.createInstance.mock.calls[ 0 ][ 0 ]
+		).not.toHaveProperty( 'partnerAttributionId' );
+	} );
+
 	describe( 'load timeout', () => {
 		const TIMEOUT_MESSAGE = 'PayPal SDK v6 did not load within 15000 ms.';
 		const neverSettles = () => new Promise( () => {} );
@@ -477,6 +497,19 @@ describe( 'client token refresh wiring', () => {
 			...firstOptions,
 			clientToken: 'T2',
 		} );
+	} );
+
+	test( 'keeps the partnerAttributionId on the renewed instance', async () => {
+		await loadSdkV6( baseConfig( { bn_code: 'Woo_PPCP' } ), 'checkout' );
+
+		await tick( REFRESH_MS );
+
+		expect( window.paypal.createInstance ).toHaveBeenLastCalledWith(
+			expect.objectContaining( {
+				partnerAttributionId: 'Woo_PPCP',
+				clientToken: 'T2',
+			} )
+		);
 	} );
 
 	test( 'resolves later loadSdkV6 calls to the new instance', async () => {
