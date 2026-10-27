@@ -36,6 +36,10 @@ class SdkClientToken
      * Seconds a served token must stay valid at least.
      */
     private const MIN_SERVED_LIFETIME = 120;
+    /**
+     * PayPal's documented token lifetime, for a response without a usable one.
+     */
+    private const DEFAULT_LIFETIME = 900;
     private string $host;
     /**
      * @phpstan-ignore property.onlyWritten (Read by RequestTrait.)
@@ -135,7 +139,11 @@ class SdkClientToken
             $this->rate_limiter->register_failure(self::RATE_LIMIT_SCOPE, $status_code, $response);
             throw new PayPalApiException($json, $status_code);
         }
-        $expires_in = (int) $json->expires_in;
+        // A cache entry with a lifetime of 0 never expires.
+        $expires_in = (int) ($json->expires_in ?? 0);
+        if ($expires_in <= 0) {
+            $expires_in = self::DEFAULT_LIFETIME;
+        }
         $token = array('token' => (string) $json->access_token, 'expires_at' => time() + $expires_in);
         $rotate_after = max(1, (int) ($expires_in * self::ROTATE_AFTER_PERCENT / 100));
         // Stop serving the token before it expires, so the page can still render with it.
