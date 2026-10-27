@@ -12,9 +12,6 @@ namespace WooCommerce\PayPalCommerce\Settings\Service;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AgenticBetaBannerEndpoint;
 
-/**
- * Determines whether the agentic beta banner should be shown to the merchant.
- */
 class AgenticBetaBannerEligibility {
 
 	private const REQUIRED_PRODUCT_COUNT = 50;
@@ -31,14 +28,8 @@ class AgenticBetaBannerEligibility {
 		$this->store_country    = $store_country;
 	}
 
-	/**
-	 * Returns true only when all conditions are met. Checks user-preference
-	 * conditions first (cheap option reads) before falling through to the
-	 * store-level conditions, which are cached in a transient.
-	 *
-	 * @return bool
-	 */
 	public function is_eligible(): bool {
+		// Cheap option reads first, to skip the store-level DB queries.
 		if ( ! $this->should_display_banner() ) {
 			return false;
 		}
@@ -46,24 +37,11 @@ class AgenticBetaBannerEligibility {
 		return $this->are_store_conditions_met();
 	}
 
-	/**
-	 * Returns false if the merchant has dismissed or snoozed the banner.
-	 *
-	 * @return bool
-	 */
 	private function should_display_banner(): bool {
 		return $this->is_not_snoozed()
 			&& ! get_option( AgenticBetaBannerEndpoint::OPTION_DISMISSED );
 	}
 
-	/**
-	 * Returns true when the store-level conditions are met: PHP >= 8.1, merchant
-	 * connected, merchant and store in an eligible country, a shipping zone for an
-	 * eligible country, and sufficient product/order counts. The result is cached
-	 * for 10 minutes to avoid repeated DB queries.
-	 *
-	 * @return bool
-	 */
 	private function are_store_conditions_met(): bool {
 		if ( ! version_compare( PHP_VERSION, '8.1', '>=' ) ) {
 			return false;
@@ -86,12 +64,6 @@ class AgenticBetaBannerEligibility {
 		return $result;
 	}
 
-	/**
-	 * Returns true if the default zone has active shipping methods, or if any
-	 * named zone covers an eligible country and has at least one active method.
-	 *
-	 * @return bool
-	 */
 	private function has_eligible_shipping_zone(): bool {
 		$default_zone = new \WC_Shipping_Zone( 0 );
 		if ( ! empty( $default_zone->get_shipping_methods( true ) ) ) {
@@ -124,10 +96,6 @@ class AgenticBetaBannerEligibility {
 		return in_array( $country, self::ELIGIBLE_COUNTRIES, true );
 	}
 
-	/**
-	 * Returns true if a shipping zone location covers an eligible country directly,
-	 * through one of its states, or through its continent.
-	 */
 	private function is_eligible_location( \stdClass $location ): bool {
 		foreach ( self::ELIGIBLE_COUNTRIES as $country ) {
 			$continent = WC()->countries->get_continent_code_for_country( $country );
@@ -144,11 +112,6 @@ class AgenticBetaBannerEligibility {
 		return false;
 	}
 
-	/**
-	 * Returns true if the store has at least {@see self::REQUIRED_PRODUCT_COUNT} published products.
-	 *
-	 * @return bool
-	 */
 	private function has_enough_products(): bool {
 		$products = wc_get_products(
 			array(
@@ -161,12 +124,6 @@ class AgenticBetaBannerEligibility {
 		return is_array( $products ) && count( $products ) >= self::REQUIRED_PRODUCT_COUNT;
 	}
 
-	/**
-	 * Returns true if the store has at least {@see self::REQUIRED_ORDER_COUNT} completed orders
-	 * within the last {@see self::ORDER_LOOKBACK_DAYS} days.
-	 *
-	 * @return bool
-	 */
 	private function has_enough_recent_orders(): bool {
 		$orders = wc_get_orders(
 			array(
@@ -180,11 +137,6 @@ class AgenticBetaBannerEligibility {
 		return is_array( $orders ) && count( $orders ) >= self::REQUIRED_ORDER_COUNT;
 	}
 
-	/**
-	 * Returns true if no snooze is active or the snooze period has expired.
-	 *
-	 * @return bool
-	 */
 	private function is_not_snoozed(): bool {
 		$snoozed_until = get_option( AgenticBetaBannerEndpoint::OPTION_SNOOZED_UNTIL );
 
