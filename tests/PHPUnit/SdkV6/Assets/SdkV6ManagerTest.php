@@ -962,6 +962,55 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a merchant whose PayPal country code may be a non-ISO code such as C2 (China)
+     * WHEN the SDK bootstrap data is generated
+     * THEN merchant_country carries a valid ISO 3166-1 code, so wallet sheets accept it
+     * AND codes that are already ISO codes, or empty, are passed through unchanged
+     *
+     * @dataProvider merchantCountryProvider
+     */
+    public function testScriptDataMapsPayPalMerchantCountryToIsoCode(string $paypal_country, string $expected): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
+
+        $wc = $this->create_wc_stub();
+        $wc->customer = Mockery::mock();
+        $wc->customer->shouldReceive('get_billing_country')->andReturn('US');
+
+        when('WC')->justReturn($wc);
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee([], true, $paypal_country);
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected, $data['merchant_country']);
+    }
+
+    public function merchantCountryProvider(): array
+    {
+        return [
+            'PayPal China code C2 maps to CN' => ['C2', 'CN'],
+            'ISO code DE passes through'      => ['DE', 'DE'],
+            'ISO code CN passes through'      => ['CN', 'CN'],
+            'empty country stays empty'       => ['', ''],
+        ];
+    }
+
+    /**
      * GIVEN a configured list of contexts in which the PayPal popup commits the payment
      * WHEN the SDK bootstrap data is generated
      * THEN pay_now_contexts carries that list exactly as configured, so the front end can
