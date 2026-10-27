@@ -3,7 +3,8 @@
  * button stack.
  *
  * Every assumption about that contract lives here: ppc-change-cart,
- * ppc-create-order, ppc-approve-order, ppc-update-shipping. Keep the
+ * ppc-create-order, ppc-approve-order, ppc-update-shipping,
+ * ppc-create-subscription, ppc-approve-subscription. Keep the
  * request/response shapes in sync with the endpoint contract tests.
  */
 
@@ -53,6 +54,22 @@ export const navigation = {
 };
 
 /**
+ * Checks the paying gateway's radio, so the submitted form is processed by it
+ * rather than whichever payment method happens to be checked.
+ *
+ * @param {string} paymentMethod - The WC gateway that processes the order.
+ */
+function checkPaymentMethod( paymentMethod ) {
+	const gatewayRadio = document.querySelector(
+		`#payment_method_${ paymentMethod }`
+	);
+	if ( gatewayRadio && ! gatewayRadio.checked ) {
+		gatewayRadio.checked = true;
+		jQuery( gatewayRadio ).trigger( 'change' );
+	}
+}
+
+/**
  * Submits the pay-for-order form after selecting the paying gateway, so the
  * approved order is captured by that gateway (not whichever method radio
  * happens to be checked) and WC issues the order-received redirect.
@@ -78,13 +95,7 @@ function submitPayOrderForm( paymentMethod = DEFAULT_PAYMENT_METHOD ) {
 		throw new Error( 'Order form not found.' );
 	}
 
-	const gatewayRadio = document.querySelector(
-		`#payment_method_${ paymentMethod }`
-	);
-	if ( gatewayRadio && ! gatewayRadio.checked ) {
-		gatewayRadio.checked = true;
-		jQuery( gatewayRadio ).trigger( 'change' );
-	}
+	checkPaymentMethod( paymentMethod );
 
 	form.trigger( 'submit' );
 }
@@ -328,17 +339,10 @@ export async function approveOrder(
 		const checkoutForm = jQuery( 'form.checkout' );
 		if ( checkoutForm.length ) {
 			// The approved order must be processed by the gateway that created
-			// it, not whichever payment method radio happens to be checked. On
-			// the express path that means switching to PayPal; where the wallet
-			// is its own gateway the buyer already selected it, so this is a
-			// no-op.
-			const gatewayRadio = document.querySelector(
-				`#payment_method_${ paymentMethod }`
-			);
-			if ( gatewayRadio && ! gatewayRadio.checked ) {
-				gatewayRadio.checked = true;
-				jQuery( gatewayRadio ).trigger( 'change' );
-			}
+			// it. On the express path that means switching to PayPal; where the
+			// wallet is its own gateway the buyer already selected it, so this
+			// is a no-op.
+			checkPaymentMethod( paymentMethod );
 
 			selectShippingMethodInForm( contact.shippingRateId );
 
@@ -351,6 +355,147 @@ export async function approveOrder(
 	// busted because a cached checkout would carry no continuation payload and
 	// show the express buttons again for an already-approved order.
 	navigation.assign( continuationRedirectUrl( config ) );
+}
+
+/**
+ * The viewed product and selected variation, for ppc-create-subscription.
+ *
+ * @return {{product_id: string, variation_id: string}} The selection.
+ * @throws {Error} When the product form cannot be found.
+ */
+function productSelection() {
+	const form = productForm();
+	if ( ! form ) {
+		throw new Error( 'Product form not found.' );
+	}
+
+	const field = ( name ) =>
+		form.querySelector( `[name="${ name }"]` )?.value || '';
+
+	return {
+		product_id: field( 'add-to-cart' ) || field( 'product_id' ),
+		variation_id: field( 'variation_id' ),
+	};
+}
+
+/**
+ * Creates a PayPal Subscription (ppc-create-subscription) for the subscription
+ * session to start with.
+ *
+ * The server picks the plan: from the viewed product on the product page, whose
+ * product is not in the cart yet, and from the cart elsewhere. On checkout the
+ * form is validated first, so the buyer sees form errors before approving.
+ *
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context - The page context.
+ * @return {Promise<{subscriptionId: string}>} The created subscription id.
+ */
+export async function createSubscription( config, context ) {
+	if ( context === 'checkout' && config.early_validation ) {
+		const form = document.querySelector( 'form.checkout' );
+		if ( form ) {
+			await postJson( config.ajax.validate_checkout, {
+				form_encoded: new URLSearchParams(
+					new FormData( form )
+				).toString(),
+			} );
+		}
+	}
+
+	const data = await postJson(
+		config.ajax.create_subscription,
+		context === 'product' ? productSelection() : {}
+	);
+
+	return { subscriptionId: data.subscription_id };
+}
+
+/**
+ * Reports an approved PayPal Subscription (ppc-approve-subscription) and takes
+ * the buyer wherever it leads, as the v5 subscription buttons do.
+ *
+ * The endpoint validates the subscription against the cart, so on the product
+ * page the viewed product is added to the cart first. Checkout then submits the
+ * form; elsewhere the server creates the WC order when the Pay Now experience
+ * is on, and otherwise the buyer completes it on the checkout page.
+ *
+ * @param {Object} config         - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context        - The page context.
+ * @param {string} subscriptionId - The approved PayPal subscription id.
+ * @param {string} orderId        - The checkout token the subscription was
+ *                                approved under.
+ */
+export async function approveSubscription(
+	config,
+	context,
+	subscriptionId,
+	orderId
+) {
+	if ( context === 'product' ) {
+		await changeCart( config );
+	}
+
+	const canCreateOrder = context !== 'checkout';
+
+	const data = await postJson( config.ajax.approve_subscription, {
+		order_id: orderId,
+		subscription_id: subscriptionId,
+		should_create_wc_order: canCreateOrder,
+	} );
+
+	if ( data?.order_received_url ) {
+		navigation.assign( data.order_received_url );
+		return;
+	}
+
+	if ( context === 'checkout' && typeof jQuery !== 'undefined' ) {
+		const checkoutForm = jQuery( 'form.checkout' );
+		if ( checkoutForm.length ) {
+			checkPaymentMethod( DEFAULT_PAYMENT_METHOD );
+			checkoutForm.trigger( 'submit' );
+			return;
+		}
+	}
+
+	navigation.assign( continuationRedirectUrl( config ) );
+}
+
+/**
+ * Approves a PayPal Subscription into the WC session without creating the WC
+ * order, for a surface that submits its own checkout afterwards.
+ *
+ * @param {Object} config         - The wc_ppcp_sdk_v6 config object.
+ * @param {string} subscriptionId - The approved PayPal subscription id.
+ * @param {string} orderId        - The checkout token the subscription was
+ *                                approved under.
+ * @return {Promise<void>} Resolves once the subscription is in the session.
+ */
+export async function approveSubscriptionInSession(
+	config,
+	subscriptionId,
+	orderId
+) {
+	await postJson( config.ajax.approve_subscription, {
+		order_id: orderId,
+		subscription_id: subscriptionId,
+		should_create_wc_order: false,
+	} );
+}
+
+/**
+ * Fetches the subscriber of a PayPal Subscription created in this session
+ * (ppc-get-subscription): name, email and shipping address.
+ *
+ * @param {Object} config         - The wc_ppcp_sdk_v6 config object.
+ * @param {string} subscriptionId - The PayPal subscription id.
+ * @return {Promise<Object>} The subscriber (Subscriptions v1 shape).
+ */
+export async function getSubscriber( config, subscriptionId ) {
+	const data = await postJson( config.ajax.get_subscription, {
+		subscription_id: subscriptionId,
+	} );
+
+	return data?.subscriber || {};
 }
 
 /**

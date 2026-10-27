@@ -115,7 +115,7 @@ return array(
 			new PaymentCaptureCompleted( $logger, $order_endpoint ),
 			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),
-			new PaymentSaleCompleted( $logger, $container->get( 'paypal-subscriptions.renewal-handler' ) ),
+			new PaymentSaleCompleted( $logger, $container->get( 'paypal-subscriptions.renewal-handler' ), $container->get( 'api.factory.seller-receivable-breakdown' ) ),
 			new PaymentSaleRefunded( $logger, $refund_fees_updater ),
 			new BillingSubscriptionCancelled( $logger ),
 			new BillingPlanPricingChangeActivated( $logger ),

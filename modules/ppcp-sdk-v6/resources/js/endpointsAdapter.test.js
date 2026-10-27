@@ -39,6 +39,10 @@ jest.mock( './utils/api', () => ( {
 import {
 	createOrder,
 	approveOrder,
+	createSubscription,
+	approveSubscription,
+	approveSubscriptionInSession,
+	getSubscriber,
 	createCardOrder,
 	approveCardOrder,
 	fetchCart,
@@ -58,6 +62,9 @@ const config = {
 		create_order: { endpoint: '/co', nonce: 'n-co' },
 		approve_order: { endpoint: '/ao', nonce: 'n-ao' },
 		simulate_cart: { endpoint: '/sc', nonce: 'n-sc' },
+		create_subscription: { endpoint: '/cs', nonce: 'n-cs' },
+		approve_subscription: { endpoint: '/as', nonce: 'n-as' },
+		validate_checkout: { endpoint: '/vc', nonce: 'n-vc' },
 		wc_store_api: {
 			cart: '/wp-json/wc/store/v1/cart',
 			update_customer: '/wp-json/wc/store/v1/cart/update-customer',
@@ -818,6 +825,352 @@ describe( 'approveOrder', () => {
 
 			delete global.jQuery;
 		} );
+	} );
+} );
+
+describe( 'createSubscription', () => {
+	test.each( [
+		[
+			'the add-to-cart field',
+			'<input name="add-to-cart" value="1006" />' +
+				'<input name="variation_id" value="1010" />',
+			{ product_id: '1006', variation_id: '1010' },
+		],
+		[
+			'the product_id field when there is no add-to-cart field',
+			'<input name="product_id" value="2002" />',
+			{ product_id: '2002', variation_id: '' },
+		],
+	] )(
+		'product context posts the product read from %s and returns the subscription id',
+		async ( label, fields, expectedBody ) => {
+			document.body.innerHTML = `<form class="cart">${ fields }</form>`;
+			postJson.mockResolvedValueOnce( { subscription_id: 'I-SUB1' } );
+
+			const result = await createSubscription( config, 'product' );
+
+			expect( result ).toEqual( { subscriptionId: 'I-SUB1' } );
+			expect( postJson ).toHaveBeenCalledTimes( 1 );
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.create_subscription,
+				expectedBody
+			);
+		}
+	);
+
+	test( 'product context fails clearly without a product form', async () => {
+		await expect(
+			createSubscription( config, 'product' )
+		).rejects.toThrow( 'Product form not found.' );
+		expect( postJson ).not.toHaveBeenCalled();
+	} );
+
+	test( 'cart context posts an empty body, leaving the plan to the server', async () => {
+		postJson.mockResolvedValueOnce( { subscription_id: 'I-SUB2' } );
+
+		const result = await createSubscription( config, 'cart' );
+
+		expect( result ).toEqual( { subscriptionId: 'I-SUB2' } );
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.create_subscription,
+			{}
+		);
+	} );
+
+	describe( 'checkout context', () => {
+		const checkoutForm =
+			'<form class="checkout"><input name="billing_email" value="a@b.com" /></form>';
+
+		test( 'validates the form before creating the subscription when early validation is on', async () => {
+			document.body.innerHTML = checkoutForm;
+			postJson
+				.mockResolvedValueOnce( {} )
+				.mockResolvedValueOnce( { subscription_id: 'I-SUB3' } );
+
+			const result = await createSubscription(
+				{ ...config, early_validation: true },
+				'checkout'
+			);
+
+			expect( result ).toEqual( { subscriptionId: 'I-SUB3' } );
+			expect( postJson ).toHaveBeenNthCalledWith(
+				1,
+				config.ajax.validate_checkout,
+				{ form_encoded: 'billing_email=a%40b.com' }
+			);
+			expect( postJson ).toHaveBeenNthCalledWith(
+				2,
+				config.ajax.create_subscription,
+				{}
+			);
+		} );
+
+		test( 'rejects without creating the subscription when validation fails', async () => {
+			document.body.innerHTML = checkoutForm;
+			const error = new Error( 'Billing email is required.' );
+			postJson.mockRejectedValueOnce( error );
+
+			await expect(
+				createSubscription(
+					{ ...config, early_validation: true },
+					'checkout'
+				)
+			).rejects.toThrow( error );
+
+			expect( postJson ).toHaveBeenCalledTimes( 1 );
+			expect( postJson ).not.toHaveBeenCalledWith(
+				config.ajax.create_subscription,
+				expect.anything()
+			);
+		} );
+
+		test( 'skips validation when early validation is off', async () => {
+			document.body.innerHTML = checkoutForm;
+			postJson.mockResolvedValueOnce( { subscription_id: 'I-SUB4' } );
+
+			await createSubscription( config, 'checkout' );
+
+			expect( postJson ).toHaveBeenCalledTimes( 1 );
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.create_subscription,
+				{}
+			);
+		} );
+	} );
+} );
+
+describe( 'approveSubscription', () => {
+	let navigationAssignSpy;
+
+	beforeEach( () => {
+		navigationAssignSpy = jest
+			.spyOn( navigation, 'assign' )
+			.mockImplementation( () => {} );
+	} );
+
+	afterEach( () => {
+		navigationAssignSpy.mockRestore();
+		delete global.jQuery;
+	} );
+
+	test( 'product context adds the product to the cart before approving', async () => {
+		document.body.innerHTML =
+			'<form class="cart"><input name="add-to-cart" value="1006" /></form>';
+		mockGetProducts.mockReturnValue( [
+			{ data: () => ( { id: 1006, quantity: 1, variations: [] } ) },
+		] );
+		postJson.mockResolvedValueOnce( [] ).mockResolvedValueOnce( {} );
+
+		await approveSubscription( config, 'product', 'I-SUB', 'ORDER1' );
+
+		expect( postJson ).toHaveBeenNthCalledWith(
+			1,
+			config.ajax.change_cart,
+			{ products: [ { id: 1006, quantity: 1, variations: [] } ] }
+		);
+		expect( postJson ).toHaveBeenNthCalledWith(
+			2,
+			config.ajax.approve_subscription,
+			{
+				order_id: 'ORDER1',
+				subscription_id: 'I-SUB',
+				should_create_wc_order: true,
+			}
+		);
+	} );
+
+	test( 'cart context approves without touching the cart', async () => {
+		postJson.mockResolvedValueOnce( {} );
+
+		await approveSubscription( config, 'cart', 'I-SUB', 'ORDER1' );
+
+		expect( postJson ).toHaveBeenCalledTimes( 1 );
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.approve_subscription,
+			{
+				order_id: 'ORDER1',
+				subscription_id: 'I-SUB',
+				should_create_wc_order: true,
+			}
+		);
+	} );
+
+	test( 'redirects to order_received_url when the server creates the WC order', async () => {
+		postJson.mockResolvedValueOnce( {
+			order_received_url: '/checkout/order-received/123/?key=wc_abc',
+		} );
+
+		await approveSubscription( config, 'cart', 'I-SUB', 'ORDER1' );
+
+		expect( navigation.assign ).toHaveBeenCalledWith(
+			'/checkout/order-received/123/?key=wc_abc'
+		);
+	} );
+
+	test( 'continues on the checkout page when the server returns no order_received_url', async () => {
+		postJson.mockResolvedValueOnce( {} );
+
+		await approveSubscription( config, 'cart', 'I-SUB', 'ORDER1' );
+
+		const url = navigation.assign.mock.calls[ 0 ][ 0 ];
+		expect( url ).toContain( '/checkout/' );
+		expect( url ).toContain( 'ppcp-continuation-redirect=' );
+	} );
+
+	describe( 'checkout context', () => {
+		const fakeJQuery = ( { radioTrigger, formTrigger } ) =>
+			jest.fn( ( selector ) =>
+				typeof selector === 'string'
+					? { length: 1, trigger: formTrigger }
+					: { trigger: radioTrigger }
+			);
+
+		test( 'does not request a WC order, selects the PayPal gateway and submits the checkout form', async () => {
+			postJson.mockResolvedValueOnce( {} );
+			document.body.innerHTML =
+				'<form class="checkout">' +
+				'<input type="radio" id="payment_method_ppcp-gateway" />' +
+				'<input type="radio" id="payment_method_cod" checked /></form>';
+			const formTrigger = jest.fn();
+			global.jQuery = fakeJQuery( {
+				radioTrigger: jest.fn(),
+				formTrigger,
+			} );
+
+			await approveSubscription( config, 'checkout', 'I-SUB', 'ORDER2' );
+
+			expect( postJson ).toHaveBeenCalledWith(
+				config.ajax.approve_subscription,
+				{
+					order_id: 'ORDER2',
+					subscription_id: 'I-SUB',
+					should_create_wc_order: false,
+				}
+			);
+			expect(
+				document.querySelector( '#payment_method_ppcp-gateway' ).checked
+			).toBe( true );
+			expect( formTrigger ).toHaveBeenCalledWith( 'submit' );
+			expect( navigation.assign ).not.toHaveBeenCalled();
+		} );
+
+		test( 'prefers order_received_url over submitting the form', async () => {
+			postJson.mockResolvedValueOnce( {
+				order_received_url: '/order-received/9/',
+			} );
+			const formTrigger = jest.fn();
+			global.jQuery = fakeJQuery( {
+				radioTrigger: jest.fn(),
+				formTrigger,
+			} );
+
+			await approveSubscription( config, 'checkout', 'I-SUB', 'ORDER2' );
+
+			expect( navigation.assign ).toHaveBeenCalledWith(
+				'/order-received/9/'
+			);
+			expect( formTrigger ).not.toHaveBeenCalled();
+		} );
+
+		test( 'continues on the checkout page when the checkout form is absent', async () => {
+			postJson.mockResolvedValueOnce( {} );
+			global.jQuery = jest.fn( () => ( { length: 0 } ) );
+
+			await approveSubscription( config, 'checkout', 'I-SUB', 'ORDER2' );
+
+			expect( navigation.assign.mock.calls[ 0 ][ 0 ] ).toContain(
+				'ppcp-continuation-redirect='
+			);
+		} );
+	} );
+
+	test( 'propagates a rejected approval without navigating', async () => {
+		const error = new Error( 'Subscription does not match the cart.' );
+		postJson.mockRejectedValueOnce( error );
+
+		await expect(
+			approveSubscription( config, 'cart', 'I-SUB', 'ORDER1' )
+		).rejects.toThrow( error );
+		expect( navigation.assign ).not.toHaveBeenCalled();
+	} );
+} );
+
+describe( 'approveSubscriptionInSession', () => {
+	afterEach( () => {
+		delete global.jQuery;
+	} );
+
+	test( 'posts the approval without requesting a WC order and without navigating', async () => {
+		const navigationAssignSpy = jest
+			.spyOn( navigation, 'assign' )
+			.mockImplementation( () => {} );
+		postJson.mockResolvedValueOnce( {
+			order_received_url: '/order-received/9/',
+		} );
+		global.jQuery = jest.fn();
+
+		await approveSubscriptionInSession( config, 'I-SUB', 'ORDER1' );
+
+		expect( postJson ).toHaveBeenCalledWith(
+			config.ajax.approve_subscription,
+			{
+				order_id: 'ORDER1',
+				subscription_id: 'I-SUB',
+				should_create_wc_order: false,
+			}
+		);
+		expect( navigationAssignSpy ).not.toHaveBeenCalled();
+		expect( global.jQuery ).not.toHaveBeenCalled();
+		navigationAssignSpy.mockRestore();
+	} );
+
+	test( 'propagates a rejected approval', async () => {
+		const error = new Error( 'Subscription does not match the cart.' );
+		postJson.mockRejectedValueOnce( error );
+
+		await expect(
+			approveSubscriptionInSession( config, 'I-SUB', 'ORDER1' )
+		).rejects.toThrow( error );
+	} );
+} );
+
+describe( 'getSubscriber', () => {
+	const subscriberConfig = {
+		ajax: { get_subscription: { endpoint: '/gs', nonce: 'n-gs' } },
+	};
+
+	test( 'posts the subscription id and returns the subscriber', async () => {
+		const subscriber = { email_address: 'buyer@example.com' };
+		postJson.mockResolvedValueOnce( { subscriber } );
+
+		await expect(
+			getSubscriber( subscriberConfig, 'I-SUB' )
+		).resolves.toBe( subscriber );
+		expect( postJson ).toHaveBeenCalledWith(
+			subscriberConfig.ajax.get_subscription,
+			{ subscription_id: 'I-SUB' }
+		);
+	} );
+
+	test.each( [
+		[ 'the response has no subscriber', {} ],
+		[ 'the response is empty', undefined ],
+		[ 'the response is null', null ],
+	] )( 'returns an empty object when %s', async ( label, response ) => {
+		postJson.mockResolvedValueOnce( response );
+
+		await expect(
+			getSubscriber( subscriberConfig, 'I-SUB' )
+		).resolves.toEqual( {} );
+	} );
+
+	test( 'propagates a failed request', async () => {
+		const error = new Error( 'not found' );
+		postJson.mockRejectedValueOnce( error );
+
+		await expect(
+			getSubscriber( subscriberConfig, 'I-SUB' )
+		).rejects.toThrow( error );
 	} );
 } );
 

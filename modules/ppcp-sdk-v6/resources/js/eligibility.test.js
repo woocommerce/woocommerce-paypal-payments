@@ -1,4 +1,8 @@
-import { checkEligibility, checkVaultEligibility } from './eligibility';
+import {
+	checkEligibility,
+	checkSubscriptionEligibility,
+	checkVaultEligibility,
+} from './eligibility';
 
 function sdkWith( {
 	eligible = [],
@@ -125,6 +129,31 @@ describe( 'checkEligibility', () => {
 		const result = await checkEligibility( sdk, { currencyCode: 'USD' } );
 
 		expect( result.card ).toBe( false );
+	} );
+} );
+
+describe( 'checkSubscriptionEligibility', () => {
+	test( 'queries the recurring-payment flow for the given currency', async () => {
+		const sdk = sdkWith( { eligible: [ 'paypal' ] } );
+
+		await checkSubscriptionEligibility( sdk, { currencyCode: 'USD' } );
+
+		expect( sdk.findEligibleMethods ).toHaveBeenCalledWith( {
+			currencyCode: 'USD',
+			paymentFlow: 'RECURRING_PAYMENT',
+		} );
+	} );
+
+	test.each( [
+		[ 'PayPal is eligible', [ 'paypal' ], true ],
+		[ 'only another method is eligible', [ 'venmo' ], false ],
+		[ 'nothing is eligible', [], false ],
+	] )( 'returns whether PayPal is eligible when %s', async ( label, eligible, expected ) => {
+		const sdk = sdkWith( { eligible } );
+
+		await expect(
+			checkSubscriptionEligibility( sdk, { currencyCode: 'EUR' } )
+		).resolves.toBe( expected );
 	} );
 } );
 

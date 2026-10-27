@@ -14,12 +14,14 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\FeesMetaTrait;
 
 /**
  * Class FeesUpdater
  */
 class FeesUpdater {
+
+	use FeesMetaTrait;
 
 	/**
 	 * The orders' endpoint.
@@ -86,13 +88,7 @@ class FeesUpdater {
 		$capture   = $this->capture_factory->from_paypal_response( $body->purchase_units[0]->payments->captures[0] );
 		$breakdown = $capture->seller_receivable_breakdown();
 		if ( $breakdown ) {
-			$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
-			$paypal_fee = $breakdown->paypal_fee();
-			if ( $paypal_fee ) {
-				$wc_order->update_meta_data( 'PayPal Transaction Fee', (string) $paypal_fee->value() );
-			}
-
-			$wc_order->save_meta_data();
+			$this->store_paypal_fees( $wc_order, $breakdown );
 		}
 	}
 }

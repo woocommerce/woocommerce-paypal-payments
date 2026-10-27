@@ -255,6 +255,60 @@ describe( 'createPreviewButton', () => {
 	} );
 } );
 
+describe( 'button type', () => {
+	test.each( [
+		[ 'paypal', undefined, 'pay' ],
+		[ 'paypal', 'subscribe', 'subscribe' ],
+		[ 'venmo', undefined, 'pay' ],
+		[ 'venmo', 'subscribe', 'subscribe' ],
+	] )(
+		'createMethodButton sets the %s button type attribute for buttonType %s to %s',
+		( method, buttonType, expected ) => {
+			const button = createMethodButton( {
+				method,
+				styles: {},
+				session: {},
+				createOrderFn: noop,
+				buttonType,
+			} );
+
+			expect( button.getAttribute( 'type' ) ).toBe( expected );
+		}
+	);
+
+	test( 'createMethodButton leaves the pay later button untyped by default', () => {
+		const button = createMethodButton( {
+			method: 'paylater',
+			styles: {},
+			session: {},
+			createOrderFn: noop,
+			payLaterDetails: { productCode: 'PAYLATER' },
+		} );
+
+		expect( button.hasAttribute( 'type' ) ).toBe( false );
+	} );
+
+	test.each( [
+		[ undefined, 'pay' ],
+		[ 'subscribe', 'subscribe' ],
+	] )(
+		'renderButtons with buttonType %s renders the PayPal button with type %s',
+		( buttonType, expected ) => {
+			const wrapper = document.createElement( 'div' );
+
+			const rendered = renderButtons( {
+				wrapper,
+				sessions: { paypal: {} },
+				styles: {},
+				createOrderForFunding: () => noop,
+				buttonType,
+			} );
+
+			expect( rendered[ 0 ].getAttribute( 'type' ) ).toBe( expected );
+		}
+	);
+} );
+
 describe( 'renderButtons', () => {
 	test( 'the card button is never bundled with the PayPal express buttons, even with a card session present', () => {
 		const wrapper = document.createElement( 'div' );

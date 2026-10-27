@@ -6,6 +6,10 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 use Mockery;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\GetSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
@@ -78,6 +82,10 @@ class SdkV6ManagerTest extends TestCase
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
         $this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false)->byDefault();
         $this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false)->byDefault();
+        $this->subscription_helper->shouldReceive('checkout_subscription_product_allowed')->andReturn(false)->byDefault();
+        $this->subscription_helper->shouldReceive('paypal_subscription_id')->andReturn('')->byDefault();
+        $this->subscription_helper->shouldReceive('paypal_subscription_variation_from_cart')->andReturn('')->byDefault();
+        $this->subscription_helper->shouldReceive('variable_paypal_subscription_variations')->andReturn([])->byDefault();
 		$this->free_trial_helper = Mockery::mock(FreeTrialSubscriptionHelper::class);
 		$this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
 		$this->free_trial_helper->shouldReceive('cart_requires_vaulting')->andReturn(false)->byDefault();
@@ -190,7 +198,7 @@ class SdkV6ManagerTest extends TestCase
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
     }
 
-    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null, bool $wcs_plugin_active = false, array $pay_now_contexts = ['checkout', 'pay-now']): SdkV6Manager
+    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null, bool $wcs_plugin_active = false, array $pay_now_contexts = ['checkout', 'pay-now'], bool $early_checkout_validation = false): SdkV6Manager
     {
         $class_name = $wcs_plugin_active ? TestableSdkV6ManagerWithWcsActive::class : SdkV6Manager::class;
 
@@ -220,8 +228,56 @@ class SdkV6ManagerTest extends TestCase
 	        $this->fastlane_config,
 	        $this->card_field_styles,
 	        $this->disabled_funding_sources,
-	        $pay_now_contexts
+	        $pay_now_contexts,
+	        $early_checkout_validation
         );
+    }
+
+    private function subscriptions_mode_testee(bool $early_checkout_validation = false): SdkV6Manager
+    {
+        return $this->createTestee(
+            [],
+            true,
+            'US',
+            false,
+            'SCA_WHEN_REQUIRED',
+            static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS,
+            false,
+            ['checkout', 'pay-now'],
+            $early_checkout_validation
+        );
+    }
+
+    /**
+     * Describes what the page holds for native PayPal Subscriptions.
+     *
+     * @param array{
+     *     cart?: bool,
+     *     product?: bool,
+     *     order_pay?: bool,
+     *     allowed?: bool,
+     *     id?: string,
+     *     variations?: array
+     * } $state cart: the cart holds a subscription; product: the viewed product is one;
+     *          order_pay: the order being paid holds one; allowed: the cart may check out
+     *          the subscription; id and variations: the PayPal plans of the viewed product.
+     */
+    private function stub_native_subscription_page(array $state): void
+    {
+        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn($state['cart'] ?? false);
+        $this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn($state['product'] ?? false);
+        $this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn($state['order_pay'] ?? false);
+        $this->subscription_helper->shouldReceive('checkout_subscription_product_allowed')->andReturn($state['allowed'] ?? false);
+        $this->subscription_helper->shouldReceive('paypal_subscription_id')->andReturn($state['id'] ?? '');
+        $this->subscription_helper->shouldReceive('variable_paypal_subscription_variations')
+            ->andReturn($state['variations'] ?? []);
+    }
+
+    private function stub_cart_needing_payment(): void
+    {
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
     }
 
     private function stubScriptDataBaseline(string $page_context, string $location): void
@@ -536,36 +592,42 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
-     * GIVEN native PayPal Subscriptions mode is active and the cart carries a subscription
+     * GIVEN native PayPal Subscriptions mode is active and the page holds a subscription
+     *       that the buyer may not check out with PayPal
      * WHEN checking whether the v6 SDK should load on the current page
-     * THEN the SDK does not load, even though a smart-button location would otherwise enable it,
-     *      because the whole page must defer to the v5 stack that can create the subscription
+     * THEN the SDK loads like on any other page, since v6 handles every native subscription page
+     *
+     * @dataProvider native_subscription_pages_provider
      */
-    public function testShouldNotLoadWhenNativePayPalSubscriptionInCart(): void
+    public function testShouldLoadOnNativeSubscriptionPages(string $page_context, array $state): void
     {
-        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->context->shouldReceive('context')->andReturn($page_context);
         $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
         $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
-        $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
+        $this->stub_native_subscription_page($state);
 
-        $testee = $this->createTestee(
-            [],
-            true,
-            'US',
-            false,
-            'SCA_WHEN_REQUIRED',
-            static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
-        );
+        $testee = $this->subscriptions_mode_testee();
 
-        $this->assertFalse($testee->should_load_on_current_page());
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    public function native_subscription_pages_provider(): array
+    {
+        return [
+            'classic checkout with a subscription in the cart' => ['checkout', ['cart' => true]],
+            'classic cart with a subscription in the cart'     => ['cart', ['cart' => true]],
+            'checkout block with a subscription in the cart'   => ['checkout-block', ['cart' => true]],
+            'cart block with a subscription in the cart'       => ['cart-block', ['cart' => true]],
+            'product page of a subscription without a plan'    => ['product', ['product' => true]],
+            'pay-for-order page of a subscription order'       => ['pay-now', ['order_pay' => true]],
+        ];
     }
 
     /**
      * GIVEN native PayPal Subscriptions mode is active but no subscription is present in the
      *      current product, cart or pay-for-order context
      * WHEN checking whether the v6 SDK should load on the current page
-     * THEN the SDK follows the normal gating rather than being forced off, since there is no
-     *      native subscription for v5 to hand off
+     * THEN the SDK follows the normal button location gating
      */
     public function testShouldLoadWhenSubscriptionsModeActiveButNoSubscriptionPresent(): void
     {
@@ -611,34 +673,204 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
-     * GIVEN native PayPal Subscriptions mode is active and the current product is a subscription
-     * WHEN determining which locations should render on the current page
-     * THEN no v6 button location renders, leaving the page entirely to the v5 stack
+     * GIVEN native PayPal Subscriptions mode is active with smart buttons enabled everywhere
+     * WHEN determining which locations should render on a page holding a subscription
+     * THEN a location the buyer may not check out the subscription in renders no button
+     * AND the other locations keep their normal answer
+     * AND block pages leave the render locations to the block bundle
+     *
+     * @dataProvider native_subscription_places_provider
      */
-    public function testDetermineRenderPlacesEmptyWhenNativePayPalSubscriptionProduct(): void
+    public function testDetermineRenderPlacesFollowsNativeSubscriptionAllowance(string $page_context, array $state, array $expected): void
     {
-        $this->context->shouldReceive('init_context')->never();
-        $this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(true);
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->stub_native_subscription_page($state);
+        $this->stub_cart_needing_payment();
 
-        $testee = $this->createTestee(
-            [],
-            true,
-            'US',
-            false,
-            'SCA_WHEN_REQUIRED',
-            static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
-        );
+        $this->assertSame($expected, $this->subscriptions_mode_testee()->determine_render_places());
+    }
 
-        $this->assertSame(
-            [
-                'product'   => false,
-                'cart'      => false,
-                'checkout'  => false,
-                'pay-now'   => false,
-                'mini-cart' => false,
-            ],
-            $testee->determine_render_places()
-        );
+    public function native_subscription_places_provider(): array
+    {
+        $all_on = ['product' => true, 'cart' => true, 'checkout' => true, 'pay-now' => true, 'mini-cart' => true];
+
+        return [
+            'product with a plan on the product renders'              => ['product', ['product' => true, 'id' => 'P-PRODUCT'], $all_on],
+            'product with a plan on one variation renders'            => ['product', ['product' => true, 'variations' => [['subscription_plan' => ''], ['subscription_plan' => 'P-VARIATION']]], $all_on],
+            'product without any plan renders nothing'                => ['product', ['product' => true], array_merge($all_on, ['product' => false])],
+            'product whose variations have no plan renders nothing'   => ['product', ['product' => true, 'variations' => [['subscription_plan' => ''], []]], array_merge($all_on, ['product' => false])],
+            'cart with an allowed subscription renders'               => ['cart', ['cart' => true, 'allowed' => true], $all_on],
+            'cart with a disallowed subscription renders nothing'     => ['cart', ['cart' => true], array_merge($all_on, ['cart' => false, 'mini-cart' => false])],
+            'checkout with an allowed subscription renders'           => ['checkout', ['cart' => true, 'allowed' => true], $all_on],
+            'checkout with a disallowed subscription renders nothing' => ['checkout', ['cart' => true], array_merge($all_on, ['checkout' => false, 'mini-cart' => false])],
+            'pay-for-order of a subscription renders nothing'         => ['pay-now', ['order_pay' => true], array_merge($all_on, ['pay-now' => false])],
+            'cart block with a disallowed subscription only turns the mini-cart off' => ['cart-block', ['cart' => true], array_merge($all_on, ['mini-cart' => false])],
+            'checkout block with an allowed subscription changes nothing' => ['checkout-block', ['cart' => true, 'allowed' => true], $all_on],
+        ];
+    }
+
+    /**
+     * GIVEN native PayPal Subscriptions mode is active and the cart is a free trial that needs
+     *       no payment today
+     * WHEN determining which locations should render on the cart page
+     * THEN the cart and mini-cart render when the subscription may be checked out, because a
+     *      native subscription pays its plan rather than the zero cart total
+     * AND they stay off when it may not
+     *
+     * @dataProvider free_trial_native_subscription_provider
+     */
+    public function testDetermineRenderPlacesIgnoresZeroTotalForNativeSubscription(bool $allowed): void
+    {
+        $this->context->shouldReceive('context')->andReturn('cart');
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(true);
+        $this->stub_native_subscription_page(['cart' => true, 'allowed' => $allowed]);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(false);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $places = $this->subscriptions_mode_testee()->determine_render_places();
+
+        $this->assertSame($allowed, $places['cart']);
+        $this->assertSame($allowed, $places['mini-cart']);
+    }
+
+    public function free_trial_native_subscription_provider(): array
+    {
+        return [
+            'allowed subscription renders despite the zero total' => [true],
+            'disallowed subscription renders nothing'             => [false],
+        ];
+    }
+
+    /**
+     * GIVEN the merchant uses the vaulting subscriptions mode and the cart carries a subscription
+     * WHEN determining which locations should render on the cart page with a zero total
+     * THEN the cart keeps following the zero-total rule, since the subscription is not native
+     */
+    public function testDetermineRenderPlacesKeepsZeroTotalRuleOutsideSubscriptionsMode(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('cart');
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->stub_native_subscription_page(['cart' => true, 'allowed' => true]);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(false);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $places = $this->createTestee()->determine_render_places();
+
+        $this->assertFalse($places['cart']);
+    }
+
+    /**
+     * GIVEN native PayPal Subscriptions mode is active on a page with a plan, but the smart
+     *       button is disabled for the page's location
+     * WHEN determining which locations should render
+     * THEN that location renders nothing, since the location setting still applies
+     */
+    public function testDetermineRenderPlacesKeepsLocationSettingForAllowedNativeSubscription(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('cart');
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->andReturnUsing(static fn (string $location): bool => 'cart' !== $location);
+        $this->stub_native_subscription_page(['cart' => true, 'allowed' => true]);
+        $this->stub_cart_needing_payment();
+
+        $places = $this->subscriptions_mode_testee()->determine_render_places();
+
+        $this->assertFalse($places['cart']);
+        $this->assertTrue($places['mini-cart']);
+    }
+
+    /**
+     * GIVEN a page and what it holds for native PayPal Subscriptions
+     * WHEN the SDK bootstrap data is generated
+     * THEN native_subscription maps each native context to whether its subscription button may
+     *      render, the mini-cart included whenever the cart holds a subscription
+     * AND it is empty when the merchant does not use the PayPal Subscriptions API mode
+     *
+     * @dataProvider script_data_native_subscription_provider
+     */
+    public function testScriptDataNativeSubscriptionMapsContextsToAllowance(bool $subscriptions_mode, string $page_context, array $state, array $expected): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('context')->andReturn($page_context);
+        $this->stub_native_subscription_page($state);
+
+        $testee = $subscriptions_mode
+            ? $this->subscriptions_mode_testee()
+            : $this->createTestee();
+        $data = $testee->script_data();
+
+        $this->assertSame($expected, $data['native_subscription']);
+    }
+
+    public function script_data_native_subscription_provider(): array
+    {
+        return [
+            'cart with an allowed subscription'              => [true, 'cart', ['cart' => true, 'allowed' => true], ['cart' => true, 'mini-cart' => true]],
+            'cart with a disallowed subscription'            => [true, 'cart', ['cart' => true], ['cart' => false, 'mini-cart' => false]],
+            'checkout with an allowed subscription'          => [true, 'checkout', ['cart' => true, 'allowed' => true], ['checkout' => true, 'mini-cart' => true]],
+            'checkout with a disallowed subscription'        => [true, 'checkout', ['cart' => true], ['checkout' => false, 'mini-cart' => false]],
+            'cart block with an allowed subscription'        => [true, 'cart-block', ['cart' => true, 'allowed' => true], ['cart-block' => true, 'mini-cart' => true]],
+            'checkout block with a disallowed subscription'  => [true, 'checkout-block', ['cart' => true], ['checkout-block' => false, 'mini-cart' => false]],
+            'page without context still maps the mini-cart'  => [true, '', ['cart' => true, 'allowed' => true], ['mini-cart' => true]],
+            'cart without a subscription'                    => [true, 'cart', [], []],
+            'vaulting mode even with a subscription'         => [false, 'cart', ['cart' => true, 'allowed' => true], []],
+        ];
+    }
+
+    /**
+     * GIVEN the early checkout validation setting on or off
+     * WHEN the SDK bootstrap data is generated
+     * THEN early_validation carries that setting
+     *
+     * @dataProvider early_validation_provider
+     */
+    public function testScriptDataEarlyValidationFollowsSetting(bool $enabled): void
+    {
+        $this->stub_common_script_data_dependencies();
+
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, false, ['checkout', 'pay-now'], $enabled);
+        $data   = $testee->script_data();
+
+        $this->assertSame($enabled, $data['early_validation']);
+    }
+
+    public function early_validation_provider(): array
+    {
+        return [
+            'enabled'  => [true],
+            'disabled' => [false],
+        ];
+    }
+
+    /**
+     * GIVEN the SDK bootstrap data for a checkout page
+     * WHEN it is generated
+     * THEN the ajax payload carries the create-subscription, approve-subscription,
+     *      get-subscription and validate-checkout endpoints, each with its own nonce
+     */
+    public function testScriptDataIncludesSubscriptionAndValidationAjaxEndpoints(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        when('wp_create_nonce')->alias(static fn (string $action) => 'nonce-' . $action);
+
+        $data = $this->createTestee()->script_data();
+
+        $expected = [
+            'create_subscription'  => [CreateSubscriptionEndpoint::ENDPOINT, CreateSubscriptionEndpoint::nonce()],
+            'approve_subscription' => [ApproveSubscriptionEndpoint::ENDPOINT, ApproveSubscriptionEndpoint::nonce()],
+            'get_subscription'     => [GetSubscriptionEndpoint::ENDPOINT, GetSubscriptionEndpoint::nonce()],
+            'validate_checkout'    => [ValidateCheckoutEndpoint::ENDPOINT, ValidateCheckoutEndpoint::nonce()],
+        ];
+        foreach ($expected as $key => [$endpoint, $nonce_action]) {
+            $this->assertSame($endpoint, $data['ajax'][$key]['endpoint']);
+            $this->assertSame('nonce-' . $nonce_action, $data['ajax'][$key]['nonce']);
+        }
     }
 
     /**

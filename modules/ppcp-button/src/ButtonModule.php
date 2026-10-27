@@ -14,6 +14,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\GetSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
@@ -136,6 +138,26 @@ class ButtonModule implements ServiceModule, ExecutableModule {
 			static function () use ( $container ) {
 				$endpoint = $container->get( 'button.endpoint.approve-subscription' );
 				assert( $endpoint instanceof ApproveSubscriptionEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . CreateSubscriptionEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.endpoint.create-subscription' );
+				assert( $endpoint instanceof CreateSubscriptionEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . GetSubscriptionEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.endpoint.get-subscription' );
+				assert( $endpoint instanceof GetSubscriptionEndpoint );
 
 				$endpoint->handle_request();
 			}

@@ -1,4 +1,78 @@
-import { paypalOrderToWcAddresses } from '../../blocks/address';
+import {
+	paypalOrderToWcAddresses,
+	paypalSubscriberToWcAddresses,
+} from '../../blocks/address';
+
+const subscriber = {
+	name: { given_name: 'Jane', surname: 'Roe' },
+	email_address: 'jane@example.test',
+	shipping_address: {
+		address: {
+			address_line_1: 'Sub Street 1',
+			admin_area_1: 'CA',
+			admin_area_2: 'Los Angeles',
+			postal_code: '90001',
+			country_code: 'US',
+		},
+	},
+};
+
+describe( 'paypalSubscriberToWcAddresses', () => {
+	test( 'maps the subscriber address and name to WC shipping fields', () => {
+		const { shippingAddress } = paypalSubscriberToWcAddresses( subscriber );
+
+		expect( shippingAddress ).toMatchObject( {
+			first_name: 'Jane',
+			last_name: 'Roe',
+			address_1: 'Sub Street 1',
+			state: 'CA',
+			city: 'Los Angeles',
+			postcode: '90001',
+			country: 'US',
+		} );
+		expect( shippingAddress.email ).toBeUndefined();
+	} );
+
+	test( 'uses the same address for billing and adds the email', () => {
+		const { billingAddress, shippingAddress } =
+			paypalSubscriberToWcAddresses( subscriber );
+
+		expect( billingAddress ).toEqual( {
+			...shippingAddress,
+			email: 'jane@example.test',
+		} );
+		expect( billingAddress ).not.toBe( shippingAddress );
+	} );
+
+	test( 'keeps the name and email when the subscriber has no address', () => {
+		const { billingAddress } = paypalSubscriberToWcAddresses( {
+			name: { given_name: 'Jane', surname: 'Roe' },
+			email_address: 'jane@example.test',
+		} );
+
+		expect( billingAddress ).toEqual( {
+			first_name: 'Jane',
+			last_name: 'Roe',
+			email: 'jane@example.test',
+		} );
+	} );
+
+	test.each( [
+		[ 'undefined', undefined ],
+		[ 'null', null ],
+		[ 'empty', {} ],
+	] )( 'returns blank names and email for an %s subscriber', ( label, input ) => {
+		const { billingAddress, shippingAddress } =
+			paypalSubscriberToWcAddresses( input );
+
+		expect( shippingAddress ).toEqual( { first_name: '', last_name: '' } );
+		expect( billingAddress ).toEqual( {
+			first_name: '',
+			last_name: '',
+			email: '',
+		} );
+	} );
+} );
 
 const shippingOnlyOrder = {
 	id: 'PPORDER',

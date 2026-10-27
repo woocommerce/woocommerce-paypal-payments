@@ -57,6 +57,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\FeesMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\WcTasks\Registrar\TaskRegistrarInterface;
@@ -69,6 +70,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	use ModuleClassNameIdTrait;
 
 	use CreditCardOrderInfoHandlingTrait;
+	use FeesMetaTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -105,13 +107,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			function ( WC_Order $wc_order, Capture $capture ) use ( $c ) {
 				$breakdown = $capture->seller_receivable_breakdown();
 				if ( $breakdown ) {
-					$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
-					$paypal_fee = $breakdown->paypal_fee();
-					if ( $paypal_fee ) {
-						$wc_order->update_meta_data( 'PayPal Transaction Fee', (string) $paypal_fee->value() );
-					}
-
-					$wc_order->save_meta_data();
+					$this->store_paypal_fees( $wc_order, $breakdown );
 				}
 
 				$order = $c->get( 'session.handler' )->order();

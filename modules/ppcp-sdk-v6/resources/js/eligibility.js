@@ -83,6 +83,27 @@ export async function checkEligibility(
 }
 
 /**
+ * Checks whether PayPal can carry a native PayPal Subscription. Only PayPal has
+ * a subscription session, so no other method is asked about.
+ *
+ * @param {Object} sdkInstance          - The PayPal SDK v6 instance.
+ * @param {Object} options              - Eligibility options.
+ * @param {string} options.currencyCode - ISO 4217 currency code.
+ * @return {Promise<boolean>} Whether PayPal is eligible.
+ */
+export async function checkSubscriptionEligibility(
+	sdkInstance,
+	{ currencyCode }
+) {
+	const methods = await sdkInstance.findEligibleMethods( {
+		currencyCode,
+		paymentFlow: 'RECURRING_PAYMENT',
+	} );
+
+	return methods.isEligible( FundingSources.PAYPAL );
+}
+
+/**
  * Checks eligibility for the "save without purchase" (vault) flow used on the
  * My Account › Add Payment Method page. Queries the dedicated vault payment
  * flow; amount-independent.

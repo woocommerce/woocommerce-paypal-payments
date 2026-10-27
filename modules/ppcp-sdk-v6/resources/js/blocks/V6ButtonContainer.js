@@ -24,6 +24,7 @@ import { createMethodButton } from '../components/buttonRenderer';
  * @param {() => Promise<{orderId: string}>}  props.createOrderFn     - Returns the created order id.
  * @param {Object}                            [props.payLaterDetails] - Pay Later product details.
  * @param {() => void}                        [props.onClick]         - Called on click before the session starts.
+ * @param {string}                            [props.buttonType]      - Overrides the button's type attribute.
  * @return {Object} The container element.
  */
 export function V6ButtonContainer( {
@@ -33,6 +34,7 @@ export function V6ButtonContainer( {
 	createOrderFn,
 	payLaterDetails,
 	onClick,
+	buttonType,
 } ) {
 	const containerRef = useRef( null );
 	// The registry passes a fresh onClick every render; read it through a ref so
@@ -56,6 +58,7 @@ export function V6ButtonContainer( {
 			createOrderFn,
 			payLaterDetails,
 			onClick: () => onClickRef.current?.(),
+			buttonType,
 		} );
 		if ( ! button ) {
 			return undefined;
