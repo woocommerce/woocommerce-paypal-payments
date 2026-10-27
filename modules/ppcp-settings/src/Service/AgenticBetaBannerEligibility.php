@@ -30,16 +30,21 @@ class AgenticBetaBannerEligibility {
 
 	public function is_eligible(): bool {
 		// Cheap option reads first, to skip the store-level DB queries.
-		if ( ! $this->should_display_banner() ) {
+		if ( $this->is_dismissed() || $this->is_snoozed() ) {
 			return false;
 		}
 
 		return $this->are_store_conditions_met();
 	}
 
-	private function should_display_banner(): bool {
-		return $this->is_not_snoozed()
-			&& ! get_option( AgenticBetaBannerEndpoint::OPTION_DISMISSED );
+	private function is_dismissed(): bool {
+		return (bool) get_option( AgenticBetaBannerEndpoint::OPTION_DISMISSED );
+	}
+
+	private function is_snoozed(): bool {
+		$snoozed_until = get_option( AgenticBetaBannerEndpoint::OPTION_SNOOZED_UNTIL );
+
+		return $snoozed_until && (int) $snoozed_until >= time();
 	}
 
 	private function are_store_conditions_met(): bool {
@@ -135,11 +140,5 @@ class AgenticBetaBannerEligibility {
 		);
 
 		return is_array( $orders ) && count( $orders ) >= self::REQUIRED_ORDER_COUNT;
-	}
-
-	private function is_not_snoozed(): bool {
-		$snoozed_until = get_option( AgenticBetaBannerEndpoint::OPTION_SNOOZED_UNTIL );
-
-		return ! $snoozed_until || (int) $snoozed_until < time();
 	}
 }
