@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\WcGateway\Helper
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
@@ -25,19 +25,9 @@ trait ProductPaymentSupportTrait {
 	}
 
 	protected function product_supports_payment( WC_Product $product ): bool {
-		$in_stock = $product->is_in_stock();
-
-		if ( $product->is_type( 'variable' ) ) {
-			assert( $product instanceof WC_Product_Variable );
-
-			/** @var WC_Product_Variation[] $variations */
-			$variations = $product->get_available_variations( 'objects' );
-			$in_stock   = $this->has_in_stock_variation( $variations );
-		}
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$enable_button = ! $product->is_type( array( 'external', 'grouped' ) ) && $in_stock &&
-			! ( ( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' ) ) && ! empty( $_GET['switch-subscription'] ) );
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		$enable_button = ! $product->is_type( array( 'external', 'grouped' ) )
+			&& $this->has_stock( $product )
+			&& ! $this->is_subscription_switch( $product );
 
 		/**
 		 * Allows to filter if PayPal buttons/messages can be rendered for the given product.
@@ -52,10 +42,16 @@ trait ProductPaymentSupportTrait {
 		);
 	}
 
-	/**
-	 * @param WC_Product_Variation[] $variations
-	 */
-	protected function has_in_stock_variation( array $variations ): bool {
+	private function has_stock( WC_Product $product ): bool {
+		if ( ! $product->is_type( 'variable' ) ) {
+			return $product->is_in_stock();
+		}
+
+		assert( $product instanceof WC_Product_Variable );
+
+		/** @var WC_Product_Variation[] $variations */
+		$variations = $product->get_available_variations( 'objects' );
+
 		foreach ( $variations as $variation ) {
 			if ( $variation->is_in_stock() ) {
 				return true;
@@ -63,5 +59,15 @@ trait ProductPaymentSupportTrait {
 		}
 
 		return false;
+	}
+
+	private function is_subscription_switch( WC_Product $product ): bool {
+		$subscription_types = array( 'subscription', 'variable-subscription' );
+		if ( ! $product->is_type( $subscription_types ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return ! empty( $_GET['switch-subscription'] );
 	}
 }
