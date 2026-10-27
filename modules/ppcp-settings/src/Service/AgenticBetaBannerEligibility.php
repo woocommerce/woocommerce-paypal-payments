@@ -58,9 +58,9 @@ class AgenticBetaBannerEligibility {
 
 	/**
 	 * Returns true when the store-level conditions are met: PHP >= 8.1, merchant
-	 * connected, merchant and store in an eligible country, a US shipping zone,
-	 * and sufficient product/order counts. The result is cached for 10 minutes
-	 * to avoid repeated DB queries.
+	 * connected, merchant and store in an eligible country, a shipping zone for an
+	 * eligible country, and sufficient product/order counts. The result is cached
+	 * for 10 minutes to avoid repeated DB queries.
 	 *
 	 * @return bool
 	 */
@@ -77,7 +77,7 @@ class AgenticBetaBannerEligibility {
 		$result = $this->general_settings->is_merchant_connected()
 			&& $this->is_eligible_country( $this->general_settings->get_merchant_data()->merchant_country )
 			&& $this->is_eligible_country( $this->store_country )
-			&& $this->has_us_shipping_zone()
+			&& $this->has_eligible_shipping_zone()
 			&& $this->has_enough_products()
 			&& $this->has_enough_recent_orders();
 
@@ -88,11 +88,11 @@ class AgenticBetaBannerEligibility {
 
 	/**
 	 * Returns true if the default zone has active shipping methods, or if any
-	 * named zone covers the US country and has at least one active method.
+	 * named zone covers an eligible country and has at least one active method.
 	 *
 	 * @return bool
 	 */
-	private function has_us_shipping_zone(): bool {
+	private function has_eligible_shipping_zone(): bool {
 		$default_zone = new \WC_Shipping_Zone( 0 );
 		if ( ! empty( $default_zone->get_shipping_methods( true ) ) ) {
 			return true;
@@ -111,11 +111,7 @@ class AgenticBetaBannerEligibility {
 			}
 
 			foreach ( $locations as $location ) {
-				if (
-					( $location->type === 'continent' && $location->code === 'NA' ) ||
-					( $location->type === 'country' && $location->code === 'US' ) ||
-					( $location->type === 'state' && strncmp( $location->code, 'US:', 3 ) === 0 )
-				) {
+				if ( $this->is_eligible_location( $location ) ) {
 					return true;
 				}
 			}
@@ -126,6 +122,26 @@ class AgenticBetaBannerEligibility {
 
 	private function is_eligible_country( string $country ): bool {
 		return in_array( $country, self::ELIGIBLE_COUNTRIES, true );
+	}
+
+	/**
+	 * Returns true if a shipping zone location covers an eligible country directly,
+	 * through one of its states, or through its continent.
+	 */
+	private function is_eligible_location( \stdClass $location ): bool {
+		foreach ( self::ELIGIBLE_COUNTRIES as $country ) {
+			$continent = WC()->countries->get_continent_code_for_country( $country );
+
+			if (
+				( $location->type === 'continent' && $location->code === $continent ) ||
+				( $location->type === 'country' && $location->code === $country ) ||
+				( $location->type === 'state' && strpos( $location->code, $country . ':' ) === 0 )
+			) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
