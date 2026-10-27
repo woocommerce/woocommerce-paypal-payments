@@ -70,7 +70,9 @@ describe( 'TokenRefreshHandler', () => {
 			expect( sdkInstance.updateClientToken ).not.toHaveBeenCalled();
 
 			await tick( 1 );
-			expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith( 'NEW' );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith(
+				'NEW'
+			);
 		} );
 
 		test( 'plans the next refresh from the refresh_in of the new token', async () => {
@@ -177,27 +179,41 @@ describe( 'TokenRefreshHandler', () => {
 			expect( sdkInstance.updateClientToken ).not.toHaveBeenCalled();
 
 			await tick( 1 );
-			expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith( 'NEW' );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith(
+				'NEW'
+			);
 		} );
 
-		test( 'tries again after retry_in when updateClientToken throws', async () => {
-			sdkInstance.updateClientToken
-				.mockImplementationOnce( () => {
-					throw new Error( 'invalid JWT' );
-				} )
-				.mockImplementationOnce( () => {} );
+		test( 'stops refreshing when updateClientToken throws', async () => {
+			sdkInstance.updateClientToken.mockImplementation( () => {
+				throw new Error( 'invalid JWT' );
+			} );
 			const fetchTokenData = jest.fn().mockResolvedValue( tokenData() );
 			handler.start( sdkInstance, fetchTokenData, tokenData() );
 
 			await tick( REFRESH_MS );
 			expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
 
-			await tick( RETRY_MS - 1 );
+			await tick( RETRY_MS );
+			await tick( REFRESH_MS * 10 );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'does not refresh on a later visibilitychange after updateClientToken throws', async () => {
+			sdkInstance.updateClientToken.mockImplementation( () => {
+				throw new Error( 'invalid JWT' );
+			} );
+			const fetchTokenData = jest.fn().mockResolvedValue( tokenData() );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
+			await tick( REFRESH_MS );
 			expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
 
-			await tick( 1 );
-			expect( fetchTokenData ).toHaveBeenCalledTimes( 2 );
-			expect( sdkInstance.updateClientToken ).toHaveBeenCalledTimes( 2 );
+			jest.setSystemTime( Date.now() + REFRESH_MS * 10 );
+			setVisibility( 'visible' );
+			document.dispatchEvent( new Event( 'visibilitychange' ) );
+			await tick( 0 );
+
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
 		} );
 
 		test( 'keeps retrying after retry_in on repeated failures', async () => {
@@ -213,7 +229,9 @@ describe( 'TokenRefreshHandler', () => {
 			expect( sdkInstance.updateClientToken ).not.toHaveBeenCalled();
 
 			await tick( RETRY_MS );
-			expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith( 'NEW' );
+			expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith(
+				'NEW'
+			);
 		} );
 
 		test( 'uses the retry_in of the latest response after a successful refresh', async () => {

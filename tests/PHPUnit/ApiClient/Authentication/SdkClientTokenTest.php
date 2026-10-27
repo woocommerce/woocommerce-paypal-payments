@@ -307,6 +307,44 @@ class SdkClientTokenTest extends TestCase
         ];
     }
 
+    /**
+     * GIVEN no cached token
+     * WHEN PayPal answers without a usable lifetime (missing, zero or negative expires_in)
+     * THEN the token is treated as living PayPal's default 900 seconds
+     * AND the token is cached for 780 seconds (900 minus the 120 second margin), never forever
+     * AND the fresh entry is a marker set for 112 seconds (12.5% of 900)
+     * AND the token is returned with a lifetime of about 900 seconds
+     *
+     * @dataProvider unusableLifetimeProvider
+     */
+    public function test_unusable_expires_in_falls_back_to_the_default_lifetime(string $body)
+    {
+        expect('trailingslashit')->andReturn($this->host . '/');
+        expect('wp_remote_get')->once()->andReturn(['body' => $body, 'headers' => $this->headers()]);
+        expect('wp_remote_retrieve_response_code')->andReturn(200);
+
+        $data = $this->sut->sdk_client_token_data();
+
+        $this->assertSame('tok', $data['token']);
+        $this->assertEqualsWithDelta(900, $data['expires_in'], self::CLOCK_TOLERANCE);
+        $this->assertCount(2, $this->cacheWrites);
+        [$key, $value, $lifetime] = $this->cacheWrites[0];
+        $this->assertSame(self::TEST_CACHE_KEY, $key);
+        $this->assertSame('tok', $value['token']);
+        $this->assertEqualsWithDelta(time() + 900, $value['expires_at'], self::CLOCK_TOLERANCE);
+        $this->assertSame(780, $lifetime);
+        $this->assertSame([self::TEST_FRESH_KEY, 1, 112], $this->cacheWrites[1]);
+    }
+
+    public function unusableLifetimeProvider(): array
+    {
+        return [
+            'expires_in missing' => ['{"access_token":"tok"}'],
+            'expires_in zero' => ['{"access_token":"tok","expires_in":0}'],
+            'expires_in negative' => ['{"access_token":"tok","expires_in":-5}'],
+        ];
+    }
+
     public function testRetriesOnceOnConnectionError()
     {
         $this->rateLimiter->expects('clear')->with('sdk-client-token');

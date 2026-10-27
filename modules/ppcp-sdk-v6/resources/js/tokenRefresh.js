@@ -76,16 +76,41 @@ export class TokenRefreshHandler {
 		this.refreshing = true;
 
 		try {
-			const tokenData = await this.fetchTokenData();
-			this.sdkInstance.updateClientToken( tokenData.client_token );
+			let tokenData;
+			try {
+				tokenData = await this.fetchTokenData();
+			} catch ( error ) {
+				console.error(
+					'[PPCP SDK v6] Client token refresh failed',
+					error
+				);
+				this.scheduleRefresh( this.retryIn );
+				return;
+			}
+
+			try {
+				this.sdkInstance.updateClientToken( tokenData.client_token );
+			} catch ( error ) {
+				// The SDK rejects a token it can never accept, e.g. one of another
+				// merchant after re-onboarding, so the next payment fails instead.
+				console.error(
+					'[PPCP SDK v6] Client token update failed',
+					error
+				);
+				this.stop();
+				return;
+			}
+
 			this.planNextRefresh( tokenData );
-		} catch ( error ) {
-			// eslint-disable-next-line no-console
-			console.error( '[PPCP SDK v6] Client token refresh failed', error );
-			this.scheduleRefresh( this.retryIn );
 		} finally {
 			this.refreshing = false;
 		}
+	}
+
+	stop() {
+		clearTimeout( this.timer );
+		this.timer = null;
+		this.refreshAt = 0;
 	}
 }
 
