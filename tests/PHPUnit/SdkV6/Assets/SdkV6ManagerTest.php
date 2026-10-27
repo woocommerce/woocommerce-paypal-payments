@@ -32,6 +32,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WC_Payment_Gateway;
+use WC_Product;
+use WC_Product_Variable;
+use WC_Product_Variation;
 use function Brain\Monkey\Actions\expectDone;
 use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\expect;
@@ -158,6 +161,35 @@ class SdkV6ManagerTest extends TestCase
         $product->shouldReceive('is_downloadable')->andReturn($is_downloadable);
         // pay_later_product_context() reads the price on every product page.
         $product->shouldReceive('get_price')->with('raw')->andReturn('10.00')->byDefault();
+
+        return $product;
+    }
+
+    /**
+     * @param bool[] $variation_stock In-stock flag of each available variation (variable products only).
+     */
+    private function create_product(string $type, bool $in_stock, array $variation_stock = []): object
+    {
+        $class = 'variable' === $type ? WC_Product_Variable::class : WC_Product::class;
+
+        $product = Mockery::mock($class);
+        $product->shouldReceive('is_type')
+            ->andReturnUsing(static fn($types): bool => in_array($type, (array) $types, true));
+        $product->shouldReceive('is_in_stock')->andReturn($in_stock);
+        $product->shouldReceive('needs_shipping')->andReturn(false)->byDefault();
+
+        if ('variable' === $type) {
+            $variations = array_map(
+                static function (bool $variation_in_stock): WC_Product_Variation {
+                    $variation = Mockery::mock(WC_Product_Variation::class);
+                    $variation->shouldReceive('is_in_stock')->andReturn($variation_in_stock);
+
+                    return $variation;
+                },
+                $variation_stock
+            );
+            $product->shouldReceive('get_available_variations')->andReturn($variations);
+        }
 
         return $product;
     }
@@ -1703,6 +1735,50 @@ class SdkV6ManagerTest extends TestCase
         ];
     }
 
+    /**
+     * GIVEN the product page location
+     * WHEN the message wrapper is rendered for the viewed product
+     * THEN the Pay Later message wrapper is printed only if the product can be bought
+     *
+     * @dataProvider product_buyability_provider
+     */
+    public function testRenderMessageWrapperOnProductPageFollowsWhetherProductCanBeBought(
+        string $type,
+        bool $in_stock,
+        array $variation_stock,
+        bool $expected
+    ): void {
+        $this->context->shouldReceive('location')->andReturn('product');
+        when('wc_get_product')->justReturn($this->create_product($type, $in_stock, $variation_stock));
+
+        ob_start();
+        $this->createTestee()->render_message_wrapper();
+        $output = ob_get_clean();
+
+        $this->assertSame($expected ? '<div class="ppcp-messages"></div>' : '', $output);
+    }
+
+    /**
+     * GIVEN the product page location and a merchant filter on PayPal button support
+     * WHEN the message wrapper is rendered for an in-stock simple product
+     * THEN the Pay Later message wrapper follows the filter result
+     *
+     * @dataProvider payment_support_filter_provider
+     */
+    public function testRenderMessageWrapperOnProductPageFollowsPaymentSupportFilter(bool $filter_result): void
+    {
+        expectApplied('woocommerce_paypal_payments_product_supports_payment_request_button')
+            ->andReturn($filter_result);
+        $this->context->shouldReceive('location')->andReturn('product');
+        when('wc_get_product')->justReturn($this->create_product('simple', true));
+
+        ob_start();
+        $this->createTestee()->render_message_wrapper();
+        $output = ob_get_clean();
+
+        $this->assertSame($filter_result ? '<div class="ppcp-messages"></div>' : '', $output);
+    }
+
     // -------------------------------------------------------------------------
     // enqueue()
     // -------------------------------------------------------------------------
@@ -3062,8 +3138,7 @@ class SdkV6ManagerTest extends TestCase
         $cart->shouldReceive('needs_payment')->andReturn(true);
         when('WC')->justReturn((object) ['cart' => $cart]);
 
-        $product = Mockery::mock(\WC_Product::class);
-        $product->shouldReceive('is_type')->andReturn($is_variable);
+        $product = $this->create_product($is_variable ? 'variable' : 'simple', true, [true]);
         $product->shouldReceive('needs_shipping')->andReturn($needs_shipping);
         when('wc_get_product')->justReturn($product);
         when('wc_get_price_including_tax')->justReturn($price);
@@ -3089,6 +3164,75 @@ class SdkV6ManagerTest extends TestCase
             'free product needing shipping with shipping disabled is suppressed' => [false, 0.0, true, false, false],
             'priced product keeps the button' => [false, 10.0, false, true, true],
             'variable product priced at zero keeps the button' => [true, 0.0, false, true, true],
+        ];
+    }
+
+    public function product_buyability_provider(): array
+    {
+        return [
+            'in-stock simple product can be bought' => ['simple', true, [], true],
+            'out-of-stock simple product cannot be bought' => ['simple', false, [], false],
+            'external product cannot be bought' => ['external', true, [], false],
+            'grouped product cannot be bought' => ['grouped', true, [], false],
+            'variable product with an in-stock variation can be bought' => ['variable', false, [false, true], true],
+            'variable product with only out-of-stock variations cannot be bought' => ['variable', true, [false, false], false],
+            'variable product without variations cannot be bought' => ['variable', true, [], false],
+        ];
+    }
+
+    /**
+     * GIVEN the smart button is enabled for the product location
+     * WHEN determining which locations should render for the viewed product
+     * THEN the product location renders only if the product can be bought
+     *
+     * @dataProvider product_buyability_provider
+     */
+    public function testDetermineRenderPlacesProductFollowsWhetherProductCanBeBought(
+        string $type,
+        bool $in_stock,
+        array $variation_stock,
+        bool $expected
+    ): void {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        when('wc_get_product')->justReturn($this->create_product($type, $in_stock, $variation_stock));
+        when('wc_get_price_including_tax')->justReturn(10.0);
+
+        $this->assertSame($expected, $this->createTestee()->determine_render_places()['product']);
+    }
+
+    /**
+     * GIVEN a product page where a merchant filter decides if the product supports PayPal buttons
+     * WHEN determining which locations should render for an in-stock simple product
+     * THEN the product location follows the filter result
+     *
+     * @dataProvider payment_support_filter_provider
+     */
+    public function testDetermineRenderPlacesProductFollowsPaymentSupportFilter(bool $filter_result): void
+    {
+        expectApplied('woocommerce_paypal_payments_product_supports_payment_request_button')
+            ->andReturn($filter_result);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        when('wc_get_product')->justReturn($this->create_product('simple', true));
+        when('wc_get_price_including_tax')->justReturn(10.0);
+
+        $this->assertSame($filter_result, $this->createTestee()->determine_render_places()['product']);
+    }
+
+    public function payment_support_filter_provider(): array
+    {
+        return [
+            'filter denies support' => [false],
+            'filter allows support' => [true],
         ];
     }
 
