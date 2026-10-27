@@ -731,6 +731,21 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a merchant whose partner attribution BN code is configured
+     * WHEN the SDK bootstrap data is generated
+     * THEN bn_code carries that BN code so the frontend can pass it to the SDK as partnerAttributionId
+     */
+    public function testScriptDataIncludesBnCode(): void
+    {
+        $this->stub_common_script_data_dependencies();
+
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, false, ['checkout', 'pay-now'], 'WooPPCP_Ecom_PS_CoreProfiler');
+        $data   = $testee->script_data();
+
+        $this->assertSame('WooPPCP_Ecom_PS_CoreProfiler', $data['bn_code']);
+    }
+
+    /**
      * GIVEN a configured list of contexts in which the PayPal popup commits the payment
      * WHEN the SDK bootstrap data is generated
      * THEN pay_now_contexts carries that list exactly as configured, so the front end can
