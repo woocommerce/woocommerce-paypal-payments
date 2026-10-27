@@ -14,8 +14,6 @@ use WC_Cart;
 use WC_Order;
 use WC_Payment_Tokens;
 use WC_Product;
-use WC_Product_Variable;
-use WC_Product_Variation;
 use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
@@ -51,6 +49,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\ProductPaymentSupportTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
@@ -63,6 +62,7 @@ use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 class SmartButton implements SmartButtonInterface {
 
 	use FreeTrialHandlerTrait;
+	use ProductPaymentSupportTrait;
 
 	/**
 	 * The Settings status helper.
@@ -1860,42 +1860,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	}
 
 	/**
-	 * Checks if PayPal buttons/messages can be rendered for the given product.
-	 *
-	 * @param WC_Product $product The product.
-	 *
-	 * @return bool
-	 */
-	protected function product_supports_payment( WC_Product $product ): bool {
-		/**
-		 * The filter returning true if PayPal buttons/messages can be rendered for this product, or false otherwise.
-		 */
-
-		$in_stock = $product->is_in_stock();
-
-		if ( $product->is_type( 'variable' ) ) {
-			assert( $product instanceof WC_Product_Variable );
-
-			/** @var WC_Product_Variation[] $variations */
-			$variations = $product->get_available_variations( 'objects' );
-			$in_stock   = $this->has_in_stock_variation( $variations );
-		}
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$enable_button = ! $product->is_type( array( 'external', 'grouped' ) ) && $in_stock &&
-			! ( ( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' ) ) && ! empty( $_GET['switch-subscription'] ) );
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-		/**
-		 * Allows to filter if PayPal buttons/messages can be rendered for the given product.
-		 */
-		return apply_filters(
-			'woocommerce_paypal_payments_product_supports_payment_request_button',
-			$enable_button,
-			$product
-		);
-	}
-
-	/**
 	 * Fills and returns the product context_data array to be used in filters.
 	 *
 	 * @param array $context_data The context data for this filter.
@@ -2000,22 +1964,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	public function is_pay_later_messaging_enabled_for_location( string $location, array $context_data = array() ): bool {
 		return $this->is_pay_later_filter_enabled_for_location( $location, $context_data )
 			&& $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
-	}
-
-	/**
-	 * Checks if variations contain any in stock variation.
-	 *
-	 * @param WC_Product_Variation[] $variations The list of variations.
-	 * @return bool True if any in stock variation, false otherwise.
-	 */
-	protected function has_in_stock_variation( array $variations ): bool {
-		foreach ( $variations as $variation ) {
-			if ( $variation->is_in_stock() ) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	/**
