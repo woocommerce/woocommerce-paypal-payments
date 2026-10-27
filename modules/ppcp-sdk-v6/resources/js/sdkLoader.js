@@ -162,6 +162,9 @@ async function createInstance( config, context ) {
 		locale: config.locale,
 		clientMetadataId: clientMetadataId(),
 	};
+	if ( config.bn_code ) {
+		instanceOptions.partnerAttributionId = config.bn_code;
+	}
 
 	const sdkInstance = await createSdkInstance(
 		window.paypal,
