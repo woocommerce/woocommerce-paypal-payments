@@ -10,11 +10,27 @@
 
 const HANDLER_KEY = '__ppcpV6TokenRefresh';
 
+const MAX_RETRIES = 3;
+
+/**
+ * Other client errors, e.g. an expired nonce, fail the same way on every try,
+ * because the page never gets a new nonce.
+ *
+ * @param {Error} error - The failed fetch.
+ * @return {boolean} Whether a later try can succeed.
+ */
+function isRetryable( error ) {
+	const status = error?.status;
+
+	return ! status || status >= 500 || status === 408 || status === 429;
+}
+
 export class TokenRefreshHandler {
 	constructor() {
 		this.timer = null;
 		this.refreshAt = 0;
 		this.retryIn = undefined;
+		this.failures = 0;
 		this.refreshing = false;
 		this.sdkInstance = null;
 		this.fetchTokenData = null;
@@ -51,6 +67,7 @@ export class TokenRefreshHandler {
 	 */
 	planNextRefresh( tokenData ) {
 		this.retryIn = tokenData.retry_in;
+		this.failures = 0;
 		this.scheduleRefresh( tokenData.refresh_in );
 	}
 
@@ -69,6 +86,21 @@ export class TokenRefreshHandler {
 		this.timer = setTimeout( () => this.refresh(), delay );
 	}
 
+	/**
+	 * A few retries cover a device waking up before its network is back.
+	 *
+	 * @param {Error} error - The failed fetch.
+	 */
+	scheduleRetry( error ) {
+		if ( ! isRetryable( error ) || this.failures >= MAX_RETRIES ) {
+			this.stop();
+			return;
+		}
+
+		this.failures++;
+		this.scheduleRefresh( this.retryIn );
+	}
+
 	async refresh() {
 		if ( this.refreshing ) {
 			return;
@@ -84,7 +116,7 @@ export class TokenRefreshHandler {
 					'[PPCP SDK v6] Client token refresh failed',
 					error
 				);
-				this.scheduleRefresh( this.retryIn );
+				this.scheduleRetry( error );
 				return;
 			}
 

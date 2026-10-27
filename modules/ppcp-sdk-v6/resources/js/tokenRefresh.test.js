@@ -234,6 +234,100 @@ describe( 'TokenRefreshHandler', () => {
 			);
 		} );
 
+		test( 'stops after 3 consecutive retryable failures', async () => {
+			const fetchTokenData = jest
+				.fn()
+				.mockRejectedValue( new Error( 'down' ) );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
+
+			await tick( REFRESH_MS );
+			await tick( RETRY_MS * 3 );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 4 );
+
+			await tick( REFRESH_MS * 10 );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 4 );
+		} );
+
+		test( 'retries at retry_in again after a success resets the failure count', async () => {
+			const fetchTokenData = jest
+				.fn()
+				.mockRejectedValueOnce( new Error( 'down' ) )
+				.mockResolvedValueOnce( tokenData() )
+				.mockRejectedValueOnce( new Error( 'down' ) )
+				.mockResolvedValueOnce( tokenData() );
+			handler.start( sdkInstance, fetchTokenData, tokenData() );
+			await tick( REFRESH_MS );
+			await tick( RETRY_MS );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 2 );
+
+			await tick( REFRESH_MS );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 3 );
+
+			await tick( RETRY_MS - 1 );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 3 );
+
+			await tick( 1 );
+			expect( fetchTokenData ).toHaveBeenCalledTimes( 4 );
+		} );
+
+		describe( 'by error status', () => {
+			const httpError = ( status ) =>
+				Object.assign( new Error( 'x' ), { status } );
+
+			test.each( [ 400, 403 ] )(
+				'stops after a %d response',
+				async ( status ) => {
+					const fetchTokenData = jest
+						.fn()
+						.mockRejectedValue( httpError( status ) );
+					handler.start( sdkInstance, fetchTokenData, tokenData() );
+
+					await tick( REFRESH_MS );
+					expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
+
+					await tick( RETRY_MS * 100 );
+					expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
+				}
+			);
+
+			test( 'does not refresh on a later visibilitychange after a 400 response', async () => {
+				const fetchTokenData = jest
+					.fn()
+					.mockRejectedValue( httpError( 400 ) );
+				handler.start( sdkInstance, fetchTokenData, tokenData() );
+				await tick( REFRESH_MS );
+				expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
+
+				jest.setSystemTime( Date.now() + REFRESH_MS * 10 );
+				setVisibility( 'visible' );
+				document.dispatchEvent( new Event( 'visibilitychange' ) );
+				await tick( 0 );
+
+				expect( fetchTokenData ).toHaveBeenCalledTimes( 1 );
+			} );
+
+			test.each( [
+				{ name: '408', error: httpError( 408 ) },
+				{ name: '429', error: httpError( 429 ) },
+				{ name: '500', error: httpError( 500 ) },
+				{ name: 'no status', error: new Error( 'network' ) },
+			] )( 'keeps retrying after $name', async ( { error } ) => {
+				const fetchTokenData = jest
+					.fn()
+					.mockRejectedValueOnce( error )
+					.mockResolvedValueOnce(
+						tokenData( { client_token: 'NEW' } )
+					);
+				handler.start( sdkInstance, fetchTokenData, tokenData() );
+
+				await tick( REFRESH_MS + RETRY_MS );
+
+				expect( sdkInstance.updateClientToken ).toHaveBeenCalledWith(
+					'NEW'
+				);
+			} );
+		} );
+
 		test( 'uses the retry_in of the latest response after a successful refresh', async () => {
 			const fetchTokenData = jest
 				.fn()
