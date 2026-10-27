@@ -175,6 +175,27 @@ class AddPaymentMethodManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a merchant whose partner attribution BN code is configured
+     * WHEN the add-payment-method bootstrap script data is generated
+     * THEN the BN code is exposed so the frontend can pass it to the SDK as partnerAttributionId
+     */
+    public function testScriptDataIncludesBnCode(): void
+    {
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->settings_provider->shouldReceive('three_d_secure_enum')->andReturn('SCA_ALWAYS');
+        when('apply_filters')->alias(static fn (string $filter, $value) => $value);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('wc_get_account_endpoint_url')->justReturn('https://example.com/my-account/payment-methods');
+        when('wp_create_nonce')->justReturn('nonce');
+
+        $testee = $this->createTestee(false, true, 'WooPPCP_Ecom_PS_CoreProfiler');
+        $data   = $this->invoke_script_data($testee);
+
+        $this->assertSame('WooPPCP_Ecom_PS_CoreProfiler', $data['bn_code']);
+    }
+
+    /**
      * Invokes the private script_data() method via reflection, since it is
      * only reachable indirectly through enqueue() in production code.
      */
