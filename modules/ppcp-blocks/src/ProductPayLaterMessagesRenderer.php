@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\ProductPaymentSupportTrait;
 
 /**
  * Emits the `.ppcp-messages` placeholder that the PayPal SDK hydrates into a Pay Later
@@ -22,6 +23,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  * messages/renderer.js) scans the DOM for `.ppcp-messages` wrappers and renders into them.
  */
 class ProductPayLaterMessagesRenderer {
+	use ProductPaymentSupportTrait;
 
 	/**
 	 * The messaging style, keyed by the same names the settings DTO exposes.
@@ -38,7 +40,8 @@ class ProductPayLaterMessagesRenderer {
 	}
 
 	/**
-	 * Renders the messaging placeholder, or an empty string when the product placement is off.
+	 * Renders the messaging placeholder, or an empty string when the current page cannot show
+	 * product Pay Later messages.
 	 *
 	 * @param array<string, mixed> $attributes The block attributes.
 	 * @param ContainerInterface   $c          The container.
@@ -46,6 +49,10 @@ class ProductPayLaterMessagesRenderer {
 	 */
 	public function render( array $attributes, ContainerInterface $c ): string {
 		if ( ! ProductBlocks::is_messaging_enabled( $c->get( 'wcgateway.settings.status' ) ) ) {
+			return '';
+		}
+
+		if ( $this->is_unsupported_product() ) {
 			return '';
 		}
 
