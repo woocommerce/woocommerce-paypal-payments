@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Mockery;
+use WC_Product;
+use WC_Product_Variable;
+use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -17,13 +20,22 @@ class ProductSmartButtonsRendererTest extends TestCase
     /** @var SettingsStatus|Mockery\MockInterface */
     private $settings_status;
 
+    /** Value a merchant filter returns for product payment support; null when no filter is attached. */
+    private ?bool $payment_support_filter_result = null;
+
     public function setUp(): void
     {
         parent::setUp();
 
         when('wp_kses_data')->returnArg();
         when('get_block_wrapper_attributes')->justReturn('');
-        when('apply_filters')->returnArg(2);
+        $this->payment_support_filter_result = null;
+        when('apply_filters')->alias(
+            fn (string $hook, $value) => 'woocommerce_paypal_payments_product_supports_payment_request_button' === $hook
+                && null !== $this->payment_support_filter_result
+                    ? $this->payment_support_filter_result
+                    : $value
+        );
         when('do_action')->justReturn(null);
         // No viewed product unless a test names one.
         when('wc_get_product')->justReturn(false);
@@ -49,6 +61,103 @@ class ProductSmartButtonsRendererTest extends TestCase
         }
 
         return $container;
+    }
+
+    /**
+     * @param bool[] $variation_stock In-stock flag of each available variation (variable products only).
+     */
+    private function create_product(string $type, bool $in_stock, array $variation_stock = []): object
+    {
+        $class = 'variable' === $type ? WC_Product_Variable::class : WC_Product::class;
+
+        $product = Mockery::mock($class);
+        $product->shouldReceive('is_type')
+            ->andReturnUsing(static fn ($types): bool => in_array($type, (array) $types, true));
+        $product->shouldReceive('is_in_stock')->andReturn($in_stock);
+        $product->shouldReceive('needs_shipping')->andReturn(false)->byDefault();
+
+        if ('variable' === $type) {
+            $variations = array_map(
+                static function (bool $variation_in_stock): WC_Product_Variation {
+                    $variation = Mockery::mock(WC_Product_Variation::class);
+                    $variation->shouldReceive('is_in_stock')->andReturn($variation_in_stock);
+
+                    return $variation;
+                },
+                $variation_stock
+            );
+            $product->shouldReceive('get_available_variations')->andReturn($variations);
+        }
+
+        return $product;
+    }
+
+    /**
+     * GIVEN the product Smart Buttons placement is enabled and a product is being viewed
+     * WHEN the block is rendered
+     * THEN the button wrapper is rendered only if the product can be bought
+     *
+     * @dataProvider product_buyability_provider
+     */
+    public function testWrapperDependsOnWhetherProductCanBeBought(
+        string $type,
+        bool $in_stock,
+        array $variation_stock,
+        bool $expect_wrapper
+    ): void {
+        when('is_product')->justReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('product')
+            ->andReturn(true);
+        when('wc_get_product')->justReturn($this->create_product($type, $in_stock, $variation_stock));
+        when('wc_get_price_including_tax')->justReturn(10.0);
+
+        $html = (new ProductSmartButtonsRenderer())->render(array(), $this->create_container(false));
+
+        $this->assertSame($expect_wrapper, false !== strpos($html, 'class="ppc-button-wrapper"'));
+    }
+
+    public function product_buyability_provider(): array
+    {
+        return [
+            'in-stock simple product renders' => ['simple', true, [], true],
+            'out-of-stock simple product renders nothing' => ['simple', false, [], false],
+            'external product renders nothing' => ['external', true, [], false],
+            'grouped product renders nothing' => ['grouped', true, [], false],
+            'variable product with an in-stock variation renders' => ['variable', false, [false, true], true],
+            'variable product with only out-of-stock variations renders nothing' => ['variable', true, [false, false], false],
+            'variable product without variations renders nothing' => ['variable', true, [], false],
+        ];
+    }
+
+    /**
+     * GIVEN a merchant filter decides if the viewed in-stock simple product supports PayPal buttons
+     * WHEN the block is rendered
+     * THEN the button wrapper is rendered only if the filter allows it
+     *
+     * @dataProvider payment_support_filter_provider
+     */
+    public function testWrapperFollowsPaymentSupportFilter(bool $filter_result): void
+    {
+        $this->payment_support_filter_result = $filter_result;
+        when('is_product')->justReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')
+            ->with('product')
+            ->andReturn(true);
+        when('wc_get_product')->justReturn($this->create_product('simple', true));
+        when('wc_get_price_including_tax')->justReturn(10.0);
+
+        $html = (new ProductSmartButtonsRenderer())->render(array(), $this->create_container(false));
+
+        $this->assertSame($filter_result, false !== strpos($html, 'class="ppc-button-wrapper"'));
+    }
+
+    public function payment_support_filter_provider(): array
+    {
+        return [
+            'filter denies support' => [false],
+            'filter allows support' => [true],
+        ];
     }
 
     /**
@@ -159,8 +268,7 @@ class ProductSmartButtonsRendererTest extends TestCase
             ->with('product')
             ->andReturn(true);
 
-        $product = Mockery::mock(\WC_Product::class);
-        $product->shouldReceive('is_type')->andReturn(false);
+        $product = $this->create_product('simple', true);
         $product->shouldReceive('needs_shipping')->andReturn($needs_shipping);
         when('wc_get_product')->justReturn($product);
         when('wc_get_price_including_tax')->justReturn(0.0);
