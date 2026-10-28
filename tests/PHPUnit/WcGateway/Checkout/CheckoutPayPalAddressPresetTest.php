@@ -446,35 +446,6 @@ class CheckoutPayPalAddressPresetTest extends TestCase
     }
 
     /**
-     * GIVEN a PayPal order with a shipping address
-     * WHEN a shipping address field is resolved
-     * THEN the value comes from the PayPal shipping address
-     *
-     * @dataProvider shippingAddressFieldProvider
-     */
-    public function testFilterCheckoutFieldFillsShippingAddressFromPayPalShipping(
-        string $fieldId,
-        string $expected
-    ): void {
-        $order = $this->buildOrderWithRecipient('Jane Recipient');
-        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
-
-        self::assertSame($expected, $this->buildTestee()[1]->filter_checkout_field(null, $fieldId));
-    }
-
-    /**
-     * @see testFilterCheckoutFieldFillsShippingAddressFromPayPalShipping
-     */
-    public function shippingAddressFieldProvider(): array
-    {
-        return [
-            'street' => ['shipping_address_1', 'Unter den Linden 1'],
-            'city' => ['shipping_city', 'Berlin'],
-            'state' => ['shipping_state', 'BE'],
-        ];
-    }
-
-    /**
      * GIVEN a PayPal order whose shipping recipient is named differently from the payer
      * WHEN the shipping name fields are resolved
      * THEN the last word is the last name and everything before it is the first name
@@ -504,6 +475,88 @@ class CheckoutPayPalAddressPresetTest extends TestCase
             'single word is first name' => ['Jane', 'shipping_first_name', 'Jane'],
             'single word has no last name' => ['Jane', 'shipping_last_name', null],
         ];
+    }
+
+    /**
+     * GIVEN a PayPal order with a shipping address
+     * WHEN a shipping address field is resolved
+     * THEN the value comes from the PayPal shipping address
+     *
+     * @dataProvider shippingAddressFieldProvider
+     */
+    public function testFilterCheckoutFieldFillsShippingAddressFromPayPalShipping(
+        string $fieldId,
+        string $expected
+    ): void {
+        $order = $this->buildOrderWithRecipient('Jane Recipient');
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+
+        self::assertSame($expected, $this->buildTestee()[1]->filter_checkout_field(null, $fieldId));
+    }
+
+    /**
+     * @see testFilterCheckoutFieldFillsShippingAddressFromPayPalShipping
+     */
+    public function shippingAddressFieldProvider(): array
+    {
+        return [
+            'street' => ['shipping_address_1', 'Unter den Linden 1'],
+            'city' => ['shipping_city', 'Berlin'],
+            'state' => ['shipping_state', 'BE'],
+        ];
+    }
+
+    /**
+     * GIVEN a PayPal order shipped to a recipient who may or may not be the payer
+     * WHEN the "ship to a different address" default is resolved
+     * THEN it is ticked only when the recipient's name differs from the payer's, ignoring case
+     *
+     * @dataProvider recipientVersusPayerProvider
+     */
+    public function testFilterShipToDifferentAddressDependsOnRecipientName(string $recipient, bool $expected): void
+    {
+        $order = $this->buildOrderWithRecipient($recipient);
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+
+        self::assertSame($expected, $this->buildTestee()[1]->filter_ship_to_different_address(false));
+    }
+
+    /**
+     * @see testFilterShipToDifferentAddressDependsOnRecipientName
+     */
+    public function recipientVersusPayerProvider(): array
+    {
+        return [
+            'different recipient ticks the box' => ['Jane Recipient', true],
+            'same name leaves it unchanged' => ['John Doe', false],
+            'same name in other case leaves it unchanged' => ['JOHN doe', false],
+        ];
+    }
+
+    /**
+     * GIVEN the shopper already submitted a ship-to-different-address choice
+     * WHEN the default is resolved for a recipient who is not the payer
+     * THEN the given value is kept so the shopper's choice is respected
+     */
+    public function testFilterShipToDifferentAddressKeepsShoppersSavedChoice(): void
+    {
+        $order = $this->buildOrderWithRecipient('Jane Recipient');
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+        $this->buildTestee()[0]->shouldReceive('checkout_form')->andReturn(['ship_to_different_address' => '0']);
+
+        self::assertFalse($this->buildTestee()[1]->filter_ship_to_different_address(false));
+    }
+
+    /**
+     * GIVEN no PayPal order in the session
+     * WHEN the "ship to a different address" default is resolved
+     * THEN the given value is returned unchanged
+     */
+    public function testFilterShipToDifferentAddressIsUnchangedWithoutSessionOrder(): void
+    {
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn(null);
+
+        self::assertFalse($this->buildTestee()[1]->filter_ship_to_different_address(false));
     }
 
     /**
