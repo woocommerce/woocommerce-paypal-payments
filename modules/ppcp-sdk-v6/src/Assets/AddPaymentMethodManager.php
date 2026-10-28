@@ -15,6 +15,7 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
@@ -41,8 +42,8 @@ class AddPaymentMethodManager
     private bool $card_vaulting_enabled;
     private SettingsProvider $settings_provider;
     private CardFieldStyles $card_field_styles;
-    private string $bn_code;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, Context $context, bool $paypal_vaulting_enabled, bool $card_vaulting_enabled, SettingsProvider $settings_provider, CardFieldStyles $card_field_styles, string $bn_code)
+    private PartnerAttribution $partner_attribution;
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, Context $context, bool $paypal_vaulting_enabled, bool $card_vaulting_enabled, SettingsProvider $settings_provider, CardFieldStyles $card_field_styles, PartnerAttribution $partner_attribution)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -52,7 +53,7 @@ class AddPaymentMethodManager
         $this->card_vaulting_enabled = $card_vaulting_enabled;
         $this->settings_provider = $settings_provider;
         $this->card_field_styles = $card_field_styles;
-        $this->bn_code = $bn_code;
+        $this->partner_attribution = $partner_attribution;
     }
     /**
      * Enqueues the add-payment-method bootstrap script.
@@ -100,6 +101,6 @@ class AddPaymentMethodManager
          * @param string $verification_method The default 3D Secure enum value.
          */
         $verification_method = (string) apply_filters('woocommerce_paypal_payments_three_d_secure_contingency', $this->settings_provider->three_d_secure_enum());
-        return array('sdk_url' => $base_url . '/web-sdk/v6/core', 'currency' => get_woocommerce_currency(), 'locale' => SdkLocale::from_wp_locale(get_locale()), 'bn_code' => $this->bn_code, 'verification_method' => $verification_method, 'payment_methods_page' => wc_get_account_endpoint_url('payment-methods'), 'button' => array('wrapper' => '#' . self::WRAPPER_ID, 'color_class' => 'paypal-gold'), 'card_fields' => array('enabled' => $this->card_vaulting_enabled, 'payment_method' => CreditCardGateway::ID, 'funding_source' => 'card', 'fields' => array('number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID), 'styles' => $this->card_field_styles->overrides()), 'ajax' => array('client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())), 'create_setup_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreateSetupToken::ENDPOINT), 'nonce' => wp_create_nonce(CreateSetupToken::nonce())), 'create_payment_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreatePaymentToken::ENDPOINT), 'nonce' => wp_create_nonce(CreatePaymentToken::nonce()))), 'labels' => array('generic_error' => __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-payments')));
+        return array('sdk_url' => $base_url . '/web-sdk/v6/core', 'currency' => get_woocommerce_currency(), 'locale' => SdkLocale::from_wp_locale(get_locale()), 'bn_code' => $this->partner_attribution->get_bn_code(), 'verification_method' => $verification_method, 'payment_methods_page' => wc_get_account_endpoint_url('payment-methods'), 'button' => array('wrapper' => '#' . self::WRAPPER_ID, 'color_class' => 'paypal-gold'), 'card_fields' => array('enabled' => $this->card_vaulting_enabled, 'payment_method' => CreditCardGateway::ID, 'funding_source' => 'card', 'fields' => array('number' => '#' . self::CARD_FIELD_NUMBER_ID, 'expiry' => '#' . self::CARD_FIELD_EXPIRY_ID, 'cvv' => '#' . self::CARD_FIELD_CVV_ID), 'styles' => $this->card_field_styles->overrides()), 'ajax' => array('client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())), 'create_setup_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreateSetupToken::ENDPOINT), 'nonce' => wp_create_nonce(CreateSetupToken::nonce())), 'create_payment_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreatePaymentToken::ENDPOINT), 'nonce' => wp_create_nonce(CreatePaymentToken::nonce()))), 'labels' => array('generic_error' => __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-payments')));
     }
 }

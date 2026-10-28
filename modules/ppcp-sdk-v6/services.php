@@ -8,7 +8,6 @@
 declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\SdkV6;
 
-use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
@@ -102,8 +101,6 @@ return array(
     'sdk-v6.manager' => static function (ContainerInterface $container): SdkV6Manager {
         $settings_provider = $container->get('settings.settings-provider');
         assert($settings_provider instanceof SettingsProvider);
-        $partner_attribution = $container->get('api.helper.partner-attribution');
-        assert($partner_attribution instanceof PartnerAttribution);
         return new SdkV6Manager(
             $container->get('sdk-v6.asset-getter'),
             $container->get('ppcp.asset-version'),
@@ -142,14 +139,12 @@ return array(
             $container->get('sdk-v6.card-field-styles'),
             $container->get('button.helper.disabled-funding-sources'),
             $container->get('order-endpoints.pay-now-contexts'),
-            $partner_attribution->get_bn_code()
+            $container->get('api.helper.partner-attribution')
         );
     },
     'sdk-v6.add-payment-method-manager' => static function (ContainerInterface $container): AddPaymentMethodManager {
         $settings_provider = $container->get('settings.settings-provider');
         assert($settings_provider instanceof SettingsProvider);
-        $partner_attribution = $container->get('api.helper.partner-attribution');
-        assert($partner_attribution instanceof PartnerAttribution);
         return new AddPaymentMethodManager(
             $container->get('sdk-v6.asset-getter'),
             $container->get('ppcp.asset-version'),
@@ -161,7 +156,7 @@ return array(
             $container->has('save-payment-methods.eligible') && $container->get('save-payment-methods.eligible') && $settings_provider->save_card_details(),
             $settings_provider,
             $container->get('sdk-v6.card-field-styles'),
-            $partner_attribution->get_bn_code()
+            $container->get('api.helper.partner-attribution')
         );
     },
     'sdk-v6.endpoint.client-token' => static function (ContainerInterface $container): ClientTokenEndpoint {

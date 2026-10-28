@@ -11,6 +11,7 @@ use WC_Product;
 use WP_Post;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
@@ -133,7 +134,7 @@ class SdkV6Manager
      * @var string[]
      */
     private array $pay_now_contexts;
-    private string $bn_code;
+    private PartnerAttribution $partner_attribution;
     /**
      * Every method this module places, in the order their rows are printed.
      *
@@ -166,7 +167,7 @@ class SdkV6Manager
      * @var bool|null
      */
     private ?bool $has_paylater_block = null;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, callable $get_subscriptions_mode, string $three_d_secure_contingency, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config, FastlaneConfig $fastlane_config, CardFieldStyles $card_field_styles, DisabledFundingSources $disabled_funding_sources, array $pay_now_contexts, string $bn_code)
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, ButtonStyleMapper $style_mapper, SettingsStatus $settings_status, Context $context, SessionHandler $session_handler, CancelView $cancel_view, bool $final_review_enabled, bool $vaulting_enabled, CardPaymentsConfiguration $card_payments_configuration, bool $card_vaulting_enabled, SubscriptionHelper $subscription_helper, FreeTrialSubscriptionHelper $free_trial_helper, callable $get_subscriptions_mode, string $three_d_secure_contingency, array $credit_card_icons, MessageStyleMapper $message_style_mapper, MessagesEligibility $messages_eligibility, string $merchant_country, GooglePayConfig $google_pay_config, ApplePayConfig $apple_pay_config, FastlaneConfig $fastlane_config, CardFieldStyles $card_field_styles, DisabledFundingSources $disabled_funding_sources, array $pay_now_contexts, PartnerAttribution $partner_attribution)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -193,7 +194,7 @@ class SdkV6Manager
         $this->card_field_styles = $card_field_styles;
         $this->disabled_funding_sources = $disabled_funding_sources;
         $this->pay_now_contexts = $pay_now_contexts;
-        $this->bn_code = $bn_code;
+        $this->partner_attribution = $partner_attribution;
         $this->placements = array(new \WooCommerce\PayPalCommerce\SdkV6\Assets\MethodPlacement('google_pay', GooglePayGateway::ID, self::GOOGLE_PAY_WRAPPER_ID, 'https://pay.google.com/gp/p/js/pay.js', $google_pay_config, static function (string $context) use ($google_pay_config): array {
             return $google_pay_config->styles($context);
         }), new \WooCommerce\PayPalCommerce\SdkV6\Assets\MethodPlacement(
@@ -1045,7 +1046,7 @@ class SdkV6Manager
             'buyer_country' => $buyer_country,
             'merchant_country' => $this->iso_merchant_country(),
             'locale' => SdkLocale::from_wp_locale(get_locale()),
-            'bn_code' => $this->bn_code,
+            'bn_code' => $this->partner_attribution->get_bn_code(),
             'vaulting_enabled' => $this->vaulting_enabled,
             'final_review' => $this->final_review_enabled,
             'pay_now_contexts' => $this->pay_now_contexts,
