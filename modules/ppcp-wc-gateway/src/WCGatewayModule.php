@@ -774,24 +774,21 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		add_filter(
 			'woocommerce_checkout_get_value',
 			static function ( ...$args ) use ( $container ) {
-
-				/**
-				 * Its important to not instantiate the service too early as it
-				 * depends on SessionHandler and WooCommerce Session.
-				 */
-
-				/**
-				 * The CheckoutPayPalAddressPreset object.
-				 *
-				 * @var CheckoutPayPalAddressPreset $service
-				 */
-				$service = $container->get( 'wcgateway.checkout.address-preset' );
-
-				return $service->filter_checkout_field( ...$args );
+				return self::address_preset( $container )->filter_checkout_field( ...$args );
 			},
 			10,
 			2
 		);
+	}
+
+	/**
+	 * Resolved per hook call, never earlier: the service needs the WooCommerce session.
+	 */
+	private static function address_preset( ContainerInterface $container ): CheckoutPayPalAddressPreset {
+		$service = $container->get( 'wcgateway.checkout.address-preset' );
+		assert( $service instanceof CheckoutPayPalAddressPreset );
+
+		return $service;
 	}
 
 	/**
