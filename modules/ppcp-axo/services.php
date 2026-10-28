@@ -17,9 +17,9 @@ use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Service\AxoApplies;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
@@ -69,15 +69,17 @@ return array(
         if (isset(WC()->session) && method_exists(WC()->session, 'get_customer_unique_id')) {
             $session_id = substr(md5((string) WC()->session->get_customer_unique_id()), 0, 16);
         }
-        return array(
-            'enabled' => defined('WP_DEBUG') && WP_DEBUG,
-            // @phpstan-ignore booleanAnd.rightAlwaysFalse
-            'client_id' => $settings_provider->merchant_data()->client_id,
-            'session_id' => $session_id,
-            'amount' => array('currency_code' => $currency->get()),
-            'payment_method_selected_map' => $container->get('axo.payment_method_selected_map'),
-            'wp_debug' => defined('WP_DEBUG') && WP_DEBUG,
-        );
+        return array('enabled' => $container->get('axo.insights.enabled'), 'client_id' => $settings_provider->merchant_data()->client_id, 'session_id' => $session_id, 'amount' => array('currency_code' => $currency->get()), 'payment_method_selected_map' => $container->get('axo.payment_method_selected_map'), 'wp_debug' => defined('WP_DEBUG') && WP_DEBUG);
+    },
+    // PayPal Insights is only active on debug sites for now.
+    'axo.insights.enabled' => static function (): bool {
+        return defined('WP_DEBUG') && WP_DEBUG;
+        // @phpstan-ignore booleanAnd.rightAlwaysFalse
+    },
+    'axo.insights.script-url' => static function (ContainerInterface $container): string {
+        $environment = $container->get('settings.environment');
+        assert($environment instanceof Environment);
+        return $environment->is_sandbox() ? 'https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js' : 'https://www.paypalobjects.com/insights/v1/paypal-insights.min.js';
     },
     // The mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
     'axo.payment_method_selected_map' => static function (ContainerInterface $container): array {

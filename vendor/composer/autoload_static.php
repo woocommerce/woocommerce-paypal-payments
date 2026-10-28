@@ -863,6 +863,7 @@ class ComposerStaticInit844a779aae516bed9e0beccea9d01fda
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\MerchantDetails' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/MerchantDetails.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PWCProductStatus' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/PWCProductStatus.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PaymentMethodTitleEnricher' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/PaymentMethodTitleEnricher.php',
+        'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\ProductPaymentSupportTrait' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/ProductPaymentSupportTrait.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\RefundFeesUpdater' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/RefundFeesUpdater.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\ResumedOrderShippingRestorer' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/ResumedOrderShippingRestorer.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\SettingsStatus' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Helper/SettingsStatus.php',

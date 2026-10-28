@@ -646,6 +646,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\MerchantDetails' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/MerchantDetails.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PWCProductStatus' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/PWCProductStatus.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\PaymentMethodTitleEnricher' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/PaymentMethodTitleEnricher.php',
+    'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\ProductPaymentSupportTrait' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/ProductPaymentSupportTrait.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\RefundFeesUpdater' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/RefundFeesUpdater.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\ResumedOrderShippingRestorer' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/ResumedOrderShippingRestorer.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Helper\\SettingsStatus' => $baseDir . '/modules/ppcp-wc-gateway/src/Helper/SettingsStatus.php',

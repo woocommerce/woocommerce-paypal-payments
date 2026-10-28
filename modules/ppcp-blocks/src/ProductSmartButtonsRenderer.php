@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FreeProductHandlerTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\ProductPaymentSupportTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 /**
  * Emits the button wrapper the existing Smart Buttons front-end pipeline mounts into.
@@ -25,6 +26,7 @@ class ProductSmartButtonsRenderer
 {
     use FreeTrialHandlerTrait;
     use FreeProductHandlerTrait;
+    use ProductPaymentSupportTrait;
     /**
      * The wrapper id the v5 Smart Buttons stack mounts into.
      */
@@ -34,8 +36,8 @@ class ProductSmartButtonsRenderer
      */
     private const V6_WRAPPER_ID = 'ppc-button-ppcp-gateway-v6';
     /**
-     * Renders the button wrapper, or an empty string when Smart Buttons are off for the
-     * product location or the current request is not a product page.
+     * Renders the button wrapper, or an empty string when the current page cannot show
+     * product Smart Buttons.
      *
      * @param array<string, mixed> $attributes The block attributes.
      * @param ContainerInterface   $c          The container.
@@ -52,6 +54,9 @@ class ProductSmartButtonsRenderer
             return '';
         }
         if ($this->is_unpayable_free_product()) {
+            return '';
+        }
+        if ($this->is_unsupported_product()) {
             return '';
         }
         $wrapper_id = \WooCommerce\PayPalCommerce\Blocks\ProductBlocks::v6_owns_current_page($c) ? self::V6_WRAPPER_ID : self::V5_WRAPPER_ID;
