@@ -46,12 +46,7 @@ class HookedBlocksRegistrar {
 	 */
 	private $insertions;
 
-	/**
-	 * Whether the active theme is a block theme; null until first checked.
-	 *
-	 * @var bool|null
-	 */
-	private $is_block_theme = null;
+	private static ?bool $is_block_theme = null;
 
 	/**
 	 * @param array<string, array{anchor:string|array<int, string>, position:string, enabled:callable, anchor_filter?:callable}> $insertions The insertions to register.
@@ -158,19 +153,11 @@ class HookedBlocksRegistrar {
 		return is_string( $content ) && '' !== $content && has_block( $block_type, $content );
 	}
 
-	/**
-	 * Whether the active theme is a block theme, the only kind the Site Editor and
-	 * Block Hooks apply to.
-	 *
-	 * Resolved on first use and cached: `hooked_block_types` can fire hundreds of
-	 * thousands of times per request when every registered pattern is processed,
-	 * and the active theme cannot change mid-request.
-	 */
 	private function is_block_theme(): bool {
-		if ( null === $this->is_block_theme ) {
-			$this->is_block_theme = function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
+		if ( null === self::$is_block_theme ) {
+			self::$is_block_theme = function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
 		}
 
-		return $this->is_block_theme;
+		return self::$is_block_theme;
 	}
 }

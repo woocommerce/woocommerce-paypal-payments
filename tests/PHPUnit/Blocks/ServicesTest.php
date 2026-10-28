@@ -29,6 +29,15 @@ class ServicesTest extends TestCase
     private const SMART_BUTTONS_BLOCK = 'woocommerce-paypal-payments/product-smart-buttons';
     private const MESSAGING_BLOCK = 'woocommerce-paypal-payments/product-paylater-messages';
 
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $is_block_theme = new \ReflectionProperty(HookedBlocksRegistrar::class, 'is_block_theme');
+        $is_block_theme->setAccessible(true);
+        $is_block_theme->setValue(null, null);
+    }
+
     /**
      * Resolves the 'blocks.product-hooked-blocks-registrar' callable from the real
      * services.php, backed by a container that serves 'wcgateway.settings.status' and

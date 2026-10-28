@@ -16,6 +16,15 @@ class HookedBlocksRegistrarTest extends TestCase
     private const CART_BLOCK = 'woocommerce-paypal-payments/cart-paylater-messages';
     private const CHECKOUT_BLOCK = 'woocommerce-paypal-payments/checkout-paylater-messages';
 
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $is_block_theme = new \ReflectionProperty(HookedBlocksRegistrar::class, 'is_block_theme');
+        $is_block_theme->setAccessible(true);
+        $is_block_theme->setValue(null, null);
+    }
+
     /**
      * @return array<string, array{anchor:string, position:string, enabled:callable}>
      */
@@ -182,12 +191,13 @@ class HookedBlocksRegistrarTest extends TestCase
 
     /**
      * GIVEN the active theme is a block theme
-     * WHEN add_hooked_block_types() is called several times on the same registrar with
-     *      different anchors and positions
+     * WHEN add_hooked_block_types() is called several times on one registrar with different
+     *      anchors and positions, and then on a second registrar
      * THEN the theme type is only looked up once, since it cannot change mid-request
-     * AND every call still resolves insertions as it does on a block theme
+     * AND every call still resolves insertions as it does on a block theme, including the
+     *     second registrar's
      */
-    public function testAddHookedBlockTypesChecksTheThemeOnlyOncePerRegistrar(): void
+    public function testAddHookedBlockTypesChecksTheThemeOnlyOncePerRequest(): void
     {
         expect('wp_is_block_theme')->once()->andReturn(true);
 
@@ -197,9 +207,13 @@ class HookedBlocksRegistrarTest extends TestCase
         $checkout_result = $registrar->add_hooked_block_types(array(), 'last_child', 'woocommerce/checkout-totals-block', null);
         $unmatched_result = $registrar->add_hooked_block_types(array(), 'first_child', 'woocommerce/cart-totals-block', null);
 
+        $other_registrar = new HookedBlocksRegistrar($this->insertions());
+        $other_registrar_result = $other_registrar->add_hooked_block_types(array(), 'last_child', 'woocommerce/cart-totals-block', null);
+
         $this->assertSame(array(self::CART_BLOCK), $cart_result);
         $this->assertSame(array(self::CHECKOUT_BLOCK), $checkout_result);
         $this->assertSame(array(), $unmatched_result);
+        $this->assertSame(array(self::CART_BLOCK), $other_registrar_result);
     }
 
     /**
