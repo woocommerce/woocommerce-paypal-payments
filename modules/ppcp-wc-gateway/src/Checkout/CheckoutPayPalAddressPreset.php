@@ -95,12 +95,18 @@ class CheckoutPayPalAddressPreset {
 		$payer    = $order->payer();
 
 		$address_map     = array(
-			'billing_address_1' => 'address_line_1',
-			'billing_address_2' => 'address_line_2',
-			'billing_postcode'  => 'postal_code',
-			'billing_country'   => 'country_code',
-			'billing_city'      => 'admin_area_2',
-			'billing_state'     => 'admin_area_1',
+			'billing_address_1'  => 'address_line_1',
+			'billing_address_2'  => 'address_line_2',
+			'billing_postcode'   => 'postal_code',
+			'billing_country'    => 'country_code',
+			'billing_city'       => 'admin_area_2',
+			'billing_state'      => 'admin_area_1',
+			'shipping_address_1' => 'address_line_1',
+			'shipping_address_2' => 'address_line_2',
+			'shipping_postcode'  => 'postal_code',
+			'shipping_country'   => 'country_code',
+			'shipping_city'      => 'admin_area_2',
+			'shipping_state'     => 'admin_area_1',
 		);
 		$payer_name_map  = array(
 			'billing_last_name'  => 'surname',
