@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Tests\Integration\WcGateway\Processor;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -59,7 +60,12 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 
 		$payments->shouldReceive('captures')->andReturn([$capture]);
 		$payments->shouldReceive('authorizations')->andReturn([]);
+		$amount = \Mockery::mock(Amount::class)->shouldIgnoreMissing();
+		$amount->shouldReceive('currency_code')->andReturn('USD');
+		$amount->shouldReceive('value_str')->andReturn('0.00');
+
 		$purchaseUnit->shouldReceive('payments')->andReturn($payments);
+		$purchaseUnit->shouldReceive('amount')->andReturn($amount);
 		$paypalOrder->shouldReceive('purchase_units')->andReturn([$purchaseUnit]);
 
 		$mockOrderEndpoint->shouldReceive('order')->andReturn($paypalOrder);
@@ -160,6 +166,7 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 		);
 
 		$wcOrder->set_status('processing');
+		$wcOrder->set_transaction_id('EXISTING-TRANSACTION-123');
 		$wcOrder->save();
 
 		$orderProcessor = $container->get('wcgateway.order-processor');
@@ -196,7 +203,7 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 			false
 		);
 
-		$wcOrder->update_meta_data('_ppcp_processing', 'yes');
+		$wcOrder->update_meta_data('_ppcp_processing', (string) ( time() + 5 * MINUTE_IN_SECONDS ));
 		$wcOrder->save();
 
 		$orderProcessor = $container->get('wcgateway.order-processor');

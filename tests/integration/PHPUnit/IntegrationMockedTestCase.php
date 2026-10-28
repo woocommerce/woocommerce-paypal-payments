@@ -8,6 +8,7 @@ use WC_Order_Item_Product;
 use WC_Payment_Token_CC;
 use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -318,15 +319,20 @@ class IntegrationMockedTestCase extends TestCase
             $payments->shouldReceive('authorizations')->andReturn([]);
         }
 
+        $amount = \Mockery::mock(Amount::class)->shouldIgnoreMissing();
+        $amount->shouldReceive('currency_code')->andReturn('USD');
+        $amount->shouldReceive('value_str')->andReturn('0.00');
+
         $purchase_unit->shouldReceive('payments')->andReturn($payments);
+        $purchase_unit->shouldReceive('amount')->andReturn($amount);
         $order->shouldReceive('purchase_units')->andReturn([$purchase_unit]);
 
         // Set up the order endpoint methods
         $order_endpoint->shouldReceive('create')->andReturn($order);
         if ($intent === 'AUTHORIZE') {
-            $order_endpoint->shouldReceive('authorize')->andReturn($order);
+            $order_endpoint->shouldReceive('authorize')->andReturn($order)->byDefault();
         } else {
-            $order_endpoint->shouldReceive('capture')->andReturn($order);
+            $order_endpoint->shouldReceive('capture')->andReturn($order)->byDefault();
         }
         $order_endpoint->shouldReceive('order')->andReturn($order);
         $order_endpoint->shouldReceive('patch_order_with')->andReturn($order);
