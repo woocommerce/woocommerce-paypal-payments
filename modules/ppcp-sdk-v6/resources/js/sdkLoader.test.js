@@ -8,6 +8,11 @@ jest.mock( './utils/scriptLoaders', () => ( {
 	loadScript: ( ...args ) => mockLoadScript( ...args ),
 } ) );
 
+const mockLogEvent = jest.fn();
+jest.mock( './utils/diagnostics', () => ( {
+	logEvent: ( ...args ) => mockLogEvent( ...args ),
+} ) );
+
 // loadSdkV6() memoizes on window-level state (shared across webpack bundles),
 // which survives jest.resetModules(), so each test also needs its own window keys.
 let loadSdkV6;
@@ -18,6 +23,7 @@ function baseConfig( overrides = {} ) {
 		sdk_url: 'https://example.test/sdk.js',
 		ajax: { client_token: { endpoint: '/token', nonce: 'n' } },
 		locale: 'en_US',
+		bn_code: 'Woo_PPCP',
 		...overrides,
 	};
 }
@@ -26,6 +32,7 @@ beforeEach( () => {
 	jest.resetModules();
 	mockPostJson.mockReset();
 	mockLoadScript.mockReset();
+	mockLogEvent.mockReset();
 	mockLoadScript.mockResolvedValue( undefined );
 	mockPostJson.mockResolvedValue( { client_token: 'TOKEN' } );
 	delete window.__ppcpV6InstancePromise;
@@ -285,6 +292,38 @@ describe( 'loadSdkV6', () => {
 		expect( firstId ).toEqual( expect.any( String ) );
 		expect( secondId ).toBe( firstId );
 	} );
+
+	test( 'passes config.bn_code as partnerAttributionId', async () => {
+		await loadSdkV6( baseConfig( { bn_code: 'Woo_PPCP' } ), 'checkout' );
+
+		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
+			expect.objectContaining( { partnerAttributionId: 'Woo_PPCP' } )
+		);
+		expect( mockLogEvent ).not.toHaveBeenCalled();
+	} );
+
+	test.each( [
+		[ 'bn_code is missing', { bn_code: undefined } ],
+		[ 'bn_code is an empty string', { bn_code: '' } ],
+	] )(
+		'omits partnerAttributionId and logs a missing-bn-code warning when %s',
+		async ( label, overrides ) => {
+			const config = baseConfig( overrides );
+
+			await loadSdkV6( config, 'checkout' );
+
+			expect(
+				window.paypal.createInstance.mock.calls[ 0 ][ 0 ]
+			).not.toHaveProperty( 'partnerAttributionId' );
+			expect( mockLogEvent ).toHaveBeenCalledWith(
+				config,
+				'missing-bn-code',
+				'',
+				'warning'
+			);
+		}
+	);
+
 	describe( 'load timeout', () => {
 		const TIMEOUT_MESSAGE = 'PayPal SDK v6 did not load within 15000 ms.';
 		const neverSettles = () => new Promise( () => {} );

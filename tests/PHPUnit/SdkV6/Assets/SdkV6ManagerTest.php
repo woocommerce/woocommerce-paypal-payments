@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
@@ -222,7 +223,7 @@ class SdkV6ManagerTest extends TestCase
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
     }
 
-    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null, bool $wcs_plugin_active = false, array $pay_now_contexts = ['checkout', 'pay-now']): SdkV6Manager
+    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null, bool $wcs_plugin_active = false, array $pay_now_contexts = ['checkout', 'pay-now'], string $bn_code = 'Woo_PPCP'): SdkV6Manager
     {
         $class_name = $wcs_plugin_active ? TestableSdkV6ManagerWithWcsActive::class : SdkV6Manager::class;
 
@@ -252,7 +253,8 @@ class SdkV6ManagerTest extends TestCase
 	        $this->fastlane_config,
 	        $this->card_field_styles,
 	        $this->disabled_funding_sources,
-	        $pay_now_contexts
+	        $pay_now_contexts,
+	        Mockery::mock(PartnerAttribution::class, ['get_bn_code' => $bn_code])
         );
     }
 
@@ -759,6 +761,21 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame('FR', $data['merchant_country']);
         $this->assertSame('DE', $data['buyer_country']);
+    }
+
+    /**
+     * GIVEN a merchant whose partner attribution BN code is configured
+     * WHEN the SDK bootstrap data is generated
+     * THEN bn_code carries that BN code so the frontend can pass it to the SDK as partnerAttributionId
+     */
+    public function testScriptDataIncludesBnCode(): void
+    {
+        $this->stub_common_script_data_dependencies();
+
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, false, ['checkout', 'pay-now'], 'WooPPCP_Ecom_PS_CoreProfiler');
+        $data   = $testee->script_data();
+
+        $this->assertSame('WooPPCP_Ecom_PS_CoreProfiler', $data['bn_code']);
     }
 
     /**

@@ -12,6 +12,7 @@ use WC_Product;
 use WP_Post;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
@@ -151,6 +152,8 @@ class SdkV6Manager {
 	 */
 	private array $pay_now_contexts;
 
+	private PartnerAttribution $partner_attribution;
+
 	/**
 	 * Every method this module places, in the order their rows are printed.
 	 *
@@ -214,7 +217,8 @@ class SdkV6Manager {
 		FastlaneConfig $fastlane_config,
 		CardFieldStyles $card_field_styles,
 		DisabledFundingSources $disabled_funding_sources,
-		array $pay_now_contexts
+		array $pay_now_contexts,
+		PartnerAttribution $partner_attribution
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -241,6 +245,7 @@ class SdkV6Manager {
 		$this->card_field_styles           = $card_field_styles;
 		$this->disabled_funding_sources    = $disabled_funding_sources;
 		$this->pay_now_contexts            = $pay_now_contexts;
+		$this->partner_attribution         = $partner_attribution;
 
 		$this->placements = array(
 			new MethodPlacement(
@@ -1270,6 +1275,7 @@ class SdkV6Manager {
 			'buyer_country'       => $buyer_country,
 			'merchant_country'    => $this->iso_merchant_country(),
 			'locale'              => SdkLocale::from_wp_locale( get_locale() ),
+			'bn_code'             => $this->partner_attribution->get_bn_code(),
 			'vaulting_enabled'    => $this->vaulting_enabled,
 			'final_review'        => $this->final_review_enabled,
 			'pay_now_contexts'    => $this->pay_now_contexts,
