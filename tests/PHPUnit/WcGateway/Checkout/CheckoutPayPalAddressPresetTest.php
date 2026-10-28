@@ -446,6 +446,84 @@ class CheckoutPayPalAddressPresetTest extends TestCase
     }
 
     /**
+     * GIVEN a PayPal order with a shipping address
+     * WHEN a shipping address field is resolved
+     * THEN the value comes from the PayPal shipping address
+     *
+     * @dataProvider shippingAddressFieldProvider
+     */
+    public function testFilterCheckoutFieldFillsShippingAddressFromPayPalShipping(
+        string $fieldId,
+        string $expected
+    ): void {
+        $order = $this->buildOrderWithRecipient('Jane Recipient');
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+
+        self::assertSame($expected, $this->buildTestee()[1]->filter_checkout_field(null, $fieldId));
+    }
+
+    /**
+     * @see testFilterCheckoutFieldFillsShippingAddressFromPayPalShipping
+     */
+    public function shippingAddressFieldProvider(): array
+    {
+        return [
+            'street' => ['shipping_address_1', 'Unter den Linden 1'],
+            'city' => ['shipping_city', 'Berlin'],
+            'state' => ['shipping_state', 'BE'],
+        ];
+    }
+
+    /**
+     * Builds an Order paid by "John Doe" and shipped to the given recipient name.
+     */
+    private function buildOrderWithRecipient(string $recipientName): Order
+    {
+        return \Mockery::mock(
+            Order::class,
+            [
+                'id' => 'order-with-recipient',
+                'purchase_units' => [
+                    \Mockery::mock(
+                        PurchaseUnit::class,
+                        [
+                            'shipping' => \Mockery::mock(
+                                Shipping::class,
+                                [
+                                    'name' => $recipientName,
+                                    'address' => \Mockery::mock(
+                                        Address::class,
+                                        [
+                                            'address_line_1' => 'Unter den Linden 1',
+                                            'address_line_2' => '',
+                                            'postal_code' => '10117',
+                                            'country_code' => 'DE',
+                                            'admin_area_1' => 'BE',
+                                            'admin_area_2' => 'Berlin',
+                                        ]
+                                    ),
+                                ]
+                            ),
+                        ]
+                    ),
+                ],
+                'payer' => \Mockery::mock(
+                    Payer::class,
+                    [
+                        'name' => \Mockery::mock(
+                            PayerName::class,
+                            [
+                                'given_name' => 'John',
+                                'surname' => 'Doe',
+                            ]
+                        ),
+                    ]
+                ),
+            ]
+        );
+    }
+
+    /**
      * @return MockInterface[]
      */
     private function buildTestee(): array
