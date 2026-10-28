@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Filters\expectAdded;
+use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 /**
@@ -177,6 +178,28 @@ class HookedBlocksRegistrarTest extends TestCase
         );
 
         $this->assertSame(array(self::CART_BLOCK), $result);
+    }
+
+    /**
+     * GIVEN the active theme is a block theme
+     * WHEN add_hooked_block_types() is called several times on the same registrar with
+     *      different anchors and positions
+     * THEN the theme type is only looked up once, since it cannot change mid-request
+     * AND every call still resolves insertions as it does on a block theme
+     */
+    public function testAddHookedBlockTypesChecksTheThemeOnlyOncePerRegistrar(): void
+    {
+        expect('wp_is_block_theme')->once()->andReturn(true);
+
+        $registrar = new HookedBlocksRegistrar($this->insertions());
+
+        $cart_result = $registrar->add_hooked_block_types(array(), 'last_child', 'woocommerce/cart-totals-block', null);
+        $checkout_result = $registrar->add_hooked_block_types(array(), 'last_child', 'woocommerce/checkout-totals-block', null);
+        $unmatched_result = $registrar->add_hooked_block_types(array(), 'first_child', 'woocommerce/cart-totals-block', null);
+
+        $this->assertSame(array(self::CART_BLOCK), $cart_result);
+        $this->assertSame(array(self::CHECKOUT_BLOCK), $checkout_result);
+        $this->assertSame(array(), $unmatched_result);
     }
 
     /**
