@@ -9,6 +9,7 @@ import { createSdkInstance } from './utils/createSdkInstance';
 import { loadScript } from './utils/scriptLoaders';
 import { methodSdkComponents } from './methods/methodRegistry';
 import { startTokenRefresh } from './tokenRefresh';
+import { logEvent } from './utils/diagnostics';
 
 const INSTANCE_KEY = '__ppcpV6InstancePromise';
 const METADATA_ID_KEY = '__ppcpV6ClientMetadataId';
@@ -164,8 +165,11 @@ async function createInstance( config, context ) {
 		locale: config.locale,
 		clientMetadataId: clientMetadataId(),
 	};
+	// Required: without it PayPal cannot attribute the session to this plugin.
 	if ( config.bn_code ) {
 		instanceOptions.partnerAttributionId = config.bn_code;
+	} else {
+		logEvent( config, 'missing-bn-code', '', 'warning' );
 	}
 
 	const sdkInstance = await createSdkInstance(
