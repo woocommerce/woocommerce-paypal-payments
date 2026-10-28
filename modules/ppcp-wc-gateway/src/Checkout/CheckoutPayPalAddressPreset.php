@@ -151,6 +151,37 @@ class CheckoutPayPalAddressPreset {
 	}
 
 	/**
+	 * Ticks "Ship to a different address" when the PayPal recipient is not the payer.
+	 *
+	 * Otherwise WooCommerce copies the billing name, which is the payer's, onto the shipment.
+	 *
+	 * @wp-hook woocommerce_ship_to_different_address_checked
+	 *
+	 * @param mixed $checked
+	 * @return mixed
+	 */
+	public function filter_ship_to_different_address( $checked ) {
+		if ( isset( $this->session_handler->checkout_form()['ship_to_different_address'] ) ) {
+			return $checked;
+		}
+
+		$order          = $this->session_handler->order();
+		$payer          = $order ? $order->payer() : null;
+		$payer_name     = $payer ? $payer->name() : null;
+		$recipient_name = $this->recipient_full_name();
+		if ( ! $payer_name || '' === $recipient_name ) {
+			return $checked;
+		}
+
+		$payer_full_name = trim( $payer_name->given_name() . ' ' . $payer_name->surname() );
+		if ( 0 !== strcasecmp( $payer_full_name, $recipient_name ) ) {
+			return true;
+		}
+
+		return $checked;
+	}
+
+	/**
 	 * The PayPal shipping recipient as given name and surname.
 	 *
 	 * The last word is treated as the surname.
