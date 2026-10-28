@@ -16,6 +16,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
@@ -46,7 +47,7 @@ class AddPaymentMethodManager {
 	private SettingsProvider $settings_provider;
 
 	private CardFieldStyles $card_field_styles;
-	private string $bn_code;
+	private PartnerAttribution $partner_attribution;
 
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -57,7 +58,7 @@ class AddPaymentMethodManager {
 		bool $card_vaulting_enabled,
 		SettingsProvider $settings_provider,
 		CardFieldStyles $card_field_styles,
-		string $bn_code
+		PartnerAttribution $partner_attribution
 	) {
 		$this->asset_getter            = $asset_getter;
 		$this->version                 = $version;
@@ -67,7 +68,7 @@ class AddPaymentMethodManager {
 		$this->card_vaulting_enabled   = $card_vaulting_enabled;
 		$this->settings_provider       = $settings_provider;
 		$this->card_field_styles       = $card_field_styles;
-		$this->bn_code                 = $bn_code;
+		$this->partner_attribution     = $partner_attribution;
 	}
 
 	/**
@@ -156,7 +157,7 @@ class AddPaymentMethodManager {
 			'sdk_url'              => $base_url . '/web-sdk/v6/core',
 			'currency'             => get_woocommerce_currency(),
 			'locale'               => SdkLocale::from_wp_locale( get_locale() ),
-			'bn_code'              => $this->bn_code,
+			'bn_code'              => $this->partner_attribution->get_bn_code(),
 			'verification_method'  => $verification_method,
 			'payment_methods_page' => wc_get_account_endpoint_url( 'payment-methods' ),
 			'button'               => array(

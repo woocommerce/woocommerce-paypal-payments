@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
 use Mockery;
 use ReflectionClass;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
@@ -52,7 +53,7 @@ class AddPaymentMethodManagerTest extends TestCase
             $card_vaulting_enabled,
             $this->settings_provider,
             $this->card_field_styles,
-            $bn_code
+            Mockery::mock(PartnerAttribution::class, ['get_bn_code' => $bn_code])
         );
     }
 
