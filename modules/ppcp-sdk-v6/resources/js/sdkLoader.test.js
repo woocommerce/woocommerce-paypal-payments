@@ -8,6 +8,11 @@ jest.mock( './utils/scriptLoaders', () => ( {
 	loadScript: ( ...args ) => mockLoadScript( ...args ),
 } ) );
 
+const mockLogEvent = jest.fn();
+jest.mock( './utils/diagnostics', () => ( {
+	logEvent: ( ...args ) => mockLogEvent( ...args ),
+} ) );
+
 // loadSdkV6() memoizes on window-level state (shared across webpack bundles),
 // which survives jest.resetModules(), so each test also needs its own window keys.
 let loadSdkV6;
@@ -18,6 +23,7 @@ function baseConfig( overrides = {} ) {
 		sdk_url: 'https://example.test/sdk.js',
 		ajax: { client_token: { endpoint: '/token', nonce: 'n' } },
 		locale: 'en_US',
+		bn_code: 'Woo_PPCP',
 		...overrides,
 	};
 }
@@ -26,6 +32,7 @@ beforeEach( () => {
 	jest.resetModules();
 	mockPostJson.mockReset();
 	mockLoadScript.mockReset();
+	mockLogEvent.mockReset();
 	mockLoadScript.mockResolvedValue( undefined );
 	mockPostJson.mockResolvedValue( { client_token: 'TOKEN' } );
 	delete window.__ppcpV6InstancePromise;
@@ -295,7 +302,7 @@ describe( 'loadSdkV6', () => {
 	} );
 
 	test.each( [
-		[ 'bn_code is missing', {} ],
+		[ 'bn_code is missing', { bn_code: undefined } ],
 		[ 'bn_code is an empty string', { bn_code: '' } ],
 	] )( 'omits partnerAttributionId when %s', async ( label, overrides ) => {
 		await loadSdkV6( baseConfig( overrides ), 'checkout' );
