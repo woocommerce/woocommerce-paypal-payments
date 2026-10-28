@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
@@ -221,7 +222,7 @@ class SdkV6ManagerTest extends TestCase
 	        $this->card_field_styles,
 	        $this->disabled_funding_sources,
 	        $pay_now_contexts,
-	        $bn_code
+	        Mockery::mock(PartnerAttribution::class, ['get_bn_code' => $bn_code])
         );
     }
 
