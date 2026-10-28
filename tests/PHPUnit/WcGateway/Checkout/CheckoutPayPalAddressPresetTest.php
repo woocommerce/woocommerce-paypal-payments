@@ -475,6 +475,38 @@ class CheckoutPayPalAddressPresetTest extends TestCase
     }
 
     /**
+     * GIVEN a PayPal order whose shipping recipient is named differently from the payer
+     * WHEN the shipping name fields are resolved
+     * THEN the last word is the last name and everything before it is the first name
+     * AND a single-word recipient has no last name
+     *
+     * @dataProvider shippingNameProvider
+     */
+    public function testFilterCheckoutFieldSplitsShippingRecipientName(
+        string $recipient,
+        string $fieldId,
+        ?string $expected
+    ): void {
+        $order = $this->buildOrderWithRecipient($recipient);
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+
+        self::assertSame($expected, $this->buildTestee()[1]->filter_checkout_field(null, $fieldId));
+    }
+
+    /**
+     * @see testFilterCheckoutFieldSplitsShippingRecipientName
+     */
+    public function shippingNameProvider(): array
+    {
+        return [
+            'multi-word first name' => ['Jane Mary Recipient', 'shipping_first_name', 'Jane Mary'],
+            'multi-word last name' => ['Jane Mary Recipient', 'shipping_last_name', 'Recipient'],
+            'single word is first name' => ['Jane', 'shipping_first_name', 'Jane'],
+            'single word has no last name' => ['Jane', 'shipping_last_name', null],
+        ];
+    }
+
+    /**
      * Builds an Order paid by "John Doe" and shipped to the given recipient name.
      */
     private function buildOrderWithRecipient(string $recipientName): Order
