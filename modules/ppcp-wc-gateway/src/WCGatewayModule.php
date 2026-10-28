@@ -766,7 +766,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	}
 
 	/**
-	 * Registers the PayPal Address preset to overwrite Shipping in checkout.
+	 * Registers the PayPal address preset for the checkout fields and the ship-to-different-address box.
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
@@ -778,6 +778,13 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			},
 			10,
 			2
+		);
+
+		add_filter(
+			'woocommerce_ship_to_different_address_checked',
+			static function ( $checked ) use ( $container ) {
+				return self::address_preset( $container )->filter_ship_to_different_address( $checked );
+			}
 		);
 	}
 
