@@ -251,8 +251,13 @@ class AxoModule implements ServiceModule, ExecutableModule {
 						assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 						if ( $dcc_configuration->use_fastlane() ) {
-							// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
-							echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
+							if ( $c->get( 'axo.insights.enabled' ) ) {
+								printf(
+									// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
+									'<script async src="%s"></script>',
+									esc_url( $c->get( 'axo.insights.script-url' ) )
+								);
+							}
 
 							$this->add_feature_detection_tag( true );
 						} else {
@@ -442,6 +447,18 @@ class AxoModule implements ServiceModule, ExecutableModule {
 	 */
 	private function enqueue_paypal_insights_script_on_order_received( ContainerInterface $c ): void {
 		global $wp;
+
+		if ( ! $c->get( 'axo.insights.enabled' ) ) {
+			return;
+		}
+
+		$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
+		assert( $dcc_configuration instanceof CardPaymentsConfiguration );
+
+		// The Insights script itself is only printed when Fastlane is in use.
+		if ( ! $dcc_configuration->use_fastlane() ) {
+			return;
+		}
 
 		if ( ! isset( $wp->query_vars['order-received'] ) ) {
 			return;
