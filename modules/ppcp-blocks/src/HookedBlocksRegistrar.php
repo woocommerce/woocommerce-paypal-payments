@@ -44,6 +44,7 @@ class HookedBlocksRegistrar
      * @var array<string, array{anchor:string|array<int, string>, position:string, enabled:callable, anchor_filter?:callable}>
      */
     private $insertions;
+    private static ?bool $is_block_theme = null;
     /**
      * @param array<string, array{anchor:string|array<int, string>, position:string, enabled:callable, anchor_filter?:callable}> $insertions The insertions to register.
      */
@@ -140,12 +141,11 @@ class HookedBlocksRegistrar
         }
         return is_string($content) && '' !== $content && has_block($block_type, $content);
     }
-    /**
-     * Whether the active theme is a block theme, the only kind the Site Editor and
-     * Block Hooks apply to.
-     */
     private function is_block_theme(): bool
     {
-        return function_exists('wp_is_block_theme') && wp_is_block_theme();
+        if (null === self::$is_block_theme) {
+            self::$is_block_theme = function_exists('wp_is_block_theme') && wp_is_block_theme();
+        }
+        return self::$is_block_theme;
     }
 }
