@@ -299,18 +299,30 @@ describe( 'loadSdkV6', () => {
 		expect( window.paypal.createInstance ).toHaveBeenCalledWith(
 			expect.objectContaining( { partnerAttributionId: 'Woo_PPCP' } )
 		);
+		expect( mockLogEvent ).not.toHaveBeenCalled();
 	} );
 
 	test.each( [
 		[ 'bn_code is missing', { bn_code: undefined } ],
 		[ 'bn_code is an empty string', { bn_code: '' } ],
-	] )( 'omits partnerAttributionId when %s', async ( label, overrides ) => {
-		await loadSdkV6( baseConfig( overrides ), 'checkout' );
+	] )(
+		'omits partnerAttributionId and logs a missing-bn-code warning when %s',
+		async ( label, overrides ) => {
+			const config = baseConfig( overrides );
 
-		expect(
-			window.paypal.createInstance.mock.calls[ 0 ][ 0 ]
-		).not.toHaveProperty( 'partnerAttributionId' );
-	} );
+			await loadSdkV6( config, 'checkout' );
+
+			expect(
+				window.paypal.createInstance.mock.calls[ 0 ][ 0 ]
+			).not.toHaveProperty( 'partnerAttributionId' );
+			expect( mockLogEvent ).toHaveBeenCalledWith(
+				config,
+				'missing-bn-code',
+				'',
+				'warning'
+			);
+		}
+	);
 
 	describe( 'load timeout', () => {
 		const TIMEOUT_MESSAGE = 'PayPal SDK v6 did not load within 15000 ms.';
