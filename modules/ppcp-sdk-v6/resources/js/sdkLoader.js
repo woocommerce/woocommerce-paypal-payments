@@ -95,9 +95,12 @@ export function loadSdkV6( config, context ) {
 			createInstance( config, context ),
 			LOAD_TIMEOUT_MS
 		)
-			.then( ( { sdkInstance, tokenData, renewInstance } ) => {
-				// Later loadSdkV6() calls get the new instance.
-				startTokenRefresh( renewInstance, tokenData );
+			.then( ( { sdkInstance, tokenData } ) => {
+				startTokenRefresh(
+					sdkInstance,
+					() => postJson( config.ajax.client_token ),
+					tokenData
+				);
 
 				document.dispatchEvent(
 					new CustomEvent( 'ppcp-sdk-v6-ready', {
@@ -121,8 +124,7 @@ export function loadSdkV6( config, context ) {
  *
  * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
  * @param {string} context - The page context used for the SDK pageType.
- * @return {Promise<Object>} The { sdkInstance, tokenData } it was created with,
- *                           and renewInstance(), which creates its successor.
+ * @return {Promise<Object>} The { sdkInstance, tokenData } it was created with.
  */
 async function createInstance( config, context ) {
 	const [ , tokenData ] = await Promise.all( [
@@ -171,18 +173,5 @@ async function createInstance( config, context ) {
 		instanceOptions
 	);
 
-	return {
-		sdkInstance,
-		tokenData,
-		renewInstance: async () => {
-			const nextTokenData = await postJson( config.ajax.client_token );
-			const nextInstance = await createSdkInstance( window.paypal, {
-				...instanceOptions,
-				clientToken: nextTokenData.client_token,
-			} );
-			window[ INSTANCE_KEY ] = Promise.resolve( nextInstance );
-
-			return { sdkInstance: nextInstance, tokenData: nextTokenData };
-		},
-	};
+	return { sdkInstance, tokenData };
 }
