@@ -1,238 +1,185 @@
 <?php
+
 /**
  * Service that fills checkout address fields
  * with address selected via PayPal
  *
  * @package WooCommerce\PayPalCommerce\WcGateway\Checkout
  */
-
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Checkout;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-
 /**
  * Class CheckoutPayPalAddressPreset
  */
-class CheckoutPayPalAddressPreset {
-
-	/**
-	 * Caches Shipping objects for orders.
-	 *
-	 * @var array
-	 */
-	private $shipping_cache = array();
-
-	/**
-	 * The Session Handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
-
-	/**
-	 * CheckoutPayPalAddressPreset constructor.
-	 *
-	 * @param SessionHandler $session_handler The session handler.
-	 */
-	public function __construct( SessionHandler $session_handler ) {
-		$this->session_handler = $session_handler;
-	}
-
-	/**
-	 * Filters the checkout fields to replace values if necessary.
-	 *
-	 * @wp-hook woocommerce_checkout_get_value
-	 *
-	 * @param string|null $default_value The default value.
-	 * @param string      $field_id The field ID.
-	 *
-	 * @return string|null
-	 */
-	public function filter_checkout_field( $default_value, $field_id ) {
-		if ( ! is_string( $default_value ) ) {
-			$default_value = null;
-		}
-
-		if ( ! is_string( $field_id ) ) {
-			return $default_value;
-		}
-
-		/*
-		 * What the shopper typed outranks what PayPal knows. They only diverge
-		 * when the checkout page is rendered again after a return from PayPal,
-		 * and replacing a name someone entered with the one on their PayPal
-		 * account is wrong even though both describe the same person.
-		 *
-		 * Express flows are unaffected: no checkout form was filled in on a
-		 * product or cart page, so there is nothing saved and the preset still
-		 * supplies the address, which is what it exists for.
-		 */
-		$entered = $this->session_handler->checkout_form()[ $field_id ] ?? '';
-		if ( is_string( $entered ) && '' !== $entered ) {
-			return $entered;
-		}
-
-		return $this->read_preset_for_field( $field_id ) ?? $default_value;
-	}
-
-	/**
-	 * Returns the value for a checkout field from an PayPal order if given.
-	 *
-	 * @param string $field_id The ID of the field.
-	 *
-	 * @return string|null
-	 */
-	private function read_preset_for_field( string $field_id ) {
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
-			return null;
-		}
-
-		$shipping = $this->read_shipping_from_order();
-		$payer    = $order->payer();
-
-		$address_map     = array(
-			'billing_address_1'  => 'address_line_1',
-			'billing_address_2'  => 'address_line_2',
-			'billing_postcode'   => 'postal_code',
-			'billing_country'    => 'country_code',
-			'billing_city'       => 'admin_area_2',
-			'billing_state'      => 'admin_area_1',
-			'shipping_address_1' => 'address_line_1',
-			'shipping_address_2' => 'address_line_2',
-			'shipping_postcode'  => 'postal_code',
-			'shipping_country'   => 'country_code',
-			'shipping_city'      => 'admin_area_2',
-			'shipping_state'     => 'admin_area_1',
-		);
-		$recipient_map   = array(
-			'shipping_first_name' => 'given_name',
-			'shipping_last_name'  => 'surname',
-		);
-		$payer_name_map  = array(
-			'billing_last_name'  => 'surname',
-			'billing_first_name' => 'given_name',
-		);
-		$payer_map       = array(
-			'billing_email' => 'email_address',
-		);
-		$payer_phone_map = array(
-			'billing_phone' => 'national_number',
-		);
-
-		if ( array_key_exists( $field_id, $address_map ) && $shipping && ! is_null( $shipping->address() ) ) {
-			return $shipping->address()->{$address_map[ $field_id ]}() ? $shipping->address()->{$address_map[ $field_id ]}() : null;
-		}
-
-		if ( array_key_exists( $field_id, $recipient_map ) ) {
-			return $this->recipient_name()[ $recipient_map[ $field_id ] ] ?: null;
-		}
-
-		if ( array_key_exists( $field_id, $payer_name_map ) && $payer ) {
-			return $payer->name()->{$payer_name_map[ $field_id ]}() ? $payer->name()->{$payer_name_map[ $field_id ]}() : null;
-		}
-
-		if ( array_key_exists( $field_id, $payer_map ) && $payer ) {
-			return $payer->{$payer_map[ $field_id ]}() ? $payer->{$payer_map[ $field_id ]}() : null;
-		}
-
-		if (
-			array_key_exists( $field_id, $payer_phone_map )
-			&& $payer
-			&& $payer->phone()
-		) {
-			return $payer->phone()->phone()->{$payer_phone_map[ $field_id ]}() ? $payer->phone()->phone()->{$payer_phone_map[ $field_id ]}() : null;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Ticks "Ship to a different address" when the PayPal recipient is not the payer.
-	 *
-	 * Otherwise WooCommerce copies the billing name, which is the payer's, onto the shipment.
-	 *
-	 * @wp-hook woocommerce_ship_to_different_address_checked
-	 *
-	 * @param mixed $checked
-	 * @return mixed
-	 */
-	public function filter_ship_to_different_address( $checked ) {
-		if ( isset( $this->session_handler->checkout_form()['ship_to_different_address'] ) ) {
-			return $checked;
-		}
-
-		$order          = $this->session_handler->order();
-		$payer          = $order ? $order->payer() : null;
-		$payer_name     = $payer ? $payer->name() : null;
-		$recipient_name = $this->recipient_full_name();
-		if ( ! $payer_name || '' === $recipient_name ) {
-			return $checked;
-		}
-
-		$payer_full_name = trim( $payer_name->given_name() . ' ' . $payer_name->surname() );
-		if ( 0 !== strcasecmp( $payer_full_name, $recipient_name ) ) {
-			return true;
-		}
-
-		return $checked;
-	}
-
-	/**
-	 * The PayPal shipping recipient as given name and surname.
-	 *
-	 * The last word is treated as the surname.
-	 *
-	 * @return array{given_name: string, surname: string}
-	 */
-	private function recipient_name(): array {
-		$parts   = explode( ' ', $this->recipient_full_name() );
-		$surname = count( $parts ) > 1 ? (string) array_pop( $parts ) : '';
-
-		return array(
-			'given_name' => implode( ' ', $parts ),
-			'surname'    => $surname,
-		);
-	}
-
-	/**
-	 * The PayPal shipping recipient's full name, with whitespace collapsed.
-	 */
-	private function recipient_full_name(): string {
-		$shipping = $this->read_shipping_from_order();
-		$name     = $shipping ? (string) $shipping->name() : '';
-
-		return trim( (string) preg_replace( '/\s+/', ' ', $name ) );
-	}
-
-	/**
-	 * Returns the Shipping object for an order, if given.
-	 *
-	 * @return Shipping|null
-	 */
-	private function read_shipping_from_order() {
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
-			return null;
-		}
-
-		if ( array_key_exists( $order->id(), $this->shipping_cache ) ) {
-			return $this->shipping_cache[ $order->id() ];
-		}
-
-		$shipping = null;
-		foreach ( $order->purchase_units() as $unit ) {
-			$shipping = $unit->shipping();
-			if ( $shipping ) {
-				break;
-			}
-		}
-
-		$this->shipping_cache[ $order->id() ] = $shipping;
-
-		return $shipping;
-	}
+class CheckoutPayPalAddressPreset
+{
+    /**
+     * Caches Shipping objects for orders.
+     *
+     * @var array
+     */
+    private $shipping_cache = array();
+    /**
+     * The Session Handler.
+     *
+     * @var SessionHandler
+     */
+    private $session_handler;
+    /**
+     * CheckoutPayPalAddressPreset constructor.
+     *
+     * @param SessionHandler $session_handler The session handler.
+     */
+    public function __construct(SessionHandler $session_handler)
+    {
+        $this->session_handler = $session_handler;
+    }
+    /**
+     * Filters the checkout fields to replace values if necessary.
+     *
+     * @wp-hook woocommerce_checkout_get_value
+     *
+     * @param string|null $default_value The default value.
+     * @param string      $field_id The field ID.
+     *
+     * @return string|null
+     */
+    public function filter_checkout_field($default_value, $field_id)
+    {
+        if (!is_string($default_value)) {
+            $default_value = null;
+        }
+        if (!is_string($field_id)) {
+            return $default_value;
+        }
+        /*
+         * What the shopper typed outranks what PayPal knows. They only diverge
+         * when the checkout page is rendered again after a return from PayPal,
+         * and replacing a name someone entered with the one on their PayPal
+         * account is wrong even though both describe the same person.
+         *
+         * Express flows are unaffected: no checkout form was filled in on a
+         * product or cart page, so there is nothing saved and the preset still
+         * supplies the address, which is what it exists for.
+         */
+        $entered = $this->session_handler->checkout_form()[$field_id] ?? '';
+        if (is_string($entered) && '' !== $entered) {
+            return $entered;
+        }
+        return $this->read_preset_for_field($field_id) ?? $default_value;
+    }
+    /**
+     * Returns the value for a checkout field from an PayPal order if given.
+     *
+     * @param string $field_id The ID of the field.
+     *
+     * @return string|null
+     */
+    private function read_preset_for_field(string $field_id)
+    {
+        $order = $this->session_handler->order();
+        if (!$order) {
+            return null;
+        }
+        $shipping = $this->read_shipping_from_order();
+        $payer = $order->payer();
+        $address_map = array('billing_address_1' => 'address_line_1', 'billing_address_2' => 'address_line_2', 'billing_postcode' => 'postal_code', 'billing_country' => 'country_code', 'billing_city' => 'admin_area_2', 'billing_state' => 'admin_area_1', 'shipping_address_1' => 'address_line_1', 'shipping_address_2' => 'address_line_2', 'shipping_postcode' => 'postal_code', 'shipping_country' => 'country_code', 'shipping_city' => 'admin_area_2', 'shipping_state' => 'admin_area_1');
+        $recipient_map = array('shipping_first_name' => 'given_name', 'shipping_last_name' => 'surname');
+        $payer_name_map = array('billing_last_name' => 'surname', 'billing_first_name' => 'given_name');
+        $payer_map = array('billing_email' => 'email_address');
+        $payer_phone_map = array('billing_phone' => 'national_number');
+        if (array_key_exists($field_id, $address_map) && $shipping && !is_null($shipping->address())) {
+            return $shipping->address()->{$address_map[$field_id]}() ? $shipping->address()->{$address_map[$field_id]}() : null;
+        }
+        if (array_key_exists($field_id, $recipient_map)) {
+            return $this->recipient_name()[$recipient_map[$field_id]] ?: null;
+        }
+        if (array_key_exists($field_id, $payer_name_map) && $payer) {
+            return $payer->name()->{$payer_name_map[$field_id]}() ? $payer->name()->{$payer_name_map[$field_id]}() : null;
+        }
+        if (array_key_exists($field_id, $payer_map) && $payer) {
+            return $payer->{$payer_map[$field_id]}() ? $payer->{$payer_map[$field_id]}() : null;
+        }
+        if (array_key_exists($field_id, $payer_phone_map) && $payer && $payer->phone()) {
+            return $payer->phone()->phone()->{$payer_phone_map[$field_id]}() ? $payer->phone()->phone()->{$payer_phone_map[$field_id]}() : null;
+        }
+        return null;
+    }
+    /**
+     * Ticks "Ship to a different address" when the PayPal recipient is not the payer.
+     *
+     * Otherwise WooCommerce copies the billing name, which is the payer's, onto the shipment.
+     *
+     * @wp-hook woocommerce_ship_to_different_address_checked
+     *
+     * @param mixed $checked
+     * @return mixed
+     */
+    public function filter_ship_to_different_address($checked)
+    {
+        if (isset($this->session_handler->checkout_form()['ship_to_different_address'])) {
+            return $checked;
+        }
+        $order = $this->session_handler->order();
+        $payer = $order ? $order->payer() : null;
+        $payer_name = $payer ? $payer->name() : null;
+        $recipient_name = $this->recipient_full_name();
+        if (!$payer_name || '' === $recipient_name) {
+            return $checked;
+        }
+        $payer_full_name = trim($payer_name->given_name() . ' ' . $payer_name->surname());
+        if (0 !== strcasecmp($payer_full_name, $recipient_name)) {
+            return \true;
+        }
+        return $checked;
+    }
+    /**
+     * The PayPal shipping recipient as given name and surname.
+     *
+     * The last word is treated as the surname.
+     *
+     * @return array{given_name: string, surname: string}
+     */
+    private function recipient_name(): array
+    {
+        $parts = explode(' ', $this->recipient_full_name());
+        $surname = count($parts) > 1 ? (string) array_pop($parts) : '';
+        return array('given_name' => implode(' ', $parts), 'surname' => $surname);
+    }
+    /**
+     * The PayPal shipping recipient's full name, with whitespace collapsed.
+     */
+    private function recipient_full_name(): string
+    {
+        $shipping = $this->read_shipping_from_order();
+        $name = $shipping ? (string) $shipping->name() : '';
+        return trim((string) preg_replace('/\s+/', ' ', $name));
+    }
+    /**
+     * Returns the Shipping object for an order, if given.
+     *
+     * @return Shipping|null
+     */
+    private function read_shipping_from_order()
+    {
+        $order = $this->session_handler->order();
+        if (!$order) {
+            return null;
+        }
+        if (array_key_exists($order->id(), $this->shipping_cache)) {
+            return $this->shipping_cache[$order->id()];
+        }
+        $shipping = null;
+        foreach ($order->purchase_units() as $unit) {
+            $shipping = $unit->shipping();
+            if ($shipping) {
+                break;
+            }
+        }
+        $this->shipping_cache[$order->id()] = $shipping;
+        return $shipping;
+    }
 }
