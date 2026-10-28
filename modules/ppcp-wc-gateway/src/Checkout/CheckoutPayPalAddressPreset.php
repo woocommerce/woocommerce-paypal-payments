@@ -108,6 +108,10 @@ class CheckoutPayPalAddressPreset {
 			'shipping_city'      => 'admin_area_2',
 			'shipping_state'     => 'admin_area_1',
 		);
+		$recipient_map   = array(
+			'shipping_first_name' => 'given_name',
+			'shipping_last_name'  => 'surname',
+		);
 		$payer_name_map  = array(
 			'billing_last_name'  => 'surname',
 			'billing_first_name' => 'given_name',
@@ -121,6 +125,10 @@ class CheckoutPayPalAddressPreset {
 
 		if ( array_key_exists( $field_id, $address_map ) && $shipping && ! is_null( $shipping->address() ) ) {
 			return $shipping->address()->{$address_map[ $field_id ]}() ? $shipping->address()->{$address_map[ $field_id ]}() : null;
+		}
+
+		if ( array_key_exists( $field_id, $recipient_map ) ) {
+			return $this->recipient_name()[ $recipient_map[ $field_id ] ] ?: null;
 		}
 
 		if ( array_key_exists( $field_id, $payer_name_map ) && $payer ) {
@@ -140,6 +148,33 @@ class CheckoutPayPalAddressPreset {
 		}
 
 		return null;
+	}
+
+	/**
+	 * The PayPal shipping recipient as given name and surname.
+	 *
+	 * The last word is treated as the surname.
+	 *
+	 * @return array{given_name: string, surname: string}
+	 */
+	private function recipient_name(): array {
+		$parts   = explode( ' ', $this->recipient_full_name() );
+		$surname = count( $parts ) > 1 ? (string) array_pop( $parts ) : '';
+
+		return array(
+			'given_name' => implode( ' ', $parts ),
+			'surname'    => $surname,
+		);
+	}
+
+	/**
+	 * The PayPal shipping recipient's full name, with whitespace collapsed.
+	 */
+	private function recipient_full_name(): string {
+		$shipping = $this->read_shipping_from_order();
+		$name     = $shipping ? (string) $shipping->name() : '';
+
+		return trim( (string) preg_replace( '/\s+/', ' ', $name ) );
 	}
 
 	/**
