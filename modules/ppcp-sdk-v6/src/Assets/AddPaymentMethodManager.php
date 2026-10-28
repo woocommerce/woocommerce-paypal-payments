@@ -1,10 +1,12 @@
 <?php
 /**
- * Manages the SDK v6 assets for the My Account › Add Payment Method page.
+ * Manages the SDK v6 assets for the My Account › Add Payment Method page and
+ * the subscription change-payment-method page.
  *
  * Renders the v6 "save for later" surfaces (PayPal wallet save button + card
- * save fields) that replace the v5 add-payment-method.js. v6 owns this page
- * fully when it loads: the v5 script and smart button are suppressed
+ * save fields) that replace the v5 add-payment-method.js. On the change-payment
+ * page the saved token is then assigned to the subscription. v6 owns these
+ * pages fully when it loads: the v5 script and smart button are suppressed
  * elsewhere (see SavePaymentMethodsModule + extensions.php), so this bootstrap
  * also ships the small rule that hides the native submit button while the
  * PayPal method is selected.
@@ -27,6 +29,8 @@ use WooCommerce\PayPalCommerce\SdkV6\Helper\SdkLocale;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
+use WC_Subscription;
 
 class AddPaymentMethodManager {
 
@@ -131,7 +135,49 @@ class AddPaymentMethodManager {
 	public function should_load_on_current_page(): bool {
 		return is_user_logged_in()
 			&& ( $this->paypal_vaulting_enabled || $this->card_vaulting_enabled )
-			&& $this->context->is_add_payment_method_page();
+			&& ( $this->context->is_add_payment_method_page()
+				|| null !== $this->subscription_to_change() );
+	}
+
+	/**
+	 * The subscription whose payment method the current page changes, or null
+	 * when this is not a subscription change-payment-method page.
+	 */
+	private function subscription_to_change(): ?WC_Subscription {
+		if ( ! function_exists( 'wcs_get_subscription' ) ) {
+			return null;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$subscription_id = absint( wp_unslash( $_GET['change_payment_method'] ?? 0 ) );
+		if ( ! $subscription_id ) {
+			return null;
+		}
+
+		$subscription = wcs_get_subscription( $subscription_id );
+
+		return $subscription instanceof WC_Subscription ? $subscription : null;
+	}
+
+	/**
+	 * The subscription change-payment-method data, or null outside that page.
+	 *
+	 * The endpoint rechecks that the subscription belongs to the current user.
+	 */
+	private function subscription_change_data(): ?array {
+		$subscription = $this->subscription_to_change();
+		if ( ! $subscription ) {
+			return null;
+		}
+
+		return array(
+			'subscription_id' => $subscription->get_id(),
+			'redirect_url'    => $subscription->get_view_order_url(),
+			'ajax'            => array(
+				'endpoint' => \WC_AJAX::get_endpoint( SubscriptionChangePaymentMethod::ENDPOINT ),
+				'nonce'    => wp_create_nonce( SubscriptionChangePaymentMethod::nonce() ),
+			),
+		);
 	}
 
 	/**
@@ -160,6 +206,7 @@ class AddPaymentMethodManager {
 			'bn_code'              => $this->partner_attribution->get_bn_code(),
 			'verification_method'  => $verification_method,
 			'payment_methods_page' => wc_get_account_endpoint_url( 'payment-methods' ),
+			'subscription_change'  => $this->subscription_change_data(),
 			'button'               => array(
 				'wrapper'     => '#' . self::WRAPPER_ID,
 				'color_class' => 'paypal-gold',

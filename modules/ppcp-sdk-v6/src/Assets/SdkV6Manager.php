@@ -328,12 +328,13 @@ class SdkV6Manager {
 	 * @return array<string, bool> Location => enabled (product, cart, checkout, pay-now, mini-cart).
 	 */
 	public function determine_render_places(): array {
-		// Native PayPal Subscriptions defer to v5 (see should_load_on_current_page);
-		// print no v6 wrappers so the classic page hands off cleanly. These render
+		// Native PayPal Subscriptions defer to v5, and the subscription
+		// change-payment page to AddPaymentMethodManager (see
+		// should_load_on_current_page); print no pay-now wrappers there. These render
 		// hooks key on the smart-button locations rather than that method, so they
 		// need this guard explicitly. Every location is returned false (rather than
 		// an empty array) to keep the array shape callers index into.
-		if ( $this->is_native_paypal_subscription_page() ) {
+		if ( $this->is_native_paypal_subscription_page() || $this->subscription_helper->is_subscription_change_payment() ) {
 			return array(
 				'product'   => false,
 				'cart'      => false,
@@ -643,6 +644,14 @@ class SdkV6Manager {
 		// actions.subscription.create. Checked before every other gate so it also
 		// overrides the sitewide mini-cart fallback below.
 		if ( $this->is_native_paypal_subscription_page() ) {
+			return false;
+		}
+
+		// The subscription change-payment page is an order-pay URL, but it must
+		// vault the card rather than charge an order. AddPaymentMethodManager owns
+		// that page; two scripts mounting into the same card inputs breaks the
+		// submit.
+		if ( $this->subscription_helper->is_subscription_change_payment() ) {
 			return false;
 		}
 

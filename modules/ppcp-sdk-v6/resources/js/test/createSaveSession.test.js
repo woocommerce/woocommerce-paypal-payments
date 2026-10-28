@@ -62,9 +62,43 @@ describe( 'createSavePayPalSession', () => {
 		expect( assign ).toHaveBeenCalledWith( config.payment_methods_page );
 	} );
 
+	test( 'onApprove on a change-payment config assigns the new token to the subscription and redirects back to it', async () => {
+		const sdk = fakeSdk();
+		const subscriptionChange = {
+			subscription_id: 123,
+			redirect_url: '/my-account/view-subscription/123/',
+			ajax: { endpoint: '/change', nonce: 'n-change' },
+		};
+		mockPostJson.mockResolvedValueOnce( 42 ).mockResolvedValueOnce( {} );
+		const assign = jest
+			.spyOn( navigation, 'assign' )
+			.mockImplementation( () => {} );
+
+		createSavePayPalSession( sdk, {
+			...config,
+			subscription_change: subscriptionChange,
+		} );
+		await sdk.capture.config.onApprove( { vaultSetupToken: 'SETUP1' } );
+
+		expect( mockPostJson ).toHaveBeenLastCalledWith(
+			subscriptionChange.ajax,
+			{
+				subscription_id: 123,
+				payment_method: 'ppcp-gateway',
+				wc_payment_token_id: 42,
+			}
+		);
+		expect( assign ).toHaveBeenCalledWith(
+			subscriptionChange.redirect_url
+		);
+		expect( mockHandleError ).not.toHaveBeenCalled();
+	} );
+
 	test( 'onApprove routes to the error handler and does not redirect when the exchange fails', async () => {
 		const sdk = fakeSdk();
-		mockPostJson.mockRejectedValueOnce( new Error( 'token exchange failed' ) );
+		mockPostJson.mockRejectedValueOnce(
+			new Error( 'token exchange failed' )
+		);
 		const assign = jest
 			.spyOn( navigation, 'assign' )
 			.mockImplementation( () => {} );
@@ -72,9 +106,7 @@ describe( 'createSavePayPalSession', () => {
 		createSavePayPalSession( sdk, config );
 		await sdk.capture.config.onApprove( { vaultSetupToken: 'SETUP1' } );
 
-		expect( mockHandleError ).toHaveBeenCalledWith(
-			expect.any( Error )
-		);
+		expect( mockHandleError ).toHaveBeenCalledWith( expect.any( Error ) );
 		expect( assign ).not.toHaveBeenCalled();
 	} );
 
@@ -87,5 +119,4 @@ describe( 'createSavePayPalSession', () => {
 
 		expect( mockHandleError ).toHaveBeenCalledWith( error );
 	} );
-
 } );
