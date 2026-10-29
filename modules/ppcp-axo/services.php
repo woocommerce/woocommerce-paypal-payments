@@ -97,6 +97,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.builder.experience-context' ),
 			$container->get( 'settings.data.settings' ),
+			$container->get( 'api.factory.payer' ),
 			$container->get( 'api.helper.return-url-secret' )
 		);
 	},
