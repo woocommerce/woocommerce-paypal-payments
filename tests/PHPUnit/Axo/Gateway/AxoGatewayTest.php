@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
@@ -477,6 +478,9 @@ class AxoGatewayTest extends TestCase
 		$order_endpoint = Mockery::mock( OrderEndpoint::class );
 		$order_endpoint->allows( 'create' )->andReturn( $paypal_order );
 
+		$payer_factory = Mockery::mock( PayerFactory::class );
+		$payer_factory->allows( 'from_wc_order' )->andReturn( Mockery::mock( Payer::class ) );
+
 		return new AxoGatewayTestable(
 			$this->dcc_configuration,
 			Mockery::mock( SessionHandler::class ),
@@ -490,7 +494,7 @@ class AxoGatewayTest extends TestCase
 			$this->logger,
 			$experience_context_builder,
 			$settings_model,
-			Mockery::mock( PayerFactory::class ),
+			$payer_factory,
 			$return_url_secret
 		);
 	}

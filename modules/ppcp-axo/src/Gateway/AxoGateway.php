@@ -513,7 +513,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		return $this->order_endpoint->create(
 			array( $purchase_unit ),
 			$shipping_preference,
-			null,
+			$this->payer_factory->from_wc_order( $wc_order ),
 			self::ID,
 			$this->build_order_data(),
 			$payment_source
