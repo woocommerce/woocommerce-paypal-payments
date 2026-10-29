@@ -766,7 +766,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	}
 
 	/**
-	 * Registers the PayPal Address preset to overwrite Shipping in checkout.
+	 * Registers the PayPal address preset for the checkout fields and the ship-to-different-address box.
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
@@ -774,24 +774,28 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		add_filter(
 			'woocommerce_checkout_get_value',
 			static function ( ...$args ) use ( $container ) {
-
-				/**
-				 * Its important to not instantiate the service too early as it
-				 * depends on SessionHandler and WooCommerce Session.
-				 */
-
-				/**
-				 * The CheckoutPayPalAddressPreset object.
-				 *
-				 * @var CheckoutPayPalAddressPreset $service
-				 */
-				$service = $container->get( 'wcgateway.checkout.address-preset' );
-
-				return $service->filter_checkout_field( ...$args );
+				return self::address_preset( $container )->filter_checkout_field( ...$args );
 			},
 			10,
 			2
 		);
+
+		add_filter(
+			'woocommerce_ship_to_different_address_checked',
+			static function ( $checked ) use ( $container ) {
+				return self::address_preset( $container )->filter_ship_to_different_address( $checked );
+			}
+		);
+	}
+
+	/**
+	 * Resolved per hook call, never earlier: the service needs the WooCommerce session.
+	 */
+	private static function address_preset( ContainerInterface $container ): CheckoutPayPalAddressPreset {
+		$service = $container->get( 'wcgateway.checkout.address-preset' );
+		assert( $service instanceof CheckoutPayPalAddressPreset );
+
+		return $service;
 	}
 
 	/**

@@ -95,12 +95,22 @@ class CheckoutPayPalAddressPreset {
 		$payer    = $order->payer();
 
 		$address_map     = array(
-			'billing_address_1' => 'address_line_1',
-			'billing_address_2' => 'address_line_2',
-			'billing_postcode'  => 'postal_code',
-			'billing_country'   => 'country_code',
-			'billing_city'      => 'admin_area_2',
-			'billing_state'     => 'admin_area_1',
+			'billing_address_1'  => 'address_line_1',
+			'billing_address_2'  => 'address_line_2',
+			'billing_postcode'   => 'postal_code',
+			'billing_country'    => 'country_code',
+			'billing_city'       => 'admin_area_2',
+			'billing_state'      => 'admin_area_1',
+			'shipping_address_1' => 'address_line_1',
+			'shipping_address_2' => 'address_line_2',
+			'shipping_postcode'  => 'postal_code',
+			'shipping_country'   => 'country_code',
+			'shipping_city'      => 'admin_area_2',
+			'shipping_state'     => 'admin_area_1',
+		);
+		$recipient_map   = array(
+			'shipping_first_name' => 'given_name',
+			'shipping_last_name'  => 'surname',
 		);
 		$payer_name_map  = array(
 			'billing_last_name'  => 'surname',
@@ -115,6 +125,10 @@ class CheckoutPayPalAddressPreset {
 
 		if ( array_key_exists( $field_id, $address_map ) && $shipping && ! is_null( $shipping->address() ) ) {
 			return $shipping->address()->{$address_map[ $field_id ]}() ? $shipping->address()->{$address_map[ $field_id ]}() : null;
+		}
+
+		if ( array_key_exists( $field_id, $recipient_map ) ) {
+			return $this->recipient_name()[ $recipient_map[ $field_id ] ] ?: null;
 		}
 
 		if ( array_key_exists( $field_id, $payer_name_map ) && $payer ) {
@@ -134,6 +148,64 @@ class CheckoutPayPalAddressPreset {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Ticks "Ship to a different address" when the PayPal recipient is not the payer.
+	 *
+	 * Otherwise WooCommerce copies the billing name, which is the payer's, onto the shipment.
+	 *
+	 * @wp-hook woocommerce_ship_to_different_address_checked
+	 *
+	 * @param mixed $checked
+	 * @return mixed
+	 */
+	public function filter_ship_to_different_address( $checked ) {
+		if ( isset( $this->session_handler->checkout_form()['ship_to_different_address'] ) ) {
+			return $checked;
+		}
+
+		$order          = $this->session_handler->order();
+		$payer          = $order ? $order->payer() : null;
+		$payer_name     = $payer ? $payer->name() : null;
+		$recipient_name = $this->recipient_full_name();
+		if ( ! $payer_name || '' === $recipient_name ) {
+			return $checked;
+		}
+
+		$payer_full_name = trim( $payer_name->given_name() . ' ' . $payer_name->surname() );
+		if ( 0 !== strcasecmp( $payer_full_name, $recipient_name ) ) {
+			return true;
+		}
+
+		return $checked;
+	}
+
+	/**
+	 * The PayPal shipping recipient as given name and surname.
+	 *
+	 * The last word is treated as the surname.
+	 *
+	 * @return array{given_name: string, surname: string}
+	 */
+	private function recipient_name(): array {
+		$parts   = explode( ' ', $this->recipient_full_name() );
+		$surname = count( $parts ) > 1 ? (string) array_pop( $parts ) : '';
+
+		return array(
+			'given_name' => implode( ' ', $parts ),
+			'surname'    => $surname,
+		);
+	}
+
+	/**
+	 * The PayPal shipping recipient's full name, with whitespace collapsed.
+	 */
+	private function recipient_full_name(): string {
+		$shipping = $this->read_shipping_from_order();
+		$name     = $shipping ? (string) $shipping->name() : '';
+
+		return trim( (string) preg_replace( '/\s+/', ' ', $name ) );
 	}
 
 	/**
