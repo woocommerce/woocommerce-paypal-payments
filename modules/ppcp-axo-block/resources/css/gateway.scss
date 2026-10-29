@@ -150,6 +150,10 @@ $fast-transition-duration: 0.5s;
 	}
 }
 
+.wc-block-components-express-payment-continue-rule--checkout.wc-block-axo-is-authenticated {
+	display: none !important;
+}
+
 // 4. AXO Loaded State
 .wc-block-axo-is-loaded {
 	// 4.1 Text Input
