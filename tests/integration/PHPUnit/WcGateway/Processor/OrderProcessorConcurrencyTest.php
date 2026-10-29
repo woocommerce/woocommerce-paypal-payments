@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Tests\Integration\WcGateway\Processor;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -59,7 +60,12 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 
 		$payments->shouldReceive('captures')->andReturn([$capture]);
 		$payments->shouldReceive('authorizations')->andReturn([]);
+		$amount = \Mockery::mock(Amount::class)->shouldIgnoreMissing();
+		$amount->shouldReceive('currency_code')->andReturn('USD');
+		$amount->shouldReceive('value_str')->andReturn('0.00');
+
 		$purchaseUnit->shouldReceive('payments')->andReturn($payments);
+		$purchaseUnit->shouldReceive('amount')->andReturn($amount);
 		$paypalOrder->shouldReceive('purchase_units')->andReturn([$purchaseUnit]);
 
 		$mockOrderEndpoint->shouldReceive('order')->andReturn($paypalOrder);
@@ -95,7 +101,21 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 		$this->assertNotEmpty($wcOrder->get_transaction_id());
 	}
 
-	public function testOrderWithTransactionIdSkipsProcessing(): void
+	/**
+	 * GIVEN an order that already carries a transaction ID
+	 * WHEN the buyer pays it with PayPal
+	 * THEN it is captured only if the order has not been paid or put on hold yet
+	 * AND the order ends in the expected status with the expected transaction ID
+	 *
+	 * @dataProvider transactionIdOrderProvider
+	 */
+	public function testOrderWithTransactionIdIsCapturedOnlyWhenUnsettled(
+		string $status,
+		string $transactionId,
+		int $expectedCaptures,
+		string $expectedStatus,
+		string $expectedTransactionIdPrefix
+	): void
 	{
 		$captureCallCount = 0;
 
@@ -122,14 +142,31 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 			false
 		);
 
-		$wcOrder->set_transaction_id('EXISTING-TRANSACTION-123');
+		$wcOrder->set_status($status);
+		$wcOrder->set_transaction_id($transactionId);
 		$wcOrder->save();
 
 		$orderProcessor = $container->get('wcgateway.order-processor');
 
 		$orderProcessor->process($wcOrder);
 
-		$this->assertEquals(0, $captureCallCount, 'PayPal capture should not be called for orders with transaction ID');
+		$this->assertEquals($expectedCaptures, $captureCallCount);
+
+		$wcOrder = wc_get_order($wcOrder->get_id());
+		$this->assertEquals($expectedStatus, $wcOrder->get_status());
+		$this->assertStringStartsWith($expectedTransactionIdPrefix, $wcOrder->get_transaction_id());
+	}
+
+	public function transactionIdOrderProvider(): array
+	{
+		return [
+			'failed order with another gateway\'s transaction ID is captured' => [
+				'failed', 'tr_foreign_gateway_123', 1, 'processing', 'TEST-CAPTURE-',
+			],
+			'on-hold order with a transaction ID is skipped' => [
+				'on-hold', 'EXISTING-TRANSACTION-123', 0, 'on-hold', 'EXISTING-TRANSACTION-123',
+			],
+		];
 	}
 
 	public function testCompletedOrderSkipsProcessing(): void
@@ -160,6 +197,7 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 		);
 
 		$wcOrder->set_status('processing');
+		$wcOrder->set_transaction_id('EXISTING-TRANSACTION-123');
 		$wcOrder->save();
 
 		$orderProcessor = $container->get('wcgateway.order-processor');
@@ -196,7 +234,7 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 			false
 		);
 
-		$wcOrder->update_meta_data('_ppcp_processing', 'yes');
+		$wcOrder->update_meta_data('_ppcp_processing', (string) ( time() + 5 * MINUTE_IN_SECONDS ));
 		$wcOrder->save();
 
 		$orderProcessor = $container->get('wcgateway.order-processor');
