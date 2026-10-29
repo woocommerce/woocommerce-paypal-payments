@@ -1,125 +1,78 @@
 # AGENTS.md
 
-Minimal instructions for coding agents working in this repository.
+WooCommerce PayPal Payments: a WooCommerce plugin for PayPal smart buttons, card fields, Apple Pay, Google Pay, Pay Later, Fastlane, vaulting, subscriptions, and local payment methods.
 
-## CRITICAL Rules
+## Critical rules
 
-- CRITICAL: Maintain PHP `7.4+` compatibility unless project requirements change.
-- CRITICAL: Do not edit WordPress core, `vendor/`, or `node_modules/`.
-- CRITICAL: For frontend work, edit `modules/*/resources/*`.
-- CRITICAL: Never revert unrelated local changes.
-- CRITICAL: Any change to an externally exposed surface - a hook, an `api/` function, stored data, or an assumption about global state, multisite, or install layout - is high-risk; state its backward-compatibility impact in the PR (see [Backward compatibility](#backward-compatibility)). PHP classes, interfaces, and methods are not such a surface.
-- MUST: Run relevant lint/tests before claiming completion.
+- PHP 7.4 compatible. Typed properties are fine; PHP 8 syntax (union types, enums, named arguments, constructor promotion) is not.
+- `assets/` and `lib/packages/` are generated. Edit the sources: `modules/*/resources/` for frontend code.
+- A change to an external surface (hook, `api/` function, stored data, runtime assumption) needs a backward-compatibility statement in the PR. See below.
 
 ## Backward compatibility
 
-The plugin's compatibility contracts with third-party code are its WordPress-level surfaces: hooks, the public functions in `api/`, stored data, and its assumptions about the runtime environment. A change to any of them is **high-risk** and **must state its backward-compatibility impact in the PR description**.
+The contracts with third-party code are hooks, the functions in `api/`, stored data, and assumptions about the runtime. PHP classes, interfaces, and methods are not contracts, even when the container exposes them: change or remove them freely.
 
-PHP classes, interfaces, and methods are **not** a compatibility contract, even when they are reachable via the module container or wired in `services.php`/`factories.php`/`extensions.php`. Change, rename, or remove them as needed: they need no deprecation window and no backward-compatibility statement.
+Assume that unseen code uses every external surface. If you cannot establish the impact of a change, stop and ask.
 
-### WordPress-level contracts
-
-**Hooks and filters are public contracts.** Every `do_action` and `apply_filters` call this plugin makes is an interface that third-party callbacks depend on. Removing a hook, renaming it, or removing/reordering its arguments breaks every attached callback. Changing *when* or *whether* a hook fires can break consumers that depend on its timing. Additive is the safe path: append new arguments at the end, never remove or reorder existing ones. To retire a hook, fire it through `do_action_deprecated()` / `apply_filters_deprecated()` for a deprecation window instead of deleting it.
-
-**Never trust data that flows through hooks.** Keep hook callback parameters untyped and validate or coerce the value before passing it to strictly typed code, since any callback can receive a value another one produced. And when firing a filter (`ppcp_*`, `woocommerce_paypal_payments_*`), validate the final return value before using it, since any callback in the chain can return the wrong thing.
-
-**Do not assume global state.** Code can run in admin, REST, WP-CLI, cron, PayPal webhook, and front-end contexts, and not all of them set the globals a front-end request does (`$post`, `$wp_query`, an initialized session or cart). A newly introduced read of a global, or of `WC()->…` state, in a path reachable outside a standard request is a fatal or a silent misbehavior in the contexts that do not set it - webhook and cron paths in this plugin are especially exposed. Guard the exact dependency explicitly: use `function_exists`/`class_exists` for symbols, `isset` for variables, `did_action` for lifecycle state, and verify that `WC()` and the required component are initialized before dereferencing `WC()->…`. The same caution applies to this plugin's own container: do not reach for services before the module has booted.
-
-**Do not assume single-site.** Multisite changes where data lives: site-scoped vs network-scoped options (`get_option` vs `get_site_option`), per-site tables, user roles and capabilities, and upload paths all differ. A change that reads or writes site state - including merchant credentials, onboarding state, and gateway settings - must state in its PR whether it behaves correctly under multisite, and if it was not tested there, say so explicitly.
-
-**Do not assume install layout.** WordPress could be configured to run in a subdirectory, with relocated `wp-content`, and behind reverse proxies. Never build paths or URLs by concatenation from the domain root; derive them (`plugins_url()`, `plugin_dir_path()`, `wp_upload_dir()`, and mind the `home_url()` vs `site_url()` distinction). This matters doubly for return, callback, and webhook URLs handed to PayPal. A path that works on a root install and breaks elsewhere is a compatibility bug, not an edge case.
+- **Hooks:** never remove or rename a hook, or remove or reorder its arguments. Add new arguments at the end. A change to when or whether a hook fires can also break consumers. To retire a hook, use `do_action_deprecated()` / `apply_filters_deprecated()`.
+- **Hook data:** keep callback parameters untyped, and validate the value before it reaches typed code. Validate the final return value of every filter this plugin fires.
+- **Global state:** code runs in admin, REST, WP-CLI, cron, webhook, and front-end contexts. Only front-end requests set `$post`, `$wp_query`, the session, and the cart. Guard each dependency: `function_exists`/`class_exists`, `isset`, `did_action`, and a check that `WC()` and its component exist before `WC()->…`. Webhook and cron paths are the most exposed. Do not use container services before the module has booted.
+- **Multisite:** site and network data live in different places (`get_option` vs `get_site_option`, per-site tables, roles, upload paths). A PR that reads or writes site state (credentials, onboarding, gateway settings) states whether it works on multisite, and says so when it was not tested there.
+- **Install layout:** WordPress can run in a subdirectory, with a moved `wp-content`, or behind a proxy. Derive paths and URLs (`plugins_url()`, `plugin_dir_path()`, `wp_upload_dir()`; `home_url()` is not `site_url()`), never concatenate them. This is most important for the return, callback, and webhook URLs sent to PayPal.
 
 ### Database migrations
 
-Settings and data migrations run from `CompatModule` (`modules/ppcp-compat`) on the `woocommerce_paypal_payments_gateway_migrate_on_update` hook, each guarded by its own marker option (e.g. `woocommerce_ppcp-is_pay_later_settings_migrated`). Two invariants:
+Migrations run from `CompatModule` (`modules/ppcp-compat`) on `woocommerce_paypal_payments_gateway_migrate_on_update`. A marker option guards each one (e.g. `woocommerce_ppcp-is_pay_later_settings_migrated`).
 
-- Migrations are one-shot: the marker option keys them, so a site that has run one never re-runs it. Never reuse or repurpose an already-shipped marker, and never edit a shipped migration - add a new one with its own marker instead.
-- Every schema or data update must remain reversible one version back: a rollback to the previous release must not fatal or corrupt data against the migrated state. If old code cannot read the new format, the change needs a deprecation window, not a hard cutover.
+- A migration runs once per site. Never edit a shipped migration or reuse its marker: add a new migration with a new marker.
+- The previous release must still work on migrated data. If old code cannot read the new format, the change needs a deprecation window.
 
-### Before changing an externally exposed surface (agent checklist)
+## Project structure
 
-1. Identify the contract you are touching: hook, `api/` function, stored data, global/scope expectation, site topology, or install layout.
-2. Assume unseen consumers. You cannot enumerate third-party code; if the surface is reachable from outside this plugin, someone consumes it.
-3. Prefer the additive path (appended hook argument, new hook or function plus deprecation of the old one) over changing what exists.
-4. State the impact in the PR description: what changed, who could consume it, and why it is safe or what the deprecation path is.
-5. If you cannot establish the impact, stop and flag it to the user as needing review.
+The plugin uses Syde Modularity: each feature is a module in `modules/`, wired through `services.php`, `factories.php`, and `extensions.php` into a PSR-11 container. Architecture reference: `docs/plugin-architecture.md`.
 
-## Project Knowledge
+```
+woocommerce-paypal-payments.php  # Plugin entry point, constants, version
+bootstrap.php                    # Container init, module loading
+modules.php                      # Module registration and feature flags
+src/                             # Core: PluginModule, PPCP container, Http
+api/                             # Public API functions
+modules/                         # Feature modules: src/, resources/, services.php
+assets/                          # Built JS/CSS (webpack output)
+lib/                             # Vendored packages, namespace-scoped by Mozart under WooCommerce\PayPalCommerce\Vendor
+tests/PHPUnit/                   # PHP unit tests
+tests/integration/               # Integration tests, run against the DDEV site
+tests/js/                        # Jest config; Jest tests sit next to their sources
+stubs/                           # PHPStan stubs
+```
 
-- This is a modular WooCommerce/WordPress plugin using Syde Modularity.
-- Key entry points:
-  - `woocommerce-paypal-payments.php` (plugin bootstrap/constants)
-  - `bootstrap.php` (container + module boot)
-  - `modules.php` (module registration and feature-flag loading)
-- Most feature code is in `modules/*`.
-- Service wiring is module-based (`services.php`, `factories.php`, `extensions.php`).
-- Architecture reference: `docs/plugin-architecture.md`.
-
-## Commands
-
-Run every command through DDEV, not with host PHP, Node, or Composer. The web container provides the project's PHP and Node versions, extensions, and database. Use `ddev npm`, `ddev npx`, `ddev composer`, and `ddev php` in place of their host counterparts, and `ddev exec` for anything else, e.g. `ddev exec vendor/bin/phpunit --filter <TestName>`.
-
-### Setup
-
-- `ddev start && ddev orchestrate`
-- If WP is missing after startup, run `ddev orchestrate`.
-- Use `ddev describe` for active URLs/ports.
-- If `.ddev.site` routing fails, use the direct host mapping shown in `ddev describe` for `web:80` (for example `http://127.0.0.1:60792`).
-- Admin defaults: `admin` / `admin` at `/wp-admin`.
-- Common DDEV issues and fixes are documented in the README under "Troubleshooting DDEV setup" (vmnetd/port errors, Docker CLI path, SSL trust, Mutagen warnings).
-
-### Build
-
-- `ddev npm run build` (rebuild after JS/SCSS source changes).
-- `ddev composer install && ddev npm ci && ddev npm run build` (reinstall dependencies and rebuild).
-
-### Quality
-
-- `ddev npm run lint` (PHPCS + PHPStan)
-- `ddev npm run lint-js` (currently unreliable for full-repo linting in this project)
-- `ddev npx wp-scripts lint-js <file-or-dir>` (recommended; works for targeted JS/TS paths)
-- `ddev npm run unit-tests`
-- `ddev npm run test:unit-js`
-- `ddev npm run integration-tests`
-- `ddev npm run test` (full suite)
+- Add behavior through module services and extensions, not globals. `ExecutableModule::run()` only registers hook callbacks.
+- Some modules load only when their flag is on (`PCP_*_ENABLED`, `woocommerce.feature-flags.*`). When you add or remove a module, update `modules.php` and test both flag states.
+- The admin settings UI is React (`@wordpress/element` + WooCommerce components) in `modules/ppcp-settings`.
 
 ## Conventions
 
-- Add or extend behavior through module services/extensions, not ad-hoc globals.
-- If adding/removing a module, update `modules.php` and validate feature-flag behavior.
-- Keep i18n text domain as `woocommerce-paypal-payments`.
-- PRs should include reproducible test steps and a changelog summary.
+- Text domain: `woocommerce-paypal-payments`.
+- American English in code, comments, docs, and commits ("canceled", "behavior").
+- `dev/develop` is the source branch and the PR base. The bare `develop` branch is a generated build artifact; never diff or branch from it.
+- Tabs for PHP and JS, spaces for JSON and YAML.
+- PHPCS (WooCommerce-Core), PHPStan level 8, ESLint (`@wordpress/eslint-plugin/recommended`).
+- A PR has reproducible test steps and a changelog line.
 
-## Architectural Decisions
+## Commands
 
-- The plugin is intentionally modular; do not collapse it into a monolith.
-- Some modules are intentionally conditional via `PCP_*_ENABLED` and `woocommerce.feature-flags.*`.
-- JS/SCSS build output is intentionally centralized in root `/assets` via webpack.
-- WordPress hook-based integration and service registration are intentional patterns.
+Run every command through DDEV: `ddev npm`, `ddev npx`, `ddev composer`, `ddev php`, and `ddev exec` for anything else.
 
-## Common Pitfalls
+| Task                   | Command                                                          |
+|------------------------|------------------------------------------------------------------|
+| Start the site         | `ddev start && ddev orchestrate` (again if WP is missing)        |
+| Build JS/SCSS          | `ddev npm run build`, or `ddev npm run watch-js`                 |
+| Reinstall dependencies | `ddev composer install && ddev npm ci && ddev npm run build`     |
+| PHPCS + PHPStan        | `ddev npm run lint`; auto-fix with `ddev npm run fix-lint`       |
+| JS lint                | `ddev npx wp-scripts lint-js <path>` (full-repo `lint-js` fails) |
+| PHP unit tests         | `ddev npm run unit-tests`, or `ddev npm run tdd [<filter>]`      |
+| JS unit tests          | `ddev npm run test:unit-js`                                      |
+| Integration tests      | `ddev npm run integration-tests`                                 |
+| PHP unit + integration | `ddev npm run test`                                              |
 
-- Editing generated `/assets` files instead of module `resources`.
-- Forgetting to rebuild after JS/SCSS source changes.
-- Introducing PHP syntax that is not PHP 7.4 compatible.
-- Accessing plugin container/services before initialization.
-- Skipping integration tests for checkout, payment, onboarding, or webhook changes.
-- Changing module load order/feature flags without validating side effects.
-- Assuming `.ddev.site` URLs always resolve locally.
-
-## Working in `modules/ppcp-abilities/`
-
-When you change the code path behind a registered ability (the backing
-REST controller, service method, or response shape), audit the
-ability's registration for required updates — annotations, input/output
-schema, description, and the redaction list on `GetConnectionStatus`.
-Drift between the ability and its backing is the failure mode the
-`woocommerce_paypal_payments_abilities_enabled` feature flag exists to
-contain; surface the change in the PR rather than letting the
-abilities surface go stale.
-
-## Verification Matrix
-
-- PHP-only change: `ddev npm run unit-tests && ddev npm run lint`
-- JS-only change: `ddev npm run test:unit-js && ddev npx wp-scripts lint-js <changed-js-files-or-dir>`
-- Checkout/payment/onboarding/webhook change: `ddev npm run test`
+Site: URLs in `ddev describe`; admin login `admin` / `admin`. If `.ddev.site` does not resolve, use the `web:80` host mapping from `ddev describe`. For DDEV problems, see "Troubleshooting DDEV setup" in `README.md`.
