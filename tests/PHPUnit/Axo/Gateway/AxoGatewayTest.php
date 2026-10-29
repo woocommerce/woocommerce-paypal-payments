@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReturnUrlSecret;
@@ -50,6 +51,7 @@ class AxoGatewayTestable extends AxoGateway
 		LoggerInterface $logger,
 		ExperienceContextBuilder $experience_context_builder,
 		SettingsModel $settings_model,
+		PayerFactory $payer_factory,
 		?ReturnUrlSecret $return_url_secret = null,
 		array $option_overrides = []
 	) {
@@ -68,6 +70,7 @@ class AxoGatewayTestable extends AxoGateway
 			$logger,
 			$experience_context_builder,
 			$settings_model,
+			$payer_factory,
 			$return_url_secret
 		);
 	}
@@ -133,7 +136,8 @@ class AxoGatewayTest extends TestCase
 			Mockery::mock( Environment::class ),
 			$this->logger,
 			Mockery::mock( ExperienceContextBuilder::class ),
-			Mockery::mock( SettingsModel::class )
+			Mockery::mock( SettingsModel::class ),
+			Mockery::mock( PayerFactory::class )
 		);
 	}
 
@@ -162,6 +166,7 @@ class AxoGatewayTest extends TestCase
 			$this->logger,
 			Mockery::mock( ExperienceContextBuilder::class ),
 			Mockery::mock( SettingsModel::class ),
+			Mockery::mock( PayerFactory::class ),
 			null,
 			$option_overrides
 		);
@@ -485,6 +490,7 @@ class AxoGatewayTest extends TestCase
 			$this->logger,
 			$experience_context_builder,
 			$settings_model,
+			Mockery::mock( PayerFactory::class ),
 			$return_url_secret
 		);
 	}
