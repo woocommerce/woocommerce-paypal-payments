@@ -591,4 +591,96 @@ class AxoGatewayTest extends TestCase
 		$this->assertSame( 'PAYPAL-ORDER-XYZ', $inner_query['token'] ?? null );
 		$this->assertSame( 'bound-nonce-value', $inner_query['ppcp_return_nonce'] ?? null );
 	}
+
+	/**
+	 * GIVEN a Fastlane card payment for a WooCommerce order with buyer details
+	 * WHEN the PayPal order is created during process_payment()
+	 * THEN the PayPal order request includes the exact payer built from that WooCommerce order
+	 * AND PayPal therefore receives the buyer email
+	 *
+	 * @covers \WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway::process_payment
+	 */
+	public function test_process_payment_sends_payer_built_from_wc_order_when_creating_paypal_order(): void
+	{
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 77 );
+
+		$payer = Mockery::mock( Payer::class );
+
+		$payer_factory = Mockery::mock( PayerFactory::class );
+		$payer_factory->shouldReceive( 'from_wc_order' )->with( $wc_order )->andReturn( $payer );
+
+		$paypal_order = Mockery::mock( Order::class );
+		$paypal_order->shouldReceive( 'id' )->andReturn( 'PAYPAL-ORDER-XYZ' );
+		$paypal_order->shouldReceive( 'links' )->andReturn(
+			[
+				(object) [
+					'rel'  => 'payer-action',
+					'href' => 'https://paypal.example/payer-action',
+				],
+			]
+		);
+
+		$order_endpoint = Mockery::mock( OrderEndpoint::class );
+		$order_endpoint->shouldReceive( 'create' )
+			->once()
+			->withArgs( static fn( ...$args ): bool => $payer === $args[2] )
+			->andReturn( $paypal_order );
+
+		$purchase_unit_factory = Mockery::mock( PurchaseUnitFactory::class );
+		$purchase_unit_factory->allows( 'from_wc_order' )->andReturn( Mockery::mock( PurchaseUnit::class ) );
+
+		$shipping_preference_factory = Mockery::mock( ShippingPreferenceFactory::class );
+		$shipping_preference_factory->allows( 'from_state' )->andReturn( 'preference' );
+
+		$settings_model = Mockery::mock( SettingsModel::class );
+		$settings_model->allows( 'get_three_d_secure_enum' )->andReturn( '' );
+
+		$experience_context = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext::class );
+		$experience_context->allows( 'to_array' )->andReturn( [] );
+
+		$experience_context_builder = Mockery::mock( ExperienceContextBuilder::class );
+		$experience_context_builder->allows( 'with_endpoint_return_urls' )->andReturnSelf();
+		$experience_context_builder->allows( 'with_current_brand_name' )->andReturnSelf();
+		$experience_context_builder->allows( 'with_current_locale' )->andReturnSelf();
+		$experience_context_builder->allows( 'build' )->andReturn( $experience_context );
+
+		$return_url_secret = Mockery::mock( ReturnUrlSecret::class );
+		$return_url_secret->allows( 'secret_for' )->andReturn( 'bound-nonce-value' );
+
+		when( 'wc_get_order' )->justReturn( $wc_order );
+		when( 'wc_clean' )->alias( static fn( $value ) => $value );
+		when( 'wp_unslash' )->alias( static fn( $value ) => $value );
+		when( 'home_url' )->alias( static fn( string $path = '' ): string => 'https://example.com' . $path );
+		when( 'add_query_arg' )->alias( static function ( $key, $value, $url ): string {
+			$separator = strpos( $url, '?' ) === false ? '?' : '&';
+			return $url . $separator . $key . '=' . $value;
+		} );
+
+		$_POST['axo_nonce'] = 'card-single-use-token';
+		unset( $_GET['token'] );
+
+		$sut = new AxoGatewayTestable(
+			$this->dcc_configuration,
+			Mockery::mock( SessionHandler::class ),
+			$this->order_processor,
+			[],
+			$order_endpoint,
+			$purchase_unit_factory,
+			$shipping_preference_factory,
+			Mockery::mock( TransactionUrlProvider::class ),
+			Mockery::mock( Environment::class ),
+			$this->logger,
+			$experience_context_builder,
+			$settings_model,
+			$payer_factory,
+			$return_url_secret
+		);
+
+		$result = $sut->process_payment( 77 );
+
+		unset( $_POST['axo_nonce'] );
+
+		$this->assertSame( 'success', $result['result'] );
+	}
 }
