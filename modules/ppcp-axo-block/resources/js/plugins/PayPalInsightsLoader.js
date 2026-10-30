@@ -154,8 +154,8 @@ const usePaymentMethodTracking = ( axoConfig, eventTracking ) => {
 
 	const handlePaymentMethodChange = useCallback(
 		async ( paymentMethod ) => {
-			// Skip if no payment method or same as last one
 			if (
+				! axoConfig?.insights?.enabled ||
 				! paymentMethod ||
 				paymentMethod === lastPaymentMethod.current
 			) {
@@ -183,6 +183,7 @@ const usePaymentMethodTracking = ( axoConfig, eventTracking ) => {
 			}
 		},
 		[
+			axoConfig?.insights?.enabled,
 			axoConfig?.insights?.payment_method_selected_map,
 			setCurrentPaymentMethod,
 		]
@@ -235,7 +236,11 @@ const PayPalInsightsLoader = () => {
 
 	useEffect( () => {
 		const trackEmail = async () => {
-			if ( isEmailSubmitted && ! isEventTriggered( 'emailSubmitted' ) ) {
+			if (
+				axoConfig?.insights?.enabled &&
+				isEmailSubmitted &&
+				! isEventTriggered( 'emailSubmitted' )
+			) {
 				try {
 					await waitForPayPalInsight();
 					PayPalInsights.trackSubmitCheckoutEmail();
@@ -246,7 +251,7 @@ const PayPalInsightsLoader = () => {
 			}
 		};
 		trackEmail();
-	}, [ isEmailSubmitted, setEventTriggered, isEventTriggered ] );
+	}, [ axoConfig, isEmailSubmitted, setEventTriggered, isEventTriggered ] );
 
 	return null;
 };

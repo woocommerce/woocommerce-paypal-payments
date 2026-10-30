@@ -56,6 +56,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	private $supported_country_card_type_matrix;
 
+	private bool $insights_enabled;
+
 	/**
 	 * @param AssetGetter               $asset_getter
 	 * @param WC_Payment_Gateway        $gateway Credit card gateway.
@@ -74,7 +76,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		Environment $environment,
 		AssetGetter $wcgateway_module_asset_getter,
 		array $payment_method_selected_map,
-		array $supported_country_card_type_matrix
+		array $supported_country_card_type_matrix,
+		bool $insights_enabled
 	) {
 		$this->name                               = AxoGateway::ID;
 		$this->asset_getter                       = $asset_getter;
@@ -85,6 +88,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		$this->wcgateway_module_asset_getter      = $wcgateway_module_asset_getter;
 		$this->payment_method_selected_map        = $payment_method_selected_map;
 		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
+		$this->insights_enabled                   = $insights_enabled;
 	}
 	/**
 	 * {@inheritDoc}
@@ -165,7 +169,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 				'email' => 'render',
 			),
 			'insights'                   => array(
-				'enabled'                     => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
+				'enabled'                     => $this->insights_enabled,
 				'client_id'                   => $this->settings_provider->merchant_data()->client_id ?: null,
 				'session_id'                  =>
 					( WC()->session && method_exists( WC()->session, 'get_customer_unique_id' ) )
