@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 4.2.1 - XXXX-XX-XX =
+* TBD
+
 = 4.2.0 - 2026-10-21 =
 * Enhancement - PayPal JS SDK v6 is now the default for all stores, including existing ones; SDK v5 remains available as a fallback via `woocommerce.feature-flags.woocommerce_paypal_payments.sdk_v6_enabled` filter #4720
 * Enhancement - Remove the leftover checks that let vaulting disable Pay Later, including the `woocommerce_paypal_payments_pay_later_with_vaulting` filter #4736
