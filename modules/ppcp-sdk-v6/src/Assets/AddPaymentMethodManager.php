@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WC_Subscription;
 class AddPaymentMethodManager
 {
@@ -47,7 +48,8 @@ class AddPaymentMethodManager
     private SettingsProvider $settings_provider;
     private CardFieldStyles $card_field_styles;
     private PartnerAttribution $partner_attribution;
-    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, Context $context, bool $paypal_vaulting_enabled, bool $card_vaulting_enabled, SettingsProvider $settings_provider, CardFieldStyles $card_field_styles, PartnerAttribution $partner_attribution)
+    private SubscriptionHelper $subscription_helper;
+    public function __construct(AssetGetter $asset_getter, string $version, Environment $environment, Context $context, bool $paypal_vaulting_enabled, bool $card_vaulting_enabled, SettingsProvider $settings_provider, CardFieldStyles $card_field_styles, PartnerAttribution $partner_attribution, SubscriptionHelper $subscription_helper)
     {
         $this->asset_getter = $asset_getter;
         $this->version = $version;
@@ -58,6 +60,7 @@ class AddPaymentMethodManager
         $this->settings_provider = $settings_provider;
         $this->card_field_styles = $card_field_styles;
         $this->partner_attribution = $partner_attribution;
+        $this->subscription_helper = $subscription_helper;
     }
     /**
      * Enqueues the add-payment-method bootstrap script.
@@ -98,7 +101,7 @@ class AddPaymentMethodManager
      */
     private function subscription_to_change(): ?WC_Subscription
     {
-        if (!function_exists('wcs_get_subscription')) {
+        if (!function_exists('wcs_get_subscription') || !$this->subscription_helper->is_subscription_change_payment()) {
             return null;
         }
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended
