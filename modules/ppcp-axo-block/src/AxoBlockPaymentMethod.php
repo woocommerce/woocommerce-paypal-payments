@@ -40,13 +40,6 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	private $environment;
 
-	/**
-	 * Mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
-	 *
-	 * @var array
-	 */
-	private array $payment_method_selected_map;
-
 	private AssetGetter $wcgateway_module_asset_getter;
 
 	/**
@@ -56,6 +49,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	private $supported_country_card_type_matrix;
 
+	private array $insights_data;
+
 	/**
 	 * @param AssetGetter               $asset_getter
 	 * @param WC_Payment_Gateway        $gateway Credit card gateway.
@@ -63,7 +58,6 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param CardPaymentsConfiguration $dcc_configuration The DCC gateway settings.
 	 * @param Environment               $environment The environment object.
 	 * @param AssetGetter               $wcgateway_module_asset_getter
-	 * @param array                     $payment_method_selected_map Mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
 	 * @param array                     $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
@@ -73,8 +67,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		CardPaymentsConfiguration $dcc_configuration,
 		Environment $environment,
 		AssetGetter $wcgateway_module_asset_getter,
-		array $payment_method_selected_map,
-		array $supported_country_card_type_matrix
+		array $supported_country_card_type_matrix,
+		array $insights_data
 	) {
 		$this->name                               = AxoGateway::ID;
 		$this->asset_getter                       = $asset_getter;
@@ -83,8 +77,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		$this->dcc_configuration                  = $dcc_configuration;
 		$this->environment                        = $environment;
 		$this->wcgateway_module_asset_getter      = $wcgateway_module_asset_getter;
-		$this->payment_method_selected_map        = $payment_method_selected_map;
 		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
+		$this->insights_data                      = $insights_data;
 	}
 	/**
 	 * {@inheritDoc}
@@ -164,21 +158,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 			'widgets'                    => array(
 				'email' => 'render',
 			),
-			'insights'                   => array(
-				'enabled'                     => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
-				'client_id'                   => $this->settings_provider->merchant_data()->client_id ?: null,
-				'session_id'                  =>
-					( WC()->session && method_exists( WC()->session, 'get_customer_unique_id' ) )
-						? substr( md5( WC()->session->get_customer_unique_id() ), 0, 16 )
-						: '',
-				'amount'                      => array(
-					'currency_code' => get_woocommerce_currency(),
-					'value'         => ( WC()->cart && method_exists( WC()->cart, 'get_total' ) )
-						? WC()->cart->get_total( 'numeric' )
-						: null,
-				),
-				'payment_method_selected_map' => $this->payment_method_selected_map,
-			),
+			'insights'                   => $this->insights_with_cart_total(),
 			'allowed_cards'              => $this->supported_country_card_type_matrix,
 			'disable_cards'              => $this->settings_provider->disabled_cards(),
 			'enabled_shipping_locations' => apply_filters( 'woocommerce_paypal_payments_axo_shipping_wc_enabled_locations', array() ),
@@ -210,5 +190,12 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 			'card_icons'                 => $this->settings_provider->card_icons(),
 			'merchant_country'           => WC()->countries->get_base_country(),
 		);
+	}
+
+	private function insights_with_cart_total(): array {
+		$insights                    = $this->insights_data;
+		$insights['amount']['value'] = WC()->cart ? WC()->cart->get_total( 'numeric' ) : null;
+
+		return $insights;
 	}
 }

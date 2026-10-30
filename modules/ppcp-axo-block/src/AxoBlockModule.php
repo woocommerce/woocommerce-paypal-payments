@@ -140,6 +140,11 @@ class AxoBlockModule implements ServiceModule, ExecutableModule {
 			return;
 		}
 
+		// Without the Insights script, the loader would wait for it and time out.
+		if ( ! $c->get( 'axo.insights.enabled' ) ) {
+			return;
+		}
+
 		$asset_getter = $c->get( 'axoblock.asset_getter' );
 		assert( $asset_getter instanceof AssetGetter );
 
