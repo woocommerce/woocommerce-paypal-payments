@@ -82,6 +82,7 @@ class SdkV6ManagerTest extends TestCase
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
         $this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false)->byDefault();
         $this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false)->byDefault();
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(false)->byDefault();
 		$this->free_trial_helper = Mockery::mock(FreeTrialSubscriptionHelper::class);
 		$this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
 		$this->free_trial_helper->shouldReceive('cart_requires_vaulting')->andReturn(false)->byDefault();
@@ -662,6 +663,67 @@ class SdkV6ManagerTest extends TestCase
             'SCA_WHEN_REQUIRED',
             static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
         );
+
+        $this->assertSame(
+            [
+                'product'   => false,
+                'cart'      => false,
+                'checkout'  => false,
+                'pay-now'   => false,
+                'mini-cart' => false,
+            ],
+            $testee->determine_render_places()
+        );
+    }
+
+    /**
+     * GIVEN a buyer on the WooCommerce Subscriptions change-payment-method page (an order-pay URL)
+     *      with ACDC and smart buttons enabled
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK does not load, because AddPaymentMethodManager owns that page and two
+     *      scripts mounting into the same card inputs break the submit
+     */
+    public function testShouldNotLoadOnSubscriptionChangePaymentPage(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('pay-now');
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a buyer on a regular pay-for-order page (not a change-payment-method page)
+     *      with ACDC and smart buttons enabled
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK loads as usual
+     */
+    public function testShouldLoadOnPayNowPageWhenNotSubscriptionChangePayment(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('pay-now');
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a buyer on the WooCommerce Subscriptions change-payment-method page
+     * WHEN determining which locations should render on the current page
+     * THEN no v6 location renders, leaving the page entirely to the v5 stack
+     */
+    public function testDetermineRenderPlacesEmptyOnSubscriptionChangePaymentPage(): void
+    {
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+        $testee = $this->createTestee();
 
         $this->assertSame(
             [

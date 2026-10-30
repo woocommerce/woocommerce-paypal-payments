@@ -201,7 +201,8 @@ return array(
 				&& $settings_provider->save_card_details(),
 			$settings_provider,
 			$container->get( 'sdk-v6.card-field-styles' ),
-			$container->get( 'api.helper.partner-attribution' )
+			$container->get( 'api.helper.partner-attribution' ),
+			$container->get( 'wc-subscriptions.helper' )
 		);
 	},
 

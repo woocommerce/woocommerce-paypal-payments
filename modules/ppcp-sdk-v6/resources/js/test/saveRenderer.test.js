@@ -209,6 +209,110 @@ describe( 'initCardSaveFields', () => {
 		expect( mockNavigationAssign ).not.toHaveBeenCalled();
 	} );
 
+	test( 'on a change-payment config the new token is assigned to the subscription and the buyer is redirected back to it', async () => {
+		buildAddPaymentMethodDom();
+		const cardSession = makeCardSession( { state: 'succeeded' } );
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsSavePaymentSession: () => cardSession,
+		} );
+		const subscriptionChange = {
+			subscription_id: 123,
+			redirect_url: '/my-account/view-subscription/123/',
+			ajax: { endpoint: '/change', nonce: 'n-change' },
+		};
+		mockPostJson
+			.mockResolvedValueOnce( { id: 'SETUP1' } )
+			.mockResolvedValueOnce( 42 )
+			.mockResolvedValueOnce( {} );
+
+		initCardSaveFields(
+			baseConfig( { subscription_change: subscriptionChange } )
+		);
+		await flushPromises();
+
+		document.querySelector( '#place_order' ).click();
+		await flushPromises();
+
+		expect( mockPostJson ).toHaveBeenLastCalledWith(
+			subscriptionChange.ajax,
+			{
+				subscription_id: 123,
+				payment_method: 'ppcp-credit-card-gateway',
+				wc_payment_token_id: 42,
+			}
+		);
+		expect( mockNavigationAssign ).toHaveBeenCalledWith(
+			subscriptionChange.redirect_url
+		);
+		expect( mockHandleError ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not intercept the click when a saved card is selected', async () => {
+		buildAddPaymentMethodDom();
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			'<input type="radio" name="wc-ppcp-credit-card-gateway-payment-token" value="77" checked />'
+		);
+		mockLoadSdkV6.mockResolvedValue( {
+			createCardFieldsSavePaymentSession: () => makeCardSession(),
+		} );
+
+		initCardSaveFields( baseConfig() );
+		await flushPromises();
+
+		const event = new window.MouseEvent( 'click', {
+			bubbles: true,
+			cancelable: true,
+		} );
+		document.querySelector( '#place_order' ).dispatchEvent( event );
+		await flushPromises();
+
+		expect( event.defaultPrevented ).toBe( false );
+		expect( mockPostJson ).not.toHaveBeenCalled();
+	} );
+
+	describe( 'save to account checkbox', () => {
+		const checkboxSelector =
+			'#wc-ppcp-credit-card-gateway-new-payment-method';
+
+		beforeEach( () => {
+			buildAddPaymentMethodDom();
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input type="checkbox" id="wc-ppcp-credit-card-gateway-new-payment-method" />'
+			);
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsSavePaymentSession: () => makeCardSession(),
+			} );
+		} );
+
+		test( 'is checked and disabled on a change-payment config', async () => {
+			initCardSaveFields(
+				baseConfig( {
+					subscription_change: {
+						subscription_id: 123,
+						redirect_url: '/sub/',
+						ajax: { endpoint: '/change', nonce: 'n' },
+					},
+				} )
+			);
+			await flushPromises();
+
+			const checkbox = document.querySelector( checkboxSelector );
+			expect( checkbox.checked ).toBe( true );
+			expect( checkbox.disabled ).toBe( true );
+		} );
+
+		test( 'is left untouched without a subscription change', async () => {
+			initCardSaveFields( baseConfig() );
+			await flushPromises();
+
+			const checkbox = document.querySelector( checkboxSelector );
+			expect( checkbox.checked ).toBe( false );
+			expect( checkbox.disabled ).toBe( false );
+		} );
+	} );
+
 	test( 'lets the native click through untouched when a different gateway is selected', async () => {
 		buildAddPaymentMethodDom();
 		mockGetCurrentPaymentMethod.mockReturnValue( 'ppcp-gateway' );
@@ -219,7 +323,7 @@ describe( 'initCardSaveFields', () => {
 		initCardSaveFields( baseConfig() );
 		await flushPromises();
 
-		const event = new MouseEvent( 'click', {
+		const event = new window.MouseEvent( 'click', {
 			bubbles: true,
 			cancelable: true,
 		} );
