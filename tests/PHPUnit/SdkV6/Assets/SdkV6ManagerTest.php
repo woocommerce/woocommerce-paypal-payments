@@ -680,8 +680,8 @@ class SdkV6ManagerTest extends TestCase
      * GIVEN a buyer on the WooCommerce Subscriptions change-payment-method page (an order-pay URL)
      *      with ACDC and smart buttons enabled
      * WHEN checking whether the v6 SDK should load on the current page
-     * THEN the SDK does not load, because v6 has no change-payment flow and the page must be
-     *      left to the v5 add-payment-method script
+     * THEN the SDK does not load, because AddPaymentMethodManager owns that page and two
+     *      scripts mounting into the same card inputs break the submit
      */
     public function testShouldNotLoadOnSubscriptionChangePaymentPage(): void
     {

@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -27,6 +28,7 @@ class AddPaymentMethodManagerTest extends TestCase
     private $context;
     private $settings_provider;
     private $card_field_styles;
+    private $subscription_helper;
 
     public function setUp(): void
     {
@@ -38,6 +40,8 @@ class AddPaymentMethodManagerTest extends TestCase
         $this->settings_provider = Mockery::mock(SettingsProvider::class);
         $this->card_field_styles = Mockery::mock(CardFieldStyles::class);
         $this->card_field_styles->shouldReceive('overrides')->andReturn([])->byDefault();
+        $this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(false)->byDefault();
 
         when('absint')->alias(static fn ($value) => abs((int) $value));
     }
@@ -83,7 +87,8 @@ class AddPaymentMethodManagerTest extends TestCase
             $card_vaulting_enabled,
             $this->settings_provider,
             $this->card_field_styles,
-            Mockery::mock(PartnerAttribution::class, ['get_bn_code' => $bn_code])
+            Mockery::mock(PartnerAttribution::class, ['get_bn_code' => $bn_code]),
+            $this->subscription_helper
         );
     }
 
@@ -136,6 +141,7 @@ class AddPaymentMethodManagerTest extends TestCase
         when('is_user_logged_in')->justReturn(true);
         $this->context->shouldReceive('is_add_payment_method_page')->andReturn(false);
         $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
         when('wcs_get_subscription')->justReturn($this->create_subscription(42, 'https://example.com/view'));
 
         $testee = $this->createTestee($paypal, $card);
@@ -164,6 +170,7 @@ class AddPaymentMethodManagerTest extends TestCase
         when('is_user_logged_in')->justReturn(true);
         $this->context->shouldReceive('is_add_payment_method_page')->andReturn(false);
         $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
         when('wcs_get_subscription')->justReturn($lookup_result);
 
         $testee = $this->createTestee(true, true);
@@ -190,9 +197,30 @@ class AddPaymentMethodManagerTest extends TestCase
         when('is_user_logged_in')->justReturn(true);
         $this->context->shouldReceive('is_add_payment_method_page')->andReturn(false);
         $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
         when('wcs_get_subscription')->justReturn($this->create_subscription(42, 'https://example.com/view'));
 
         $testee = $this->createTestee(false, false);
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a logged-in buyer with vaulting enabled and a change_payment_method id that
+     *       resolves to a valid subscription, but the request is not a subscription
+     *       change-payment page (e.g. pay_for_order is missing)
+     * WHEN checking whether the save surfaces should load
+     * THEN they do not load
+     */
+    public function testShouldNotLoadWhenChangePaymentMethodParamIsPresentOutsideChangePaymentPage(): void
+    {
+        when('is_user_logged_in')->justReturn(true);
+        $this->context->shouldReceive('is_add_payment_method_page')->andReturn(false);
+        $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(false);
+        when('wcs_get_subscription')->justReturn($this->create_subscription(42, 'https://example.com/view'));
+
+        $testee = $this->createTestee(true, true);
 
         $this->assertFalse($testee->should_load_on_current_page());
     }
@@ -207,6 +235,7 @@ class AddPaymentMethodManagerTest extends TestCase
     {
         $this->stub_script_data_dependencies();
         $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
         when('wcs_get_subscription')->justReturn(
             $this->create_subscription(42, 'https://example.com/my-account/view-subscription/42')
         );
