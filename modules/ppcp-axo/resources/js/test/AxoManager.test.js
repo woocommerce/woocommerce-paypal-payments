@@ -1,4 +1,4 @@
-/* global describe, test, expect, afterEach, jest */
+/* global describe, test, expect, beforeEach, afterEach, jest */
 import jQuery from 'jquery';
 import AxoManager from '../AxoManager';
 
@@ -300,6 +300,51 @@ describe( 'AxoManager.refreshEnhancedSelects', () => {
 		manager.refreshEnhancedSelects();
 
 		expect( trigger ).not.toHaveBeenCalled();
+	} );
+} );
+
+describe( 'AxoManager.submit', () => {
+	let originalFetch;
+
+	beforeEach( () => {
+		originalFetch = global.fetch;
+		global.fetch = jest.fn();
+		global.wc_checkout_params = { checkout_url: '/?wc-ajax=checkout' };
+		jest.spyOn( jQuery.fn, 'animate' ).mockReturnThis();
+	} );
+
+	afterEach( () => {
+		global.fetch = originalFetch;
+		delete global.wc_checkout_params;
+		jest.restoreAllMocks();
+		jQuery( document.body ).off( 'checkout_error' );
+		document.body.innerHTML = '';
+	} );
+
+	test( 'triggers checkout_error on the body with the failure messages when the checkout response fails (Ryan flow)', async () => {
+		const messages =
+			'<ul class="woocommerce-error"><li>CAPTCHA verification failed. Please try again.</li></ul>';
+		document.body.innerHTML = `
+			<div class="woocommerce-notices-wrapper"></div>
+			<form class="woocommerce-checkout"></form>`;
+		global.fetch.mockResolvedValueOnce( {
+			ok: true,
+			json: async () => ( { result: 'failure', messages } ),
+		} );
+
+		const manager = buildManager();
+		manager.el = { axoNonceInput: { id: 'axo-nonce', get: () => ( {} ) } };
+		manager.showLoading = jest.fn();
+		const received = new Promise( ( resolve ) => {
+			jQuery( document.body ).on( 'checkout_error', ( event, msg ) =>
+				resolve( msg )
+			);
+		} );
+		manager.hideLoading = jest.fn();
+
+		manager.submit( 'nonce-123', { billing_email: 'ryan@example.com' } );
+
+		await expect( received ).resolves.toBe( messages );
 	} );
 } );
 

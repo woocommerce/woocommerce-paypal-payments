@@ -1271,6 +1271,11 @@ class AxoManager {
 							);
 						}
 
+						// Same event WooCommerce fires for a failed checkout, e.g. so reCAPTCHA falls back to v2.
+						this.$( document.body ).trigger( 'checkout_error', [
+							responseData.messages,
+						] );
+
 						log(
 							`Error sending checkout form. ${ responseData }`,
 							'error'
