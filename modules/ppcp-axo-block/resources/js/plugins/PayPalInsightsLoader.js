@@ -251,7 +251,12 @@ const PayPalInsightsLoader = () => {
 			}
 		};
 		trackEmail();
-	}, [ axoConfig, isEmailSubmitted, setEventTriggered, isEventTriggered ] );
+	}, [
+		axoConfig?.insights?.enabled,
+		isEmailSubmitted,
+		setEventTriggered,
+		isEventTriggered,
+	] );
 
 	return null;
 };
