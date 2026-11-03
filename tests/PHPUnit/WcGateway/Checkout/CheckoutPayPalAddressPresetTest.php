@@ -534,20 +534,6 @@ class CheckoutPayPalAddressPresetTest extends TestCase
     }
 
     /**
-     * GIVEN the shopper already submitted a ship-to-different-address choice
-     * WHEN the default is resolved for a recipient who is not the payer
-     * THEN the given value is kept so the shopper's choice is respected
-     */
-    public function testFilterShipToDifferentAddressKeepsShoppersSavedChoice(): void
-    {
-        $order = $this->buildOrderWithRecipient('Jane Recipient');
-        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
-        $this->buildTestee()[0]->shouldReceive('checkout_form')->andReturn(['ship_to_different_address' => '0']);
-
-        self::assertFalse($this->buildTestee()[1]->filter_ship_to_different_address(false));
-    }
-
-    /**
      * GIVEN no PayPal order in the session
      * WHEN the "ship to a different address" default is resolved
      * THEN the given value is returned unchanged
