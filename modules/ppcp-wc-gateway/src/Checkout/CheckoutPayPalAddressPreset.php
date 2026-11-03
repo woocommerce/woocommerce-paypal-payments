@@ -120,8 +120,10 @@ class CheckoutPayPalAddressPreset
      */
     public function filter_ship_to_different_address($checked)
     {
-        if (isset($this->session_handler->checkout_form()['ship_to_different_address'])) {
-            return $checked;
+        // A saved form holds the shopper's choice; the checkbox is only in it when ticked.
+        $form = $this->session_handler->checkout_form();
+        if ($form) {
+            return isset($form['ship_to_different_address']);
         }
         $order = $this->session_handler->order();
         $payer = $order ? $order->payer() : null;
