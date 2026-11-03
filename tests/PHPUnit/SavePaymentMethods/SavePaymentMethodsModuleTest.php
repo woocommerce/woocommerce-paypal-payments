@@ -88,26 +88,33 @@ class SavePaymentMethodsModuleTest extends TestCase
 
 	/**
 	 * GIVEN a merchant whose "save PayPal" setting and vault scope vary
-	 * WHEN the module decides whether PayPal can be saved
-	 * THEN PayPal is only saveable when the setting is on and the vault scope is granted
+	 * WHEN the available payment gateways are listed on the Add payment method page
+	 * THEN PayPal is only listed when the setting is on and the vault scope is granted
+	 * AND the card gateway is always listed
 	 *
 	 * @dataProvider can_save_paypal_provider
 	 */
-	public function test_can_save_paypal_requires_setting_and_vault_scope(
+	public function test_add_payment_method_page_lists_paypal_only_when_it_can_be_saved(
 		bool $setting_enabled,
 		bool $has_vault_scope,
-		bool $expected
+		bool $expected_listed
 	): void {
+		when('is_add_payment_method_page')->justReturn(true);
 		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn($setting_enabled);
+		$this->settings->shouldReceive('save_card_details')->andReturn(true);
+		$this->container->shouldReceive('get')->with('wcgateway.helper.vaulting-scope')->andReturn($has_vault_scope);
 
-		$container = Mockery::mock(ContainerInterface::class);
-		$container->shouldReceive('get')->with('settings.settings-provider')->andReturn($this->settings);
-		$container->shouldReceive('get')->with('wcgateway.helper.vaulting-scope')->andReturn($has_vault_scope);
+		$filter = $this->captured_filter('woocommerce_available_payment_gateways');
 
-		$method = ( new \ReflectionClass(SavePaymentMethodsModule::class) )->getMethod('can_save_paypal');
-		$method->setAccessible(true);
+		$result = $filter(
+			array(
+				PayPalGateway::ID     => 'paypal',
+				CreditCardGateway::ID => 'card',
+			)
+		);
 
-		$this->assertSame($expected, $method->invoke(new SavePaymentMethodsModule(), $container));
+		$this->assertSame($expected_listed, array_key_exists(PayPalGateway::ID, $result));
+		$this->assertSame('card', $result[ CreditCardGateway::ID ]);
 	}
 
 	private function apple_pay_order_data(): array
