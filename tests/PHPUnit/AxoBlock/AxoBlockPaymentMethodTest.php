@@ -10,7 +10,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 class AxoBlockPaymentMethodTest extends TestCase
@@ -18,19 +17,17 @@ class AxoBlockPaymentMethodTest extends TestCase
     /**
      * @var array<string, mixed>|null
      */
-    private $localized_data;
+    private ?array $localized_data = null;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->localized_data = null;
-
         when('is_admin')->justReturn(false);
         when('wp_register_script')->justReturn(true);
         when('wp_create_nonce')->justReturn('nonce');
 
-        expect('wp_localize_script')->andReturnUsing(
+        when('wp_localize_script')->alias(
             function (string $handle, string $object_name, array $data): bool {
                 if ($object_name === 'wc_ppcp_axo') {
                     $this->localized_data = $data;
@@ -40,7 +37,7 @@ class AxoBlockPaymentMethodTest extends TestCase
         );
     }
 
-    private function stub_wc(?string $cart_total): void
+    private function stub_wc(?float $cart_total): void
     {
         $countries = Mockery::mock();
         $countries->shouldReceive('get_states')->andReturn(array());
@@ -52,7 +49,7 @@ class AxoBlockPaymentMethodTest extends TestCase
 
         if ($cart_total !== null) {
             $cart = Mockery::mock(\WC_Cart::class);
-            $cart->shouldReceive('get_total')->with('numeric')->andReturn((float) $cart_total);
+            $cart->shouldReceive('get_total')->with('numeric')->andReturn($cart_total);
             $wc->cart = $cart;
         }
 
@@ -76,18 +73,15 @@ class AxoBlockPaymentMethodTest extends TestCase
     /**
      * GIVEN Insights data for the checkout and a cart with a total
      * WHEN the Axo block registers its frontend script data
-     * THEN the localized "insights" data carries the injected values, including whether Insights is enabled
+     * THEN the localized "insights" data carries the injected values
      * AND the amount value is the current cart total
-     *
-     * @dataProvider insights_enabled_provider
      */
-    public function test_insights_data_contains_cart_total_and_keeps_enabled_flag(bool $enabled): void
+    public function test_insights_data_contains_cart_total(): void
     {
-        $this->stub_wc('42.5');
+        $this->stub_wc(42.5);
 
         $testee = $this->createTestee(
             array(
-                'enabled'    => $enabled,
                 'client_id'  => 'client-id',
                 'session_id' => 'session',
                 'amount'     => array( 'currency_code' => 'EUR' ),
@@ -98,7 +92,6 @@ class AxoBlockPaymentMethodTest extends TestCase
 
         $this->assertSame(
             array(
-                'enabled'    => $enabled,
                 'client_id'  => 'client-id',
                 'session_id' => 'session',
                 'amount'     => array(
@@ -107,14 +100,6 @@ class AxoBlockPaymentMethodTest extends TestCase
                 ),
             ),
             $this->localized_data['insights']
-        );
-    }
-
-    public function insights_enabled_provider(): array
-    {
-        return array(
-            'insights enabled'  => array( true ),
-            'insights disabled' => array( false ),
         );
     }
 
@@ -129,8 +114,7 @@ class AxoBlockPaymentMethodTest extends TestCase
 
         $testee = $this->createTestee(
             array(
-                'enabled' => true,
-                'amount'  => array( 'currency_code' => 'EUR' ),
+                'amount' => array( 'currency_code' => 'EUR' ),
             )
         );
 

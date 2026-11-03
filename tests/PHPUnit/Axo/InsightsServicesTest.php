@@ -13,9 +13,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use function Brain\Monkey\Functions\when;
 
 /**
- * Exercises the 'axo.insights.script-url' service as defined in
- * modules/ppcp-axo/services.php: the container closure is loaded from the real
- * production file and invoked against a stub container.
+ * Exercises the PayPal Insights services as defined in
+ * modules/ppcp-axo/services.php: the container closures are loaded from the
+ * real production file and invoked against a stub container.
  */
 class InsightsServicesTest extends TestCase
 {
@@ -41,13 +41,12 @@ class InsightsServicesTest extends TestCase
     }
 
     /**
-     * @dataProvider insights_enabled_provider
-     *
-     * GIVEN the 'axo.insights.enabled' service reports Insights as enabled or disabled
+     * GIVEN a connected merchant and a shop currency
      * WHEN the 'axo.insights' service is resolved
-     * THEN its 'enabled' flag reflects that decision
+     * THEN it returns the merchant client ID
+     * AND the currency code from the shop currency getter
      */
-    public function test_insights_data_enabled_flag_follows_enabled_service(bool $enabled): void
+    public function test_insights_data_contains_client_id_and_currency(): void
     {
         $merchant_data = new MerchantConnectionDTO(false, 'client-id', 'secret', 'merchant-id');
 
@@ -60,7 +59,6 @@ class InsightsServicesTest extends TestCase
         $container = Mockery::mock(ContainerInterface::class);
         $container->shouldReceive('get')->with('settings.settings-provider')->andReturn($settings_provider);
         $container->shouldReceive('get')->with('api.shop.currency.getter')->andReturn($currency);
-        $container->shouldReceive('get')->with('axo.insights.enabled')->andReturn($enabled);
         $container->shouldReceive('get')->with('axo.payment_method_selected_map')->andReturn(array());
 
         when('WC')->justReturn(new \stdClass());
@@ -70,16 +68,8 @@ class InsightsServicesTest extends TestCase
         $factory = $services['axo.insights'];
         $insights = $factory($container);
 
-        $this->assertSame($enabled, $insights['enabled']);
         $this->assertSame('client-id', $insights['client_id']);
-    }
-
-    public function insights_enabled_provider(): array
-    {
-        return [
-            'insights enabled'  => [true],
-            'insights disabled' => [false],
-        ];
+        $this->assertSame('EUR', $insights['amount']['currency_code']);
     }
 
     public function script_url_provider(): array

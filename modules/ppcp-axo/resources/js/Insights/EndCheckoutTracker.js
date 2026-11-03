@@ -9,7 +9,6 @@ class EndCheckoutTracker {
 		const axoConfig = window.wc_ppcp_axo_insights_data || {};
 
 		if (
-			axoConfig?.enabled === '1' &&
 			axoConfig?.client_id &&
 			axoConfig?.session_id &&
 			axoConfig?.orderTotal &&
@@ -53,7 +52,6 @@ class EndCheckoutTracker {
 			console.warn(
 				'EndCheckoutTracker: Missing required configuration',
 				{
-					enabled: axoConfig?.enabled,
 					hasClientId: !! axoConfig?.client_id,
 					hasSessionId: !! axoConfig?.session_id,
 					hasOrderTotal: !! axoConfig?.orderTotal,
