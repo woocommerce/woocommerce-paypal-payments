@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\when;
 
@@ -53,6 +54,7 @@ class AxoGatewayTestable extends AxoGateway
 		ExperienceContextBuilder $experience_context_builder,
 		SettingsModel $settings_model,
 		PayerFactory $payer_factory,
+		SubscriptionHelper $subscription_helper,
 		?ReturnUrlSecret $return_url_secret = null,
 		array $option_overrides = []
 	) {
@@ -72,6 +74,7 @@ class AxoGatewayTestable extends AxoGateway
 			$experience_context_builder,
 			$settings_model,
 			$payer_factory,
+			$subscription_helper,
 			$return_url_secret
 		);
 	}
@@ -138,7 +141,8 @@ class AxoGatewayTest extends TestCase
 			$this->logger,
 			Mockery::mock( ExperienceContextBuilder::class ),
 			Mockery::mock( SettingsModel::class ),
-			Mockery::mock( PayerFactory::class )
+			Mockery::mock( PayerFactory::class ),
+			Mockery::mock( SubscriptionHelper::class )
 		);
 	}
 
@@ -168,6 +172,7 @@ class AxoGatewayTest extends TestCase
 			Mockery::mock( ExperienceContextBuilder::class ),
 			Mockery::mock( SettingsModel::class ),
 			Mockery::mock( PayerFactory::class ),
+			Mockery::mock( SubscriptionHelper::class ),
 			null,
 			$option_overrides
 		);
@@ -495,6 +500,7 @@ class AxoGatewayTest extends TestCase
 			$experience_context_builder,
 			$settings_model,
 			$payer_factory,
+			Mockery::mock( SubscriptionHelper::class ),
 			$return_url_secret
 		);
 	}
@@ -674,6 +680,7 @@ class AxoGatewayTest extends TestCase
 			$experience_context_builder,
 			$settings_model,
 			$payer_factory,
+			Mockery::mock( SubscriptionHelper::class ),
 			$return_url_secret
 		);
 
