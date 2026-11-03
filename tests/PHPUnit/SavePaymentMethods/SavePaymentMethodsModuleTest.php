@@ -117,6 +117,36 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->assertSame('card', $result[ CreditCardGateway::ID ]);
 	}
 
+	/**
+	 * GIVEN PayPal cannot be saved because the vault scope is missing
+	 * WHEN the available payment gateways are listed outside the Add payment method page
+	 * THEN PayPal stays listed, as it is still valid for regular checkout
+	 */
+	public function test_paypal_stays_listed_outside_add_payment_method_page_when_it_cannot_be_saved(): void
+	{
+		when('is_add_payment_method_page')->justReturn(false);
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+		$this->settings->shouldReceive('save_card_details')->andReturn(true);
+		$this->container->shouldReceive('get')->with('wcgateway.helper.vaulting-scope')->andReturn(false);
+
+		$filter = $this->captured_filter('woocommerce_available_payment_gateways');
+
+		$result = $filter(
+			array(
+				PayPalGateway::ID     => 'paypal',
+				CreditCardGateway::ID => 'card',
+			)
+		);
+
+		$this->assertSame(
+			array(
+				PayPalGateway::ID     => 'paypal',
+				CreditCardGateway::ID => 'card',
+			),
+			$result
+		);
+	}
+
 	private function apple_pay_order_data(): array
 	{
 		return array(
