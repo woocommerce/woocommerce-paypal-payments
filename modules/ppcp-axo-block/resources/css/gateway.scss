@@ -141,17 +141,14 @@ $fast-transition-duration: 0.5s;
 		scale: 1.1;
 	}
 
-	&.wc-block-axo-is-authenticated {
+	&.wc-block-axo-is-authenticated,
+	&.wc-block-axo-is-authenticated ~ .wc-block-components-express-payment-continue-rule {
 		opacity: 0;
 		scale: 0.9;
 		display: none !important;
 		transition-duration: $fast-transition-duration;
 		transition-timing-function: var(--ease-out-5);
 	}
-}
-
-.wc-block-components-express-payment-continue-rule--checkout.wc-block-axo-is-authenticated {
-	display: none !important;
 }
 
 // 4. AXO Loaded State
