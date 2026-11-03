@@ -192,13 +192,11 @@ class AxoModule implements ServiceModule, ExecutableModule
                 $dcc_configuration = $c->get('wcgateway.configuration.card-configuration');
                 assert($dcc_configuration instanceof CardPaymentsConfiguration);
                 if ($dcc_configuration->use_fastlane()) {
-                    if ($c->get('axo.insights.enabled')) {
-                        printf(
-                            // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
-                            '<script async src="%s"></script>',
-                            esc_url($c->get('axo.insights.script-url'))
-                        );
-                    }
+                    printf(
+                        // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
+                        '<script async src="%s"></script>',
+                        esc_url($c->get('axo.insights.script-url'))
+                    );
                     $this->add_feature_detection_tag(\true);
                 } else {
                     $this->add_feature_detection_tag(\false);
@@ -334,9 +332,6 @@ class AxoModule implements ServiceModule, ExecutableModule
     private function enqueue_paypal_insights_script_on_order_received(ContainerInterface $c): void
     {
         global $wp;
-        if (!$c->get('axo.insights.enabled')) {
-            return;
-        }
         $dcc_configuration = $c->get('wcgateway.configuration.card-configuration');
         assert($dcc_configuration instanceof CardPaymentsConfiguration);
         // The Insights script itself is only printed when Fastlane is in use.

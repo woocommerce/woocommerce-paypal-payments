@@ -69,12 +69,7 @@ return array(
         if (isset(WC()->session) && method_exists(WC()->session, 'get_customer_unique_id')) {
             $session_id = substr(md5((string) WC()->session->get_customer_unique_id()), 0, 16);
         }
-        return array('enabled' => $container->get('axo.insights.enabled'), 'client_id' => $settings_provider->merchant_data()->client_id, 'session_id' => $session_id, 'amount' => array('currency_code' => $currency->get()), 'payment_method_selected_map' => $container->get('axo.payment_method_selected_map'), 'wp_debug' => defined('WP_DEBUG') && WP_DEBUG);
-    },
-    // PayPal Insights is only active on debug sites for now.
-    'axo.insights.enabled' => static function (): bool {
-        return defined('WP_DEBUG') && WP_DEBUG;
-        // @phpstan-ignore booleanAnd.rightAlwaysFalse
+        return array('client_id' => $settings_provider->merchant_data()->client_id, 'session_id' => $session_id, 'amount' => array('currency_code' => $currency->get()), 'payment_method_selected_map' => $container->get('axo.payment_method_selected_map'), 'wp_debug' => defined('WP_DEBUG') && WP_DEBUG);
     },
     'axo.insights.script-url' => static function (ContainerInterface $container): string {
         $environment = $container->get('settings.environment');
