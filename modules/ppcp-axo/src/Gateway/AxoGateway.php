@@ -578,6 +578,14 @@ class AxoGateway extends WC_Payment_Gateway {
 	}
 
 	/**
+	 * Hide Fastlane from subscription carts. With manual renewals enabled,
+	 * WooCommerce Subscriptions lists gateways that lack subscription support.
+	 */
+	public function is_available(): bool {
+		return parent::is_available() && ! $this->subscription_helper->cart_contains_subscription();
+	}
+
+	/**
 	 * Returns the icons of the gateway.
 	 *
 	 * @return string
