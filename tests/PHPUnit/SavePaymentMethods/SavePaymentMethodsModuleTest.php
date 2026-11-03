@@ -46,8 +46,21 @@ class SavePaymentMethodsModuleTest extends TestCase
 	 */
 	private function captured_filter( string $hook ): callable
 	{
-		$captured_setup  = null;
-		$captured_filter = null;
+		return $this->captured_registration($hook, false);
+	}
+
+	/**
+	 * Same as captured_filter(), for a callback the module registered with add_action().
+	 */
+	private function captured_action( string $hook ): callable
+	{
+		return $this->captured_registration($hook, true);
+	}
+
+	private function captured_registration( string $hook, bool $is_action ): callable
+	{
+		$captured_setup    = null;
+		$captured_callback = null;
 
 		expectActionAdded('after_setup_theme')
 			->once()
@@ -57,11 +70,12 @@ class SavePaymentMethodsModuleTest extends TestCase
 				}
 			);
 
-		expectFilterAdded($hook)
+		$expectation = $is_action ? expectActionAdded($hook) : expectFilterAdded($hook);
+		$expectation
 			->once()
 			->whenHappen(
-				static function ( $callback ) use ( &$captured_filter ) {
-					$captured_filter = $callback;
+				static function ( $callback ) use ( &$captured_callback ) {
+					$captured_callback = $callback;
 				}
 			);
 
@@ -69,12 +83,12 @@ class SavePaymentMethodsModuleTest extends TestCase
 
 		$this->assertIsCallable($captured_setup);
 
-		// Fires the deferred registration that adds the filter.
+		// Fires the deferred registration that adds the hook callback.
 		$captured_setup();
 
-		$this->assertIsCallable($captured_filter);
+		$this->assertIsCallable($captured_callback);
 
-		return $captured_filter;
+		return $captured_callback;
 	}
 
 	public function can_save_paypal_provider(): array
@@ -145,6 +159,33 @@ class SavePaymentMethodsModuleTest extends TestCase
 			),
 			$result
 		);
+	}
+
+	/**
+	 * GIVEN a logged-in customer on the Add payment method page
+	 * WHEN the bottom of the add payment method form is rendered
+	 * THEN the PayPal save button placeholder is printed only when PayPal can be saved
+	 *
+	 * @dataProvider can_save_paypal_provider
+	 */
+	public function test_add_payment_method_form_prints_paypal_button_only_when_it_can_be_saved(
+		bool $setting_enabled,
+		bool $has_vault_scope,
+		bool $expected_printed
+	): void {
+		when('is_user_logged_in')->justReturn(true);
+		when('is_add_payment_method_page')->justReturn(true);
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn($setting_enabled);
+		$this->settings->shouldReceive('save_card_details')->andReturn(true);
+		$this->container->shouldReceive('get')->with('wcgateway.helper.vaulting-scope')->andReturn($has_vault_scope);
+
+		$action = $this->captured_action('woocommerce_add_payment_method_form_bottom');
+
+		$this->expectOutputString(
+			$expected_printed ? '<div id="ppc-button-' . PayPalGateway::ID . '-save-payment-method"></div>' : ''
+		);
+
+		$action();
 	}
 
 	private function apple_pay_order_data(): array
