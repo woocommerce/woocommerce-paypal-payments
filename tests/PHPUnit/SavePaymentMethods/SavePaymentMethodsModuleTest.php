@@ -41,10 +41,10 @@ class SavePaymentMethodsModuleTest extends TestCase
 
 	/**
 	 * Runs the module, fires the deferred `after_setup_theme` registration (gated by the save
-	 * settings), and returns the captured `ppcp_create_order_request_body_data` filter so it can
-	 * be invoked directly in assertions.
+	 * settings), and returns the callback the module registered for the given filter hook so it
+	 * can be invoked directly in assertions.
 	 */
-	private function captured_request_body_filter(): callable
+	private function captured_filter( string $hook ): callable
 	{
 		$captured_setup  = null;
 		$captured_filter = null;
@@ -57,7 +57,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 				}
 			);
 
-		expectFilterAdded('ppcp_create_order_request_body_data')
+		expectFilterAdded($hook)
 			->once()
 			->whenHappen(
 				static function ( $callback ) use ( &$captured_filter ) {
@@ -69,7 +69,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 
 		$this->assertIsCallable($captured_setup);
 
-		// Fires the deferred registration that adds the request-body filter.
+		// Fires the deferred registration that adds the filter.
 		$captured_setup();
 
 		$this->assertIsCallable($captured_filter);
@@ -133,7 +133,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
@@ -170,7 +170,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
@@ -196,7 +196,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
@@ -217,7 +217,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn(false);
 		$this->settings->shouldReceive('save_card_details')->andReturn(true);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
@@ -274,7 +274,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->venmo_order_data(),
@@ -298,7 +298,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->venmo_order_data(),
@@ -322,7 +322,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 	{
 		$this->stub_pay_now_subscription_order();
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->venmo_order_data(),
@@ -352,7 +352,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->paypal_order_data(),
@@ -375,7 +375,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 	{
 		$this->stub_pay_now_subscription_order();
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
