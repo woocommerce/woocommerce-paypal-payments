@@ -534,6 +534,44 @@ class CheckoutPayPalAddressPresetTest extends TestCase
     }
 
     /**
+     * GIVEN a saved checkout form, a recipient who is not the payer and a store default that disagrees with the shopper
+     * WHEN the "ship to a different address" default is resolved
+     * THEN the shopper's saved choice wins: ticked only when the form contains the checkbox
+     *
+     * @dataProvider savedShipToDifferentAddressChoiceProvider
+     */
+    public function testFilterShipToDifferentAddressKeepsShoppersSavedChoice(
+        array $savedForm,
+        bool $storeDefault,
+        bool $expected
+    ): void {
+        $order = $this->buildOrderWithRecipient('Jane Recipient');
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+        $this->buildTestee()[0]->shouldReceive('checkout_form')->andReturn($savedForm);
+
+        self::assertSame($expected, $this->buildTestee()[1]->filter_ship_to_different_address($storeDefault));
+    }
+
+    /**
+     * @see testFilterShipToDifferentAddressKeepsShoppersSavedChoice
+     */
+    public function savedShipToDifferentAddressChoiceProvider(): array
+    {
+        return [
+            'unticked checkbox is absent from the form and stays unticked' => [
+                ['billing_first_name' => 'John'],
+                true,
+                false,
+            ],
+            'ticked checkbox is present in the form and stays ticked' => [
+                ['billing_first_name' => 'John', 'ship_to_different_address' => '1'],
+                false,
+                true,
+            ],
+        ];
+    }
+
+    /**
      * GIVEN no PayPal order in the session
      * WHEN the "ship to a different address" default is resolved
      * THEN the given value is returned unchanged
