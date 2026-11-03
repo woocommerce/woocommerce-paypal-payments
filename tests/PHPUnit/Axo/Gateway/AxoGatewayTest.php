@@ -721,4 +721,21 @@ class AxoGatewayTest extends TestCase
 			'unavailable when the cart has a subscription' => [ true, false ],
 		];
 	}
+
+	/**
+	 * GIVEN the Fastlane gateway disabled by the merchant
+	 * AND the cart has no subscription
+	 * WHEN checkout asks whether the gateway is available
+	 * THEN it is not available
+	 */
+	public function test_disabled_gateway_is_unavailable_even_without_subscription_in_cart(): void
+	{
+		$subscription_helper = Mockery::mock( SubscriptionHelper::class );
+		$subscription_helper->allows( 'cart_contains_subscription' )->andReturn( false );
+
+		$gateway          = $this->create_gateway( [], null, $subscription_helper );
+		$gateway->enabled = 'no';
+
+		$this->assertSame( false, $gateway->is_available() );
+	}
 }
