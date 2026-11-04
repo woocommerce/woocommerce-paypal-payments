@@ -34,6 +34,18 @@ const states = new Map();
 const listening = new Set();
 
 /**
+ * WooCommerce events around a classic update: `start` makes the total unknown,
+ * `end` fetches the new one.
+ *
+ * A cart update fires nothing before its request, so `start` is the completion
+ * event. Until then, WooCommerce blocks the element that holds the buttons.
+ */
+const UPDATE_EVENTS = {
+	checkout: { start: 'update_checkout', end: 'updated_checkout' },
+	cart: { start: 'updated_cart_totals', end: 'updated_cart_totals' },
+};
+
+/**
  * Resets module state. Test seam only.
  */
 export function resetViewedTotals() {
@@ -150,6 +162,21 @@ function listenToProductForm( config, form ) {
 }
 
 /**
+ * Subscribes to the events of a classic cart or checkout update.
+ *
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context - The page context.
+ */
+function listenToCartUpdates( config, context ) {
+	const { start, end } = UPDATE_EVENTS[ context ];
+
+	jQuery( document.body ).on( start, () => invalidate( context ) );
+	jQuery( document.body ).on( end, () => {
+		refresh( config, context ).catch( () => {} );
+	} );
+}
+
+/**
  * Starts tracking the total for one context.
  *
  * Repeated calls for the same context share its total, so every surface sees
@@ -180,6 +207,15 @@ export function watchViewedTotal( config, context ) {
 			listening.add( context );
 			listenToProductForm( config, form );
 		}
+	}
+
+	if (
+		UPDATE_EVENTS[ context ] &&
+		hasJQuery() &&
+		! listening.has( context )
+	) {
+		listening.add( context );
+		listenToCartUpdates( config, context );
 	}
 
 	return {
