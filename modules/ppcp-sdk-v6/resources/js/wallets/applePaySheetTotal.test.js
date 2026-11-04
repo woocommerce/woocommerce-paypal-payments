@@ -128,7 +128,7 @@ describe( 'watchSheetTotal()', () => {
 	} );
 
 	describe( 'refresh failures', () => {
-		test( 'keeps the previous total when a later refresh resolves empty, instead of overwriting it with the failed lookup', async () => {
+		test( 'stays unknown when a refresh after a change resolves empty, instead of restoring the stale total', async () => {
 			const form = renderProductForm();
 			mockSimulateCart
 				.mockResolvedValueOnce( { total: '15.00' } )
@@ -142,10 +142,10 @@ describe( 'watchSheetTotal()', () => {
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
-			expect( watcher.get() ).toBe( '15.00' );
+			expect( watcher.get() ).toBe( '' );
 		} );
 
-		test( 'keeps the previous total when a later refresh resolves without a total property, instead of the nullish result overwriting it', async () => {
+		test( 'stays unknown when a refresh after a change resolves without a total property', async () => {
 			const form = renderProductForm();
 			mockSimulateCart
 				.mockResolvedValueOnce( { total: '15.00' } )
@@ -159,10 +159,10 @@ describe( 'watchSheetTotal()', () => {
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
-			expect( watcher.get() ).toBe( '15.00' );
+			expect( watcher.get() ).toBe( '' );
 		} );
 
-		test( 'keeps the previous total when simulateCart rejects', async () => {
+		test( 'stays unknown when simulateCart rejects after a change', async () => {
 			const form = renderProductForm();
 			mockSimulateCart
 				.mockResolvedValueOnce( { total: '15.00' } )
@@ -175,7 +175,7 @@ describe( 'watchSheetTotal()', () => {
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
-			expect( watcher.get() ).toBe( '15.00' );
+			expect( watcher.get() ).toBe( '' );
 		} );
 	} );
 

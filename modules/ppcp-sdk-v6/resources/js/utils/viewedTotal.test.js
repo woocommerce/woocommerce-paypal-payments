@@ -51,6 +51,9 @@ function renderProductForm() {
 beforeEach( () => {
 	resetViewedTotals();
 	jest.clearAllMocks();
+	// Persistent resolved values and unused queued ones would leak across tests.
+	mockSimulateCart.mockReset();
+	mockFetchCartTotal.mockReset();
 	jest.useFakeTimers();
 	mockHasJQuery.mockReturnValue( true );
 	document.body.innerHTML = '';
@@ -127,9 +130,11 @@ describe( 'watchViewedTotal()', () => {
 			expect( notify ).toHaveBeenCalledWith( '25.00' );
 		} );
 
-		test( 'is not notified when a refresh resolves the same total again', async () => {
+		test( 'is told the total is unknown and then the new total after a form change', async () => {
 			const form = renderProductForm();
-			mockSimulateCart.mockResolvedValue( { total: '10.00' } );
+			mockSimulateCart
+				.mockResolvedValueOnce( { total: '10.00' } )
+				.mockResolvedValueOnce( { total: '25.00' } );
 
 			const watcher = watchViewedTotal( config(), 'product' );
 			await flushPromises();
@@ -139,6 +144,22 @@ describe( 'watchViewedTotal()', () => {
 
 			form.dispatchEvent( new Event( 'change' ) );
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
+			await flushPromises();
+
+			expect( notify.mock.calls ).toEqual( [ [ '' ], [ '25.00' ] ] );
+		} );
+
+		test( 'is not notified when a refresh without a preceding change resolves the same total', async () => {
+			mockFetchCartTotal
+				.mockResolvedValueOnce( '10.00' )
+				.mockResolvedValueOnce( '10.00' );
+
+			const watcher = watchViewedTotal( config(), 'mini-cart' );
+			await flushPromises();
+
+			const notify = jest.fn();
+			watcher.subscribe( notify );
+			watchViewedTotal( config(), 'mini-cart' );
 			await flushPromises();
 
 			expect( notify ).not.toHaveBeenCalled();
@@ -157,10 +178,11 @@ describe( 'watchViewedTotal()', () => {
 			const notify = jest.fn();
 			const unsubscribe = watcher.subscribe( notify );
 
+			// Told twice: unknown at the change, the new total at the refresh.
 			form.dispatchEvent( new Event( 'change' ) );
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
-			expect( notify ).toHaveBeenCalledTimes( 1 );
+			expect( notify ).toHaveBeenCalledTimes( 2 );
 
 			unsubscribe();
 
@@ -168,7 +190,7 @@ describe( 'watchViewedTotal()', () => {
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
-			expect( notify ).toHaveBeenCalledTimes( 1 );
+			expect( notify ).toHaveBeenCalledTimes( 2 );
 		} );
 	} );
 
@@ -266,7 +288,7 @@ describe( 'watchViewedTotal()', () => {
 	} );
 
 	describe( 'refresh failures', () => {
-		test( 'a rejected refresh leaves the previous total intact', async () => {
+		test( 'a rejected refresh after a change leaves the total unknown rather than stale', async () => {
 			const form = renderProductForm();
 			mockSimulateCart
 				.mockResolvedValueOnce( { total: '15.00' } )
@@ -279,10 +301,23 @@ describe( 'watchViewedTotal()', () => {
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
+			expect( watcher.get() ).toBe( '' );
+		} );
+
+		test( 'a rejected refresh without a change leaves the previous total intact', async () => {
+			mockFetchCartTotal
+				.mockResolvedValueOnce( '15.00' )
+				.mockRejectedValueOnce( new Error( 'network down' ) );
+
+			const watcher = watchViewedTotal( config(), 'mini-cart' );
+			await flushPromises();
+			watchViewedTotal( config(), 'mini-cart' );
+			await flushPromises();
+
 			expect( watcher.get() ).toBe( '15.00' );
 		} );
 
-		test( 'a refresh that resolves an empty total leaves the previous total intact', async () => {
+		test( 'a refresh after a change that resolves an empty total leaves the total unknown', async () => {
 			const form = renderProductForm();
 			mockSimulateCart
 				.mockResolvedValueOnce( { total: '15.00' } )
@@ -295,7 +330,7 @@ describe( 'watchViewedTotal()', () => {
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
-			expect( watcher.get() ).toBe( '15.00' );
+			expect( watcher.get() ).toBe( '' );
 		} );
 	} );
 
@@ -317,5 +352,66 @@ describe( 'watchViewedTotal()', () => {
 
 			expect( mockSimulateCart ).toHaveBeenCalledTimes( 1 );
 		} );
+	} );
+
+	describe( 'product form changes', () => {
+		test( 'empties the total at once and fills it from the debounced refresh', async () => {
+			const form = renderProductForm();
+			mockSimulateCart
+				.mockResolvedValueOnce( { total: '10.00' } )
+				.mockResolvedValueOnce( { total: '25.00' } );
+			const watcher = watchViewedTotal( config(), 'product' );
+			await flushPromises();
+
+			form.dispatchEvent( new Event( 'change' ) );
+			expect( watcher.get() ).toBe( '' );
+
+			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS - 1 );
+			expect( watcher.get() ).toBe( '' );
+
+			await jest.advanceTimersByTimeAsync( 1 );
+			await flushPromises();
+			expect( watcher.get() ).toBe( '25.00' );
+		} );
+
+		test( 'empties the total on a jQuery found_variation event', async () => {
+			const form = renderProductForm();
+			mockSimulateCart
+				.mockResolvedValueOnce( { total: '10.00' } )
+				.mockResolvedValueOnce( { total: '30.00' } );
+			const watcher = watchViewedTotal( config(), 'product' );
+			await flushPromises();
+
+			jQuery( form ).trigger( 'found_variation' );
+			expect( watcher.get() ).toBe( '' );
+
+			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
+			await flushPromises();
+			expect( watcher.get() ).toBe( '30.00' );
+		} );
+
+		test( 'a refresh that was in flight before the change cannot write its result', async () => {
+			const form = renderProductForm();
+			let resolveInFlight;
+			mockSimulateCart
+				.mockReturnValueOnce(
+					new Promise( ( resolve ) => {
+						resolveInFlight = resolve;
+					} )
+				)
+				.mockResolvedValueOnce( { total: '25.00' } );
+			const watcher = watchViewedTotal( config(), 'product' );
+
+			form.dispatchEvent( new Event( 'change' ) );
+			resolveInFlight( { total: '10.00' } );
+			await flushPromises();
+
+			expect( watcher.get() ).toBe( '' );
+
+			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
+			await flushPromises();
+			expect( watcher.get() ).toBe( '25.00' );
+		} );
+
 	} );
 } );
