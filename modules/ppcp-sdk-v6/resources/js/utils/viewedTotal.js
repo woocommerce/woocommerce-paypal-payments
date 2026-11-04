@@ -107,7 +107,7 @@ async function refresh( config, context ) {
 	const resolved = await resolve( config, context );
 
 	// Never overwritten by a failed lookup's empty string, nor by a request a
-	// newer one has already superseded — overlapping refreshes can resolve out
+	// newer one has already superseded: overlapping refreshes can resolve out
 	// of order, which is the stale total the debounce exists to prevent.
 	const superseded = request !== state.latestRequest;
 	if ( resolved && ! superseded && resolved !== state.total ) {
@@ -120,9 +120,6 @@ async function refresh( config, context ) {
 
 /**
  * Marks the total of one context as unknown until the next refresh.
- *
- * Apple Pay disables its button on an empty total, so a tap cannot open a sheet
- * with a total that PayPal then rejects.
  *
  * @param {string} context - The page context.
  */

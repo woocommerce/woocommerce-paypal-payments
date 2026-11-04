@@ -623,7 +623,7 @@ describe( 'a click on the rendered button', () => {
 	} );
 
 	test( 'refuses to open a sheet when no total has resolved yet', async () => {
-		// The guard must not latch on this refusal — a second tap, once the
+		// The guard must not latch on this refusal: a second tap, once the
 		// total has resolved, still opens a sheet.
 		const sheetTotal = makeSheetTotal( '' );
 		mockWatchSheetTotal.mockReturnValue( sheetTotal );

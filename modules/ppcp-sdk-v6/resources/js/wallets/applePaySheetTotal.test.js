@@ -312,7 +312,7 @@ describe( 'watchSheetTotal()', () => {
 		// messaging both watch the same 'product' context, and a shopper who
 		// changes quantity or variation must not have the two surfaces report
 		// different totals for the one product they are looking at. A watcher
-		// obtained by an earlier render is not a frozen snapshot — it reads
+		// obtained by an earlier render is not a frozen snapshot: it reads
 		// the same context state a later render's watcher does.
 		test( 'a form change refreshes the total shared by every watcher on the context, so none of them disagrees with another', async () => {
 			const form = renderProductForm();
