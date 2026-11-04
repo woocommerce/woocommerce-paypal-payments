@@ -61,6 +61,11 @@ beforeEach( () => {
 } );
 
 afterEach( () => {
+	// Handlers on document.body outlive the test and would refresh the next
+	// test's state.
+	jQuery( document.body ).off(
+		'update_checkout updated_checkout updated_cart_totals'
+	);
 	jest.useRealTimers();
 } );
 
@@ -351,6 +356,82 @@ describe( 'watchViewedTotal()', () => {
 			await flushPromises();
 
 			expect( mockSimulateCart ).toHaveBeenCalledTimes( 1 );
+		} );
+	} );
+
+	describe( 'classic checkout updates', () => {
+		test( 'is unknown on update_checkout and holds the fetched total after updated_checkout', async () => {
+			mockFetchCartTotal
+				.mockResolvedValueOnce( '10.00' )
+				.mockResolvedValueOnce( '12.00' );
+			const watcher = watchViewedTotal( config(), 'checkout' );
+			await flushPromises();
+			expect( watcher.get() ).toBe( '10.00' );
+
+			jQuery( document.body ).trigger( 'update_checkout' );
+			expect( watcher.get() ).toBe( '' );
+
+			jQuery( document.body ).trigger( 'updated_checkout' );
+			await flushPromises();
+
+			expect( watcher.get() ).toBe( '12.00' );
+		} );
+
+		test( 'tells subscribers the total is unknown, then the new total', async () => {
+			mockFetchCartTotal
+				.mockResolvedValueOnce( '10.00' )
+				.mockResolvedValueOnce( '12.00' );
+			const watcher = watchViewedTotal( config(), 'checkout' );
+			await flushPromises();
+			const notify = jest.fn();
+			watcher.subscribe( notify );
+
+			jQuery( document.body ).trigger( 'update_checkout' );
+			jQuery( document.body ).trigger( 'updated_checkout' );
+			await flushPromises();
+
+			expect( notify.mock.calls ).toEqual( [ [ '' ], [ '12.00' ] ] );
+		} );
+
+		test( 'ignores the events when jQuery is unavailable', async () => {
+			mockHasJQuery.mockReturnValue( false );
+			mockFetchCartTotal.mockResolvedValueOnce( '10.00' );
+			const watcher = watchViewedTotal( config(), 'checkout' );
+			await flushPromises();
+
+			jQuery( document.body ).trigger( 'update_checkout' );
+
+			expect( watcher.get() ).toBe( '10.00' );
+		} );
+	} );
+
+	describe( 'classic cart updates', () => {
+		test( 'is unknown the moment updated_cart_totals fires and holds the fetched total once it resolves', async () => {
+			mockFetchCartTotal
+				.mockResolvedValueOnce( '10.00' )
+				.mockResolvedValueOnce( '14.00' );
+			const watcher = watchViewedTotal( config(), 'cart' );
+			await flushPromises();
+			const notify = jest.fn();
+			watcher.subscribe( notify );
+
+			jQuery( document.body ).trigger( 'updated_cart_totals' );
+			expect( watcher.get() ).toBe( '' );
+
+			await flushPromises();
+
+			expect( watcher.get() ).toBe( '14.00' );
+			expect( notify.mock.calls ).toEqual( [ [ '' ], [ '14.00' ] ] );
+		} );
+
+		test( 'does not react to the checkout events', async () => {
+			mockFetchCartTotal.mockResolvedValueOnce( '10.00' );
+			const watcher = watchViewedTotal( config(), 'cart' );
+			await flushPromises();
+
+			jQuery( document.body ).trigger( 'update_checkout' );
+
+			expect( watcher.get() ).toBe( '10.00' );
 		} );
 	} );
 
