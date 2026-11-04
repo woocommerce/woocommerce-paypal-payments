@@ -29,15 +29,16 @@ const REFRESH_DEBOUNCE_MS = 250;
 // else through the cart, so the two cannot share one cached total.
 const states = new Map();
 
-// Attached once per page, however many surfaces are watching.
-let listening = false;
+// Contexts whose listeners are attached: once per page, however many surfaces
+// are watching.
+const listening = new Set();
 
 /**
  * Resets module state. Test seam only.
  */
 export function resetViewedTotals() {
 	states.clear();
-	listening = false;
+	listening.clear();
 }
 
 /**
@@ -173,10 +174,10 @@ export function watchViewedTotal( config, context ) {
 
 	refresh( config, context ).catch( () => {} );
 
-	if ( 'product' === context && ! listening ) {
+	if ( 'product' === context && ! listening.has( context ) ) {
 		const form = productForm();
 		if ( form ) {
-			listening = true;
+			listening.add( context );
 			listenToProductForm( config, form );
 		}
 	}
