@@ -393,7 +393,11 @@ class WooCommerceOrderCreator {
 		if ( $shipping_options ) {
 			$shipping = new WC_Order_Item_Shipping();
 			$shipping->set_method_title( $shipping_options->label() );
-			$shipping->set_method_id( $shipping_options->id() );
+			// Without the instance ID, WC_Order_Item_Shipping::get_tax_status() cannot find
+			// the method and falls back to taxable, so calculate_totals() taxes untaxed shipping.
+			list( $method_id, $instance_id ) = $this->split_shipping_rate_id( (string) $shipping_options->id() );
+			$shipping->set_method_id( $method_id );
+			$shipping->set_instance_id( $instance_id );
 			$shipping->set_total( $shipping_options->amount()->value_str() );
 
 			$items            = $wc_order->get_items();
@@ -408,6 +412,29 @@ class WooCommerceOrderCreator {
 		}
 
 		$wc_order->calculate_totals();
+	}
+
+	/**
+	 * Zone methods build rate IDs as "<method_id>:<instance_id>", e.g. "flat_rate:2".
+	 * Any other shape is kept whole as the method ID, with no instance ID.
+	 *
+	 * @return array{0: string, 1: string} The method ID and the instance ID.
+	 */
+	protected function split_shipping_rate_id( string $rate_id ): array {
+		$separator = strpos( $rate_id, ':' );
+
+		if ( false === $separator ) {
+			return array( $rate_id, '' );
+		}
+
+		$method_id   = substr( $rate_id, 0, $separator );
+		$instance_id = substr( $rate_id, $separator + 1 );
+
+		if ( '' === $method_id || ! ctype_digit( $instance_id ) ) {
+			return array( $rate_id, '' );
+		}
+
+		return array( $method_id, $instance_id );
 	}
 
 	/**
