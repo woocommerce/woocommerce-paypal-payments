@@ -19,10 +19,9 @@ import { hasJQuery } from './api';
 /**
  * How long to coalesce product-form changes before re-pricing.
  *
- * Short, because Apple Pay cannot re-read the total on click — a stale one is
- * what the shopper gets charged. Debounced rather than throttled, which would
- * price the burst's first event and so describe a variation already moved away
- * from.
+ * Short, because the Apple Pay button stays disabled until the new total
+ * arrives. Debounced rather than throttled, which would price the burst's first
+ * event and so describe a variation already moved away from.
  */
 const REFRESH_DEBOUNCE_MS = 250;
 
@@ -102,6 +101,26 @@ async function refresh( config, context ) {
 }
 
 /**
+ * Marks the total of one context as unknown until the next refresh.
+ *
+ * Apple Pay disables its button on an empty total, so a tap cannot open a sheet
+ * with a total that PayPal then rejects.
+ *
+ * @param {string} context - The page context.
+ */
+function invalidate( context ) {
+	const state = stateFor( context );
+
+	// A refresh already in flight prices the cart before this change.
+	state.latestRequest++;
+
+	if ( state.total ) {
+		state.total = '';
+		state.subscribers.forEach( ( notify ) => notify( '' ) );
+	}
+}
+
+/**
  * Subscribes to the events that change what the viewed product costs.
  *
  * The native change listener covers the quantity field; the variation events
@@ -115,6 +134,7 @@ function listenToProductForm( config, form ) {
 	let timer = null;
 
 	const schedule = () => {
+		invalidate( 'product' );
 		clearTimeout( timer );
 		timer = setTimeout( () => {
 			refresh( config, 'product' ).catch( () => {} );
