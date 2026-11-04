@@ -118,6 +118,23 @@ describe( 'watchSheetTotal()', () => {
 			expect( mockSimulateCart ).not.toHaveBeenCalled();
 			expect( mockFetchCartTotal ).not.toHaveBeenCalled();
 		} );
+
+		test( 'offers a subscribe that never calls back and returns a callable unsubscribe', async () => {
+			const form = renderProductForm();
+			const watcher = watchSheetTotal(
+				config( { amount: '42.00' } ),
+				'pay-now'
+			);
+			const notify = jest.fn();
+
+			const unsubscribe = watcher.subscribe( notify );
+			form.dispatchEvent( new Event( 'change' ) );
+			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
+			await flushPromises();
+
+			expect( notify ).not.toHaveBeenCalled();
+			expect( unsubscribe ).not.toThrow();
+		} );
 	} );
 
 	test( 'does not throw when the page has no product form', async () => {
