@@ -159,12 +159,15 @@ function listenToProductForm( config, form ) {
  * @return {{get: Function, subscribe: Function}} Reader and change subscription.
  */
 export function watchViewedTotal( config, context ) {
+	const isFirstWatch = ! states.has( context );
 	const state = stateFor( context );
 
 	// Seeded so a synchronous reader that beats the first resolve still has a
 	// number. On a product page it is the cart total whenever the cart is not
-	// empty, so it is a placeholder rather than an answer.
-	if ( ! state.total ) {
+	// empty, so it is a placeholder rather than an answer. Only on the first
+	// watch: the localized amount is the page-load total, and a re-render after
+	// an update must not overwrite an invalidated total.
+	if ( isFirstWatch ) {
 		state.total = config.amount || '';
 	}
 
