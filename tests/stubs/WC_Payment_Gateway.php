@@ -4,6 +4,12 @@ declare(strict_types=1);
 class WC_Payment_Gateway
 {
 
+    public $enabled = 'no';
+
+    public function is_available() {
+        return 'yes' === $this->enabled;
+    }
+
     public function get_option(string $key, $empty_value = null) {
         return $key;
     }

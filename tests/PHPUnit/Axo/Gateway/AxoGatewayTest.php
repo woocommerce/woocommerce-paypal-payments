@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\when;
 
@@ -53,6 +54,7 @@ class AxoGatewayTestable extends AxoGateway
 		ExperienceContextBuilder $experience_context_builder,
 		SettingsModel $settings_model,
 		PayerFactory $payer_factory,
+		SubscriptionHelper $subscription_helper,
 		?ReturnUrlSecret $return_url_secret = null,
 		array $option_overrides = []
 	) {
@@ -72,6 +74,7 @@ class AxoGatewayTestable extends AxoGateway
 			$experience_context_builder,
 			$settings_model,
 			$payer_factory,
+			$subscription_helper,
 			$return_url_secret
 		);
 	}
@@ -138,7 +141,8 @@ class AxoGatewayTest extends TestCase
 			$this->logger,
 			Mockery::mock( ExperienceContextBuilder::class ),
 			Mockery::mock( SettingsModel::class ),
-			Mockery::mock( PayerFactory::class )
+			Mockery::mock( PayerFactory::class ),
+			Mockery::mock( SubscriptionHelper::class )
 		);
 	}
 
@@ -149,10 +153,12 @@ class AxoGatewayTest extends TestCase
 	 *
 	 * @param array<string, mixed>           $option_overrides  Option values, keyed by option name.
 	 * @param CardPaymentsConfiguration|null $dcc_configuration Defaults to the shared setUp() stub.
+	 * @param SubscriptionHelper|null        $subscription_helper Defaults to a plain mock.
 	 */
 	private function create_gateway(
 		array $option_overrides = [],
-		?CardPaymentsConfiguration $dcc_configuration = null
+		?CardPaymentsConfiguration $dcc_configuration = null,
+		?SubscriptionHelper $subscription_helper = null
 	): AxoGatewayTestable {
 		return new AxoGatewayTestable(
 			$dcc_configuration ?? $this->dcc_configuration,
@@ -168,6 +174,7 @@ class AxoGatewayTest extends TestCase
 			Mockery::mock( ExperienceContextBuilder::class ),
 			Mockery::mock( SettingsModel::class ),
 			Mockery::mock( PayerFactory::class ),
+			$subscription_helper ?? Mockery::mock( SubscriptionHelper::class ),
 			null,
 			$option_overrides
 		);
@@ -495,6 +502,7 @@ class AxoGatewayTest extends TestCase
 			$experience_context_builder,
 			$settings_model,
 			$payer_factory,
+			Mockery::mock( SubscriptionHelper::class ),
 			$return_url_secret
 		);
 	}
@@ -674,6 +682,7 @@ class AxoGatewayTest extends TestCase
 			$experience_context_builder,
 			$settings_model,
 			$payer_factory,
+			Mockery::mock( SubscriptionHelper::class ),
 			$return_url_secret
 		);
 
@@ -682,5 +691,51 @@ class AxoGatewayTest extends TestCase
 		unset( $_POST['axo_nonce'] );
 
 		$this->assertSame( 'success', $result['result'] );
+	}
+
+	/**
+	 * GIVEN the Fastlane gateway enabled by the merchant
+	 * AND the cart contains a subscription or not
+	 * WHEN checkout asks whether the gateway is available
+	 * THEN it is available only when the cart holds no subscription
+	 *
+	 * @dataProvider enabled_gateway_availability_provider
+	 */
+	public function test_enabled_gateway_availability_depends_on_subscription_in_cart(
+		bool $cart_contains_subscription,
+		bool $expected
+	): void {
+		$subscription_helper = Mockery::mock( SubscriptionHelper::class );
+		$subscription_helper->allows( 'cart_contains_subscription' )->andReturn( $cart_contains_subscription );
+
+		$gateway          = $this->create_gateway( [], null, $subscription_helper );
+		$gateway->enabled = 'yes';
+
+		$this->assertSame( $expected, $gateway->is_available() );
+	}
+
+	public function enabled_gateway_availability_provider(): array
+	{
+		return [
+			'available when the cart has no subscription'  => [ false, true ],
+			'unavailable when the cart has a subscription' => [ true, false ],
+		];
+	}
+
+	/**
+	 * GIVEN the Fastlane gateway disabled by the merchant
+	 * AND the cart has no subscription
+	 * WHEN checkout asks whether the gateway is available
+	 * THEN it is not available
+	 */
+	public function test_disabled_gateway_is_unavailable_even_without_subscription_in_cart(): void
+	{
+		$subscription_helper = Mockery::mock( SubscriptionHelper::class );
+		$subscription_helper->allows( 'cart_contains_subscription' )->andReturn( false );
+
+		$gateway          = $this->create_gateway( [], null, $subscription_helper );
+		$gateway->enabled = 'no';
+
+		$this->assertSame( false, $gateway->is_available() );
 	}
 }
