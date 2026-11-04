@@ -64,7 +64,7 @@ afterEach( () => {
 	// Handlers on document.body outlive the test and would refresh the next
 	// test's state.
 	jQuery( document.body ).off(
-		'update_checkout updated_checkout updated_cart_totals'
+		'update_checkout updated_checkout updated_cart_totals adding_to_cart added_to_cart removed_from_cart'
 	);
 	jest.useRealTimers();
 } );
@@ -432,6 +432,45 @@ describe( 'watchViewedTotal()', () => {
 			jQuery( document.body ).trigger( 'update_checkout' );
 
 			expect( watcher.get() ).toBe( '10.00' );
+		} );
+	} );
+
+	describe( 'mini-cart updates', () => {
+		test( 'is unknown on adding_to_cart and holds the fetched total after added_to_cart', async () => {
+			mockFetchCartTotal
+				.mockResolvedValueOnce( '10.00' )
+				.mockResolvedValueOnce( '18.00' );
+			const watcher = watchViewedTotal( config(), 'mini-cart' );
+			await flushPromises();
+			const notify = jest.fn();
+			watcher.subscribe( notify );
+
+			jQuery( document.body ).trigger( 'adding_to_cart' );
+			expect( watcher.get() ).toBe( '' );
+
+			jQuery( document.body ).trigger( 'added_to_cart' );
+			await flushPromises();
+
+			expect( watcher.get() ).toBe( '18.00' );
+			expect( notify.mock.calls ).toEqual( [ [ '' ], [ '18.00' ] ] );
+		} );
+
+		test( 'is unknown the moment removed_from_cart fires and holds the fetched total once it resolves', async () => {
+			mockFetchCartTotal
+				.mockResolvedValueOnce( '10.00' )
+				.mockResolvedValueOnce( '4.00' );
+			const watcher = watchViewedTotal( config(), 'mini-cart' );
+			await flushPromises();
+			const notify = jest.fn();
+			watcher.subscribe( notify );
+
+			jQuery( document.body ).trigger( 'removed_from_cart' );
+			expect( watcher.get() ).toBe( '' );
+
+			await flushPromises();
+
+			expect( watcher.get() ).toBe( '4.00' );
+			expect( notify.mock.calls ).toEqual( [ [ '' ], [ '4.00' ] ] );
 		} );
 	} );
 
