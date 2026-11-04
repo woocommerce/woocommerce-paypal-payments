@@ -37,12 +37,17 @@ const listening = new Set();
  * WooCommerce events around a classic update: `start` makes the total unknown,
  * `end` fetches the new one.
  *
- * A cart update fires nothing before its request, so `start` is the completion
- * event. Until then, WooCommerce blocks the element that holds the buttons.
+ * A cart update and a mini-cart removal fire nothing before their request, so
+ * `start` is the completion event. Until then, WooCommerce blocks the element
+ * that holds the buttons.
  */
 const UPDATE_EVENTS = {
 	checkout: { start: 'update_checkout', end: 'updated_checkout' },
 	cart: { start: 'updated_cart_totals', end: 'updated_cart_totals' },
+	'mini-cart': {
+		start: 'adding_to_cart removed_from_cart',
+		end: 'added_to_cart removed_from_cart',
+	},
 };
 
 /**
