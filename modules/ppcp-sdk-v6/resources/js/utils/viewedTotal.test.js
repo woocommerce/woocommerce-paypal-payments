@@ -413,5 +413,21 @@ describe( 'watchViewedTotal()', () => {
 			expect( watcher.get() ).toBe( '25.00' );
 		} );
 
+		test( 'a second watchViewedTotal() call after the change does not restore the page-load amount', async () => {
+			const form = renderProductForm();
+			mockSimulateCart
+				.mockResolvedValueOnce( { total: '10.00' } )
+				.mockReturnValueOnce( new Promise( () => {} ) );
+			watchViewedTotal( config( { amount: '5.00' } ), 'product' );
+			await flushPromises();
+
+			form.dispatchEvent( new Event( 'change' ) );
+			const second = watchViewedTotal(
+				config( { amount: '5.00' } ),
+				'product'
+			);
+
+			expect( second.get() ).toBe( '' );
+		} );
 	} );
 } );
