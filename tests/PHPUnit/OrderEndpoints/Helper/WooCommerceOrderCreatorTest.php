@@ -12,6 +12,7 @@ use WC_Order_Item_Fee;
 use WC_Order_Item_Product;
 use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
@@ -20,6 +21,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Phone;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PhoneWithType;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ShippingOption;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
@@ -935,6 +937,70 @@ class WooCommerceOrderCreatorTest extends TestCase {
 			'browser phone fills in when PayPal has none'       => array( null, '+1 555 987-6543', '15559876543' ),
 			'no phone anywhere leaves the phone empty'          => array( null, null, '' ),
 		);
+	}
+
+	/**
+	 * GIVEN an express order whose selected shipping option carries a WooCommerce rate ID
+	 * WHEN configure_addresses() builds the order's shipping line via reflection
+	 * THEN the shipping line's method ID and instance ID are split like WooCommerce checkout does
+	 *      for a "<method>:<numeric instance>" rate ID, so WooCommerce can find the shipping
+	 *      method's tax status when totals are recalculated
+	 * AND any other rate ID shape is kept whole as the method ID with an empty instance ID
+	 *
+	 * @dataProvider shipping_rate_id_provider
+	 */
+	public function test_configure_addresses_stores_method_and_instance_id_of_selected_shipping_rate(
+		string $rate_id,
+		string $expected_method_id,
+		string $expected_instance_id
+	): void {
+		$shipping_line = $this->configure_addresses_with_shipping_rate( $rate_id );
+
+		$this->assertSame(
+			array( $expected_method_id, $expected_instance_id ),
+			array( $shipping_line->get_method_id(), $shipping_line->get_instance_id() )
+		);
+	}
+
+	public function shipping_rate_id_provider(): array {
+		return array(
+			'zone method rate is split into method and instance' => array( 'flat_rate:2', 'flat_rate', '2' ),
+			'multi-digit instance ID is kept complete'           => array( 'free_shipping:123', 'free_shipping', '123' ),
+			'rate without instance keeps the whole ID'           => array( 'legacy_flat_rate', 'legacy_flat_rate', '' ),
+			'rate with an extra segment keeps the whole ID'      => array( 'table_rate:5:2', 'table_rate:5:2', '' ),
+			'rate with a non-numeric suffix keeps the whole ID'  => array( 'ups:GND', 'ups:GND', '' ),
+			'rate with an empty method part keeps the whole ID'  => array( ':2', ':2', '' ),
+			'rate with an empty instance keeps the whole ID'     => array( 'flat_rate:', 'flat_rate:', '' ),
+		);
+	}
+
+	private function configure_addresses_with_shipping_rate( string $rate_id ): \WC_Order_Item_Shipping {
+		$shipping = new Shipping(
+			'Jane Doe',
+			new Address( 'US', '1 Main St', '', 'NY', 'NYC', '10001' ),
+			null,
+			null,
+			array( new ShippingOption( $rate_id, 'Shipping', true, new Money( 5.0, 'USD' ), ShippingOption::TYPE_SHIPPING ) )
+		);
+
+		$shipping_line = null;
+		$wc_order      = Mockery::mock( WC_Order::class )->shouldIgnoreMissing();
+		$wc_order->shouldReceive( 'get_items' )->andReturn( array() );
+		$wc_order->shouldReceive( 'add_item' )->andReturnUsing(
+			static function ( $item ) use ( &$shipping_line ): void {
+				$shipping_line = $item;
+			}
+		);
+
+		$wc_holder           = new \stdClass();
+		$wc_holder->customer = null;
+		when( 'WC' )->justReturn( $wc_holder );
+
+		$method = new ReflectionMethod( WooCommerceOrderCreator::class, 'configure_addresses' );
+		$method->setAccessible( true );
+		$method->invoke( $this->create_order_creator(), $wc_order, null, $shipping, true );
+
+		return $shipping_line;
 	}
 
 	private function create_payer( ?string $phone ): Payer {
