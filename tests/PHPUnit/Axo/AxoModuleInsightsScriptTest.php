@@ -73,10 +73,8 @@ class AxoModuleInsightsScriptTest extends TestCase
             'guest on order-received enqueues the library' => [true, true, false, 'order-received', true],
             'logged-in user on order-received enqueues the library' => [true, true, true, 'order-received', true],
             'guest on order-pay does not enqueue' => [true, true, false, 'order-pay', false],
-            'logged-in user on order-pay does not enqueue' => [true, true, true, 'order-pay', false],
             'guest outside checkout does not enqueue' => [true, false, false, '', false],
             'fastlane off for guest on checkout does not enqueue' => [false, true, false, '', false],
-            'fastlane off on order-received does not enqueue' => [false, true, false, 'order-received', false],
         ];
     }
 

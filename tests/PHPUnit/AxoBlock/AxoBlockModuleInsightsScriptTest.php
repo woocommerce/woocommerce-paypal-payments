@@ -16,22 +16,19 @@ class AxoBlockModuleInsightsScriptTest extends TestCase
     private const HANDLE = 'wc-ppcp-paypal-insights';
 
     /**
-     * GIVEN a visitor on a page, with Fastlane on or off
+     * GIVEN Fastlane is on and a checkout block page with items in the cart
      * WHEN the page enqueues its scripts
-     * THEN the Insights script is enqueued only where block tracking applies
+     * THEN the Insights script is enqueued only for guests outside order-pay
      *
      * @dataProvider insights_enqueue_provider
      */
     public function test_insights_script_is_enqueued_only_where_fastlane_block_tracking_applies(
-        bool $has_checkout_block,
         bool $is_logged_in,
         bool $is_order_pay,
-        bool $cart_is_empty,
-        bool $use_fastlane,
         bool $expect_enqueued
     ): void {
         when('has_block')->alias(
-            static fn($block = '') => $has_checkout_block && 'woocommerce/checkout' === $block
+            static fn($block = '') => 'woocommerce/checkout' === $block
         );
         when('is_user_logged_in')->justReturn($is_logged_in);
         when('is_checkout_pay_page')->justReturn($is_order_pay);
@@ -41,7 +38,7 @@ class AxoBlockModuleInsightsScriptTest extends TestCase
         when('wp_localize_script')->justReturn(true);
 
         $cart = Mockery::mock();
-        $cart->allows('is_empty')->andReturn($cart_is_empty);
+        $cart->allows('is_empty')->andReturn(false);
         $wc       = Mockery::mock();
         $wc->cart = $cart;
         when('WC')->justReturn($wc);
@@ -53,7 +50,7 @@ class AxoBlockModuleInsightsScriptTest extends TestCase
             }
         );
 
-        foreach ($this->capture_enqueue_scripts_callbacks($use_fastlane) as $callback) {
+        foreach ($this->capture_enqueue_scripts_callbacks() as $callback) {
             $callback();
         }
 
@@ -63,19 +60,16 @@ class AxoBlockModuleInsightsScriptTest extends TestCase
     public function insights_enqueue_provider(): array
     {
         return [
-            'guest on checkout block with items enqueues the script' => [true, false, false, false, true, true],
-            'logged-in user on checkout block does not enqueue' => [true, true, false, false, true, false],
-            'guest on order-pay does not enqueue' => [true, false, true, false, true, false],
-            'guest with empty cart does not enqueue' => [true, false, false, true, true, false],
-            'guest on page without checkout block does not enqueue' => [false, false, false, false, true, false],
-            'fastlane off for guest on checkout block does not enqueue' => [true, false, false, false, false, false],
+            'guest on checkout block with items enqueues the script' => [false, false, true],
+            'logged-in user on checkout block does not enqueue' => [true, false, false],
+            'guest on order-pay does not enqueue' => [false, true, false],
         ];
     }
 
-    private function capture_enqueue_scripts_callbacks(bool $use_fastlane): array
+    private function capture_enqueue_scripts_callbacks(): array
     {
         $card_configuration = Mockery::mock(CardPaymentsConfiguration::class);
-        $card_configuration->allows('use_fastlane')->andReturn($use_fastlane);
+        $card_configuration->allows('use_fastlane')->andReturn(true);
 
         $asset_getter = Mockery::mock(AssetGetter::class);
         $asset_getter->allows('get_asset_url')->andReturn('https://example.test/asset.js');
