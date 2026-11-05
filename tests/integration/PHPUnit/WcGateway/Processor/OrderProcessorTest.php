@@ -37,6 +37,7 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$paypalOrder = $mockOrderEndpoint->order('test-order-id');
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,
@@ -66,6 +67,7 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$paypalOrder = $mockOrderEndpoint->order('test-order-id');
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,
@@ -105,6 +107,7 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$paypalOrder = $mockOrderEndpoint->order('test-order-id');
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$mockAuthorizedPaymentsProcessor = \Mockery::mock(AuthorizedPaymentsProcessor::class);
 		$mockAuthorizedPaymentsProcessor->shouldReceive('capture_authorized_payment')
@@ -140,6 +143,7 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$paypalOrder = $mockOrderEndpoint->order('test-order-id');
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,
@@ -177,6 +181,7 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn(null);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 		$sessionHandler->shouldReceive('is_created_order')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
@@ -221,6 +226,7 @@ class OrderProcessorTest extends IntegrationMockedTestCase
 
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,

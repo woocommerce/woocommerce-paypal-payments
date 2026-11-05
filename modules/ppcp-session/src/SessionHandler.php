@@ -62,6 +62,8 @@ class SessionHandler {
 
 	private string $created_order_id = '';
 
+	private bool $free_trial_vaulted = false;
+
 	public function __construct( ?LoggerInterface $logger = null ) {
 		$this->logger = $logger ?? new NullLogger();
 	}
@@ -204,6 +206,38 @@ class SessionHandler {
 	}
 
 	/**
+	 * Whether the buyer approved saving their PayPal account for a free-trial
+	 * cart. There is no PayPal order to capture, so this is what keeps the
+	 * checkout in continuation until the buyer places the $0 order.
+	 */
+	public function is_free_trial_vaulted(): bool {
+		$this->load_session();
+
+		return $this->free_trial_vaulted;
+	}
+
+	/**
+	 * Free-trial vaulting is only offered through PayPal, so an earlier Venmo
+	 * or Pay Later attempt must not name the wrong wallet in the continuation.
+	 */
+	public function mark_free_trial_vaulted_with_paypal(): void {
+		$this->load_session();
+
+		$this->free_trial_vaulted = true;
+		$this->funding_source     = 'paypal';
+
+		$this->store_session();
+	}
+
+	public function forget_free_trial_vaulted(): void {
+		$this->load_session();
+
+		$this->free_trial_vaulted = false;
+
+		$this->store_session();
+	}
+
+	/**
 	 * Returns how many times the customer tried to use the PayPal Gateway in this session.
 	 *
 	 * @return int
@@ -251,6 +285,7 @@ class SessionHandler {
 		$this->checkout_form              = array();
 		$this->payer_action_order_id      = '';
 		$this->created_order_id           = '';
+		$this->free_trial_vaulted         = false;
 		$this->store_session();
 		return $this;
 	}
@@ -291,6 +326,7 @@ class SessionHandler {
 		$this->checkout_form         = $data['checkout_form'] ?? array();
 		$this->payer_action_order_id = (string) ( $data['payer_action_order_id'] ?? '' );
 		$this->created_order_id      = (string) ( $data['created_order_id'] ?? '' );
+		$this->free_trial_vaulted    = (bool) ( $data['free_trial_vaulted'] ?? false );
 	}
 
 	/**
@@ -308,6 +344,7 @@ class SessionHandler {
 			'checkout_form'              => $obj->checkout_form,
 			'payer_action_order_id'      => $obj->payer_action_order_id,
 			'created_order_id'           => $obj->created_order_id,
+			'free_trial_vaulted'         => $obj->free_trial_vaulted,
 		);
 	}
 }

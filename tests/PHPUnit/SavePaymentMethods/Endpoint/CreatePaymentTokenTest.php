@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
@@ -41,6 +42,9 @@ class CreatePaymentTokenTest extends TestCase {
 
 	/** @var LoggerInterface&\Mockery\MockInterface */
 	private $logger;
+
+	/** @var SessionHandler&\Mockery\MockInterface */
+	private $session_handler;
 
 	/** @var CreatePaymentToken */
 	private $sut;
@@ -79,6 +83,9 @@ class CreatePaymentTokenTest extends TestCase {
 
 		$this->logger = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
 
+		$this->session_handler = Mockery::mock( SessionHandler::class );
+		$this->session_handler->shouldReceive( 'mark_free_trial_vaulted_with_paypal' )->byDefault();
+
 		$this->sut = $this->create_sut( $this->free_trial_helper );
 
 		// Common WP stubs. A first-time customer has no stored PayPal customer id.
@@ -94,6 +101,7 @@ class CreatePaymentTokenTest extends TestCase {
 			$this->wc_payment_tokens,
 			$free_trial_helper,
 			$this->setup_token_binding,
+			$this->session_handler,
 			$this->logger
 		);
 	}
@@ -101,6 +109,74 @@ class CreatePaymentTokenTest extends TestCase {
 	// -------------------------------------------------------------------------
 	// Tests
 	// -------------------------------------------------------------------------
+
+	/**
+	 * GIVEN a logged-in user whose cart is (or is not) a free trial
+	 * WHEN handle_request() saves the given payment source, with or without the free-trial continuation flag
+	 * THEN the session is marked as having a vaulted free trial only for a PayPal account on a free-trial cart
+	 *      when the request asks for the free-trial continuation
+	 *
+	 * @dataProvider free_trial_vaulting_provider
+	 */
+	public function test_free_trial_vaulting_is_marked_only_for_paypal_account_on_free_trial_cart( bool $free_trial_cart, string $source, bool $continuation, bool $expect_marked ): void {
+		$store = array();
+		$this->use_stateful_wc_session( $store );
+		$this->session_handler = new SessionHandler();
+
+		$free_trial_helper = Mockery::mock( FreeTrialSubscriptionHelper::class );
+		$free_trial_helper->shouldReceive( 'is_free_trial_cart' )->andReturn( $free_trial_cart );
+		$this->sut = $this->create_sut( $free_trial_helper );
+
+		$request = array( 'vault_setup_token' => 'setup-tok-030' );
+		if ( $continuation ) {
+			$request['free_trial_continuation'] = '1';
+		}
+		$this->request_data->shouldReceive( 'read_request' )->andReturn( $request );
+
+		if ( $source === 'paypal' ) {
+			$this->tokens_endpoint->shouldReceive( 'create_payment_token' )->andReturn( $this->paypal_result_fixture() );
+			$this->wc_payment_tokens->shouldReceive( 'create_payment_token_paypal' )->andReturn( 7001 );
+		} else {
+			$this->tokens_endpoint->shouldReceive( 'create_payment_token' )->andReturn( $this->card_result_fixture() );
+			$this->wc_payment_tokens->shouldReceive( 'create_payment_token_card' )->andReturn( 7002 );
+		}
+
+		when( 'update_user_meta' )->justReturn( true );
+		when( 'wp_send_json_success' )->justReturn( null );
+
+		$this->sut->handle_request();
+
+		$this->assertSame( $expect_marked, $this->session_handler->is_free_trial_vaulted() );
+	}
+
+	public function free_trial_vaulting_provider(): array {
+		return array(
+			'paypal account on a free-trial cart with continuation' => array( true, 'paypal', true, true ),
+			'paypal account on a free-trial cart without continuation' => array( true, 'paypal', false, false ),
+			'paypal account on a regular cart with continuation' => array( false, 'paypal', true, false ),
+			'card on a free-trial cart with continuation' => array( true, 'card', true, false ),
+		);
+	}
+
+	/**
+	 * Replaces WC()->session with one that keeps what is set, so a real SessionHandler can be used.
+	 *
+	 * @param array<string, mixed> $store Receives the session values.
+	 */
+	private function use_stateful_wc_session( array &$store ): void {
+		$session = Mockery::mock();
+		$session->shouldReceive( 'get' )->andReturnUsing(
+			static function ( string $key ) use ( &$store ) {
+				return $store[ $key ] ?? null;
+			}
+		);
+		$session->shouldReceive( 'set' )->andReturnUsing(
+			static function ( string $key, $value ) use ( &$store ): void {
+				$store[ $key ] = $value;
+			}
+		);
+		when( 'WC' )->justReturn( (object) array( 'session' => $session ) );
+	}
 
 	/**
 	 * GIVEN a logged-in user and create_payment_token() returns a card vault result

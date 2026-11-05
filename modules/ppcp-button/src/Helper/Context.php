@@ -8,19 +8,23 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionStatus;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 
 class Context {
 
 	protected SessionHandler $session_handler;
 	protected SubscriptionStatus $subscription_status;
+	private FreeTrialSubscriptionHelper $free_trial_helper;
 
 	public function __construct(
 		SessionHandler $session_handler,
-		SubscriptionStatus $subscription_status
+		SubscriptionStatus $subscription_status,
+		FreeTrialSubscriptionHelper $free_trial_helper
 	) {
 
 		$this->session_handler     = $session_handler;
 		$this->subscription_status = $subscription_status;
+		$this->free_trial_helper   = $free_trial_helper;
 	}
 
 	/**
@@ -245,11 +249,14 @@ class Context {
 	}
 
 	/**
-	 * Checks if PayPal payment was already initiated (on the product or cart pages).
-	 *
-	 * @return bool
+	 * Checks if PayPal payment was already initiated (on the product or cart pages),
+	 * or a PayPal account was vaulted for a free trial whose order is not placed yet.
 	 */
 	public function is_paypal_continuation(): bool {
+		if ( $this->is_free_trial_continuation() ) {
+			return true;
+		}
+
 		/**
 		 * Property is already defined in trait consumers.
 		 *
@@ -295,6 +302,16 @@ class Context {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Whether the buyer vaulted a PayPal account for a free trial and has not
+	 * placed the order yet. Vaulting alone is not enough: the cart must still be
+	 * a free trial, so a cart changed after vaulting is not a continuation.
+	 */
+	public function is_free_trial_continuation(): bool {
+		return $this->session_handler->is_free_trial_vaulted()
+			&& $this->free_trial_helper->is_free_trial_cart();
 	}
 
 	/**

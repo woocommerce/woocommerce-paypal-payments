@@ -779,6 +779,48 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN the buyer saved their PayPal account for a free-trial cart and must still place the order
+     * WHEN the SDK bootstrap data is generated
+     * THEN the continuation is flagged as a free trial with PayPal as funding source
+     * AND it carries the cancel link markup
+     * AND it carries no PayPal order, as none exists for a free trial
+     */
+    public function testScriptDataContinuationForFreeTrialCarriesNoOrder(): void
+    {
+        $this->stub_common_script_data_dependencies();
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(true);
+        $this->context->shouldReceive('is_free_trial_continuation')->andReturn(true);
+        $this->session_handler->shouldReceive('funding_source')->andReturn('paypal');
+        $this->cancel_view->shouldReceive('render_session_cancellation')->andReturn('<a>Cancel</a>');
+        when('add_query_arg')->justReturn('https://example.com/checkout?cancel=1');
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertSame(
+            [
+                'free_trial'     => true,
+                'funding_source' => 'paypal',
+                'cancel'         => ['html' => '<a>Cancel</a>'],
+            ],
+            $data['continuation']
+        );
+    }
+
+    /**
+     * GIVEN the buyer is not in a PayPal continuation
+     * WHEN the SDK bootstrap data is generated
+     * THEN no continuation payload is sent
+     */
+    public function testScriptDataOmitsContinuationOutsideContinuation(): void
+    {
+        $this->stub_common_script_data_dependencies();
+
+        $data = $this->createTestee()->script_data();
+
+        $this->assertArrayNotHasKey('continuation', $data);
+    }
+
+    /**
      * GIVEN a merchant whose PayPal country code may be a non-ISO code such as C2 (China)
      * WHEN the SDK bootstrap data is generated
      * THEN merchant_country carries a valid ISO 3166-1 code, so wallet sheets accept it

@@ -98,7 +98,6 @@ export function V6ExpressComponent( {
 				setEligibility( methods );
 			}
 		} )().catch( ( error ) => {
-			// eslint-disable-next-line no-console
 			console.error( '[ppcp-sdk-v6] express SDK load failed', error );
 		} );
 
@@ -192,9 +191,20 @@ export function V6ExpressComponent( {
 					onClose();
 				}
 			},
-			// Free trial: the token is already stored, so just submit the Blocks
-			// checkout — the gateway places the $0 order server-side.
-			onFreeTrialComplete: () => onSubmit(),
+			// Free trial: the token is already stored, so the gateway places the
+			// $0 order server-side. With final review the buyer places it from
+			// the checkout page, which the reload builds as a continuation. The
+			// block cart always goes there: it has no checkout form to submit,
+			// and no PayPal order to create server-side like a paid Pay Now.
+			onFreeTrialComplete: () => {
+				if ( config.final_review || context === 'cart-block' ) {
+					navigation.assign( continuationRedirectUrl( config ) );
+					return;
+				}
+
+				continuationOnErrorRef.current = true;
+				onSubmit();
+			},
 			shippingHandlers: buildBlocksShippingHandlers(
 				config,
 				shippingData
@@ -219,7 +229,9 @@ export function V6ExpressComponent( {
 		if ( isFreeTrial ) {
 			setSession(
 				createFreeTrialPayPalSession( sdk, config, {
-					onComplete: () => callbacksRef.current.onFreeTrialComplete(),
+					freeTrialContinuation: true,
+					onComplete: () =>
+						callbacksRef.current.onFreeTrialComplete(),
 					onError: ( error ) => callbacksRef.current.onError( error ),
 				} )
 			);
