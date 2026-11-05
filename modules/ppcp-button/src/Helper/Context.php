@@ -249,8 +249,7 @@ class Context {
 	}
 
 	/**
-	 * Checks if PayPal payment was already initiated (on the product or cart pages),
-	 * or a PayPal account was vaulted for a free trial whose order is not placed yet.
+	 * Checks if a PayPal (non-card) checkout is in progress, including a free-trial vault.
 	 */
 	public function is_paypal_continuation(): bool {
 		if ( $this->is_free_trial_continuation() ) {
@@ -305,9 +304,7 @@ class Context {
 	}
 
 	/**
-	 * Whether the buyer vaulted a PayPal account for a free trial and has not
-	 * placed the order yet. Vaulting alone is not enough: the cart must still be
-	 * a free trial, so a cart changed after vaulting is not a continuation.
+	 * Whether a PayPal account was vaulted and the cart is still a free trial.
 	 */
 	public function is_free_trial_continuation(): bool {
 		return $this->session_handler->is_free_trial_vaulted()

@@ -191,11 +191,8 @@ export function V6ExpressComponent( {
 					onClose();
 				}
 			},
-			// Free trial: the token is already stored, so the gateway places the
-			// $0 order server-side. With final review the buyer places it from
-			// the checkout page, which the reload builds as a continuation. The
-			// block cart always goes there: it has no checkout form to submit,
-			// and no PayPal order to create server-side like a paid Pay Now.
+			// The token is stored. With final review, or on the block cart (no form
+			// to submit), the $0 order is placed from the checkout continuation.
 			onFreeTrialComplete: () => {
 				if ( config.final_review || context === 'cart-block' ) {
 					navigation.assign( continuationRedirectUrl( config ) );

@@ -58,8 +58,7 @@ export const createOrder = async ( data, config, onError, onClose ) => {
 };
 
 /**
- * Places the order right away (Pay Now), or sends the buyer to the checkout
- * page to confirm it when final review is required.
+ * Places the order now (Pay Now) or redirects to checkout to confirm it.
  *
  * @param {Object}   handlers
  * @param {Function} handlers.shouldskipFinalConfirmation - Whether Pay Now applies.
@@ -352,8 +351,7 @@ export const onApproveSavePayment = async (
 	let bodyContent = {
 		nonce: config.scriptData.ajax.create_payment_token_for_guest.nonce,
 		vault_setup_token: vaultSetupToken,
-		// Lets the server keep the checkout in continuation until the $0
-		// order is placed.
+		// Keeps the checkout in continuation until the $0 order is placed.
 		free_trial_continuation: true,
 	};
 
