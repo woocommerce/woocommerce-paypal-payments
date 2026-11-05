@@ -41,6 +41,11 @@ on:
           - v6
           - v5
           - both
+      WOOCOMMERCE_VERSION:
+        description: 'WooCommerce version from WordPress.org, e.g. 10.3.0-beta.1. Empty = latest stable.'
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.workflow_run.head_branch || github.ref }}
@@ -73,7 +78,28 @@ jobs:
     outputs:
       matrix-v6: ${{ steps.resolve.outputs.matrix-v6 }}
       matrix-v5: ${{ steps.resolve.outputs.matrix-v5 }}
+      woocommerce-version: ${{ steps.woocommerce-version.outputs.version }}
     steps:
+      # Fails here, before every Playwright job boots wp-env, on a bad or unknown version.
+      - name: Validate WooCommerce version
+        id: woocommerce-version
+        shell: bash
+        env:
+          WOOCOMMERCE_VERSION: ${{ inputs.WOOCOMMERCE_VERSION }}
+        run: |
+          if [[ -n "$WOOCOMMERCE_VERSION" ]]; then
+            # Strict format also keeps the value safe to inline in PRE_SCRIPT.
+            if ! [[ "$WOOCOMMERCE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(beta|rc|RC)\.[0-9]+)?$ ]]; then
+              echo "::error::Invalid WooCommerce version '$WOOCOMMERCE_VERSION', expected e.g. 10.3.0 or 10.3.0-beta.1"
+              exit 1
+            fi
+            if ! curl -sfIL -o /dev/null "https://downloads.wordpress.org/plugin/woocommerce.${WOOCOMMERCE_VERSION}.zip"; then
+              echo "::error::WooCommerce $WOOCOMMERCE_VERSION is not available on WordPress.org"
+              exit 1
+            fi
+          fi
+          echo "version=$WOOCOMMERCE_VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Resolve test scripts
         id: resolve
         shell: bash
@@ -179,6 +205,14 @@ jobs:
         # 2. Add private composer repository and download WooCommerce Subscriptions
         composer config repositories.repo-name composer https://repo.packagist.com/inpsyde/payment-gateways/
         composer require "inpsyde-mirror/woocommerce-subscriptions"
+
+        # 3. Optional WooCommerce version (validated in resolve-playwright-matrix); replaces the latest from wp-env afterStart.
+        WC_VERSION='${{ needs.resolve-playwright-matrix.outputs.woocommerce-version }}'
+        if [ -n "$WC_VERSION" ]; then
+          npx wp-env run tests-cli -- wp plugin install woocommerce --version="$WC_VERSION" --force --activate
+          npx wp-env run tests-cli -- wp wc update
+        fi
+        echo "WooCommerce version: $(npx wp-env run tests-cli -- wp plugin get woocommerce --field=version)" >> "$GITHUB_STEP_SUMMARY"
     secrets: &playwright-secrets
       ENV_FILE_DATA: ${{ secrets.QA_ENV_FILE }}
       NPM_REGISTRY_TOKEN: ${{ secrets.DEPLOYBOT_GITHUB_TOKEN_PACKAGES }}
