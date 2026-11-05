@@ -12,19 +12,14 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use function Brain\Monkey\Functions\when;
 
-/**
- * Exercises the PayPal Insights services as defined in
- * modules/ppcp-axo/services.php: the container closures are loaded from the
- * real production file and invoked against a stub container.
- */
 class InsightsServicesTest extends TestCase
 {
     /**
-     * @dataProvider script_url_provider
-     *
      * GIVEN the merchant is connected to the sandbox or production environment
      * WHEN the 'axo.insights.script-url' service is resolved
      * THEN it returns the PayPal Insights script URL matching that environment
+     *
+     * @dataProvider script_url_provider
      */
     public function test_insights_script_url_matches_environment(bool $is_sandbox, string $expected): void
     {
@@ -41,35 +36,54 @@ class InsightsServicesTest extends TestCase
     }
 
     /**
-     * GIVEN a connected merchant and a shop currency
+     * GIVEN a visitor with or without a customer session
      * WHEN the 'axo.insights' service is resolved
-     * THEN it returns the merchant client ID
-     * AND the currency code from the shop currency getter
+     * THEN the session ID is derived from the customer ID, or empty
+     *
+     * @dataProvider session_provider
      */
-    public function test_insights_data_contains_client_id_and_currency(): void
+    public function test_insights_session_id_is_derived_from_customer_session(?object $session, string $expected): void
     {
         $merchant_data = new MerchantConnectionDTO(false, 'client-id', 'secret', 'merchant-id');
 
         $settings_provider = Mockery::mock(SettingsProvider::class);
-        $settings_provider->shouldReceive('merchant_data')->andReturn($merchant_data);
+        $settings_provider->allows('merchant_data')->andReturn($merchant_data);
 
         $currency = Mockery::mock(CurrencyGetter::class);
-        $currency->shouldReceive('get')->andReturn('EUR');
+        $currency->allows('get')->andReturn('EUR');
 
-        $container = Mockery::mock(ContainerInterface::class);
-        $container->shouldReceive('get')->with('settings.settings-provider')->andReturn($settings_provider);
-        $container->shouldReceive('get')->with('api.shop.currency.getter')->andReturn($currency);
-        $container->shouldReceive('get')->with('axo.payment_method_selected_map')->andReturn(array());
+        $container_map = [
+            'settings.settings-provider'     => $settings_provider,
+            'api.shop.currency.getter'       => $currency,
+            'axo.payment_method_selected_map' => array(),
+        ];
+        $container     = Mockery::mock(ContainerInterface::class);
+        $container->allows('get')->andReturnUsing(static fn(string $id) => $container_map[$id]);
 
-        when('WC')->justReturn(new \stdClass());
+        $wc = new \stdClass();
+        if ($session !== null) {
+            $wc->session = $session;
+        }
+        when('WC')->justReturn($wc);
 
         $services = require ROOT_DIR . '/modules/ppcp-axo/services.php';
 
-        $factory = $services['axo.insights'];
+        $factory  = $services['axo.insights'];
         $insights = $factory($container);
 
-        $this->assertSame('client-id', $insights['client_id']);
-        $this->assertSame('EUR', $insights['amount']['currency_code']);
+        $this->assertSame($expected, $insights['session_id']);
+    }
+
+    public function session_provider(): array
+    {
+        return [
+            'session id is the first 16 chars of the md5 of the customer id' => [
+                new InsightsSessionDouble('customer-123'),
+                substr(md5('customer-123'), 0, 16),
+            ],
+            'no session gives an empty session id'                           => [null, ''],
+            'session without a customer id gives an empty session id'        => [new \stdClass(), ''],
+        ];
     }
 
     public function script_url_provider(): array
@@ -84,5 +98,20 @@ class InsightsServicesTest extends TestCase
                 'https://www.paypalobjects.com/insights/v1/paypal-insights.min.js',
             ],
         ];
+    }
+}
+
+class InsightsSessionDouble
+{
+    private string $customer_unique_id;
+
+    public function __construct(string $customer_unique_id)
+    {
+        $this->customer_unique_id = $customer_unique_id;
+    }
+
+    public function get_customer_unique_id(): string
+    {
+        return $this->customer_unique_id;
     }
 }
