@@ -46,6 +46,20 @@ class SessionModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		// WooCommerce empties the cart after an order completes, whichever
+		// gateway took it, so a vault cannot carry over to a later checkout.
+		add_action(
+			'woocommerce_cart_emptied',
+			static function () use ( $c ): void {
+				$session_handler = $c->get( 'session.handler' );
+				assert( $session_handler instanceof SessionHandler );
+
+				if ( $session_handler->is_free_trial_vaulted() ) {
+					$session_handler->forget_free_trial_vaulted();
+				}
+			}
+		);
+
 		add_action(
 			'ppcp_session_get_order',
 			static function ( $order, $session_handler ) use ( $c ): void {

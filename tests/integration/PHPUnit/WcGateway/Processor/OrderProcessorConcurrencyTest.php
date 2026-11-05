@@ -71,6 +71,7 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,
@@ -109,6 +110,7 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,
@@ -146,6 +148,7 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,
@@ -183,6 +186,7 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,
@@ -220,6 +224,7 @@ class OrderProcessorConcurrencyTest extends IntegrationMockedTestCase
 
 		$sessionHandler = \Mockery::mock(SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn($paypalOrder);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 
 		$container = $this->setupTestContainer($mockOrderEndpoint, [
 			'session.handler' => fn() => $sessionHandler,

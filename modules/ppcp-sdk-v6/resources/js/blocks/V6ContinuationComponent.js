@@ -12,11 +12,11 @@ import { prefillFromPayPalOrder } from './prefillAddresses';
 import { FundingSources } from '../utils/fundingSources';
 
 /**
- * @param {Object} props                    - Props from the Blocks registry.
- * @param {Object} props.config             - The localized sdk-v6 config.
- * @param {Object} props.eventRegistration  - Blocks checkout event subscriptions.
- * @param {Object} props.emitResponse       - Blocks response-type constants.
- * @param {Object} props.shippingData       - The Blocks shipping data.
+ * @param {Object} props                   - Props from the Blocks registry.
+ * @param {Object} props.config            - The localized sdk-v6 config.
+ * @param {Object} props.eventRegistration - Blocks checkout event subscriptions.
+ * @param {Object} props.emitResponse      - Blocks response-type constants.
+ * @param {Object} props.shippingData      - The Blocks shipping data.
  * @return {Object} The cancel-link element.
  */
 export function V6ContinuationComponent( {
@@ -44,26 +44,31 @@ export function V6ContinuationComponent( {
 			reflectInUi: true,
 		} ).catch( ( error ) => {
 			// Non-fatal: the buyer can still fill the form by hand.
-			// eslint-disable-next-line no-console
-			console.error(
-				'[ppcp-sdk-v6] continuation prefill failed',
-				error
-			);
+			console.error( '[ppcp-sdk-v6] continuation prefill failed', error );
 		} );
 	}, [ continuation, shippingData ] );
 
 	useEffect(
 		() =>
-			onPaymentSetup( () => ( {
-				type: responseTypes.SUCCESS,
-				meta: {
-					paymentMethodData: {
-						paypal_order_id: continuation?.order_id,
-						funding_source: continuation?.funding_source ||
-							FundingSources.PAYPAL,
+			onPaymentSetup( () => {
+				// A saved free-trial account has no order to hand over: the
+				// gateway places the $0 order from the stored token.
+				if ( continuation?.free_trial ) {
+					return { type: responseTypes.SUCCESS };
+				}
+
+				return {
+					type: responseTypes.SUCCESS,
+					meta: {
+						paymentMethodData: {
+							paypal_order_id: continuation?.order_id,
+							funding_source:
+								continuation?.funding_source ||
+								FundingSources.PAYPAL,
+						},
 					},
-				},
-			} ) ),
+				};
+			} ),
 		[ onPaymentSetup, continuation, responseTypes ]
 	);
 

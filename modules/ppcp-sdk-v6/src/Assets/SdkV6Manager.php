@@ -1547,27 +1547,20 @@ class SdkV6Manager {
 	}
 
 	/**
-	 * Whether the buyer is returning from an approved PayPal order and should
-	 * see the order review instead of the express buttons.
+	 * Whether the buyer is in a PayPal continuation: an approved order, or a vaulted free-trial account.
 	 */
 	public function is_continuation(): bool {
 		return $this->context->is_paypal_continuation();
 	}
 
 	/**
-	 * The continuation payload, or null when there is no approved order.
+	 * The continuation payload, or null when there is nothing to continue.
 	 *
-	 * The cancel link is load-bearing: while an approved order sits in the
-	 * session the express buttons are suppressed everywhere, so it is the
-	 * buyer's only way out.
+	 * The cancel link is load-bearing: during a continuation the express
+	 * buttons are suppressed everywhere, so it is the buyer's only way out.
 	 */
 	private function continuation_data(): ?array {
 		if ( ! $this->is_continuation() ) {
-			return null;
-		}
-
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
 			return null;
 		}
 
@@ -1575,6 +1568,26 @@ class SdkV6Manager {
 			array( CancelController::NONCE => wp_create_nonce( CancelController::NONCE ) ),
 			wc_get_checkout_url()
 		);
+
+		// No order exists yet, so there is nothing to prefill; the gateway
+		// places the $0 order from the vaulted account.
+		if ( $this->context->is_free_trial_continuation() ) {
+			return array(
+				'free_trial'     => true,
+				'funding_source' => $this->session_handler->funding_source(),
+				'cancel'         => array(
+					'html' => $this->cancel_view->render_session_cancellation(
+						$cancel_url,
+						$this->session_handler->funding_source()
+					),
+				),
+			);
+		}
+
+		$order = $this->session_handler->order();
+		if ( ! $order ) {
+			return null;
+		}
 
 		return array(
 			'order_id'       => $order->id(),
