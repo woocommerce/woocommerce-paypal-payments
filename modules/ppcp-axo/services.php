@@ -120,7 +120,6 @@ return array(
 		}
 
 		return array(
-			'enabled'                     => $container->get( 'axo.insights.enabled' ),
 			'client_id'                   => $settings_provider->merchant_data()->client_id,
 			'session_id'                  => $session_id,
 			'amount'                      => array(
@@ -129,11 +128,6 @@ return array(
 			'payment_method_selected_map' => $container->get( 'axo.payment_method_selected_map' ),
 			'wp_debug'                    => defined( 'WP_DEBUG' ) && WP_DEBUG, // @phpstan-ignore booleanAnd.rightAlwaysFalse
 		);
-	},
-
-	// PayPal Insights is only active on debug sites for now.
-	'axo.insights.enabled'                   => static function (): bool {
-		return defined( 'WP_DEBUG' ) && WP_DEBUG; // @phpstan-ignore booleanAnd.rightAlwaysFalse
 	},
 
 	'axo.insights.script-url'                => static function ( ContainerInterface $container ): string {

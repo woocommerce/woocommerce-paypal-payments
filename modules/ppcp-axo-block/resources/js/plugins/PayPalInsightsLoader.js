@@ -83,7 +83,6 @@ const usePayPalInsightsInit = ( axoConfig, ppcpConfig, eventTracking ) => {
 
 	useEffect( () => {
 		if (
-			! axoConfig?.insights?.enabled ||
 			! axoConfig?.insights?.client_id ||
 			! axoConfig?.insights?.session_id ||
 			initialized.current ||
