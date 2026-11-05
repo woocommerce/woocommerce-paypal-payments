@@ -1215,9 +1215,7 @@ class SdkV6Manager
         return $order;
     }
     /**
-     * Whether the buyer is in a PayPal continuation (an approved order, or a
-     * vaulted account for a free trial) and should see the order review
-     * instead of the express buttons.
+     * Whether the buyer is in a PayPal continuation: an approved order, or a vaulted free-trial account.
      */
     public function is_continuation(): bool
     {

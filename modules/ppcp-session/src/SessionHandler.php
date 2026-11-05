@@ -172,9 +172,7 @@ class SessionHandler
         return '' !== $order_id && $order_id === $this->created_order_id;
     }
     /**
-     * Whether the buyer approved saving their PayPal account for a free-trial
-     * cart. There is no PayPal order to capture, so this is what keeps the
-     * checkout in continuation until the buyer places the $0 order.
+     * Keeps a free-trial checkout in continuation, which has no PayPal order.
      */
     public function is_free_trial_vaulted(): bool
     {
@@ -182,8 +180,7 @@ class SessionHandler
         return $this->free_trial_vaulted;
     }
     /**
-     * Free-trial vaulting is only offered through PayPal, so an earlier Venmo
-     * or Pay Later attempt must not name the wrong wallet in the continuation.
+     * Overrides an earlier Venmo or Pay Later funding source.
      */
     public function mark_free_trial_vaulted_with_paypal(): void
     {
