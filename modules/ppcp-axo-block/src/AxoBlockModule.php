@@ -87,7 +87,8 @@ class AxoBlockModule implements ServiceModule, ExecutableModule
      */
     private function enqueue_paypal_insights_script(ContainerInterface $c): void
     {
-        if (!has_block('woocommerce/checkout') || WC()->cart->is_empty()) {
+        // Fastlane runs only for guests and not on order-pay.
+        if (!has_block('woocommerce/checkout') || is_user_logged_in() || is_checkout_pay_page() || WC()->cart->is_empty()) {
             return;
         }
         $dcc_configuration = $c->get('wcgateway.configuration.card-configuration');

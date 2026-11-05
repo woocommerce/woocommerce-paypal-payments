@@ -50,6 +50,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType
      * @param Environment               $environment The environment object.
      * @param AssetGetter               $wcgateway_module_asset_getter
      * @param array                     $supported_country_card_type_matrix The supported country card type matrix for Axo.
+     * @param array                     $insights_data Insights data without the cart total.
      */
     public function __construct(AssetGetter $asset_getter, WC_Payment_Gateway $gateway, SettingsProvider $settings_provider, CardPaymentsConfiguration $dcc_configuration, Environment $environment, AssetGetter $wcgateway_module_asset_getter, array $supported_country_card_type_matrix, array $insights_data)
     {
