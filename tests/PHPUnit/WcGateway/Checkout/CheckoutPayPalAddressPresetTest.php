@@ -446,6 +446,193 @@ class CheckoutPayPalAddressPresetTest extends TestCase
     }
 
     /**
+     * GIVEN a PayPal order whose shipping recipient is named differently from the payer
+     * WHEN the shipping name fields are resolved
+     * THEN the last word is the last name and everything before it is the first name
+     * AND a single-word recipient has no last name
+     *
+     * @dataProvider shippingNameProvider
+     */
+    public function testFilterCheckoutFieldSplitsShippingRecipientName(
+        string $recipient,
+        string $fieldId,
+        ?string $expected
+    ): void {
+        $order = $this->buildOrderWithRecipient($recipient);
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+
+        self::assertSame($expected, $this->buildTestee()[1]->filter_checkout_field(null, $fieldId));
+    }
+
+    /**
+     * @see testFilterCheckoutFieldSplitsShippingRecipientName
+     */
+    public function shippingNameProvider(): array
+    {
+        return [
+            'multi-word first name' => ['Jane Mary Recipient', 'shipping_first_name', 'Jane Mary'],
+            'multi-word last name' => ['Jane Mary Recipient', 'shipping_last_name', 'Recipient'],
+            'single word is first name' => ['Jane', 'shipping_first_name', 'Jane'],
+            'single word has no last name' => ['Jane', 'shipping_last_name', null],
+        ];
+    }
+
+    /**
+     * GIVEN a PayPal order with a shipping address
+     * WHEN a shipping address field is resolved
+     * THEN the value comes from the PayPal shipping address
+     *
+     * @dataProvider shippingAddressFieldProvider
+     */
+    public function testFilterCheckoutFieldFillsShippingAddressFromPayPalShipping(
+        string $fieldId,
+        string $expected
+    ): void {
+        $order = $this->buildOrderWithRecipient('Jane Recipient');
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+
+        self::assertSame($expected, $this->buildTestee()[1]->filter_checkout_field(null, $fieldId));
+    }
+
+    /**
+     * @see testFilterCheckoutFieldFillsShippingAddressFromPayPalShipping
+     */
+    public function shippingAddressFieldProvider(): array
+    {
+        return [
+            'street' => ['shipping_address_1', 'Unter den Linden 1'],
+            'city' => ['shipping_city', 'Berlin'],
+            'state' => ['shipping_state', 'BE'],
+        ];
+    }
+
+    /**
+     * GIVEN a PayPal order shipped to a recipient who may or may not be the payer
+     * WHEN the "ship to a different address" default is resolved
+     * THEN it is ticked only when the recipient's name differs from the payer's, ignoring case
+     *
+     * @dataProvider recipientVersusPayerProvider
+     */
+    public function testFilterShipToDifferentAddressDependsOnRecipientName(string $recipient, bool $expected): void
+    {
+        $order = $this->buildOrderWithRecipient($recipient);
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+
+        self::assertSame($expected, $this->buildTestee()[1]->filter_ship_to_different_address(false));
+    }
+
+    /**
+     * @see testFilterShipToDifferentAddressDependsOnRecipientName
+     */
+    public function recipientVersusPayerProvider(): array
+    {
+        return [
+            'different recipient ticks the box' => ['Jane Recipient', true],
+            'same name leaves it unchanged' => ['John Doe', false],
+            'same name in other case leaves it unchanged' => ['JOHN doe', false],
+        ];
+    }
+
+    /**
+     * GIVEN a saved checkout form, a recipient who is not the payer and a store default that disagrees with the shopper
+     * WHEN the "ship to a different address" default is resolved
+     * THEN the shopper's saved choice wins: ticked only when the form contains the checkbox
+     *
+     * @dataProvider savedShipToDifferentAddressChoiceProvider
+     */
+    public function testFilterShipToDifferentAddressKeepsShoppersSavedChoice(
+        array $savedForm,
+        bool $storeDefault,
+        bool $expected
+    ): void {
+        $order = $this->buildOrderWithRecipient('Jane Recipient');
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn($order);
+        $this->buildTestee()[0]->shouldReceive('checkout_form')->andReturn($savedForm);
+
+        self::assertSame($expected, $this->buildTestee()[1]->filter_ship_to_different_address($storeDefault));
+    }
+
+    /**
+     * @see testFilterShipToDifferentAddressKeepsShoppersSavedChoice
+     */
+    public function savedShipToDifferentAddressChoiceProvider(): array
+    {
+        return [
+            'unticked checkbox is absent from the form and stays unticked' => [
+                ['billing_first_name' => 'John'],
+                true,
+                false,
+            ],
+            'ticked checkbox is present in the form and stays ticked' => [
+                ['billing_first_name' => 'John', 'ship_to_different_address' => '1'],
+                false,
+                true,
+            ],
+        ];
+    }
+
+    /**
+     * GIVEN no PayPal order in the session
+     * WHEN the "ship to a different address" default is resolved
+     * THEN the given value is returned unchanged
+     */
+    public function testFilterShipToDifferentAddressIsUnchangedWithoutSessionOrder(): void
+    {
+        $this->buildTestee()[0]->shouldReceive('order')->andReturn(null);
+
+        self::assertFalse($this->buildTestee()[1]->filter_ship_to_different_address(false));
+    }
+
+    /**
+     * Builds an Order paid by "John Doe" and shipped to the given recipient name.
+     */
+    private function buildOrderWithRecipient(string $recipientName): Order
+    {
+        return \Mockery::mock(
+            Order::class,
+            [
+                'id' => 'order-with-recipient',
+                'purchase_units' => [
+                    \Mockery::mock(
+                        PurchaseUnit::class,
+                        [
+                            'shipping' => \Mockery::mock(
+                                Shipping::class,
+                                [
+                                    'name' => $recipientName,
+                                    'address' => \Mockery::mock(
+                                        Address::class,
+                                        [
+                                            'address_line_1' => 'Unter den Linden 1',
+                                            'address_line_2' => '',
+                                            'postal_code' => '10117',
+                                            'country_code' => 'DE',
+                                            'admin_area_1' => 'BE',
+                                            'admin_area_2' => 'Berlin',
+                                        ]
+                                    ),
+                                ]
+                            ),
+                        ]
+                    ),
+                ],
+                'payer' => \Mockery::mock(
+                    Payer::class,
+                    [
+                        'name' => \Mockery::mock(
+                            PayerName::class,
+                            [
+                                'given_name' => 'John',
+                                'surname' => 'Doe',
+                            ]
+                        ),
+                    ]
+                ),
+            ]
+        );
+    }
+
+    /**
      * @return MockInterface[]
      */
     private function buildTestee(): array
