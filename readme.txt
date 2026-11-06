@@ -180,6 +180,10 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Invoice prefix could not be cleared in the new settings UI and always fell back to `WC-` #4614
 * Fix - "Start your Pay with Crypto application" to-do linking to a placeholder page instead of PayPal's sign-up page #4830
 * Fix - Card logos next to Fastlane too large in the classic checkout #4854
+* Fix - Hide Fastlane when the cart contains a subscription #4865
+* Fix - Disable the Apple Pay button while the order total updates #4868
+* Fix - WooCommerce order remains Failed after a successful PayPal retry #4851
+* Fix - Classic cart - PayPal buttons visible for total 0 after applying coupon and selecting free shipping #4870
 
 = 4.2.0 - 2026-10-21 =
 * Enhancement - PayPal JS SDK v6 is now the default for all stores, including existing ones; SDK v5 remains available as a fallback via `woocommerce.feature-flags.woocommerce_paypal_payments.sdk_v6_enabled` filter #4720
