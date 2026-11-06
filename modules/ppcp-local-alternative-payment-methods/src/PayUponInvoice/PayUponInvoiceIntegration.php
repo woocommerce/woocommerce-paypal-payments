@@ -15,7 +15,7 @@ use WC_Email;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
-use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
@@ -83,9 +83,13 @@ class PayUponInvoiceIntegration {
 	public function init(): void {
 		add_action(
 			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
-			function ( WC_Order $wc_order, string $order_id ) {
+			function ( WC_Order $wc_order, $order_id ) {
 				try {
 					if ( $wc_order->get_payment_method() !== PayUponInvoiceGateway::ID ) {
+						return;
+					}
+
+					if ( ! is_string( $order_id ) || '' === $order_id ) {
 						return;
 					}
 
