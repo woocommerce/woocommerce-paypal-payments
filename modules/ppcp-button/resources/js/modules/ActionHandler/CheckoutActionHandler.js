@@ -150,6 +150,7 @@ class CheckoutActionHandler {
 
 						throw { type: 'create-order-error', data: data.data };
 					}
+					errorHandler.clear();
 					const input = document.createElement( 'input' );
 					input.setAttribute( 'type', 'hidden' );
 					input.setAttribute( 'name', 'ppcp-resume-order' );
