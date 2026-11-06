@@ -103,7 +103,8 @@ return array(
 		return new CreateSetupToken(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-method-tokens' ),
-			$container->get( 'save-payment-methods.service.setup-token-binding' )
+			$container->get( 'save-payment-methods.service.setup-token-binding' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'save-payment-methods.endpoint.create-payment-token' => static function ( ContainerInterface $container ): CreatePaymentToken {
