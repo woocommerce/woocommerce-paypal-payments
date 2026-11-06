@@ -118,6 +118,23 @@ describe( 'watchSheetTotal()', () => {
 			expect( mockSimulateCart ).not.toHaveBeenCalled();
 			expect( mockFetchCartTotal ).not.toHaveBeenCalled();
 		} );
+
+		test( 'offers a subscribe that never calls back and returns a callable unsubscribe', async () => {
+			const form = renderProductForm();
+			const watcher = watchSheetTotal(
+				config( { amount: '42.00' } ),
+				'pay-now'
+			);
+			const notify = jest.fn();
+
+			const unsubscribe = watcher.subscribe( notify );
+			form.dispatchEvent( new Event( 'change' ) );
+			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
+			await flushPromises();
+
+			expect( notify ).not.toHaveBeenCalled();
+			expect( unsubscribe ).not.toThrow();
+		} );
 	} );
 
 	test( 'does not throw when the page has no product form', async () => {
@@ -128,7 +145,7 @@ describe( 'watchSheetTotal()', () => {
 	} );
 
 	describe( 'refresh failures', () => {
-		test( 'keeps the previous total when a later refresh resolves empty, instead of overwriting it with the failed lookup', async () => {
+		test( 'stays unknown when a refresh after a change resolves empty, instead of restoring the stale total', async () => {
 			const form = renderProductForm();
 			mockSimulateCart
 				.mockResolvedValueOnce( { total: '15.00' } )
@@ -142,10 +159,10 @@ describe( 'watchSheetTotal()', () => {
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
-			expect( watcher.get() ).toBe( '15.00' );
+			expect( watcher.get() ).toBe( '' );
 		} );
 
-		test( 'keeps the previous total when a later refresh resolves without a total property, instead of the nullish result overwriting it', async () => {
+		test( 'stays unknown when a refresh after a change resolves without a total property', async () => {
 			const form = renderProductForm();
 			mockSimulateCart
 				.mockResolvedValueOnce( { total: '15.00' } )
@@ -159,10 +176,10 @@ describe( 'watchSheetTotal()', () => {
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
-			expect( watcher.get() ).toBe( '15.00' );
+			expect( watcher.get() ).toBe( '' );
 		} );
 
-		test( 'keeps the previous total when simulateCart rejects', async () => {
+		test( 'stays unknown when simulateCart rejects after a change', async () => {
 			const form = renderProductForm();
 			mockSimulateCart
 				.mockResolvedValueOnce( { total: '15.00' } )
@@ -175,7 +192,7 @@ describe( 'watchSheetTotal()', () => {
 			await jest.advanceTimersByTimeAsync( DEBOUNCE_MS );
 			await flushPromises();
 
-			expect( watcher.get() ).toBe( '15.00' );
+			expect( watcher.get() ).toBe( '' );
 		} );
 	} );
 
@@ -295,7 +312,7 @@ describe( 'watchSheetTotal()', () => {
 		// messaging both watch the same 'product' context, and a shopper who
 		// changes quantity or variation must not have the two surfaces report
 		// different totals for the one product they are looking at. A watcher
-		// obtained by an earlier render is not a frozen snapshot — it reads
+		// obtained by an earlier render is not a frozen snapshot: it reads
 		// the same context state a later render's watcher does.
 		test( 'a form change refreshes the total shared by every watcher on the context, so none of them disagrees with another', async () => {
 			const form = renderProductForm();

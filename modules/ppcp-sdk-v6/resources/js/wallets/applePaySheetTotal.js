@@ -3,8 +3,8 @@
  *
  * Safari requires the ApplePaySession to be constructed inside the click handler
  * itself, so the bridge cannot await a total the way every other v6 surface
- * does. The shared watcher resolves it ahead of the click and re-prices it
- * whenever the viewed product changes.
+ * does. The shared watcher resolves it ahead of the click, and reports an empty
+ * total while a page change makes it unknown.
  *
  * @package
  */
@@ -16,7 +16,7 @@ import { watchViewedTotal } from '../utils/viewedTotal';
  *
  * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
  * @param {string} context - The page context.
- * @return {{get: Function}} The synchronously-readable total.
+ * @return {{get: Function, subscribe: Function}} The synchronously-readable total.
  */
 export function watchSheetTotal( config, context ) {
 	// An existing order is being paid, so the localized amount is that order's
@@ -25,8 +25,8 @@ export function watchSheetTotal( config, context ) {
 	if ( context === 'pay-now' ) {
 		const total = config.amount || '';
 
-		return { get: () => total };
+		return { get: () => total, subscribe: () => () => {} };
 	}
 
-	return { get: watchViewedTotal( config, context ).get };
+	return watchViewedTotal( config, context );
 }

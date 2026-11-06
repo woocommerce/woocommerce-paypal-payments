@@ -19,10 +19,9 @@ import { hasJQuery } from './api';
 /**
  * How long to coalesce product-form changes before re-pricing.
  *
- * Short, because Apple Pay cannot re-read the total on click — a stale one is
- * what the shopper gets charged. Debounced rather than throttled, which would
- * price the burst's first event and so describe a variation already moved away
- * from.
+ * Short, because the Apple Pay button stays disabled until the new total
+ * arrives. Debounced rather than throttled, which would price the burst's first
+ * event and so describe a variation already moved away from.
  */
 const REFRESH_DEBOUNCE_MS = 250;
 
@@ -30,15 +29,33 @@ const REFRESH_DEBOUNCE_MS = 250;
 // else through the cart, so the two cannot share one cached total.
 const states = new Map();
 
-// Attached once per page, however many surfaces are watching.
-let listening = false;
+// Contexts whose listeners are attached: once per page, however many surfaces
+// are watching.
+const listening = new Set();
+
+/**
+ * WooCommerce events around a classic update: `start` makes the total unknown,
+ * `end` fetches the new one.
+ *
+ * A cart update and a mini-cart removal fire nothing before their request, so
+ * `start` is the completion event. Until then, WooCommerce blocks the element
+ * that holds the buttons.
+ */
+const UPDATE_EVENTS = {
+	checkout: { start: 'update_checkout', end: 'updated_checkout' },
+	cart: { start: 'updated_cart_totals', end: 'updated_cart_totals' },
+	'mini-cart': {
+		start: 'adding_to_cart removed_from_cart',
+		end: 'added_to_cart removed_from_cart',
+	},
+};
 
 /**
  * Resets module state. Test seam only.
  */
 export function resetViewedTotals() {
 	states.clear();
-	listening = false;
+	listening.clear();
 }
 
 /**
@@ -90,7 +107,7 @@ async function refresh( config, context ) {
 	const resolved = await resolve( config, context );
 
 	// Never overwritten by a failed lookup's empty string, nor by a request a
-	// newer one has already superseded — overlapping refreshes can resolve out
+	// newer one has already superseded: overlapping refreshes can resolve out
 	// of order, which is the stale total the debounce exists to prevent.
 	const superseded = request !== state.latestRequest;
 	if ( resolved && ! superseded && resolved !== state.total ) {
@@ -99,6 +116,23 @@ async function refresh( config, context ) {
 	}
 
 	return state.total;
+}
+
+/**
+ * Marks the total of one context as unknown until the next refresh.
+ *
+ * @param {string} context - The page context.
+ */
+function invalidate( context ) {
+	const state = stateFor( context );
+
+	// A refresh already in flight prices the cart before this change.
+	state.latestRequest++;
+
+	if ( state.total ) {
+		state.total = '';
+		state.subscribers.forEach( ( notify ) => notify( '' ) );
+	}
 }
 
 /**
@@ -115,6 +149,7 @@ function listenToProductForm( config, form ) {
 	let timer = null;
 
 	const schedule = () => {
+		invalidate( 'product' );
 		clearTimeout( timer );
 		timer = setTimeout( () => {
 			refresh( config, 'product' ).catch( () => {} );
@@ -129,6 +164,21 @@ function listenToProductForm( config, form ) {
 }
 
 /**
+ * Subscribes to the events of a classic cart or checkout update.
+ *
+ * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
+ * @param {string} context - The page context.
+ */
+function listenToCartUpdates( config, context ) {
+	const { start, end } = UPDATE_EVENTS[ context ];
+
+	jQuery( document.body ).on( start, () => invalidate( context ) );
+	jQuery( document.body ).on( end, () => {
+		refresh( config, context ).catch( () => {} );
+	} );
+}
+
+/**
  * Starts tracking the total for one context.
  *
  * Repeated calls for the same context share its total, so every surface sees
@@ -139,23 +189,35 @@ function listenToProductForm( config, form ) {
  * @return {{get: Function, subscribe: Function}} Reader and change subscription.
  */
 export function watchViewedTotal( config, context ) {
+	const isFirstWatch = ! states.has( context );
 	const state = stateFor( context );
 
 	// Seeded so a synchronous reader that beats the first resolve still has a
 	// number. On a product page it is the cart total whenever the cart is not
-	// empty, so it is a placeholder rather than an answer.
-	if ( ! state.total ) {
+	// empty, so it is a placeholder rather than an answer. Only on the first
+	// watch: the localized amount is the page-load total, and a re-render after
+	// an update must not overwrite an invalidated total.
+	if ( isFirstWatch ) {
 		state.total = config.amount || '';
 	}
 
 	refresh( config, context ).catch( () => {} );
 
-	if ( 'product' === context && ! listening ) {
+	if ( 'product' === context && ! listening.has( context ) ) {
 		const form = productForm();
 		if ( form ) {
-			listening = true;
+			listening.add( context );
 			listenToProductForm( config, form );
 		}
+	}
+
+	if (
+		UPDATE_EVENTS[ context ] &&
+		hasJQuery() &&
+		! listening.has( context )
+	) {
+		listening.add( context );
+		listenToCartUpdates( config, context );
 	}
 
 	return {

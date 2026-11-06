@@ -351,13 +351,43 @@ export async function renderApplePay( {
 		styles.borderRadius = `${ Number( overrides.borderRadius ) }px`;
 	}
 
-	container.appendChild(
-		createButton(
-			styles,
-			overrides.height || buttonHeight( config, context ),
-			pay
-		)
+	const button = createButton(
+		styles,
+		overrides.height || buttonHeight( config, context ),
+		pay
 	);
+	container.appendChild( button );
+
+	// An empty total means a page change is pending. A sheet opened now would
+	// show a total that PayPal then rejects.
+	setButtonEnabled( button, !! sheetTotal.get() );
+
+	const unsubscribe = sheetTotal.subscribe( ( total ) => {
+		// A re-render replaced this button.
+		if ( ! button.isConnected ) {
+			unsubscribe();
+			return;
+		}
+
+		setButtonEnabled( button, !! total );
+	} );
+}
+
+/**
+ * Enables or disables the <apple-pay-button>, which has no disabled attribute.
+ *
+ * @param {HTMLElement} button  - The button element.
+ * @param {boolean}     enabled - Whether a tap may open the sheet.
+ */
+function setButtonEnabled( button, enabled ) {
+	if ( enabled ) {
+		button.removeAttribute( 'aria-disabled' );
+	} else {
+		button.setAttribute( 'aria-disabled', 'true' );
+	}
+
+	button.style.pointerEvents = enabled ? '' : 'none';
+	button.style.opacity = enabled ? '' : '0.5';
 }
 
 /**
