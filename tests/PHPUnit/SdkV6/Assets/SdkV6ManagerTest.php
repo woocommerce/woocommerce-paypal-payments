@@ -366,9 +366,9 @@ class SdkV6ManagerTest extends TestCase
                 true,
                 ['product' => true, 'cart' => true, 'checkout' => true, 'pay-now' => true, 'mini-cart' => true],
             ],
-            'zero-total cart not needing payment suppresses cart and checkout only' => [
+            'zero-total cart not needing payment suppresses checkout only' => [
                 false,
-                ['product' => true, 'cart' => false, 'checkout' => false, 'pay-now' => true, 'mini-cart' => true],
+                ['product' => true, 'cart' => true, 'checkout' => false, 'pay-now' => true, 'mini-cart' => true],
             ],
             'no cart present is treated as needing payment' => [
                 null,
@@ -384,10 +384,8 @@ class SdkV6ManagerTest extends TestCase
      * THEN the checkout still renders, because it must offer the PayPal
      *      save-without-purchase button for the vaulted token backing the future
      *      recurring payment
-     * AND the cart stays suppressed regardless of the free-trial flag, since it has no
-     *     form to submit that vaulted token from
-     * AND the mini-cart follows its setting alone, since its wrapper checks the cart
-     *     when it prints
+     * AND the cart and mini-cart follow their settings alone, since their wrappers
+     *     check the cart when they print
      * AND a $0 cart that is NOT a free trial (e.g. a full-value coupon) keeps the
      *     checkout suppressed too, same as before the fix
      *
@@ -406,8 +404,52 @@ class SdkV6ManagerTest extends TestCase
         $result = $testee->determine_render_places();
 
         $this->assertSame($expected_checkout, $result['checkout']);
-        $this->assertSame($needs_payment, $result['cart']);
+        $this->assertTrue($result['cart']);
         $this->assertTrue($result['mini-cart']);
+    }
+
+    /**
+     * GIVEN the cart was determined to need payment when the render places were determined
+     * WHEN the cart total changes (e.g. free shipping selected via AJAX) and the cart
+     *      button wrapper is rendered afterwards
+     * THEN the wrapper prints when the cart still needs payment at render time
+     * AND nothing prints when the cart needs no payment, e.g. a $0 total
+     *
+     * @dataProvider cart_wrapper_provider
+     */
+    public function testRenderCartWrapperFollowsCartStateAtRenderTime(bool $needs_payment_at_render, string $expected_output): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $needs_payment = true;
+        $cart          = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturnUsing(static function () use (&$needs_payment): bool {
+            return $needs_payment;
+        });
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $testee = $this->createTestee();
+        $places = $testee->determine_render_places();
+
+        $needs_payment = $needs_payment_at_render;
+        $testee->render_cart_wrapper();
+
+        $this->assertTrue($places['cart']);
+        $this->expectOutputString($expected_output);
+    }
+
+    public function cart_wrapper_provider(): array
+    {
+        return [
+            'cart that needs payment at render time prints the wrapper' => [
+                true,
+                '<div class="ppc-button-wrapper"><div id="' . SdkV6Manager::WRAPPER_ID . '"></div></div>',
+            ],
+            'zero-total cart at render time prints nothing' => [
+                false,
+                '',
+            ],
+        ];
     }
 
     /**

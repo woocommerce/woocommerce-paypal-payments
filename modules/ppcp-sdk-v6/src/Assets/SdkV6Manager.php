@@ -358,11 +358,11 @@ class SdkV6Manager {
 		$product_enabled = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
 
 		// pay-now is driven by the existing WC order rather than the cart, so
-		// the zero-total guard does not apply to it. The mini-cart checks it at
-		// render time instead (see render_mini_cart_wrapper()).
+		// the zero-total guard does not apply to it. The cart and mini-cart check
+		// it at render time instead (see render_cart_wrapper()).
 		return array(
 			'product'   => $product_enabled && ! $this->is_free_trial_product() && ! $this->is_unpayable_free_product() && ! $this->is_unsupported_product(),
-			'cart'      => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
+			'cart'      => $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
 			'checkout'  => ( $needs_payment || $free_trial_checkout ) && $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ),
 			'pay-now'   => $this->settings_status->is_smart_button_enabled_for_location( 'pay-now' ),
 			'mini-cart' => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
@@ -433,6 +433,21 @@ class SdkV6Manager {
 		if ( $this->is_card_button_row() ) {
 			$this->render_gateway_wrapper( CardButtonGateway::ID, self::CARD_BUTTON_WRAPPER_ID );
 		}
+	}
+
+	/**
+	 * Renders the cart button wrapper.
+	 *
+	 * The zero-total check runs here, not when the hook is registered: a cart
+	 * AJAX update (e.g. selecting free shipping) recalculates the totals after
+	 * the hook is registered and before the cart totals render.
+	 */
+	public function render_cart_wrapper(): void {
+		if ( ! $this->cart_needs_payment() ) {
+			return;
+		}
+
+		$this->render_wrapper();
 	}
 
 	/**
