@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use DomainException;
 /**
  * Class AXOGateway.
@@ -117,6 +118,7 @@ class AxoGateway extends WC_Payment_Gateway
      * Builds the payer sent with the PayPal order.
      */
     protected PayerFactory $payer_factory;
+    protected SubscriptionHelper $subscription_helper;
     /**
      * Issues the single-use secret that the 3DS return URL carries.
      */
@@ -135,11 +137,12 @@ class AxoGateway extends WC_Payment_Gateway
      * @param ExperienceContextBuilder  $experience_context_builder  The experience context builder.
      * @param SettingsModel             $settings_model              The settings model.
      * @param PayerFactory              $payer_factory               Builds the payer sent with the PayPal order.
+     * @param SubscriptionHelper        $subscription_helper         Detects subscriptions in the cart.
      * @param ReturnUrlSecret|null      $return_url_secret           Issues the return URL secret.
      *                                                               Defaults to a real instance, so the
      *                                                               3DS return URL always carries proof.
      */
-    public function __construct(CardPaymentsConfiguration $dcc_configuration, SessionHandler $session_handler, OrderProcessor $order_processor, array $card_icons, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, TransactionUrlProvider $transaction_url_provider, Environment $environment, LoggerInterface $logger, ExperienceContextBuilder $experience_context_builder, SettingsModel $settings_model, PayerFactory $payer_factory, ?ReturnUrlSecret $return_url_secret = null)
+    public function __construct(CardPaymentsConfiguration $dcc_configuration, SessionHandler $session_handler, OrderProcessor $order_processor, array $card_icons, OrderEndpoint $order_endpoint, PurchaseUnitFactory $purchase_unit_factory, ShippingPreferenceFactory $shipping_preference_factory, TransactionUrlProvider $transaction_url_provider, Environment $environment, LoggerInterface $logger, ExperienceContextBuilder $experience_context_builder, SettingsModel $settings_model, PayerFactory $payer_factory, SubscriptionHelper $subscription_helper, ?ReturnUrlSecret $return_url_secret = null)
     {
         $this->id = self::ID;
         $this->dcc_configuration = $dcc_configuration;
@@ -149,6 +152,7 @@ class AxoGateway extends WC_Payment_Gateway
         $this->experience_context_builder = $experience_context_builder;
         $this->settings_model = $settings_model;
         $this->payer_factory = $payer_factory;
+        $this->subscription_helper = $subscription_helper;
         $this->return_url_secret = $return_url_secret ?? new ReturnUrlSecret();
         $this->method_title = __('Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments');
         $this->method_description = __('Fastlane accelerates the checkout experience for guest shoppers and autofills their details so they can pay in seconds. When enabled, Fastlane is presented as the default payment method for guests.', 'woocommerce-paypal-payments');
@@ -382,6 +386,14 @@ class AxoGateway extends WC_Payment_Gateway
             $data['transaction_context'] = array('soft_descriptor' => __('Card verification hold', 'woocommerce-paypal-payments'));
         }
         return $data;
+    }
+    /**
+     * Hide Fastlane from subscription carts. With manual renewals enabled,
+     * WooCommerce Subscriptions lists gateways that lack subscription support.
+     */
+    public function is_available(): bool
+    {
+        return parent::is_available() && !$this->subscription_helper->cart_contains_subscription();
     }
     /**
      * Returns the icons of the gateway.
