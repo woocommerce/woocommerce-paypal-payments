@@ -397,16 +397,23 @@ class OrderProcessor {
 	/**
 	 * Verifies whether the order can be processed.
 	 *
+	 * A transaction ID alone does not mean the order was paid: another gateway
+	 * may have stored one for a payment that was later cancelled. Only a paid or
+	 * on-hold order is skipped.
+	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 * @return bool
 	 */
 	private function verify_order_can_be_processed( WC_Order $wc_order ): bool {
-		if ( $wc_order->get_transaction_id() ) {
+		$settled_statuses = array_merge( (array) wc_get_is_paid_statuses(), array( 'on-hold' ) );
+
+		if ( $wc_order->get_transaction_id() && $wc_order->has_status( $settled_statuses ) ) {
 			$this->logger->info(
 				sprintf(
-					'Order #%d already has transaction ID "%s", skipping payment processing.',
+					'Order #%d already has transaction ID "%s" and status "%s", skipping payment processing.',
 					$wc_order->get_id(),
-					$wc_order->get_transaction_id()
+					$wc_order->get_transaction_id(),
+					$wc_order->get_status()
 				)
 			);
 
