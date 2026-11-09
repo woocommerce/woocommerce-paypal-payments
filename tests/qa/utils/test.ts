@@ -262,6 +262,7 @@ const test = base.extend< BaseExtend >( {
 			checkout,
 			classicCheckout,
 			orderReceived,
+			customerPaymentMethods,
 			cli,
 		},
 		use
@@ -277,6 +278,7 @@ const test = base.extend< BaseExtend >( {
 				checkout,
 				classicCheckout,
 				orderReceived,
+				customerPaymentMethods,
 				cli,
 			} )
 		);

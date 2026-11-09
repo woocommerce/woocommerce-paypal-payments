@@ -17,11 +17,15 @@ import {
 	Checkout,
 	ClassicCheckout,
 	OrderReceived,
+	CustomerPaymentMethods,
 } from './frontend';
 import {
 	subscriptionsPlugin,
 	pcpPlugin,
+	orders,
+	Pcp,
 	ShopConfig,
+	ShopOrder,
 	ShopProduct,
 } from '../resources';
 import { getCustomerStorageStateName } from './helpers/';
@@ -37,6 +41,7 @@ export class Utils {
 	checkout: Checkout;
 	classicCheckout: ClassicCheckout;
 	orderReceived: OrderReceived;
+	customerPaymentMethods: CustomerPaymentMethods;
 	cli: WpCli;
 
 	constructor( {
@@ -49,6 +54,7 @@ export class Utils {
 		checkout,
 		classicCheckout,
 		orderReceived,
+		customerPaymentMethods,
 		cli,
 	} ) {
 		this.requestUtils = requestUtils;
@@ -60,6 +66,7 @@ export class Utils {
 		this.checkout = checkout;
 		this.classicCheckout = classicCheckout;
 		this.orderReceived = orderReceived;
+		this.customerPaymentMethods = customerPaymentMethods;
 		this.cli = cli;
 	}
 
@@ -114,6 +121,48 @@ export class Utils {
 		}
 		await this.visitorWooCommerceApi.clearCart();
 		await this.visitorWooCommerceApi.addProductsToCart( cartProducts );
+	};
+
+	/**
+	 * Saves a card by paying for a default order with "Save to account" checked.
+	 * Precondition for tests that need a saved card, so they don't depend on
+	 * My Account "Add payment method", which has its own tests (PCP-4500, PCP-5381).
+	 *
+	 * @param customer          The logged-in visitor.
+	 * @param payment           ACDC payment with the card to save.
+	 * @param isClassicCheckout Pay on the classic checkout: use it when the spec activates classic pages.
+	 */
+	saveCardViaCheckout = async (
+		customer: WooCommerce.CreateCustomer,
+		payment: Pcp.Payment,
+		isClassicCheckout = false
+	) => {
+		const order: ShopOrder = {
+			...orders.default,
+			customer,
+			payment: { ...payment, isVaulted: false, saveToAccount: true },
+		};
+
+		await this.fillVisitorsCart( order.products );
+		if ( isClassicCheckout ) {
+			await this.classicCheckout.visit();
+			await this.classicCheckout.completeCheckoutDetails( order );
+			await this.classicCheckout.payPalUi.makePayment( {
+				merchant: order.merchant,
+				payment: order.payment,
+			} );
+		} else {
+			await this.checkout.visit();
+			await this.checkout.completeCheckoutDetails( order );
+			await this.checkout.payPalUi.makePayment( {
+				merchant: order.merchant,
+				payment: order.payment,
+			} );
+		}
+		await this.orderReceived.assertOrderDetails( order );
+
+		await this.customerPaymentMethods.visit();
+		await this.customerPaymentMethods.assertIsSavedPaymentMethod( payment );
 	};
 
 	/**

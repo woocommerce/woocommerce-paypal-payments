@@ -88,12 +88,12 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 				orderReceived,
 			} ) => {
 				// Preconditions
-				await customerPaymentMethods.visit();
 				// Save initial card (not tested one)
-				await customerPaymentMethods.savePaymentMethod( {
-					...payments.acdc,
-					card: cards.visa,
-				} );
+				await utils.saveCardViaCheckout(
+					customer,
+					{ ...payments.acdc, card: cards.visa },
+					true
+				);
 				// Assert tested card is not present in My Account
 				await customerPaymentMethods.assertIsNotSavedPaymentMethod(
 					payment
@@ -162,6 +162,11 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 				const { title: gatewayTitle } = payment.gateway;
 
 				await test.step( `Precondition: save ${ gatewayTitle } payment method`, async () => {
+					// Cards are saved via checkout: My Account card saving has its own tests
+					if ( payment.gateway.shortcut === 'acdc' ) {
+						await utils.saveCardViaCheckout( customer, payment, true );
+						return;
+					}
 					await customerPaymentMethods.visit();
 					await customerPaymentMethods.savePaymentMethod( payment );
 				} );

@@ -2,7 +2,14 @@
  * Internal dependencies
  */
 import { annotateVisitor, expect, test } from '../../utils';
-import { customers, payments, cards, products } from '../../resources';
+import {
+	customers,
+	payments,
+	cards,
+	products,
+	orders,
+	ShopOrder,
+} from '../../resources';
 
 const customer = customers.usa;
 const { payPal, acdc } = payments;
@@ -95,7 +102,12 @@ for ( const testData of deletePaymentMethodData ) {
 					'Assert no saved payment methods message is visible'
 				).toBeVisible();
 
-				await customerPaymentMethods.savePaymentMethod( payment );
+				// Cards are saved via checkout: My Account card saving has its own tests
+				if ( payment.gateway.shortcut === 'acdc' ) {
+					await utils.saveCardViaCheckout( customer, payment, true );
+				} else {
+					await customerPaymentMethods.savePaymentMethod( payment );
+				}
 
 				const savedPaymentMethodText =
 					await customerPaymentMethods.getSavedPaymentMethodText(
@@ -166,6 +178,49 @@ test.describe( () => {
 			await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayed(
 				acdc2
 			);
+		}
+	);
+} );
+
+test.describe( () => {
+	// Restore customer and his storage state to remove vaulted payment methods.
+	// Placed in beforeAll for each test to be able to use storate state in a test.
+	test.beforeAll( async ( { utils } ) => {
+		await utils.restoreCustomer( customer );
+	} );
+
+	const testOrder: ShopOrder = {
+		...orders.default,
+		customer,
+		payment: { ...acdc, isVaulted: true },
+	};
+
+	test(
+		// TODO: replace PCP-0000 with the Xray key once the test case is created.
+		'PCP-0000 | Vaulting - My Account - Payment Methods - ACDC - Pay with card saved in My Account',
+		annotateVisitor( customer ),
+		async ( {
+			utils,
+			customerPaymentMethods,
+			classicCheckout,
+			orderReceived,
+		} ) => {
+			// Preconditions
+			// Card saved without a payment (setup token), unlike cards saved at checkout
+			await customerPaymentMethods.visit();
+			await customerPaymentMethods.savePaymentMethod( acdc );
+			await customerPaymentMethods.assertIsSavedPaymentMethod( acdc );
+
+			await utils.fillVisitorsCart( testOrder.products );
+			await classicCheckout.visit();
+			await classicCheckout.completeCheckoutDetails( testOrder );
+			await classicCheckout.payPalUi.makePayment( {
+				merchant: testOrder.merchant,
+				payment: testOrder.payment,
+			} );
+
+			await orderReceived.assertOrderDetails( testOrder );
+			await orderReceived.assertNoErrors();
 		}
 	);
 } );
