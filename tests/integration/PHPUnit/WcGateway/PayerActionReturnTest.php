@@ -7,7 +7,9 @@ namespace WooCommerce\PayPalCommerce\Tests\Integration\WcGateway;
 use Mockery;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -223,6 +225,9 @@ class PayerActionReturnTest extends IntegrationMockedTestCase {
 		$purchase_unit = Mockery::mock( PurchaseUnit::class )->shouldIgnoreMissing();
 		$purchase_unit->allows( 'custom_id' )->andReturn( (string) $wc_order->get_id() );
 		$purchase_unit->allows( 'payments' )->andReturn( $capture_id ? $payments : null );
+		$purchase_unit->allows( 'amount' )->andReturn(
+			new Amount( new Money( (float) $wc_order->get_total(), $wc_order->get_currency() ) )
+		);
 
 		$order = Mockery::mock( Order::class )->shouldIgnoreMissing();
 		$order->allows( 'id' )->andReturn( $id );

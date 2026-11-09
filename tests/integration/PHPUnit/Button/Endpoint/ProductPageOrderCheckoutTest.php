@@ -6,7 +6,9 @@ namespace WooCommerce\PayPalCommerce\Tests\Integration\Button\Endpoint;
 use Mockery;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -31,8 +33,13 @@ class ProductPageOrderCheckoutTest extends WcAjaxEndpointTestCase {
 	/** @var string[] */
 	private $captured_order_ids = array();
 
+	/** @var WC_Order|null */
+	private $checkout_wc_order = null;
+
 	public function setUp(): void {
 		parent::setUp();
+
+		$this->checkout_wc_order = null;
 
 		$this->created_order_count = 0;
 		$this->captured_order_ids  = array();
@@ -79,6 +86,7 @@ class ProductPageOrderCheckoutTest extends WcAjaxEndpointTestCase {
 		$orders_before_checkout = $this->created_order_count;
 		$wc_order               = $this->pending_wc_order();
 
+		$this->checkout_wc_order  = $wc_order;
 		$_POST['paypal_order_id'] = $paypal_order_id;
 		$_POST['funding_source']  = 'apple_pay';
 		$result                  = $container->get( 'wcgateway.paypal-gateway' )->process_payment( $wc_order->get_id() );
@@ -172,6 +180,11 @@ class ProductPageOrderCheckoutTest extends WcAjaxEndpointTestCase {
 
 		$purchase_unit = Mockery::mock( PurchaseUnit::class )->shouldIgnoreMissing();
 		$purchase_unit->allows( 'payments' )->andReturn( $capture_id ? $payments : null );
+		if ( $this->checkout_wc_order ) {
+			$purchase_unit->allows( 'amount' )->andReturn(
+				new Amount( new Money( (float) $this->checkout_wc_order->get_total(), $this->checkout_wc_order->get_currency() ) )
+			);
+		}
 
 		$order = Mockery::mock( Order::class )->shouldIgnoreMissing();
 		$order->allows( 'id' )->andReturn( $id );

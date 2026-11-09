@@ -30,40 +30,15 @@ class CheckoutOrderApproved implements RequestHandler {
 
 	use RequestHandlerTrait;
 
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
+	private LoggerInterface $logger;
 
-	/**
-	 * The order endpoint.
-	 *
-	 * @var OrderEndpoint
-	 */
-	private $order_endpoint;
+	private OrderEndpoint $order_endpoint;
 
-	/**
-	 * The Session handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
+	private SessionHandler $session_handler;
 
-	/**
-	 * The funding source renderer.
-	 *
-	 * @var FundingSourceRenderer
-	 */
-	protected $funding_source_renderer;
+	protected FundingSourceRenderer $funding_source_renderer;
 
-	/**
-	 * The processor for orders.
-	 *
-	 * @var OrderProcessor
-	 */
-	protected $order_processor;
+	protected OrderProcessor $order_processor;
 
 	/**
 	 * CheckoutOrderApproved constructor.
@@ -215,7 +190,7 @@ class CheckoutOrderApproved implements RequestHandler {
 				}
 			);
 		} else {
-			$wc_orders = $this->get_wc_orders_from_custom_ids( $wc_order_ids );
+			$wc_orders = $this->get_wc_orders_from_custom_ids( $wc_order_ids, $order_id );
 			if ( ! $wc_orders ) {
 				return $this->no_wc_orders_response( $request );
 			}

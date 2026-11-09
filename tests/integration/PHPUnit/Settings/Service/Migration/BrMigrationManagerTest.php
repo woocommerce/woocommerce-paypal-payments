@@ -31,6 +31,7 @@ class BrMigrationManagerTest extends AbstractMigrationManager {
 				'capture_for_virtual_only'       => false,
 				'card_billing_data_mode'         => 'minimal_input',
 				'allow_card_button_gateway'      => true,
+				'3d_secure_contingency'          => 'NO_3D_SECURE',
 			)
 		);
 	}

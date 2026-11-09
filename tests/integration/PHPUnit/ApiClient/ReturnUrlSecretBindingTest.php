@@ -110,17 +110,21 @@ class ReturnUrlSecretBindingTest extends TestCase {
 	 *       change, so 'woocommerce_paypal_payments_gateway_migrate' never fired
 	 *       during this run
 	 * WHEN the value that 'ppcp_return_url_binding_since' held at boot is read
-	 * THEN it is absent
+	 * THEN it is absent, or it is a stamp from before this test process started
 	 *
 	 * @scenario Booting must not stamp the option. A fresh install has no order in
 	 *           transit to rescue, so a stamp there would only make ReturnUrlEndpoint
 	 *           accept tokens that carry no bound secret for the width of the grace
-	 *           window. The value is captured before the first test runs, so the
-	 *           assertion cannot be satisfied by another test in this class having
-	 *           deleted the option.
+	 *           window. A shared site can hold a stamp from an earlier plugin update,
+	 *           so only a stamp written during this process counts as a boot write.
+	 *           The value is captured before the first test runs, so the assertion
+	 *           cannot be satisfied by another test in this class having deleted
+	 *           the option.
 	 */
 	public function test_boot_alone_does_not_write_the_binding_since_option(): void {
-		$this->assertFalse( self::$binding_since_at_boot );
+		$process_start = (int) $_SERVER['REQUEST_TIME'];
+
+		$this->assertLessThan( $process_start, (int) self::$binding_since_at_boot );
 	}
 
 	/**
