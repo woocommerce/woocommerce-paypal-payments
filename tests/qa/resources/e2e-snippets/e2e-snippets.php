@@ -47,6 +47,17 @@ add_filter('woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabl
 add_filter( 'wc_order_milestone_egg_enabled', '__return_false' );
 
 /**
+ * Disable the server-side shipping callback on non-HTTPS sites (wp-env in CI and WSL).
+ * A simulated webhook turns it on, but PayPal rejects the private http callback_url with INVALID_PARAMETER_VALUE.
+ */
+add_filter(
+	'woocommerce.feature-flags.woocommerce_paypal_payments.server_side_shipping_callback_enabled',
+	function ( $enabled ) {
+		return is_ssl() ? $enabled : false;
+	}
+);
+
+/**
  * Load NGROK_HOST from a CI-written file, since wp-env can't pass env vars.
  */
 if ( ! getenv( 'NGROK_HOST' ) ) {
