@@ -1,16 +1,15 @@
 <?php
+
 /**
  * Endpoint to handle PayPal Subscription created.
  *
  * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
-
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
-use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -23,235 +22,187 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
-
 /**
  * Class ApproveSubscriptionEndpoint
  */
-class ApproveSubscriptionEndpoint implements EndpointInterface {
-
-	const ENDPOINT = 'ppc-approve-subscription';
-
-	const VALID_SUBSCRIPTION_STATUSES = array( 'ACTIVE', 'APPROVED' );
-
-	/**
-	 * The request data helper.
-	 *
-	 * @var RequestData
-	 */
-	private $request_data;
-
-	/**
-	 * The order endpoint.
-	 *
-	 * @var OrderEndpoint
-	 */
-	private $order_endpoint;
-
-	/**
-	 * The session handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
-
-	private PayNowOrderHandler $pay_now_order_handler;
-	private BillingSubscriptions $billing_subscriptions;
-	private LoggerInterface $logger;
-	private SubscriptionHelper $subscription_helper;
-
-	public function __construct(
-		RequestData $request_data,
-		OrderEndpoint $order_endpoint,
-		SessionHandler $session_handler,
-		PayNowOrderHandler $pay_now_order_handler,
-		BillingSubscriptions $billing_subscriptions,
-		LoggerInterface $logger,
-		SubscriptionHelper $subscription_helper
-	) {
-		$this->request_data          = $request_data;
-		$this->order_endpoint        = $order_endpoint;
-		$this->session_handler       = $session_handler;
-		$this->pay_now_order_handler = $pay_now_order_handler;
-		$this->billing_subscriptions = $billing_subscriptions;
-		$this->logger                = $logger;
-		$this->subscription_helper   = $subscription_helper;
-	}
-
-	/**
-	 * The nonce.
-	 *
-	 * @return string
-	 */
-	public static function nonce(): string {
-		return self::ENDPOINT;
-	}
-
-	/**
-	 * Handles the request.
-	 *
-	 * @throws RuntimeException When order not found or handling failed.
-	 */
-	public function handle_request(): void {
-		try {
-			$data = $this->request_data->read_request( $this->nonce() );
-			if ( ! isset( $data['order_id'] ) ) {
-				throw new RuntimeException( 'No order id given' );
-			}
-
-			$paypal_subscription_id = $data['subscription_id'] ?? '';
-			$subscription           = $paypal_subscription_id
-				? $this->validate_subscription( $paypal_subscription_id )
-				: null;
-
-			// Ensure the PayPal order belongs to the current session before it is stored.
-			$order = $this->order_endpoint->order( $data['order_id'] );
-
-			// Always bind the supplied PayPal order to the current shopper session.
-			$purchase_units = $order->purchase_units();
-			if ( ! empty( $purchase_units ) ) {
-				$this->validate_custom_id_ownership( (string) $purchase_units[0]->custom_id() );
-			}
-
-			if ( $subscription ) {
-				// Additionally require the order to have been approved by the
-				// payer that owns the subscription.
-				$this->validate_order_belongs_to_subscriber( $order, $subscription );
-			}
-
-			$this->session_handler->replace_order( $order );
-
-			if ( $paypal_subscription_id ) {
-				WC()->session->set( 'ppcp_subscription_id', $paypal_subscription_id );
-				WC()->session->set( 'ppcp_subscription_cart_hash', WC()->cart->get_cart_hash() );
-			}
-
-			if ( $this->pay_now_order_handler->applies( $data ) ) {
-				$redirect_url = $this->pay_now_order_handler->pay( $order );
-				wp_send_json_success( array( 'order_received_url' => $redirect_url ) );
-			}
-
-			wp_send_json_success();
-
-		} catch ( NonceValidationException $error ) {
-			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
-		} catch ( Exception $error ) {
-			$this->logger->error( 'Subscription approve failed: ' . $error->getMessage() );
-
-			wp_send_json_error(
-				array(
-					'name'    => $error instanceof PayPalApiException ? $error->name() : '',
-					'message' => $error->getMessage(),
-					'code'    => $error->getCode(),
-					'details' => $error instanceof PayPalApiException ? $error->details() : (object) array(),
-				)
-			);
-		}
-	}
-
-	/**
-	 * Validates subscription status, ownership and plan ID.
-	 *
-	 * @param string $subscription_id The PayPal subscription ID.
-	 * @return \stdClass The validated PayPal subscription.
-	 * @throws RuntimeException When the subscription status is invalid, it does not belong
-	 *                          to the current session, or the plan ID doesn't match.
-	 */
-	private function validate_subscription( string $subscription_id ): \stdClass {
-		$subscription = $this->billing_subscriptions->subscription( $subscription_id );
-		$status       = $subscription->status ?? '';
-
-		if ( ! in_array( $status, self::VALID_SUBSCRIPTION_STATUSES, true ) ) {
-			throw new RuntimeException(
-				"Invalid subscription status: $status"
-			);
-		}
-
-		/*
-		 * The subscription must carry the custom_id we injected into
-		 * actions.subscription.create() for the current session. A subscription created in a
-		 * different session carries a different custom_id and is rejected before replace_order().
-		 */
-		$this->validate_custom_id_ownership( (string) ( $subscription->custom_id ?? '' ) );
-
-		$plan_id          = $subscription->plan_id ?? '';
-		$expected_plan_id = $this->subscription_helper->paypal_subscription_variation_from_cart();
-		if ( ! $expected_plan_id ) {
-			$expected_plan_id = $this->subscription_helper->paypal_subscription_id();
-		}
-
-		if ( ! $plan_id || ! $expected_plan_id || $plan_id !== $expected_plan_id ) {
-			throw new RuntimeException( 'Subscription plan ID does not match any cart product plan' );
-		}
-
-		return $subscription;
-	}
-
-	/**
-	 * Binds the supplied PayPal order to the validated subscription.
-	 *
-	 * The order's payer must match the subscription's subscriber. A different order_id swapped
-	 * into the request was approved by another PayPal account, so its payer will not match and
-	 * the order is rejected before it is stored in the session.
-	 *
-	 * @param Order     $order The PayPal order fetched from the supplied order_id.
-	 * @param \stdClass $subscription The validated PayPal subscription.
-	 * @throws RuntimeException When the order was not approved by the subscription's subscriber.
-	 */
-	private function validate_order_belongs_to_subscriber( Order $order, \stdClass $subscription ): void {
-		$subscriber_payer_id = (string) ( $subscription->subscriber->payer_id ?? '' );
-		$payer               = $order->payer();
-		$order_payer_id      = $payer ? $payer->payer_id() : '';
-
-		// A native subscription's related order does not reliably expose a resolved
-		// payer id at approval time, so an absent id on either side is treated as
-		// "cannot compare" rather than a failure. Only a present, differing payer (an
-		// order approved by another account) is rejected.
-		//
-		// Security note: this binding is best-effort. The subscription itself is
-		// session-bound by validate_subscription() (status + custom_id ownership +
-		// plan match), but the order is bound to the subscriber only when both payer
-		// ids resolve here — validate_custom_id_ownership() returns early for an order
-		// whose custom_id lacks the CustomIds::CUSTOMER_ID_PREFIX, so such an order
-		// with an unresolved payer is not independently tied to the subscriber.
-		if ( '' === $subscriber_payer_id || '' === $order_payer_id ) {
-			return;
-		}
-
-		if ( $order_payer_id !== $subscriber_payer_id ) {
-			throw new RuntimeException(
-				__( 'Order validation failed.', 'woocommerce-paypal-payments' )
-			);
-		}
-	}
-
-	/**
-	 * Rejects a PayPal custom_id that is bound to a different shopper session.
-	 *
-	 * Mirrors the ownership check in ApproveOrderEndpoint: only custom_id values that
-	 * carry our session prefix (see PurchaseUnitFactory::from_wc_cart() and the
-	 * custom_id injected into actions.subscription.create()) are validated, so
-	 * subscriptions/orders created without the prefix (e.g. older cached scripts) are
-	 * left untouched.
-	 *
-	 * @param string $custom_id The custom_id from the PayPal subscription or order.
-	 * @throws RuntimeException When the custom_id belongs to a different session.
-	 */
-	private function validate_custom_id_ownership( string $custom_id ): void {
-		if ( strpos( $custom_id, CustomIds::CUSTOMER_ID_PREFIX ) !== 0 ) {
-			return;
-		}
-
-		$wc_session = WC()->session;
-		if ( ! $wc_session instanceof WC_Session_Handler ) {
-			return;
-		}
-
-		$bound_session_id   = substr( $custom_id, strlen( CustomIds::CUSTOMER_ID_PREFIX ) );
-		$current_session_id = (string) $wc_session->get_customer_unique_id();
-		if ( $bound_session_id !== $current_session_id ) {
-			throw new RuntimeException(
-				__( 'Order validation failed.', 'woocommerce-paypal-payments' )
-			);
-		}
-	}
+class ApproveSubscriptionEndpoint implements \WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface
+{
+    const ENDPOINT = 'ppc-approve-subscription';
+    const VALID_SUBSCRIPTION_STATUSES = array('ACTIVE', 'APPROVED');
+    /**
+     * The request data helper.
+     *
+     * @var RequestData
+     */
+    private $request_data;
+    /**
+     * The order endpoint.
+     *
+     * @var OrderEndpoint
+     */
+    private $order_endpoint;
+    /**
+     * The session handler.
+     *
+     * @var SessionHandler
+     */
+    private $session_handler;
+    private PayNowOrderHandler $pay_now_order_handler;
+    private BillingSubscriptions $billing_subscriptions;
+    private LoggerInterface $logger;
+    private SubscriptionHelper $subscription_helper;
+    public function __construct(RequestData $request_data, OrderEndpoint $order_endpoint, SessionHandler $session_handler, PayNowOrderHandler $pay_now_order_handler, BillingSubscriptions $billing_subscriptions, LoggerInterface $logger, SubscriptionHelper $subscription_helper)
+    {
+        $this->request_data = $request_data;
+        $this->order_endpoint = $order_endpoint;
+        $this->session_handler = $session_handler;
+        $this->pay_now_order_handler = $pay_now_order_handler;
+        $this->billing_subscriptions = $billing_subscriptions;
+        $this->logger = $logger;
+        $this->subscription_helper = $subscription_helper;
+    }
+    /**
+     * The nonce.
+     *
+     * @return string
+     */
+    public static function nonce(): string
+    {
+        return self::ENDPOINT;
+    }
+    /**
+     * Handles the request.
+     *
+     * @throws RuntimeException When order not found or handling failed.
+     */
+    public function handle_request(): void
+    {
+        try {
+            $data = $this->request_data->read_request($this->nonce());
+            if (!isset($data['order_id'])) {
+                throw new RuntimeException('No order id given');
+            }
+            $paypal_subscription_id = $data['subscription_id'] ?? '';
+            $subscription = $paypal_subscription_id ? $this->validate_subscription($paypal_subscription_id) : null;
+            // Ensure the PayPal order belongs to the current session before it is stored.
+            $order = $this->order_endpoint->order($data['order_id']);
+            // Always bind the supplied PayPal order to the current shopper session.
+            $purchase_units = $order->purchase_units();
+            if (!empty($purchase_units)) {
+                $this->validate_custom_id_ownership((string) $purchase_units[0]->custom_id());
+            }
+            if ($subscription) {
+                // Additionally require the order to have been approved by the
+                // payer that owns the subscription.
+                $this->validate_order_belongs_to_subscriber($order, $subscription);
+            }
+            $this->session_handler->replace_order($order);
+            if ($paypal_subscription_id) {
+                WC()->session->set('ppcp_subscription_id', $paypal_subscription_id);
+                WC()->session->set('ppcp_subscription_cart_hash', WC()->cart->get_cart_hash());
+            }
+            if ($this->pay_now_order_handler->applies($data)) {
+                $redirect_url = $this->pay_now_order_handler->pay($order);
+                wp_send_json_success(array('order_received_url' => $redirect_url));
+            }
+            wp_send_json_success();
+        } catch (NonceValidationException $error) {
+            wp_send_json_error(array('message' => $error->getMessage()), 400);
+        } catch (Exception $error) {
+            $this->logger->error('Subscription approve failed: ' . $error->getMessage());
+            wp_send_json_error(array('name' => $error instanceof PayPalApiException ? $error->name() : '', 'message' => $error->getMessage(), 'code' => $error->getCode(), 'details' => $error instanceof PayPalApiException ? $error->details() : (object) array()));
+        }
+    }
+    /**
+     * Validates subscription status, ownership and plan ID.
+     *
+     * @param string $subscription_id The PayPal subscription ID.
+     * @return \stdClass The validated PayPal subscription.
+     * @throws RuntimeException When the subscription status is invalid, it does not belong
+     *                          to the current session, or the plan ID doesn't match.
+     */
+    private function validate_subscription(string $subscription_id): \stdClass
+    {
+        $subscription = $this->billing_subscriptions->subscription($subscription_id);
+        $status = $subscription->status ?? '';
+        if (!in_array($status, self::VALID_SUBSCRIPTION_STATUSES, \true)) {
+            throw new RuntimeException("Invalid subscription status: {$status}");
+        }
+        /*
+         * The subscription must carry the custom_id we injected into
+         * actions.subscription.create() for the current session. A subscription created in a
+         * different session carries a different custom_id and is rejected before replace_order().
+         */
+        $this->validate_custom_id_ownership((string) ($subscription->custom_id ?? ''));
+        $plan_id = $subscription->plan_id ?? '';
+        $expected_plan_id = $this->subscription_helper->paypal_subscription_variation_from_cart();
+        if (!$expected_plan_id) {
+            $expected_plan_id = $this->subscription_helper->paypal_subscription_id();
+        }
+        if (!$plan_id || !$expected_plan_id || $plan_id !== $expected_plan_id) {
+            throw new RuntimeException('Subscription plan ID does not match any cart product plan');
+        }
+        return $subscription;
+    }
+    /**
+     * Binds the supplied PayPal order to the validated subscription.
+     *
+     * The order's payer must match the subscription's subscriber. A different order_id swapped
+     * into the request was approved by another PayPal account, so its payer will not match and
+     * the order is rejected before it is stored in the session.
+     *
+     * @param Order     $order The PayPal order fetched from the supplied order_id.
+     * @param \stdClass $subscription The validated PayPal subscription.
+     * @throws RuntimeException When the order was not approved by the subscription's subscriber.
+     */
+    private function validate_order_belongs_to_subscriber(Order $order, \stdClass $subscription): void
+    {
+        $subscriber_payer_id = (string) ($subscription->subscriber->payer_id ?? '');
+        $payer = $order->payer();
+        $order_payer_id = $payer ? $payer->payer_id() : '';
+        // A native subscription's related order does not reliably expose a resolved
+        // payer id at approval time, so an absent id on either side is treated as
+        // "cannot compare" rather than a failure. Only a present, differing payer (an
+        // order approved by another account) is rejected.
+        //
+        // Security note: this binding is best-effort. The subscription itself is
+        // session-bound by validate_subscription() (status + custom_id ownership +
+        // plan match), but the order is bound to the subscriber only when both payer
+        // ids resolve here — validate_custom_id_ownership() returns early for an order
+        // whose custom_id lacks the CustomIds::CUSTOMER_ID_PREFIX, so such an order
+        // with an unresolved payer is not independently tied to the subscriber.
+        if ('' === $subscriber_payer_id || '' === $order_payer_id) {
+            return;
+        }
+        if ($order_payer_id !== $subscriber_payer_id) {
+            throw new RuntimeException(__('Order validation failed.', 'woocommerce-paypal-payments'));
+        }
+    }
+    /**
+     * Rejects a PayPal custom_id that is bound to a different shopper session.
+     *
+     * Mirrors the ownership check in ApproveOrderEndpoint: only custom_id values that
+     * carry our session prefix (see PurchaseUnitFactory::from_wc_cart() and the
+     * custom_id injected into actions.subscription.create()) are validated, so
+     * subscriptions/orders created without the prefix (e.g. older cached scripts) are
+     * left untouched.
+     *
+     * @param string $custom_id The custom_id from the PayPal subscription or order.
+     * @throws RuntimeException When the custom_id belongs to a different session.
+     */
+    private function validate_custom_id_ownership(string $custom_id): void
+    {
+        if (strpos($custom_id, CustomIds::CUSTOMER_ID_PREFIX) !== 0) {
+            return;
+        }
+        $wc_session = WC()->session;
+        if (!$wc_session instanceof WC_Session_Handler) {
+            return;
+        }
+        $bound_session_id = substr($custom_id, strlen(CustomIds::CUSTOMER_ID_PREFIX));
+        $current_session_id = (string) $wc_session->get_customer_unique_id();
+        if ($bound_session_id !== $current_session_id) {
+            throw new RuntimeException(__('Order validation failed.', 'woocommerce-paypal-payments'));
+        }
+    }
 }
