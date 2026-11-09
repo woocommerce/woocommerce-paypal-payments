@@ -84,10 +84,36 @@ class EarlyOrderHandler
                 $order_id = (int) $purchase_unit->custom_id();
             }
         }
-        if ($order_id === $resume_order_id) {
-            $value = $order_id;
+        if ($order_id !== $resume_order_id) {
+            return $value;
+        }
+        $wc_order = wc_get_order($order_id);
+        if (!$wc_order instanceof \WC_Order) {
+            return $value;
+        }
+        if ($wc_order->needs_payment()) {
+            return $order_id;
+        }
+        /**
+         * WC_Checkout completes any resumed order that does not need payment, as if it was free.
+         * An order settled by the approved webhook (paid, or on-hold for authorizations and
+         * pending captures) goes straight to its order-received page instead.
+         * Any other order (e.g. cancelled) is not resumed, so WC_Checkout creates a new one.
+         */
+        if ($wc_order->get_meta(PayPalGateway::ORDER_ID_META_KEY) === $order->id() && ($wc_order->is_paid() || $wc_order->has_status('on-hold'))) {
+            $this->redirect_to_order_received($wc_order);
         }
         return $value;
+    }
+    /**
+     * Ends the checkout request with a redirect to the order-received page of the given order.
+     *
+     * @param \WC_Order $wc_order The WC order.
+     */
+    private function redirect_to_order_received(\WC_Order $wc_order): void
+    {
+        $this->session_handler->destroy_session_data();
+        wp_send_json(array('result' => 'success', 'redirect' => $wc_order->get_checkout_order_received_url()));
     }
     //phpcs:enable WordPress.Security.NonceVerification.Recommended
     /**

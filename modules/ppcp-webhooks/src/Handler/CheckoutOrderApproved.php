@@ -27,36 +27,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 class CheckoutOrderApproved implements \WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler
 {
     use \WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * The order endpoint.
-     *
-     * @var OrderEndpoint
-     */
-    private $order_endpoint;
-    /**
-     * The Session handler.
-     *
-     * @var SessionHandler
-     */
-    private $session_handler;
-    /**
-     * The funding source renderer.
-     *
-     * @var FundingSourceRenderer
-     */
-    protected $funding_source_renderer;
-    /**
-     * The processor for orders.
-     *
-     * @var OrderProcessor
-     */
-    protected $order_processor;
+    private LoggerInterface $logger;
+    private OrderEndpoint $order_endpoint;
+    private SessionHandler $session_handler;
+    protected FundingSourceRenderer $funding_source_renderer;
+    protected OrderProcessor $order_processor;
     /**
      * CheckoutOrderApproved constructor.
      *
@@ -164,7 +139,7 @@ class CheckoutOrderApproved implements \WooCommerce\PayPalCommerce\Webhooks\Hand
                 $session->forget_session();
             });
         } else {
-            $wc_orders = $this->get_wc_orders_from_custom_ids($wc_order_ids);
+            $wc_orders = $this->get_wc_orders_from_custom_ids($wc_order_ids, $order_id);
             if (!$wc_orders) {
                 return $this->no_wc_orders_response($request);
             }

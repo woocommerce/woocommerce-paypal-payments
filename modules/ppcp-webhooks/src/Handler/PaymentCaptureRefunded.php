@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
@@ -24,28 +25,21 @@ class PaymentCaptureRefunded implements \WooCommerce\PayPalCommerce\Webhooks\Han
     use TransactionIdHandlingTrait;
     use RefundMetaTrait;
     use \WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private $logger;
-    /**
-     * The refund fees updater.
-     *
-     * @var RefundFeesUpdater
-     */
-    private $refund_fees_updater;
+    private LoggerInterface $logger;
+    private RefundFeesUpdater $refund_fees_updater;
+    private OrderEndpoint $order_endpoint;
     /**
      * PaymentCaptureRefunded constructor.
      *
      * @param LoggerInterface   $logger The logger.
      * @param RefundFeesUpdater $refund_fees_updater The refund fees updater.
+     * @param OrderEndpoint     $order_endpoint The order endpoint.
      */
-    public function __construct(LoggerInterface $logger, RefundFeesUpdater $refund_fees_updater)
+    public function __construct(LoggerInterface $logger, RefundFeesUpdater $refund_fees_updater, OrderEndpoint $order_endpoint)
     {
         $this->logger = $logger;
         $this->refund_fees_updater = $refund_fees_updater;
+        $this->order_endpoint = $order_endpoint;
     }
     /**
      * The event types a handler handles.
@@ -84,14 +78,14 @@ class PaymentCaptureRefunded implements \WooCommerce\PayPalCommerce\Webhooks\Han
             return $this->failure_response($message);
         }
         $wc_order = wc_get_order($order_id);
-        if (!$wc_order instanceof WC_Order) {
-            $message = sprintf('Order for PayPal refund %s not found.', $refund_id);
-            return $this->failure_response($message);
-        }
-        $already_added_refunds = $this->get_refunds_meta($wc_order);
-        if (in_array($refund_id, $already_added_refunds, \true)) {
+        // Check the refund meta first: is_payment_of_wc_order() may call the PayPal order API.
+        if ($wc_order instanceof WC_Order && in_array($refund_id, $this->get_refunds_meta($wc_order), \true)) {
             $this->logger->info("Refund {$refund_id} is already handled.");
             return $this->success_response();
+        }
+        if (!$wc_order instanceof WC_Order || !$this->is_payment_of_wc_order($request, $wc_order, $this->order_endpoint)) {
+            $message = sprintf('Order for PayPal refund %s not found.', $refund_id);
+            return $this->failure_response($message);
         }
         $refund = wc_create_refund(array('order_id' => $wc_order->get_id(), 'amount' => $request['resource']['amount']['value']));
         if ($refund instanceof WP_Error) {

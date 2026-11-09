@@ -522,6 +522,7 @@ class ComposerStaticInita712320141b04cc5c486f9729bb428e3
         'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\P24Gateway' => __DIR__ . '/../..' . '/modules/ppcp-local-alternative-payment-methods/src/P24Gateway.php',
         'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\P24PaymentMethod' => __DIR__ . '/../..' . '/modules/ppcp-local-alternative-payment-methods/src/P24PaymentMethod.php',
         'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PWCGateway' => __DIR__ . '/../..' . '/modules/ppcp-local-alternative-payment-methods/src/PWCGateway.php',
+        'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PWCOrderReceivedUrl' => __DIR__ . '/../..' . '/modules/ppcp-local-alternative-payment-methods/src/PWCOrderReceivedUrl.php',
         'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PWCPaymentMethod' => __DIR__ . '/../..' . '/modules/ppcp-local-alternative-payment-methods/src/PWCPaymentMethod.php',
         'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PayUponInvoice\\PUIPaymentMethod' => __DIR__ . '/../..' . '/modules/ppcp-local-alternative-payment-methods/src/PayUponInvoice/PUIPaymentMethod.php',
         'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PayUponInvoice\\PayUponInvoiceGateway' => __DIR__ . '/../..' . '/modules/ppcp-local-alternative-payment-methods/src/PayUponInvoice/PayUponInvoiceGateway.php',
