@@ -161,7 +161,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 4.2.1 - XXXX-XX-XX =
+= 4.2.1 - 2026-11-09 =
 * Enhancement - Refresh the SDK v6 client token earlier, so the token served to the buyer stays valid for at least two minutes #4841
 * Enhancement - Show the Store Sync beta invitation only to US-based PayPal merchants #4845
 * Fix - Renewals of existing vaulted PayPal and card subscriptions failing when "Accept manual renewals" is enabled #4824
