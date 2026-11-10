@@ -12,26 +12,25 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 /**
  * Class PaymentCaptureReversed
  */
 class PaymentCaptureReversed implements \WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler
 {
     use \WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
+    private OrderEndpoint $order_endpoint;
     /**
      * PaymentCaptureReversed constructor.
      *
      * @param LoggerInterface $logger The logger.
+     * @param OrderEndpoint   $order_endpoint The order endpoint.
      */
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, OrderEndpoint $order_endpoint)
     {
         $this->logger = $logger;
+        $this->order_endpoint = $order_endpoint;
     }
     /**
      * The event types a handler handles.
@@ -68,7 +67,7 @@ class PaymentCaptureReversed implements \WooCommerce\PayPalCommerce\Webhooks\Han
             return $this->failure_response($message);
         }
         $wc_order = wc_get_order($order_id);
-        if (!$wc_order instanceof \WC_Order) {
+        if (!$wc_order instanceof \WC_Order || !$this->is_payment_of_wc_order($request, $wc_order, $this->order_endpoint)) {
             $message = sprintf('Order for PayPal refund %s not found.', isset($request['resource']['id']) ? $request['resource']['id'] : '');
             return $this->failure_response($message);
         }

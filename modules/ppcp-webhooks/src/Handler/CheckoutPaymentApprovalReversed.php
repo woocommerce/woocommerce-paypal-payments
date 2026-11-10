@@ -17,12 +17,7 @@ use WP_REST_Response;
 class CheckoutPaymentApprovalReversed implements \WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler
 {
     use \WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
-    /**
-     * The logger.
-     *
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected LoggerInterface $logger;
     /**
      * CheckoutPaymentApprovalReversed constructor.
      *
@@ -65,7 +60,7 @@ class CheckoutPaymentApprovalReversed implements \WooCommerce\PayPalCommerce\Web
         if (empty($custom_ids)) {
             return $this->no_custom_ids_response($request);
         }
-        $wc_orders = $this->get_wc_orders_from_custom_ids($custom_ids);
+        $wc_orders = $this->get_wc_orders_from_custom_ids($custom_ids, $this->get_paypal_order_id_from_request($request));
         if (!$wc_orders) {
             return $this->no_wc_orders_response($request);
         }

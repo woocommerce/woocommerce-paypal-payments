@@ -247,12 +247,13 @@ class SdkV6Manager
      */
     public function determine_render_places(): array
     {
-        // Native PayPal Subscriptions defer to v5 (see should_load_on_current_page);
-        // print no v6 wrappers so the classic page hands off cleanly. These render
+        // Native PayPal Subscriptions defer to v5, and the subscription
+        // change-payment page to AddPaymentMethodManager (see
+        // should_load_on_current_page); print no pay-now wrappers there. These render
         // hooks key on the smart-button locations rather than that method, so they
         // need this guard explicitly. Every location is returned false (rather than
         // an empty array) to keep the array shape callers index into.
-        if ($this->is_native_paypal_subscription_page()) {
+        if ($this->is_native_paypal_subscription_page() || $this->subscription_helper->is_subscription_change_payment()) {
             return array('product' => \false, 'cart' => \false, 'checkout' => \false, 'pay-now' => \false, 'mini-cart' => \false);
         }
         $needs_payment = $this->cart_needs_payment();
@@ -266,9 +267,9 @@ class SdkV6Manager
         // turns the total zero once the button adds it - too late for the client.
         $product_enabled = $this->settings_status->is_smart_button_enabled_for_location('product');
         // pay-now is driven by the existing WC order rather than the cart, so
-        // the zero-total guard does not apply to it. The mini-cart checks it at
-        // render time instead (see render_mini_cart_wrapper()).
-        return array('product' => $product_enabled && !$this->is_free_trial_product() && !$this->is_unpayable_free_product() && !$this->is_unsupported_product(), 'cart' => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location('cart'), 'checkout' => ($needs_payment || $free_trial_checkout) && $this->settings_status->is_smart_button_enabled_for_location('checkout'), 'pay-now' => $this->settings_status->is_smart_button_enabled_for_location('pay-now'), 'mini-cart' => $this->settings_status->is_smart_button_enabled_for_location('mini-cart'));
+        // the zero-total guard does not apply to it. The cart and mini-cart check
+        // it at render time instead (see render_cart_wrapper()).
+        return array('product' => $product_enabled && !$this->is_free_trial_product() && !$this->is_unpayable_free_product() && !$this->is_unsupported_product(), 'cart' => $this->settings_status->is_smart_button_enabled_for_location('cart'), 'checkout' => ($needs_payment || $free_trial_checkout) && $this->settings_status->is_smart_button_enabled_for_location('checkout'), 'pay-now' => $this->settings_status->is_smart_button_enabled_for_location('pay-now'), 'mini-cart' => $this->settings_status->is_smart_button_enabled_for_location('mini-cart'));
     }
     /**
      * Whether the current cart still needs payment.
@@ -340,6 +341,20 @@ class SdkV6Manager
         if ($this->is_card_button_row()) {
             $this->render_gateway_wrapper(CardButtonGateway::ID, self::CARD_BUTTON_WRAPPER_ID);
         }
+    }
+    /**
+     * Renders the cart button wrapper.
+     *
+     * The zero-total check runs here, not when the hook is registered: a cart
+     * AJAX update (e.g. selecting free shipping) recalculates the totals after
+     * the hook is registered and before the cart totals render.
+     */
+    public function render_cart_wrapper(): void
+    {
+        if (!$this->cart_needs_payment()) {
+            return;
+        }
+        $this->render_wrapper();
     }
     /**
      * Renders the mini-cart button wrapper.
@@ -522,6 +537,13 @@ class SdkV6Manager
         // actions.subscription.create. Checked before every other gate so it also
         // overrides the sitewide mini-cart fallback below.
         if ($this->is_native_paypal_subscription_page()) {
+            return \false;
+        }
+        // The subscription change-payment page is an order-pay URL, but it must
+        // vault the card rather than charge an order. AddPaymentMethodManager owns
+        // that page; two scripts mounting into the same card inputs breaks the
+        // submit.
+        if ($this->subscription_helper->is_subscription_change_payment()) {
             return \false;
         }
         $page_location = $this->get_page_context();

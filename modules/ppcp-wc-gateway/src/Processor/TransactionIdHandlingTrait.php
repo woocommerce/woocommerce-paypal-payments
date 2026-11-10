@@ -82,11 +82,6 @@ trait TransactionIdHandlingTrait
     /**
      * Whether a capture never took money and so is not this order's transaction.
      *
-     * Storing one as the WooCommerce transaction id is not merely inaccurate: an order
-     * carrying that meta is treated as already paid, so every later attempt on it -
-     * a Subscriptions retry, or the shopper's own order-pay page - is skipped, and the
-     * order cannot be paid again without the meta being removed by hand.
-     *
      * PENDING is deliberately absent: it may yet settle, so its id is the reference to
      * keep. So are the refunded states, which describe money that did move.
      */

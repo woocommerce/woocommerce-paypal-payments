@@ -312,7 +312,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
                 if (!is_cart()) {
                     return;
                 }
-                $manager->render_wrapper();
+                $manager->render_cart_wrapper();
             }, 20);
         }
         if ($places['checkout']) {

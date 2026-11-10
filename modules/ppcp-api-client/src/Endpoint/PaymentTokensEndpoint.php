@@ -102,9 +102,15 @@ class PaymentTokensEndpoint
         $tokens = array();
         $payment_tokens = $json->payment_tokens ?? array();
         foreach ($payment_tokens as $payment_token) {
-            $name = array_key_first((array) $payment_token->payment_source) ?? '';
+            // Skip tokens PayPal returns without a payment source; the other
+            // tokens are still listed.
+            $payment_source = $payment_token->payment_source ?? null;
+            if (!is_object($payment_source)) {
+                continue;
+            }
+            $name = array_key_first((array) $payment_source) ?? '';
             if ($name) {
-                $tokens[] = array('id' => $payment_token->id, 'payment_source' => new PaymentSource($name, $payment_token->payment_source->{$name}));
+                $tokens[] = array('id' => $payment_token->id, 'payment_source' => new PaymentSource($name, $payment_source->{$name}));
             }
         }
         return $tokens;

@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.
  *
@@ -129,6 +130,8 @@ class AgenticCheckoutProcessor
         }
         // Mark as agentic commerce order with metadata.
         $wc_order->update_meta_data('_paypal_order_id', $paypal_order_id);
+        // The webhook handlers accept only the events of the PayPal order saved here.
+        $wc_order->update_meta_data(PayPalGateway::ORDER_ID_META_KEY, $paypal_order_id);
         $wc_order->update_meta_data('_agentic_commerce', '1');
         $wc_order->set_status('on-hold', 'Awaiting PayPal payment capture.');
         $wc_order->save();

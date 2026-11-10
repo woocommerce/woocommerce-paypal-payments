@@ -374,6 +374,11 @@ class ReturnUrlEndpoint
         if ($payment_method === $this->gateway->id) {
             return $this->gateway;
         }
+        // The shopper controls the payment method of a pending order; only
+        // this plugin's gateways may finish it.
+        if (strpos($payment_method, 'ppcp-') !== 0) {
+            return null;
+        }
         // For other payment methods (like AXO), get from WooCommerce.
         $available_gateways = WC()->payment_gateways->get_available_payment_gateways();
         if (isset($available_gateways[$payment_method])) {
@@ -383,6 +388,7 @@ class ReturnUrlEndpoint
         // where DisableGateways offers PayPal alone - so the gateway that sent the
         // buyer to PayPal is missing from the list above on the way back.
         $registered_gateways = WC()->payment_gateways->payment_gateways();
-        return $registered_gateways[$payment_method] ?? null;
+        $gateway = $registered_gateways[$payment_method] ?? null;
+        return $gateway && 'yes' === $gateway->enabled ? $gateway : null;
     }
 }

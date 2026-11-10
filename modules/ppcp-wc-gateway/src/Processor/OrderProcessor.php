@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
@@ -225,13 +226,45 @@ class OrderProcessor
              * final when the order was created from the cart. When the amount is
              * unchanged it is therefore safe to skip the patch and capture the order
              * as-is. Any other failure (including an actual amount change) is re-thrown.
+             *
+             * This does not hold for an order that was created for another WooCommerce
+             * order (pay for order): the webhooks complete the order named by custom_id,
+             * so capturing it as-is would mark both orders as paid. The PayPal order ID
+             * is removed again so that a retry, void, or tracking does not act on the
+             * other order's PayPal order.
              */
             if ($exception->status_code() !== 422 || !$amount_unchanged) {
+                throw $exception;
+            }
+            if ($this->is_bound_to_other_wc_order($order, $updated_order)) {
+                $this->logger->warning(sprintf('Not skipping the rejected order patch for order #%1$d: PayPal order %2$s belongs to another WooCommerce order.', $wc_order->get_id(), $order->id()));
+                $wc_order->delete_meta_data(PayPalGateway::ORDER_ID_META_KEY);
+                $wc_order->save();
                 throw $exception;
             }
             $this->logger->warning(sprintf('Skipping order patch for order #%1$d: PayPal rejected it because the order is locked after confirming a vaulted payment, and the amount is unchanged so capture can proceed. %2$s', $wc_order->get_id(), $exception->getMessage()));
         }
         return $order;
+    }
+    /**
+     * Determines whether the custom_id of the PayPal order (as it exists at PayPal)
+     * differs from the one built for the WooCommerce order being paid, which already
+     * includes any filtered custom_id. An empty custom_id (product and cart buttons)
+     * or a session ID (checkout) names no WooCommerce order.
+     */
+    private function is_bound_to_other_wc_order(Order $order, Order $updated_order): bool
+    {
+        $own_custom_ids = array_map(static fn(PurchaseUnit $purchase_unit): string => $purchase_unit->custom_id(), $updated_order->purchase_units());
+        foreach ($order->purchase_units() as $purchase_unit) {
+            $custom_id = $purchase_unit->custom_id();
+            if (!$custom_id || strpos($custom_id, CustomIds::CUSTOMER_ID_PREFIX) === 0) {
+                continue;
+            }
+            if (!in_array($custom_id, $own_custom_ids, \true)) {
+                return \true;
+            }
+        }
+        return \false;
     }
     /**
      * Determines whether the purchase unit amounts of two orders are identical,
@@ -292,13 +325,18 @@ class OrderProcessor
     /**
      * Verifies whether the order can be processed.
      *
+     * A transaction ID alone does not mean the order was paid: another gateway
+     * may have stored one for a payment that was later cancelled. Only a paid or
+     * on-hold order is skipped.
+     *
      * @param WC_Order $wc_order The WooCommerce order.
      * @return bool
      */
     private function verify_order_can_be_processed(WC_Order $wc_order): bool
     {
-        if ($wc_order->get_transaction_id()) {
-            $this->logger->info(sprintf('Order #%d already has transaction ID "%s", skipping payment processing.', $wc_order->get_id(), $wc_order->get_transaction_id()));
+        $settled_statuses = array_merge((array) wc_get_is_paid_statuses(), array('on-hold'));
+        if ($wc_order->get_transaction_id() && $wc_order->has_status($settled_statuses)) {
+            $this->logger->info(sprintf('Order #%d already has transaction ID "%s" and status "%s", skipping payment processing.', $wc_order->get_id(), $wc_order->get_transaction_id(), $wc_order->get_status()));
             return \false;
         }
         return \true;

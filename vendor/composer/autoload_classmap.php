@@ -305,6 +305,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\P24Gateway' => $baseDir . '/modules/ppcp-local-alternative-payment-methods/src/P24Gateway.php',
     'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\P24PaymentMethod' => $baseDir . '/modules/ppcp-local-alternative-payment-methods/src/P24PaymentMethod.php',
     'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PWCGateway' => $baseDir . '/modules/ppcp-local-alternative-payment-methods/src/PWCGateway.php',
+    'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PWCOrderReceivedUrl' => $baseDir . '/modules/ppcp-local-alternative-payment-methods/src/PWCOrderReceivedUrl.php',
     'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PWCPaymentMethod' => $baseDir . '/modules/ppcp-local-alternative-payment-methods/src/PWCPaymentMethod.php',
     'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PayUponInvoice\\PUIPaymentMethod' => $baseDir . '/modules/ppcp-local-alternative-payment-methods/src/PayUponInvoice/PUIPaymentMethod.php',
     'WooCommerce\\PayPalCommerce\\LocalAlternativePaymentMethods\\PayUponInvoice\\PayUponInvoiceGateway' => $baseDir . '/modules/ppcp-local-alternative-payment-methods/src/PayUponInvoice/PayUponInvoiceGateway.php',
