@@ -1,0 +1,84 @@
+name: QIT E2E tests
+
+on:
+  pull_request
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    name: QIT E2E tests
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    # PHP
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 7.4
+        tools: composer
+        coverage: none
+
+    # Node
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Cache Node deps
+      id: node-cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ./node_modules
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-node_modules-${{ hashFiles('package-lock.json') }}
+
+    # Build
+    - name: Build plugin package
+      shell: bash
+      run: |
+        npm run build
+
+    # QIT CLI
+    - name: Install QIT via composer
+      run: composer require woocommerce/qit-cli --dev
+
+    - name: Add partner for QIT
+      run: ./vendor/bin/qit partner:add --user='${{ secrets.PARTNER_USER }}' --application_password='${{ secrets.PARTNER_SECRET }}'
+
+    # E2E test environment
+    - name: Fill in .env
+      run: |
+        echo 'PAYPAL_MERCHANT_ID="${{ secrets.PAYPAL_MERCHANT_ID }}"' >> .env
+        echo 'PAYPAL_MERCHANT_EMAIL="${{ secrets.PAYPAL_MERCHANT_EMAIL }}"' >> .env
+        echo 'PAYPAL_CLIENT_ID="${{ secrets.PAYPAL_CLIENT_ID }}"' >> .env
+        echo 'PAYPAL_CLIENT_SECRET="${{ secrets.PAYPAL_CLIENT_SECRET }}"' >> .env
+        echo 'PAYPAL_CUSTOMER_EMAIL="${{ secrets.PAYPAL_CUSTOMER_EMAIL }}"' >> .env
+        echo 'PAYPAL_CUSTOMER_PASSWORD="${{ secrets.PAYPAL_CUSTOMER_PASSWORD }}"' >> .env
+        echo 'STRIPE_PUB_KEY="${{ secrets.STRIPE_PUB_KEY }}"' >> .env
+        echo 'STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}"' >> .env
+
+    - name: Run E2E tests
+      shell: bash
+      run: ./vendor/bin/qit run:e2e woocommerce-paypal-payments --source ./ --plugin woocommerce --plugin woocommerce-subscriptions --plugin woocommerce-gateway-stripe:test:setup-tests --env_file .env
+
+    - name: Set the path in an env var
+      if: ${{ failure() }}
+      run: echo "E2E_REPORT_PATH=$(./vendor/bin/qit e2e-report --dir_only --local)/playwright" >> $GITHUB_ENV
+
+    - name: Upload E2E test results
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: E2E-test-results
+        path: ${{ env.E2E_REPORT_PATH }}
+        if-no-files-found: ignore
+        retention-days: 2
