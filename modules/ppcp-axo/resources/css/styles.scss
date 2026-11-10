@@ -214,6 +214,10 @@
 	}
 }
 
+#payment .payment_methods li label[for="payment_method_ppcp-axo-gateway"] .ppcp-card-icon {
+	max-height: 25px;
+}
+
 #payment .payment_methods li.payment_method_ppcp-axo-gateway .ppcp-card-icon {
 	float: none;
 	max-height: initial

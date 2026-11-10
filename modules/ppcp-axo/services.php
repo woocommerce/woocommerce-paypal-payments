@@ -98,6 +98,7 @@ return array(
 			$container->get( 'wcgateway.builder.experience-context' ),
 			$container->get( 'settings.data.settings' ),
 			$container->get( 'api.factory.payer' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'api.helper.return-url-secret' )
 		);
 	},

@@ -569,7 +569,12 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExecutableM
 			return;
 		}
 
-		wp_safe_redirect( $order->get_checkout_order_received_url() );
+		$url = ( new PWCOrderReceivedUrl() )->without_token( $order, $params );
+		if ( ! $url ) {
+			return;
+		}
+
+		wp_safe_redirect( $url );
 		exit;
 	}
 

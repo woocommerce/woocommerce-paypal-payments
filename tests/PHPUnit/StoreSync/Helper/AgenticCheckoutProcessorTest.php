@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\StoreSync\Schema\ShippingOption;
 use WooCommerce\PayPalCommerce\StoreSync\StoreData\StorePayPalCart;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use function Brain\Monkey\Functions\when;
 
 class AgenticCheckoutProcessorTest extends TestCase {
@@ -199,6 +200,47 @@ class AgenticCheckoutProcessorTest extends TestCase {
 			$remove_filter_hook,
 			'remove_filter must be called with the correct hook even when create_from_paypal_order throws'
 		);
+	}
+
+	/**
+	 * GIVEN WooCommerceOrderCreator::create_from_paypal_order() returns the WC order
+	 * WHEN create_order() is called via reflection
+	 * THEN the PayPal order ID is saved in the meta by which the webhook handlers recognize the events of this order
+	 */
+	public function test_create_order_saves_paypal_order_id_for_webhooks(): void {
+		when( 'add_filter' )->justReturn( true );
+		when( 'remove_filter' )->justReturn( true );
+
+		$wc_order = Mockery::mock( WC_Order::class );
+		$wc_order->expects( 'update_meta_data' )->with( PayPalGateway::ORDER_ID_META_KEY, 'ORDER-123' );
+		$wc_order->allows( 'update_meta_data' );
+		$wc_order->allows( 'set_status' );
+		$wc_order->expects( 'save' );
+
+		$wc_order_creator = Mockery::mock( WooCommerceOrderCreator::class );
+		$wc_order_creator->allows( 'create_from_paypal_order' )->andReturn( $wc_order );
+
+		$cart = Mockery::mock( PayPalCart::class );
+		$cart->allows( 'customer' )->andReturn( null );
+		$cart->allows( 'billing_address' )->andReturn( null );
+		$cart->allows( 'shipping_address' )->andReturn( Address::create_empty() );
+
+		$payment_method = Mockery::mock( PaymentMethod::class );
+		$payment_method->allows( 'token' )->andReturn( 'tok' );
+		$payment_method->allows( 'payer_id' )->andReturn( 'pid' );
+
+		$method = new ReflectionMethod( AgenticCheckoutProcessor::class, 'create_order' );
+		$method->setAccessible( true );
+		$result = $method->invoke(
+			$this->make_sut( Mockery::mock( ShippingFactory::class ), $wc_order_creator ),
+			Mockery::mock( PayPalOrder::class ),
+			Mockery::mock( CartData::class ),
+			$cart,
+			$payment_method,
+			'ORDER-123'
+		);
+
+		$this->assertSame( $wc_order, $result );
 	}
 
 	/**

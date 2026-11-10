@@ -13,6 +13,12 @@ jest.mock( '../../blocks/V6BridgeContainer', () => ( {
 	V6BridgeContainer: ( props ) => mockWalletContainer( props ),
 } ) );
 
+const mockSelect = jest.fn();
+jest.mock( '@wordpress/data', () => ( {
+	select: ( ...args ) => mockSelect( ...args ),
+	subscribe: jest.fn( () => () => {} ),
+} ) );
+
 import { render, waitFor, act } from '@testing-library/react';
 import { createElement } from '@wordpress/element';
 import { V6WalletComponent } from '../../blocks/V6WalletComponent';
@@ -268,6 +274,34 @@ describe( 'V6WalletComponent', () => {
 			expect( latestContainerProps().rebuildKey ).not.toBe(
 				rebuildKeyBefore
 			);
+		} );
+	} );
+
+	describe( 'sheetTotal', () => {
+		test( 'reads the cart store total, not the billing prop that lags a render behind', async () => {
+			const idle = () => false;
+			mockSelect.mockReturnValue( {
+				hasFinishedResolution: () => true,
+				getCartTotals: () => ( {
+					total_price: '1234',
+					currency_minor_unit: 2,
+				} ),
+				isApplyingCoupon: idle,
+				isRemovingCoupon: idle,
+				hasPendingItemsOperations: idle,
+				isShippingRateBeingSelected: idle,
+				isCustomerDataUpdating: idle,
+			} );
+			renderComponent( {
+				billing: { cartTotal: { value: 5000 } },
+			} );
+			await waitFor( () =>
+				expect( mockWalletContainer ).toHaveBeenCalled()
+			);
+
+			const { overrides } = latestContainerProps();
+
+			expect( overrides.sheetTotal.get() ).toBe( '12.34' );
 		} );
 	} );
 

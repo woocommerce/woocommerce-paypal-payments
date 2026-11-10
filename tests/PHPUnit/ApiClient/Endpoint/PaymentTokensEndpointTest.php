@@ -193,6 +193,48 @@ class PaymentTokensEndpointTest extends TestCase
 	}
 
 	/**
+	 * GIVEN PayPal returns one token without a payment_source next to a complete one
+	 * WHEN payment_tokens_for_customer() maps the response
+	 * THEN the incomplete token is skipped without a PHP warning and the complete one is returned
+	 */
+	public function testPaymentTokensForCustomerSkipsTokensWithoutPaymentSource(): void
+	{
+		$response_body = json_encode([
+			'payment_tokens' => [
+				[
+					'id' => 'tok_incomplete',
+				],
+				[
+					'id' => 'tok_card',
+					'payment_source' => [
+						'card' => [
+							'brand' => 'VISA',
+							'last_digits' => '1234',
+						],
+					],
+				],
+			],
+		]);
+
+		$response = [
+			'response' => [
+				'code' => 200,
+				'message' => 'OK',
+			],
+			'body' => $response_body,
+			'headers' => $this->createMockHeaders(),
+		];
+
+		when('wp_remote_get')->justReturn($response);
+
+		$tokens = $this->endpoint->payment_tokens_for_customer('cust_12345');
+
+		$this->assertCount(1, $tokens);
+		$this->assertEquals('tok_card', $tokens[0]['id']);
+		$this->assertEquals('card', $tokens[0]['payment_source']->name());
+	}
+
+	/**
 	 * Test that payment_tokens_for_customer() returns empty array when no tokens exist.
 	 */
 	public function testPaymentTokensForCustomerReturnsEmptyArrayWhenNoTokens(): void

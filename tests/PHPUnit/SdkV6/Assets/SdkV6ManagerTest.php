@@ -82,6 +82,7 @@ class SdkV6ManagerTest extends TestCase
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
         $this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false)->byDefault();
         $this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false)->byDefault();
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(false)->byDefault();
 		$this->free_trial_helper = Mockery::mock(FreeTrialSubscriptionHelper::class);
 		$this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
 		$this->free_trial_helper->shouldReceive('cart_requires_vaulting')->andReturn(false)->byDefault();
@@ -365,9 +366,9 @@ class SdkV6ManagerTest extends TestCase
                 true,
                 ['product' => true, 'cart' => true, 'checkout' => true, 'pay-now' => true, 'mini-cart' => true],
             ],
-            'zero-total cart not needing payment suppresses cart and checkout only' => [
+            'zero-total cart not needing payment suppresses checkout only' => [
                 false,
-                ['product' => true, 'cart' => false, 'checkout' => false, 'pay-now' => true, 'mini-cart' => true],
+                ['product' => true, 'cart' => true, 'checkout' => false, 'pay-now' => true, 'mini-cart' => true],
             ],
             'no cart present is treated as needing payment' => [
                 null,
@@ -383,10 +384,8 @@ class SdkV6ManagerTest extends TestCase
      * THEN the checkout still renders, because it must offer the PayPal
      *      save-without-purchase button for the vaulted token backing the future
      *      recurring payment
-     * AND the cart stays suppressed regardless of the free-trial flag, since it has no
-     *     form to submit that vaulted token from
-     * AND the mini-cart follows its setting alone, since its wrapper checks the cart
-     *     when it prints
+     * AND the cart and mini-cart follow their settings alone, since their wrappers
+     *     check the cart when they print
      * AND a $0 cart that is NOT a free trial (e.g. a full-value coupon) keeps the
      *     checkout suppressed too, same as before the fix
      *
@@ -405,8 +404,52 @@ class SdkV6ManagerTest extends TestCase
         $result = $testee->determine_render_places();
 
         $this->assertSame($expected_checkout, $result['checkout']);
-        $this->assertSame($needs_payment, $result['cart']);
+        $this->assertTrue($result['cart']);
         $this->assertTrue($result['mini-cart']);
+    }
+
+    /**
+     * GIVEN the cart was determined to need payment when the render places were determined
+     * WHEN the cart total changes (e.g. free shipping selected via AJAX) and the cart
+     *      button wrapper is rendered afterwards
+     * THEN the wrapper prints when the cart still needs payment at render time
+     * AND nothing prints when the cart needs no payment, e.g. a $0 total
+     *
+     * @dataProvider cart_wrapper_provider
+     */
+    public function testRenderCartWrapperFollowsCartStateAtRenderTime(bool $needs_payment_at_render, string $expected_output): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $needs_payment = true;
+        $cart          = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturnUsing(static function () use (&$needs_payment): bool {
+            return $needs_payment;
+        });
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $testee = $this->createTestee();
+        $places = $testee->determine_render_places();
+
+        $needs_payment = $needs_payment_at_render;
+        $testee->render_cart_wrapper();
+
+        $this->assertTrue($places['cart']);
+        $this->expectOutputString($expected_output);
+    }
+
+    public function cart_wrapper_provider(): array
+    {
+        return [
+            'cart that needs payment at render time prints the wrapper' => [
+                true,
+                '<div class="ppc-button-wrapper"><div id="' . SdkV6Manager::WRAPPER_ID . '"></div></div>',
+            ],
+            'zero-total cart at render time prints nothing' => [
+                false,
+                '',
+            ],
+        ];
     }
 
     /**
@@ -662,6 +705,67 @@ class SdkV6ManagerTest extends TestCase
             'SCA_WHEN_REQUIRED',
             static fn (): string => SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS
         );
+
+        $this->assertSame(
+            [
+                'product'   => false,
+                'cart'      => false,
+                'checkout'  => false,
+                'pay-now'   => false,
+                'mini-cart' => false,
+            ],
+            $testee->determine_render_places()
+        );
+    }
+
+    /**
+     * GIVEN a buyer on the WooCommerce Subscriptions change-payment-method page (an order-pay URL)
+     *      with ACDC and smart buttons enabled
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK does not load, because AddPaymentMethodManager owns that page and two
+     *      scripts mounting into the same card inputs break the submit
+     */
+    public function testShouldNotLoadOnSubscriptionChangePaymentPage(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('pay-now');
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a buyer on a regular pay-for-order page (not a change-payment-method page)
+     *      with ACDC and smart buttons enabled
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK loads as usual
+     */
+    public function testShouldLoadOnPayNowPageWhenNotSubscriptionChangePayment(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('pay-now');
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a buyer on the WooCommerce Subscriptions change-payment-method page
+     * WHEN determining which locations should render on the current page
+     * THEN no v6 location renders, leaving the page entirely to the v5 stack
+     */
+    public function testDetermineRenderPlacesEmptyOnSubscriptionChangePaymentPage(): void
+    {
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+        $testee = $this->createTestee();
 
         $this->assertSame(
             [

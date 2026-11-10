@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 4.2.0
+Stable tag: 4.2.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,30 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
+
+= 4.2.2 - 2026-11-09 =
+* Enhancement - Refresh the SDK v6 client token earlier, so the token served to the buyer stays valid for at least two minutes #4841
+* Enhancement - Show the Store Sync beta invitation only to US-based PayPal merchants #4845
+* Fix - Renewals of existing vaulted PayPal and card subscriptions failing when "Accept manual renewals" is enabled #4824
+* Fix - Apple Pay failing on cart and checkout with SDK v6 for merchants whose PayPal account country is China #4833
+* Fix - Native PayPal subscription checkout from the block cart failing for guests when Pay Now is disabled #4827
+* Fix - reCAPTCHA v2 checkbox not appearing after a v3 rejection when paying with a saved Fastlane card in the classic checkout, blocking the order #4856
+* Fix - Subscription change payment method page loading both SDK v5 and SDK v6 card fields, causing a `fields_empty` error on submit #4852
+* Fix - PayPal buttons showing on out-of-stock, external and grouped products, where they cannot complete a purchase #4848
+* Fix - Slow page loads on sites with many block patterns, caused by a block theme check running on every hooked block lookup #4850
+* Fix - SDK v6 client token refresh retrying every 10 seconds indefinitely after a failure, for example an expired nonce #4847
+* Fix - SDK v6 not sending the partner attribution ID (BN code) to PayPal #4844
+* Fix - Fastlane card payments not sending the buyer email to PayPal #4853
+* Fix - Apple Pay and Google Pay orders not saving the customer's phone number #4834
+* Fix - Refund breakdown in the order admin counting failed and cancelled refunds, such as dispute holds closed in the merchant's favour #4818
+* Fix - PayPal popup showing "Pay" instead of "Review Order" with SDK v6 when the Pay Now Experience is disabled #4816
+* Fix - Invoice prefix could not be cleared in the new settings UI and always fell back to `WC-` #4614
+* Fix - "Start your Pay with Crypto application" to-do linking to a placeholder page instead of PayPal's sign-up page #4830
+* Fix - Card logos next to Fastlane too large in the classic checkout #4854
+* Fix - Hide Fastlane when the cart contains a subscription #4865
+* Fix - Disable the Apple Pay button while the order total updates #4868
+* Fix - WooCommerce order remains Failed after a successful PayPal retry #4851
+* Fix - Classic cart - PayPal buttons visible for total 0 after applying coupon and selecting free shipping #4870
 
 = 4.2.0 - 2026-10-21 =
 * Enhancement - PayPal JS SDK v6 is now the default for all stores, including existing ones; SDK v5 remains available as a fallback via `woocommerce.feature-flags.woocommerce_paypal_payments.sdk_v6_enabled` filter #4720
