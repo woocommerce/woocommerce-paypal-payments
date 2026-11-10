@@ -295,6 +295,46 @@ class SubscriptionHelperTest extends TestCase
 	}
 
 	/**
+	 * GIVEN a store with WooCommerce Subscriptions in various plugin, filter and settings states
+	 * WHEN is_mode_disabled_for_manual_renewals() is called
+	 * THEN it is true only when manual renewals are accepted and "Save PayPal and Venmo" is off,
+	 *      and neither the inactive plugin nor the disable filter has already taken over
+	 *
+	 * @dataProvider manual_renewals_disabled_mode_provider
+	 */
+	public function test_is_mode_disabled_for_manual_renewals_reflects_settings(
+		bool $plugin_active,
+		bool $disabled_by_filter,
+		bool $accept_manual_renewals,
+		bool $save_paypal_and_venmo,
+		bool $expected
+	): void {
+		expectApplied( 'woocommerce_paypal_payments_subscription_mode_disabled' )
+			->zeroOrMoreTimes()
+			->with( false )
+			->andReturn( $disabled_by_filter );
+
+		$settings_provider = Mockery::mock( SettingsProvider::class );
+		$settings_provider->allows( 'save_paypal_and_venmo' )->andReturn( $save_paypal_and_venmo );
+
+		$helper = Mockery::mock( SubscriptionHelper::class )->makePartial();
+		$helper->shouldReceive( 'plugin_is_active' )->andReturn( $plugin_active );
+		$helper->shouldReceive( 'accept_manual_renewals' )->andReturn( $accept_manual_renewals );
+
+		$this->assertSame( $expected, $helper->is_mode_disabled_for_manual_renewals( $settings_provider ) );
+	}
+
+	public function manual_renewals_disabled_mode_provider(): array {
+		return array(
+			'manual renewals accepted and vaulting off'    => array( true, false, true, false, true ),
+			'manual renewals not accepted'                 => array( true, false, false, false, false ),
+			'vaulting on'                                  => array( true, false, true, true, false ),
+			'disabled mode forced by filter'               => array( true, true, true, false, false ),
+			'subscriptions plugin inactive'                => array( false, false, true, false, false ),
+		);
+	}
+
+	/**
 	 * Builds a partial mock of SubscriptionHelper so `locations_with_subscription_product()`
 	 * runs for real while its individual signal methods return fixed, arranged values.
 	 */

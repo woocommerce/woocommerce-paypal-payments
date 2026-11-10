@@ -10,13 +10,12 @@
 
 import { createElement, useEffect, useRef, useState } from '@wordpress/element';
 import { loadSdkV6 } from '../sdkLoader';
-import { onSdkInstanceChange } from '../tokenRefresh';
 import { createSession } from '../sessions/createSession';
-import { amountFromBilling } from '../utils/amount';
 import { refreshCartUi } from '../utils/cartUi';
 import { methodShippingRequired } from '../methods/methodShipping';
 import { wcAddressToApplePay } from '../wallets/walletContacts';
 import { V6BridgeContainer } from './V6BridgeContainer';
+import { blockSheetTotal } from './blockSheetTotal';
 
 // A render can fail on the way to the button, so the row is dropped only after
 // this many attempts. The delay grows by one step per attempt.
@@ -30,7 +29,7 @@ const RETRY_DELAY_MS = 1000;
  * @param {() => void}                props.onClick            - Signals the start of the express flow.
  * @param {() => void}                props.onClose            - Called when the express flow ends without an order.
  * @param {(message: string) => void} props.onError            - Called with an error message on failure.
- * @param {Object}                    props.billing            - The Blocks billing data (cart totals).
+ * @param {Object}                    props.billing            - The Blocks billing data (billing address).
  * @param {Object}                    props.shippingData       - The Blocks shipping data.
  * @param {Object}                    [props.buttonAttributes] - Height/borderRadius from the express block.
  * @return {?Object} The button element, or null while the wallet cannot render.
@@ -77,17 +76,6 @@ export function V6WalletComponent( {
 			active = false;
 		};
 	}, [ config, context ] );
-
-	// A new instance creates a new session, which draws the button again.
-	useEffect( () => onSdkInstanceChange( setSdk ), [] );
-
-	const totalRef = useRef( config.amount );
-	const total = amountFromBilling( billing ) || config.amount;
-	useEffect( () => {
-		totalRef.current = total;
-	}, [ total ] );
-
-	const sheetTotalRef = useRef( { get: () => totalRef.current } );
 
 	// Apple only: Google's PaymentDataRequest has no equivalent field.
 	const contactsRef = useRef( {} );
@@ -217,7 +205,7 @@ export function V6WalletComponent( {
 			height,
 			borderRadius: buttonAttributes?.borderRadius,
 			requiresShipping,
-			sheetTotal: sheetTotalRef.current,
+			sheetTotal: blockSheetTotal,
 			sheetContacts: sheetContactsRef.current,
 			onClick: () => {
 				setPaying( true );

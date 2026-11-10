@@ -55,6 +55,10 @@ Four behaviours of that class:
 
 [`ClientTokenEndpoint`](https://github.com/woocommerce/woocommerce-paypal-payments/blob/dev/develop/modules/ppcp-sdk-v6/src/Endpoint/ClientTokenEndpoint.php) exposes it behind a nonce. PayPal errors are logged with detail and answered with a generic message.
 
+### One token for every component
+
+PayPal requires the client token only for Fastlane and vaulting; the other components could authenticate with the client ID. All components use the client token on purpose. Fastlane and vaulting are hard to test and usually tested last, so a second auth path would let token bugs (such as expiry handling) ship unnoticed and hit only those buyers. With one path, any working component proves that the token works for Fastlane and vaulting too.
+
 ### Token scope
 
 `intent=sdk_init` is a request, not a guarantee. On some merchant account and authentication combinations it is ignored and the response is a vault-scoped token whose only scope is `https://uri.paypal.com/services/vault/payment-tokens/read Braintree:Vault`. `createInstance()` accepts such a token; `findEligibleMethods()` then fails with `403 NOT_AUTHORIZED` and every button disappears.

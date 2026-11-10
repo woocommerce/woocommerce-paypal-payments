@@ -1,18 +1,6 @@
 const mockLoadSdkV6 = jest.fn();
-let mockInstanceListeners = [];
-const mockOnSdkInstanceChange = jest.fn( ( listener ) => {
-	mockInstanceListeners.push( listener );
-	return () => {
-		mockInstanceListeners = mockInstanceListeners.filter(
-			( registered ) => registered !== listener
-		);
-	};
-} );
 jest.mock( '../../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
-} ) );
-jest.mock( '../../tokenRefresh', () => ( {
-	onSdkInstanceChange: ( ...args ) => mockOnSdkInstanceChange( ...args ),
 } ) );
 
 const mockCreateSession = jest.fn();
@@ -23,6 +11,12 @@ jest.mock( '../../sessions/createSession', () => ( {
 const mockWalletContainer = jest.fn( () => null );
 jest.mock( '../../blocks/V6BridgeContainer', () => ( {
 	V6BridgeContainer: ( props ) => mockWalletContainer( props ),
+} ) );
+
+const mockSelect = jest.fn();
+jest.mock( '@wordpress/data', () => ( {
+	select: ( ...args ) => mockSelect( ...args ),
+	subscribe: jest.fn( () => () => {} ),
 } ) );
 
 import { render, waitFor, act } from '@testing-library/react';
@@ -60,11 +54,7 @@ function latestContainerProps() {
 	return mockWalletContainer.mock.calls.at( -1 )[ 0 ];
 }
 
-const emitInstanceChange = ( sdk ) =>
-	mockInstanceListeners.forEach( ( listener ) => listener( sdk ) );
-
 beforeEach( () => {
-	mockInstanceListeners = [];
 	mockLoadSdkV6.mockReset().mockResolvedValue( { sdk: true } );
 	mockCreateSession.mockReset().mockReturnValue( { fake: 'session' } );
 	mockWalletContainer.mockClear();
@@ -91,41 +81,6 @@ describe( 'V6WalletComponent', () => {
 		const props = latestContainerProps();
 		expect( props.method ).toBe( 'applepay' );
 		expect( props.session ).toEqual( { fake: 'session' } );
-	} );
-
-	describe( 'when the SDK instance changes', () => {
-		const newSdk = { sdk: 'new' };
-
-		beforeEach( () => {
-			mockCreateSession.mockImplementation( ( sdk ) => ( { from: sdk } ) );
-		} );
-
-		test( 'builds the button from a session of the new instance', async () => {
-			renderComponent();
-			await waitFor( () => expect( mockWalletContainer ).toHaveBeenCalled() );
-			expect( latestContainerProps().session ).toEqual( {
-				from: { sdk: true },
-			} );
-
-			act( () => emitInstanceChange( newSdk ) );
-
-			await waitFor( () =>
-				expect( latestContainerProps().session ).toEqual( {
-					from: newSdk,
-				} )
-			);
-		} );
-
-		test( 'ignores the change after the component unmounted', async () => {
-			const { unmount } = renderComponent();
-			await waitFor( () => expect( mockWalletContainer ).toHaveBeenCalled() );
-			const sessionsBefore = mockCreateSession.mock.calls.length;
-
-			unmount();
-			emitInstanceChange( newSdk );
-
-			expect( mockCreateSession.mock.calls.length ).toBe( sessionsBefore );
-		} );
 	} );
 
 	test( 'returns null after the bridge reports the wallet unavailable', async () => {
@@ -319,6 +274,34 @@ describe( 'V6WalletComponent', () => {
 			expect( latestContainerProps().rebuildKey ).not.toBe(
 				rebuildKeyBefore
 			);
+		} );
+	} );
+
+	describe( 'sheetTotal', () => {
+		test( 'reads the cart store total, not the billing prop that lags a render behind', async () => {
+			const idle = () => false;
+			mockSelect.mockReturnValue( {
+				hasFinishedResolution: () => true,
+				getCartTotals: () => ( {
+					total_price: '1234',
+					currency_minor_unit: 2,
+				} ),
+				isApplyingCoupon: idle,
+				isRemovingCoupon: idle,
+				hasPendingItemsOperations: idle,
+				isShippingRateBeingSelected: idle,
+				isCustomerDataUpdating: idle,
+			} );
+			renderComponent( {
+				billing: { cartTotal: { value: 5000 } },
+			} );
+			await waitFor( () =>
+				expect( mockWalletContainer ).toHaveBeenCalled()
+			);
+
+			const { overrides } = latestContainerProps();
+
+			expect( overrides.sheetTotal.get() ).toBe( '12.34' );
 		} );
 	} );
 

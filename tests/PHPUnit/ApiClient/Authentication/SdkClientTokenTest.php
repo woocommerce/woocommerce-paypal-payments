@@ -145,7 +145,8 @@ class SdkClientTokenTest extends TestCase
      * GIVEN a cached token whose fresh entry is missing
      * WHEN the token is requested
      * THEN a new token is requested from PayPal, cached and returned
-     * AND the fresh entry is already set when the request to PayPal starts, so other requests keep the old token
+     * AND the fresh entry is already set for 60 seconds when the request to PayPal starts, so other requests keep the old token
+     * AND once the new token arrived the fresh entry is set for 12.5% of its lifetime
      */
     public function test_expired_fresh_entry_gets_a_new_token_and_holds_off_other_requests()
     {
@@ -170,6 +171,8 @@ class SdkClientTokenTest extends TestCase
         $this->assertSame('new-token', $this->store[self::TEST_CACHE_KEY]['token']);
         $this->assertEqualsWithDelta(time() + 3600, $this->store[self::TEST_CACHE_KEY]['expires_at'], self::CLOCK_TOLERANCE);
         $this->assertSame(1, $this->store[self::TEST_FRESH_KEY]);
+        $this->assertSame([self::TEST_FRESH_KEY, 1, 60], $this->cacheWrites[0]);
+        $this->assertSame([self::TEST_FRESH_KEY, 1, 450], end($this->cacheWrites));
     }
 
     /**
@@ -265,15 +268,15 @@ class SdkClientTokenTest extends TestCase
     /**
      * GIVEN no cached token
      * WHEN PayPal reports a token lifetime
-     * THEN a long-lived token is cached 30 seconds short of its reported lifetime
-     * AND a short-lived token (150 seconds or less) is cached unchanged
+     * THEN a long-lived token is cached 120 seconds short of its reported lifetime
+     * AND a short-lived token (240 seconds or less) is cached unchanged
      * AND the cached data holds the token with its real expiry timestamp
-     * AND the fresh entry is a marker set for 60 seconds
+     * AND the fresh entry is a marker set for 12.5% of the reported lifetime, at least 1 second
      * AND the token is returned with the reported lifetime
      *
      * @dataProvider cachedLifetimeProvider
      */
-    public function testCachesTokenForAdjustedLifetime(int $expiresIn, int $expectedCachedLifetime)
+    public function testCachesTokenForAdjustedLifetime(int $expiresIn, int $expectedCachedLifetime, int $expectedMarkerLifetime)
     {
         $this->rateLimiter->expects('clear')->with('sdk-client-token');
         $this->paypalReturnsToken('tok', $expiresIn);
@@ -288,15 +291,57 @@ class SdkClientTokenTest extends TestCase
         $this->assertSame('tok', $value['token']);
         $this->assertEqualsWithDelta(time() + $expiresIn, $value['expires_at'], self::CLOCK_TOLERANCE);
         $this->assertSame($expectedCachedLifetime, $lifetime);
-        $this->assertSame([self::TEST_FRESH_KEY, 1, 60], $this->cacheWrites[1]);
+        $this->assertSame([self::TEST_FRESH_KEY, 1, $expectedMarkerLifetime], $this->cacheWrites[1]);
     }
 
     public function cachedLifetimeProvider(): array
     {
         return [
-            'long-lived token cached 30 seconds short of its reported lifetime' => [3600, 3570],
-            'short-lived token at the 150 second boundary cached unchanged' => [150, 150],
-            'short-lived token below the boundary cached unchanged' => [60, 60],
+            'one hour token cached 120 seconds short' => [3600, 3480, 450],
+            'fifteen minute token cached 120 seconds short' => [900, 780, 112],
+            'eight hour token cached 120 seconds short' => [28800, 28680, 3600],
+            'token just above the 240 second boundary cached 120 seconds short' => [241, 121, 30],
+            'token at the 240 second boundary cached unchanged' => [240, 240, 30],
+            'short-lived token cached unchanged' => [60, 60, 7],
+            'marker lives at least 1 second' => [4, 4, 1],
+        ];
+    }
+
+    /**
+     * GIVEN no cached token
+     * WHEN PayPal answers without a usable lifetime (missing, zero or negative expires_in)
+     * THEN the token is treated as living PayPal's default 900 seconds
+     * AND the token is cached for 780 seconds (900 minus the 120 second margin), never forever
+     * AND the fresh entry is a marker set for 112 seconds (12.5% of 900)
+     * AND the token is returned with a lifetime of about 900 seconds
+     *
+     * @dataProvider unusableLifetimeProvider
+     */
+    public function test_unusable_expires_in_falls_back_to_the_default_lifetime(string $body)
+    {
+        expect('trailingslashit')->andReturn($this->host . '/');
+        expect('wp_remote_get')->once()->andReturn(['body' => $body, 'headers' => $this->headers()]);
+        expect('wp_remote_retrieve_response_code')->andReturn(200);
+
+        $data = $this->sut->sdk_client_token_data();
+
+        $this->assertSame('tok', $data['token']);
+        $this->assertEqualsWithDelta(900, $data['expires_in'], self::CLOCK_TOLERANCE);
+        $this->assertCount(2, $this->cacheWrites);
+        [$key, $value, $lifetime] = $this->cacheWrites[0];
+        $this->assertSame(self::TEST_CACHE_KEY, $key);
+        $this->assertSame('tok', $value['token']);
+        $this->assertEqualsWithDelta(time() + 900, $value['expires_at'], self::CLOCK_TOLERANCE);
+        $this->assertSame(780, $lifetime);
+        $this->assertSame([self::TEST_FRESH_KEY, 1, 112], $this->cacheWrites[1]);
+    }
+
+    public function unusableLifetimeProvider(): array
+    {
+        return [
+            'expires_in missing' => ['{"access_token":"tok"}'],
+            'expires_in zero' => ['{"access_token":"tok","expires_in":0}'],
+            'expires_in negative' => ['{"access_token":"tok","expires_in":-5}'],
         ];
     }
 
@@ -317,6 +362,6 @@ class SdkClientTokenTest extends TestCase
         expect('wp_remote_retrieve_response_code')->andReturn(200);
 
         $this->assertSame('tok', $this->sut->sdk_client_token());
-        $this->assertSame(3570, $this->cacheWrites[0][2]);
+        $this->assertSame(3480, $this->cacheWrites[0][2]);
     }
 }

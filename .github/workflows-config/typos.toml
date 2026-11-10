@@ -27,6 +27,7 @@ extend-ignore-re = [
 	"Unter den .*",
 	"Die Kombination .*",
 	"Die gewählte .*",
+	"Deutsch \\(Sie\\)",
 	# Lorem ipsum
 	"Lorem ipsum .*",
 	"Id cursus metus .*",

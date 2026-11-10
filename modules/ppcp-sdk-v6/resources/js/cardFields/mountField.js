@@ -126,21 +126,3 @@ export function mountField(
 	hide( inputField, true );
 	inputField.hidden = true;
 }
-
-/**
- * Lets mountField() mount the input again, for a new card session. The input
- * stays invisible. Card data the buyer entered is lost, which is clearer than
- * a declined payment later.
- *
- * @param {HTMLElement} inputField - The WC input the field replaced.
- */
-export function unmountField( inputField ) {
-	if ( ! inputField ) {
-		return;
-	}
-
-	inputField.parentNode
-		?.querySelector( `:scope > .${ FIELD_CLASS }` )
-		?.remove();
-	inputField.hidden = false;
-}

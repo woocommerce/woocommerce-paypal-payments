@@ -43,7 +43,6 @@
 	</rule>
 
 	<rule ref="WooCommerce">
-		<exclude name="WooCommerce.Commenting.CommentHooks.MissingHookComment" />
 		<exclude name="WooCommerce.Commenting.CommentHooks.MissingSinceComment" />
 	</rule>
 
@@ -58,6 +57,7 @@
 		<exclude name="Squiz.Commenting.FunctionComment.MissingParamTag" />
 		<exclude name="Squiz.Commenting.FunctionComment.MissingParamComment" />
 		<exclude name="Squiz.Commenting.FunctionComment.Missing" />
+		<exclude name="Squiz.Commenting.FunctionComment.MissingReturn" />
 	</rule>
 	<rule ref="Squiz.Commenting.VariableComment">
 		<exclude name="Squiz.Commenting.VariableComment.MissingVar" />
@@ -82,6 +82,53 @@
     	</properties>
     </rule>
 
+
+	<!-- Code quality checks. Warnings only: legacy code still violates them, and CI ignores warnings on exit. -->
+	<rule ref="WooCommerce.Commenting.CommentHooks.MissingHookComment">
+		<type>warning</type>
+	</rule>
+	<rule ref="Generic.Metrics.NestingLevel">
+		<type>warning</type>
+		<properties>
+			<property name="nestingLevel" value="4" />
+		</properties>
+	</rule>
+	<rule ref="SlevomatCodingStandard.Functions.FunctionLength">
+		<type>warning</type>
+		<properties>
+			<property name="maxLinesLength" value="40" />
+		</properties>
+	</rule>
+	<rule ref="SlevomatCodingStandard.Namespaces.UnusedUses">
+		<type>warning</type>
+		<properties>
+			<property name="searchAnnotations" value="true" />
+		</properties>
+	</rule>
+	<rule ref="SlevomatCodingStandard.Commenting.UselessInheritDocComment">
+		<type>warning</type>
+	</rule>
+	<rule ref="SlevomatCodingStandard.Commenting.UselessFunctionDocComment">
+		<type>warning</type>
+	</rule>
+	<rule ref="SlevomatCodingStandard.TypeHints.ParameterTypeHint">
+		<type>warning</type>
+		<exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingAnyTypeHint" />
+		<exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingNativeTypeHint" />
+		<exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint.MissingTraversableTypeHintSpecification" />
+	</rule>
+	<rule ref="SlevomatCodingStandard.TypeHints.ReturnTypeHint">
+		<type>warning</type>
+		<exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingAnyTypeHint" />
+		<exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint" />
+		<exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingTraversableTypeHintSpecification" />
+	</rule>
+	<rule ref="SlevomatCodingStandard.TypeHints.PropertyTypeHint">
+		<type>warning</type>
+		<exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingAnyTypeHint" />
+		<exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingNativeTypeHint" />
+		<exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint.MissingTraversableTypeHintSpecification" />
+	</rule>
 
 	<arg name="extensions" value="php"/>
 	<file>api</file>

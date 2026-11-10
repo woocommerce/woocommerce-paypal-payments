@@ -96,7 +96,6 @@ return array(
 	},
 	'webhook.endpoint.handler'                => static function ( ContainerInterface $container ): array {
 		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
-		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		$refund_fees_updater = $container->get( 'wcgateway.helper.refund-fees-updater' );
@@ -111,11 +110,11 @@ return array(
 			),
 			new CheckoutOrderCompleted( $logger ),
 			new CheckoutPaymentApprovalReversed( $logger ),
-			new PaymentCaptureRefunded( $logger, $refund_fees_updater ),
-			new PaymentCaptureReversed( $logger ),
+			new PaymentCaptureRefunded( $logger, $refund_fees_updater, $order_endpoint ),
+			new PaymentCaptureReversed( $logger, $order_endpoint ),
 			new PaymentCaptureCompleted( $logger, $order_endpoint ),
 			new VaultPaymentTokenDeleted( $logger ),
-			new PaymentCapturePending( $logger ),
+			new PaymentCapturePending( $logger, $order_endpoint ),
 			new PaymentSaleCompleted( $logger, $container->get( 'paypal-subscriptions.renewal-handler' ) ),
 			new PaymentSaleRefunded( $logger, $refund_fees_updater ),
 			new BillingSubscriptionCancelled( $logger ),

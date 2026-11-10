@@ -168,6 +168,10 @@ class Payer {
 		return $this->phone;
 	}
 
+	public function set_phone( ?PhoneWithType $phone ): void {
+		$this->phone = $phone;
+	}
+
 	/**
 	 * Returns the tax info.
 	 *

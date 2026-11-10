@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\InvoicePrefixGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
@@ -63,7 +64,7 @@ class PurchaseUnitFactory {
 	/**
 	 * The Prefix.
 	 *
-	 * @var string
+	 * @var InvoicePrefixGetter
 	 */
 	private $prefix;
 
@@ -89,7 +90,7 @@ class PurchaseUnitFactory {
 		PaymentLevelHelper $payment_level_helper,
 		PaymentLevelEligibility $payment_level_eligibility,
 		SettingsProvider $settings,
-		string $prefix = 'WC-',
+		InvoicePrefixGetter $prefix,
 		string $soft_descriptor = '',
 		?PurchaseUnitSanitizer $sanitizer = null
 	) {
@@ -131,7 +132,7 @@ class PurchaseUnitFactory {
 		$reference_id    = 'default';
 		$description     = '';
 		$custom_id       = (string) $order->get_id();
-		$invoice_id      = $this->prefix . $order->get_order_number();
+		$invoice_id      = $this->prefix->get() . $order->get_order_number();
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
 		$payment_level   = null;
 		$payment_method  = ! empty( $payment_method ) ? $payment_method : $order->get_payment_method();

@@ -488,7 +488,6 @@ export const PayPalComponent = ( {
 						data,
 						actions,
 						config,
-						shouldHandleShippingInPayPal,
 						shippingData,
 						setPaypalOrder,
 						shouldskipFinalConfirmation,

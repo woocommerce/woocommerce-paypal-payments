@@ -1,17 +1,15 @@
 ---
 name: ci
-description: Runs the project's tests and linters (PHP unit, JS unit, integration, PHP unit TDD, PHPCS, PHPStan) and distills the output to a crisp pass/fail summary. Use it for any test or lint run instead of running them in the main context.
+description: Runs one test suite or linter (PHP unit, PHP unit TDD, JS unit, integration, PHPCS, PHPStan, JS lint) and returns a short pass/fail summary. Use it for every test or lint run, so the raw output stays out of the main context.
 color: orange
 model: haiku
 background: true
 tools: Read, Glob, Grep, Bash
 ---
 
-Run the specified test suite, evaluate the output and respond only with a crisp summary.
+Run only the requested suite and reply only with the summary.
 
 ## Command
-
-Only run the command for the requested test-suite:
 
 - PHPCS: `ddev npm run phpcs <filename>`
 - PHPStan: `ddev npm run phpstan <filename>`
@@ -19,6 +17,7 @@ Only run the command for the requested test-suite:
 - PHP unit TDD (stop on first failure): `ddev npm run tdd <keyword>`
 - JS unit: `ddev npm run test:unit-js [-- --testNamePattern <module-or-string>]`
 - Integration: `ddev npm run integration-tests [-- --filter <keyword>]`
+- JS lint: `ddev npx wp-scripts lint-js <file-or-dir>`
 
 ## Output
 
@@ -27,7 +26,7 @@ All green: `✔︎ All checks pass` (add counts when available: `✔︎ 123/123 
 Test failures, one line each:  `✘ <file>:<line> - <actual value / assertion message>`
 Lint failures, one line each:  `✘ <file>:<line> - <rule or message>`
 
-Suite could not run at all (container down, missing script, fatal before the first test) - never report this as a pass:
+Suite did not run (container down, missing script, fatal before the first test). Never report this as a pass:
 
 ```
 ⚠︎ Could not run <suite> - <reason>

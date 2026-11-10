@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
 use Mockery;
 use ReflectionClass;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
@@ -15,6 +16,8 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -25,6 +28,7 @@ class AddPaymentMethodManagerTest extends TestCase
     private $context;
     private $settings_provider;
     private $card_field_styles;
+    private $subscription_helper;
 
     public function setUp(): void
     {
@@ -36,11 +40,43 @@ class AddPaymentMethodManagerTest extends TestCase
         $this->settings_provider = Mockery::mock(SettingsProvider::class);
         $this->card_field_styles = Mockery::mock(CardFieldStyles::class);
         $this->card_field_styles->shouldReceive('overrides')->andReturn([])->byDefault();
+        $this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(false)->byDefault();
+
+        when('absint')->alias(static fn ($value) => abs((int) $value));
+    }
+
+    public function tearDown(): void
+    {
+        unset($_GET['change_payment_method']);
+
+        parent::tearDown();
+    }
+
+    private function stub_script_data_dependencies(): void
+    {
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->settings_provider->shouldReceive('three_d_secure_enum')->andReturn('SCA_ALWAYS');
+        when('apply_filters')->alias(static fn (string $filter, $value) => $value);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('wc_get_account_endpoint_url')->justReturn('https://example.com/my-account/payment-methods');
+        when('wp_create_nonce')->alias(static fn (string $action) => 'nonce-' . $action);
+    }
+
+    private function create_subscription(int $id, string $view_order_url): object
+    {
+        $subscription = Mockery::mock('WC_Subscription');
+        $subscription->shouldReceive('get_id')->andReturn($id);
+        $subscription->shouldReceive('get_view_order_url')->andReturn($view_order_url);
+
+        return $subscription;
     }
 
     private function createTestee(
         bool $paypal_vaulting_enabled = false,
-        bool $card_vaulting_enabled = false
+        bool $card_vaulting_enabled = false,
+        string $bn_code = 'Woo_PPCP'
     ): AddPaymentMethodManager {
         return new AddPaymentMethodManager(
             $this->asset_getter,
@@ -50,7 +86,9 @@ class AddPaymentMethodManagerTest extends TestCase
             $paypal_vaulting_enabled,
             $card_vaulting_enabled,
             $this->settings_provider,
-            $this->card_field_styles
+            $this->card_field_styles,
+            Mockery::mock(PartnerAttribution::class, ['get_bn_code' => $bn_code]),
+            $this->subscription_helper
         );
     }
 
@@ -88,6 +126,150 @@ class AddPaymentMethodManagerTest extends TestCase
             'logged in with card vaulting on the add payment method page loads' => [true, false, true, true, true],
             'logged in with paypal vaulting on the add payment method page loads' => [true, true, false, true, true],
         ];
+    }
+
+    /**
+     * GIVEN a logged-in buyer with a vaulting flag on, on a subscription change-payment-method
+     *       page (not the add-payment-method page) for an existing subscription
+     * WHEN checking whether the save surfaces should load
+     * THEN they load
+     *
+     * @dataProvider vaulting_flags_provider
+     */
+    public function testShouldLoadOnSubscriptionChangePaymentPage(bool $paypal, bool $card): void
+    {
+        when('is_user_logged_in')->justReturn(true);
+        $this->context->shouldReceive('is_add_payment_method_page')->andReturn(false);
+        $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+        when('wcs_get_subscription')->justReturn($this->create_subscription(42, 'https://example.com/view'));
+
+        $testee = $this->createTestee($paypal, $card);
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    public function vaulting_flags_provider(): array
+    {
+        return [
+            'paypal vaulting only' => [true, false],
+            'card vaulting only' => [false, true],
+            'both vaulting flags' => [true, true],
+        ];
+    }
+
+    /**
+     * GIVEN a change-payment-method request whose id does not resolve to a subscription
+     * WHEN checking whether the save surfaces should load
+     * THEN they do not load
+     *
+     * @dataProvider unresolvable_subscription_provider
+     */
+    public function testShouldNotLoadWhenSubscriptionDoesNotResolve($lookup_result): void
+    {
+        when('is_user_logged_in')->justReturn(true);
+        $this->context->shouldReceive('is_add_payment_method_page')->andReturn(false);
+        $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+        when('wcs_get_subscription')->justReturn($lookup_result);
+
+        $testee = $this->createTestee(true, true);
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    public function unresolvable_subscription_provider(): array
+    {
+        return [
+            'subscription not found' => [false],
+            'id belongs to a regular order' => [new \stdClass()],
+        ];
+    }
+
+    /**
+     * GIVEN a logged-in buyer on a valid subscription change-payment-method page
+     *       but with no vaulting flag enabled
+     * WHEN checking whether the save surfaces should load
+     * THEN they do not load
+     */
+    public function testShouldNotLoadOnSubscriptionChangePaymentPageWithoutVaulting(): void
+    {
+        when('is_user_logged_in')->justReturn(true);
+        $this->context->shouldReceive('is_add_payment_method_page')->andReturn(false);
+        $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+        when('wcs_get_subscription')->justReturn($this->create_subscription(42, 'https://example.com/view'));
+
+        $testee = $this->createTestee(false, false);
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a logged-in buyer with vaulting enabled and a change_payment_method id that
+     *       resolves to a valid subscription, but the request is not a subscription
+     *       change-payment page (e.g. pay_for_order is missing)
+     * WHEN checking whether the save surfaces should load
+     * THEN they do not load
+     */
+    public function testShouldNotLoadWhenChangePaymentMethodParamIsPresentOutsideChangePaymentPage(): void
+    {
+        when('is_user_logged_in')->justReturn(true);
+        $this->context->shouldReceive('is_add_payment_method_page')->andReturn(false);
+        $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(false);
+        when('wcs_get_subscription')->justReturn($this->create_subscription(42, 'https://example.com/view'));
+
+        $testee = $this->createTestee(true, true);
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a buyer changing the payment method of subscription 42
+     * WHEN the bootstrap script data is generated
+     * THEN subscription_change carries the subscription id, its view-order redirect URL
+     *      and the change-payment-method endpoint with its nonce
+     */
+    public function testScriptDataSubscriptionChangeOnChangePaymentPage(): void
+    {
+        $this->stub_script_data_dependencies();
+        $_GET['change_payment_method'] = '42';
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+        when('wcs_get_subscription')->justReturn(
+            $this->create_subscription(42, 'https://example.com/my-account/view-subscription/42')
+        );
+
+        $testee = $this->createTestee(true, true);
+        $data   = $this->invoke_script_data($testee);
+
+        $this->assertSame(
+            [
+                'subscription_id' => 42,
+                'redirect_url' => 'https://example.com/my-account/view-subscription/42',
+                'ajax' => [
+                    'endpoint' => SubscriptionChangePaymentMethod::ENDPOINT,
+                    'nonce' => 'nonce-' . SubscriptionChangePaymentMethod::nonce(),
+                ],
+            ],
+            $data['subscription_change']
+        );
+    }
+
+    /**
+     * GIVEN a buyer on the regular add-payment-method page, not changing a subscription
+     * WHEN the bootstrap script data is generated
+     * THEN subscription_change is null
+     */
+    public function testScriptDataSubscriptionChangeIsNullOnAddPaymentMethodPage(): void
+    {
+        $this->stub_script_data_dependencies();
+
+        $testee = $this->createTestee(true, true);
+        $data   = $this->invoke_script_data($testee);
+
+        $this->assertArrayHasKey('subscription_change', $data);
+        $this->assertNull($data['subscription_change']);
     }
 
     /**
@@ -173,6 +355,27 @@ class AddPaymentMethodManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a merchant whose partner attribution BN code is configured
+     * WHEN the add-payment-method bootstrap script data is generated
+     * THEN the BN code is exposed so the frontend can pass it to the SDK as partnerAttributionId
+     */
+    public function testScriptDataIncludesBnCode(): void
+    {
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->settings_provider->shouldReceive('three_d_secure_enum')->andReturn('SCA_ALWAYS');
+        when('apply_filters')->alias(static fn (string $filter, $value) => $value);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('wc_get_account_endpoint_url')->justReturn('https://example.com/my-account/payment-methods');
+        when('wp_create_nonce')->justReturn('nonce');
+
+        $testee = $this->createTestee(false, true, 'WooPPCP_Ecom_PS_CoreProfiler');
+        $data   = $this->invoke_script_data($testee);
+
+        $this->assertSame('WooPPCP_Ecom_PS_CoreProfiler', $data['bn_code']);
+    }
+
+    /**
      * Invokes the private script_data() method via reflection, since it is
      * only reachable indirectly through enqueue() in production code.
      */
@@ -217,6 +420,7 @@ class AddPaymentMethodManagerTest extends TestCase
         $this->asset_getter->shouldReceive('get_asset_data')
             ->with('boot-add-payment-method.js', '1.0.0')
             ->andReturn(['dependencies' => ['wp-data'], 'version' => 'deadbeef']);
+        $this->stub_gateway_stylesheet_asset();
 
         expect('wp_register_script')
             ->once()
@@ -240,15 +444,77 @@ class AddPaymentMethodManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a logged-in buyer with vaulting enabled on the add-payment-method page
+     * WHEN the bootstrap script is enqueued
+     * THEN the v6 gateway stylesheet is enqueued once with the version webpack recorded for it
+     * AND this does not conflict with the inline-style handle also enqueued on this page
+     */
+    public function testEnqueueEnqueuesGatewayStylesheetWithAssetVersion(): void
+    {
+        when('is_user_logged_in')->justReturn(true);
+        $this->context->shouldReceive('is_add_payment_method_page')->andReturn(true);
+
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->settings_provider->shouldReceive('three_d_secure_enum')->andReturn('SCA_ALWAYS');
+        when('apply_filters')->alias(static fn (string $filter, $value) => $value);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('wc_get_account_endpoint_url')->justReturn('https://example.com/my-account/payment-methods');
+        when('wp_create_nonce')->justReturn('nonce');
+        when('wp_register_script')->justReturn(true);
+        when('wp_set_script_translations')->justReturn(true);
+        when('wp_localize_script')->justReturn(true);
+        when('wp_enqueue_script')->justReturn(null);
+        when('wp_register_style')->justReturn(true);
+        when('wp_add_inline_style')->justReturn(null);
+
+        $this->asset_getter->shouldReceive('get_asset_url')
+            ->with('boot-add-payment-method.js')
+            ->andReturn('https://example.com/assets/boot-add-payment-method.js');
+        $this->asset_getter->shouldReceive('get_asset_data')
+            ->with('boot-add-payment-method.js', '1.0.0')
+            ->andReturn(['dependencies' => [], 'version' => 'deadbeef']);
+        $this->stub_gateway_stylesheet_asset();
+
+        expect('wp_enqueue_style')
+            ->once()
+            ->with(
+                'wc-ppcp-sdk-v6-gateway',
+                'https://example.com/assets/gateway.css',
+                [],
+                'cafebabe'
+            );
+        expect('wp_enqueue_style')
+            ->zeroOrMoreTimes()
+            ->with('wc-ppcp-sdk-v6-add-payment-method');
+
+        $testee = $this->createTestee(true, true);
+        $testee->enqueue();
+
+        $this->addToAssertionCount(1);
+    }
+
+    private function stub_gateway_stylesheet_asset(): void
+    {
+        $this->asset_getter->shouldReceive('get_asset_url')
+            ->with('gateway.css')
+            ->andReturn('https://example.com/assets/gateway.css');
+        $this->asset_getter->shouldReceive('get_asset_data')
+            ->with('gateway.css', '1.0.0')
+            ->andReturn(['dependencies' => [], 'version' => 'cafebabe']);
+    }
+
+    /**
      * GIVEN the add-payment-method surfaces should not load on the current page
      * WHEN enqueue() is called
-     * THEN no script is registered — the method returns before touching the asset getter
+     * THEN no script or stylesheet is enqueued — the method returns before touching the asset getter
      */
     public function testEnqueueDoesNothingWhenShouldNotLoadOnCurrentPage(): void
     {
         when('is_user_logged_in')->justReturn(false);
 
         expect('wp_register_script')->never();
+        expect('wp_enqueue_style')->never();
 
         $testee = $this->createTestee(true, true);
         $testee->enqueue();

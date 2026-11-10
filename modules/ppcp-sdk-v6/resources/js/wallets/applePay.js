@@ -16,7 +16,6 @@ import { hasJQuery } from '../utils/api';
 import { refreshCartUi } from '../utils/cartUi';
 import { describeError, logEvent } from '../utils/diagnostics';
 import { handleError } from '../utils/errorHandler';
-import { setSdkBusy } from '../tokenRefresh';
 import { loadScript } from '../utils/scriptLoaders';
 import { revealMethodGateway } from '../methods/gatewayPlacement';
 import { renderIsObsolete } from '../methods/renderOverrides';
@@ -117,10 +116,6 @@ export async function renderApplePay( {
 	const shipping = createShippingController( { config, exactTotal: true } );
 	const spinner = hasJQuery() ? Spinner.fullPage() : null;
 	let paying = false;
-	const setPaying = ( value ) => {
-		paying = value;
-		setSdkBusy( value );
-	};
 
 	/**
 	 * The cart holding what is being bought, resolved once per sheet.
@@ -152,7 +147,7 @@ export async function renderApplePay( {
 			return;
 		}
 
-		setPaying( true );
+		paying = true;
 
 		// Claims the surface's express UI; onSheetClosed() releases it again.
 		overrides.onClick?.();
@@ -206,7 +201,7 @@ export async function renderApplePay( {
 			// `paying` or the button could never open a second sheet. It also
 			// drops the rate this sheet pinned server-side.
 			appleSession.oncancel = () => {
-				setPaying( false );
+				paying = false;
 				spinner?.unblock();
 
 				if ( requiresShipping ) {
@@ -220,7 +215,7 @@ export async function renderApplePay( {
 			// Presents the sheet, and only then asks for merchant validation.
 			appleSession.begin();
 		} catch ( error ) {
-			setPaying( false );
+			paying = false;
 			spinner?.unblock();
 			handleError( error );
 			overrides.onSheetClosed?.();
@@ -259,7 +254,7 @@ export async function renderApplePay( {
 			// Nothing can be paid without a validated merchant, and the usual
 			// cause (an unregistered domain) is not something the shopper can
 			// act on, so close the sheet rather than leave it open.
-			setPaying( false );
+			paying = false;
 			appleSession.abort();
 			handleError( error );
 			overrides.onSheetClosed?.();
@@ -323,10 +318,9 @@ export async function renderApplePay( {
 			);
 
 			// A rejected checkout form submit keeps the shopper on the page.
-			setSdkBusy( false );
 			if ( hasJQuery() ) {
 				jQuery( document.body ).one( 'checkout_error', () => {
-					setPaying( false );
+					paying = false;
 					spinner?.unblock();
 				} );
 			}
@@ -341,7 +335,7 @@ export async function renderApplePay( {
 			// this sheet would fail again. handleError() shows the message.
 			appleSession.abort();
 
-			setPaying( false );
+			paying = false;
 			spinner?.unblock();
 			refreshCartUi( context );
 			handleError( error );
@@ -357,13 +351,43 @@ export async function renderApplePay( {
 		styles.borderRadius = `${ Number( overrides.borderRadius ) }px`;
 	}
 
-	container.appendChild(
-		createButton(
-			styles,
-			overrides.height || buttonHeight( config, context ),
-			pay
-		)
+	const button = createButton(
+		styles,
+		overrides.height || buttonHeight( config, context ),
+		pay
 	);
+	container.appendChild( button );
+
+	// An empty total means a page change is pending. A sheet opened now would
+	// show a total that PayPal then rejects.
+	setButtonEnabled( button, !! sheetTotal.get() );
+
+	const unsubscribe = sheetTotal.subscribe( ( total ) => {
+		// A re-render replaced this button.
+		if ( ! button.isConnected ) {
+			unsubscribe();
+			return;
+		}
+
+		setButtonEnabled( button, !! total );
+	} );
+}
+
+/**
+ * Enables or disables the <apple-pay-button>, which has no disabled attribute.
+ *
+ * @param {HTMLElement} button  - The button element.
+ * @param {boolean}     enabled - Whether a tap may open the sheet.
+ */
+function setButtonEnabled( button, enabled ) {
+	if ( enabled ) {
+		button.removeAttribute( 'aria-disabled' );
+	} else {
+		button.setAttribute( 'aria-disabled', 'true' );
+	}
+
+	button.style.pointerEvents = enabled ? '' : 'none';
+	button.style.opacity = enabled ? '' : '0.5';
 }
 
 /**

@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\SdkV6\Assets;
 
 use Mockery;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
@@ -32,6 +33,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WC_Payment_Gateway;
+use WC_Product;
+use WC_Product_Variable;
+use WC_Product_Variation;
 use function Brain\Monkey\Actions\expectDone;
 use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\expect;
@@ -78,6 +82,7 @@ class SdkV6ManagerTest extends TestCase
         $this->subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(false)->byDefault();
         $this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false)->byDefault();
         $this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false)->byDefault();
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(false)->byDefault();
 		$this->free_trial_helper = Mockery::mock(FreeTrialSubscriptionHelper::class);
 		$this->free_trial_helper->shouldReceive('is_free_trial_cart')->andReturn(false)->byDefault();
 		$this->free_trial_helper->shouldReceive('cart_requires_vaulting')->andReturn(false)->byDefault();
@@ -163,6 +168,35 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * @param bool[] $variation_stock In-stock flag of each available variation (variable products only).
+     */
+    private function create_product(string $type, bool $in_stock, array $variation_stock = []): object
+    {
+        $class = 'variable' === $type ? WC_Product_Variable::class : WC_Product::class;
+
+        $product = Mockery::mock($class);
+        $product->shouldReceive('is_type')
+            ->andReturnUsing(static fn($types): bool => in_array($type, (array) $types, true));
+        $product->shouldReceive('is_in_stock')->andReturn($in_stock);
+        $product->shouldReceive('needs_shipping')->andReturn(false)->byDefault();
+
+        if ('variable' === $type) {
+            $variations = array_map(
+                static function (bool $variation_in_stock): WC_Product_Variation {
+                    $variation = Mockery::mock(WC_Product_Variation::class);
+                    $variation->shouldReceive('is_in_stock')->andReturn($variation_in_stock);
+
+                    return $variation;
+                },
+                $variation_stock
+            );
+            $product->shouldReceive('get_available_variations')->andReturn($variations);
+        }
+
+        return $product;
+    }
+
+    /**
      * Stubs the collaborators and WP functions that script_data() always
      * touches, so a test only has to set up what it is actually verifying.
      */
@@ -190,7 +224,7 @@ class SdkV6ManagerTest extends TestCase
         when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
     }
 
-    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null, bool $wcs_plugin_active = false): SdkV6Manager
+    private function createTestee(array $credit_card_icons = [], bool $card_vaulting_enabled = true, string $merchant_country = 'US', bool $final_review_enabled = false, string $three_d_secure_contingency = 'SCA_WHEN_REQUIRED', ?callable $get_subscriptions_mode = null, bool $wcs_plugin_active = false, array $pay_now_contexts = ['checkout', 'pay-now'], string $bn_code = 'Woo_PPCP'): SdkV6Manager
     {
         $class_name = $wcs_plugin_active ? TestableSdkV6ManagerWithWcsActive::class : SdkV6Manager::class;
 
@@ -219,7 +253,9 @@ class SdkV6ManagerTest extends TestCase
 	        $this->apple_pay_config,
 	        $this->fastlane_config,
 	        $this->card_field_styles,
-	        $this->disabled_funding_sources
+	        $this->disabled_funding_sources,
+	        $pay_now_contexts,
+	        Mockery::mock(PartnerAttribution::class, ['get_bn_code' => $bn_code])
         );
     }
 
@@ -330,9 +366,9 @@ class SdkV6ManagerTest extends TestCase
                 true,
                 ['product' => true, 'cart' => true, 'checkout' => true, 'pay-now' => true, 'mini-cart' => true],
             ],
-            'zero-total cart not needing payment suppresses cart and checkout only' => [
+            'zero-total cart not needing payment suppresses checkout only' => [
                 false,
-                ['product' => true, 'cart' => false, 'checkout' => false, 'pay-now' => true, 'mini-cart' => true],
+                ['product' => true, 'cart' => true, 'checkout' => false, 'pay-now' => true, 'mini-cart' => true],
             ],
             'no cart present is treated as needing payment' => [
                 null,
@@ -348,10 +384,8 @@ class SdkV6ManagerTest extends TestCase
      * THEN the checkout still renders, because it must offer the PayPal
      *      save-without-purchase button for the vaulted token backing the future
      *      recurring payment
-     * AND the cart stays suppressed regardless of the free-trial flag, since it has no
-     *     form to submit that vaulted token from
-     * AND the mini-cart follows its setting alone, since its wrapper checks the cart
-     *     when it prints
+     * AND the cart and mini-cart follow their settings alone, since their wrappers
+     *     check the cart when they print
      * AND a $0 cart that is NOT a free trial (e.g. a full-value coupon) keeps the
      *     checkout suppressed too, same as before the fix
      *
@@ -370,8 +404,52 @@ class SdkV6ManagerTest extends TestCase
         $result = $testee->determine_render_places();
 
         $this->assertSame($expected_checkout, $result['checkout']);
-        $this->assertSame($needs_payment, $result['cart']);
+        $this->assertTrue($result['cart']);
         $this->assertTrue($result['mini-cart']);
+    }
+
+    /**
+     * GIVEN the cart was determined to need payment when the render places were determined
+     * WHEN the cart total changes (e.g. free shipping selected via AJAX) and the cart
+     *      button wrapper is rendered afterwards
+     * THEN the wrapper prints when the cart still needs payment at render time
+     * AND nothing prints when the cart needs no payment, e.g. a $0 total
+     *
+     * @dataProvider cart_wrapper_provider
+     */
+    public function testRenderCartWrapperFollowsCartStateAtRenderTime(bool $needs_payment_at_render, string $expected_output): void
+    {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $needs_payment = true;
+        $cart          = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturnUsing(static function () use (&$needs_payment): bool {
+            return $needs_payment;
+        });
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        $testee = $this->createTestee();
+        $places = $testee->determine_render_places();
+
+        $needs_payment = $needs_payment_at_render;
+        $testee->render_cart_wrapper();
+
+        $this->assertTrue($places['cart']);
+        $this->expectOutputString($expected_output);
+    }
+
+    public function cart_wrapper_provider(): array
+    {
+        return [
+            'cart that needs payment at render time prints the wrapper' => [
+                true,
+                '<div class="ppc-button-wrapper"><div id="' . SdkV6Manager::WRAPPER_ID . '"></div></div>',
+            ],
+            'zero-total cart at render time prints nothing' => [
+                false,
+                '',
+            ],
+        ];
     }
 
     /**
@@ -641,6 +719,67 @@ class SdkV6ManagerTest extends TestCase
     }
 
     /**
+     * GIVEN a buyer on the WooCommerce Subscriptions change-payment-method page (an order-pay URL)
+     *      with ACDC and smart buttons enabled
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK does not load, because AddPaymentMethodManager owns that page and two
+     *      scripts mounting into the same card inputs break the submit
+     */
+    public function testShouldNotLoadOnSubscriptionChangePaymentPage(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('pay-now');
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertFalse($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a buyer on a regular pay-for-order page (not a change-payment-method page)
+     *      with ACDC and smart buttons enabled
+     * WHEN checking whether the v6 SDK should load on the current page
+     * THEN the SDK loads as usual
+     */
+    public function testShouldLoadOnPayNowPageWhenNotSubscriptionChangePayment(): void
+    {
+        $this->context->shouldReceive('context')->andReturn('pay-now');
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(true);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertTrue($testee->should_load_on_current_page());
+    }
+
+    /**
+     * GIVEN a buyer on the WooCommerce Subscriptions change-payment-method page
+     * WHEN determining which locations should render on the current page
+     * THEN no v6 location renders, leaving the page entirely to the v5 stack
+     */
+    public function testDetermineRenderPlacesEmptyOnSubscriptionChangePaymentPage(): void
+    {
+        $this->subscription_helper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+
+        $testee = $this->createTestee();
+
+        $this->assertSame(
+            [
+                'product'   => false,
+                'cart'      => false,
+                'checkout'  => false,
+                'pay-now'   => false,
+                'mini-cart' => false,
+            ],
+            $testee->determine_render_places()
+        );
+    }
+
+    /**
      * GIVEN a buyer on the pay-for-order page for an existing WC order
      * WHEN the SDK bootstrap data is generated
      * THEN the pay_now identifiers (order id and order key) are forwarded so the front end
@@ -726,6 +865,87 @@ class SdkV6ManagerTest extends TestCase
 
         $this->assertSame('FR', $data['merchant_country']);
         $this->assertSame('DE', $data['buyer_country']);
+    }
+
+    /**
+     * GIVEN a merchant whose partner attribution BN code is configured
+     * WHEN the SDK bootstrap data is generated
+     * THEN bn_code carries that BN code so the frontend can pass it to the SDK as partnerAttributionId
+     */
+    public function testScriptDataIncludesBnCode(): void
+    {
+        $this->stub_common_script_data_dependencies();
+
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, false, ['checkout', 'pay-now'], 'WooPPCP_Ecom_PS_CoreProfiler');
+        $data   = $testee->script_data();
+
+        $this->assertSame('WooPPCP_Ecom_PS_CoreProfiler', $data['bn_code']);
+    }
+
+    /**
+     * GIVEN a merchant whose PayPal country code may be a non-ISO code such as C2 (China)
+     * WHEN the SDK bootstrap data is generated
+     * THEN merchant_country carries a valid ISO 3166-1 code, so wallet sheets accept it
+     * AND codes that are already ISO codes, or empty, are passed through unchanged
+     *
+     * @dataProvider merchantCountryProvider
+     */
+    public function testScriptDataMapsPayPalMerchantCountryToIsoCode(string $paypal_country, string $expected): void
+    {
+        $this->context->shouldReceive('context')->andReturn('checkout');
+        $this->card_payments_configuration->shouldReceive('is_acdc_enabled')->andReturn(false);
+        $this->card_payments_configuration->shouldReceive('gateway_title')->andReturn('Credit Card');
+        $this->card_payments_configuration->shouldReceive('show_name_on_card')->andReturn('no');
+
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(false);
+        $this->session_handler->shouldReceive('order')->andReturn(null);
+        $this->context->shouldReceive('is_paypal_continuation')->andReturn(false);
+        $this->environment->shouldReceive('is_sandbox')->andReturn(false);
+        $this->style_mapper->shouldReceive('styles_for_context')->andReturn(['borderRadius' => '4px']);
+
+        $wc = $this->create_wc_stub();
+        $wc->customer = Mockery::mock();
+        $wc->customer->shouldReceive('get_billing_country')->andReturn('US');
+
+        when('WC')->justReturn($wc);
+        when('wc_get_base_location')->justReturn(['country' => 'US']);
+        when('get_woocommerce_currency')->justReturn('USD');
+        when('get_locale')->justReturn('en_US');
+        when('is_product')->justReturn(false);
+        when('rest_url')->justReturn('https://example.com/wp-json/wc/store/v1/cart');
+        when('wc_get_checkout_url')->justReturn('https://example.com/checkout');
+
+        $testee = $this->createTestee([], true, $paypal_country);
+        $data   = $testee->script_data();
+
+        $this->assertSame($expected, $data['merchant_country']);
+    }
+
+    public function merchantCountryProvider(): array
+    {
+        return [
+            'PayPal China code C2 maps to CN' => ['C2', 'CN'],
+            'ISO code DE passes through'      => ['DE', 'DE'],
+            'ISO code CN passes through'      => ['CN', 'CN'],
+            'empty country stays empty'       => ['', ''],
+        ];
+    }
+
+    /**
+     * GIVEN a configured list of contexts in which the PayPal popup commits the payment
+     * WHEN the SDK bootstrap data is generated
+     * THEN pay_now_contexts carries that list exactly as configured, so the front end can
+     *      decide the popup's commit flag per context
+     */
+    public function testScriptDataIncludesPayNowContextsAsConfigured(): void
+    {
+        $pay_now_contexts = ['checkout', 'pay-now', 'cart', 'product', 'mini-cart'];
+        $this->stubScriptDataBaseline('checkout', 'checkout');
+
+        $testee = $this->createTestee([], true, 'US', false, 'SCA_WHEN_REQUIRED', null, false, $pay_now_contexts);
+        $data   = $testee->script_data();
+
+        $this->assertSame($pay_now_contexts, $data['pay_now_contexts']);
     }
 
     /**
@@ -1634,6 +1854,50 @@ class SdkV6ManagerTest extends TestCase
             'product'                          => ['product', 'product'],
             'pay-now uses pay_order segment'  => ['pay-now', 'pay_order'],
         ];
+    }
+
+    /**
+     * GIVEN the product page location
+     * WHEN the message wrapper is rendered for the viewed product
+     * THEN the Pay Later message wrapper is printed only if the product can be bought
+     *
+     * @dataProvider product_buyability_provider
+     */
+    public function testRenderMessageWrapperOnProductPageFollowsWhetherProductCanBeBought(
+        string $type,
+        bool $in_stock,
+        array $variation_stock,
+        bool $expected
+    ): void {
+        $this->context->shouldReceive('location')->andReturn('product');
+        when('wc_get_product')->justReturn($this->create_product($type, $in_stock, $variation_stock));
+
+        ob_start();
+        $this->createTestee()->render_message_wrapper();
+        $output = ob_get_clean();
+
+        $this->assertSame($expected ? '<div class="ppcp-messages"></div>' : '', $output);
+    }
+
+    /**
+     * GIVEN the product page location and a merchant filter on PayPal button support
+     * WHEN the message wrapper is rendered for an in-stock simple product
+     * THEN the Pay Later message wrapper follows the filter result
+     *
+     * @dataProvider payment_support_filter_provider
+     */
+    public function testRenderMessageWrapperOnProductPageFollowsPaymentSupportFilter(bool $filter_result): void
+    {
+        expectApplied('woocommerce_paypal_payments_product_supports_payment_request_button')
+            ->andReturn($filter_result);
+        $this->context->shouldReceive('location')->andReturn('product');
+        when('wc_get_product')->justReturn($this->create_product('simple', true));
+
+        ob_start();
+        $this->createTestee()->render_message_wrapper();
+        $output = ob_get_clean();
+
+        $this->assertSame($filter_result ? '<div class="ppcp-messages"></div>' : '', $output);
     }
 
     // -------------------------------------------------------------------------
@@ -2995,8 +3259,7 @@ class SdkV6ManagerTest extends TestCase
         $cart->shouldReceive('needs_payment')->andReturn(true);
         when('WC')->justReturn((object) ['cart' => $cart]);
 
-        $product = Mockery::mock(\WC_Product::class);
-        $product->shouldReceive('is_type')->andReturn($is_variable);
+        $product = $this->create_product($is_variable ? 'variable' : 'simple', true, [true]);
         $product->shouldReceive('needs_shipping')->andReturn($needs_shipping);
         when('wc_get_product')->justReturn($product);
         when('wc_get_price_including_tax')->justReturn($price);
@@ -3022,6 +3285,75 @@ class SdkV6ManagerTest extends TestCase
             'free product needing shipping with shipping disabled is suppressed' => [false, 0.0, true, false, false],
             'priced product keeps the button' => [false, 10.0, false, true, true],
             'variable product priced at zero keeps the button' => [true, 0.0, false, true, true],
+        ];
+    }
+
+    public function product_buyability_provider(): array
+    {
+        return [
+            'in-stock simple product can be bought' => ['simple', true, [], true],
+            'out-of-stock simple product cannot be bought' => ['simple', false, [], false],
+            'external product cannot be bought' => ['external', true, [], false],
+            'grouped product cannot be bought' => ['grouped', true, [], false],
+            'variable product with an in-stock variation can be bought' => ['variable', false, [false, true], true],
+            'variable product with only out-of-stock variations cannot be bought' => ['variable', true, [false, false], false],
+            'variable product without variations cannot be bought' => ['variable', true, [], false],
+        ];
+    }
+
+    /**
+     * GIVEN the smart button is enabled for the product location
+     * WHEN determining which locations should render for the viewed product
+     * THEN the product location renders only if the product can be bought
+     *
+     * @dataProvider product_buyability_provider
+     */
+    public function testDetermineRenderPlacesProductFollowsWhetherProductCanBeBought(
+        string $type,
+        bool $in_stock,
+        array $variation_stock,
+        bool $expected
+    ): void {
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        when('wc_get_product')->justReturn($this->create_product($type, $in_stock, $variation_stock));
+        when('wc_get_price_including_tax')->justReturn(10.0);
+
+        $this->assertSame($expected, $this->createTestee()->determine_render_places()['product']);
+    }
+
+    /**
+     * GIVEN a product page where a merchant filter decides if the product supports PayPal buttons
+     * WHEN determining which locations should render for an in-stock simple product
+     * THEN the product location follows the filter result
+     *
+     * @dataProvider payment_support_filter_provider
+     */
+    public function testDetermineRenderPlacesProductFollowsPaymentSupportFilter(bool $filter_result): void
+    {
+        expectApplied('woocommerce_paypal_payments_product_supports_payment_request_button')
+            ->andReturn($filter_result);
+        $this->settings_status->shouldReceive('is_smart_button_enabled_for_location')->andReturn(true);
+
+        $cart = Mockery::mock();
+        $cart->shouldReceive('needs_payment')->andReturn(true);
+        when('WC')->justReturn((object) ['cart' => $cart]);
+
+        when('wc_get_product')->justReturn($this->create_product('simple', true));
+        when('wc_get_price_including_tax')->justReturn(10.0);
+
+        $this->assertSame($filter_result, $this->createTestee()->determine_render_places()['product']);
+    }
+
+    public function payment_support_filter_provider(): array
+    {
+        return [
+            'filter denies support' => [false],
+            'filter allows support' => [true],
         ];
     }
 

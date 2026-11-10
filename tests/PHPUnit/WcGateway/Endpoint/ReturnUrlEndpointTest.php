@@ -1061,9 +1061,96 @@ class ReturnUrlEndpointTest extends TestCase {
 		$this->assertSame( self::CHECKOUT_URL, $this->resume_redirect_target() );
 	}
 
+	/**
+	 * GIVEN the buyer returns from 3DS with a valid resume nonce
+	 * AND the order's payment method is not a gateway of this plugin, or is a
+	 *     disabled gateway of this plugin
+	 * WHEN the return URL endpoint handles the request
+	 * THEN the gateway does not process a payment
+	 * AND the buyer is sent back to the checkout
+	 *
+	 * @dataProvider refused_gateway_provider
+	 */
+	public function test_resume_refuses_gateway_that_must_not_finish_the_order(
+		string $payment_method,
+		bool $is_available,
+		string $enabled
+	): void {
+		$this->arrange_resume_fixture();
+		$this->payment_method = $payment_method;
+		$gateway              = $this->create_refused_gateway( $payment_method, $enabled );
+
+		$this->registered_gateways[ $payment_method ] = $gateway;
+		if ( $is_available ) {
+			$this->available_gateways[ $payment_method ] = $gateway;
+		}
+
+		$this->assertSame( self::CHECKOUT_URL, $this->resume_redirect_target() );
+	}
+
+	/**
+	 * GIVEN the buyer returns from PayPal with a valid return nonce for an approved order
+	 * AND the WC order's payment method is not a gateway of this plugin, or is a
+	 *     disabled gateway of this plugin
+	 * WHEN the return URL endpoint handles the request
+	 * THEN the gateway does not process a payment
+	 * AND the buyer is sent back to the checkout
+	 *
+	 * @dataProvider refused_gateway_provider
+	 */
+	public function test_return_refuses_gateway_that_must_not_finish_the_order(
+		string $payment_method,
+		bool $is_available,
+		string $enabled
+	): void {
+		$_GET['token']             = 'TOKEN-REFUSED-GATEWAY';
+		$_GET['ppcp_return_nonce'] = 'NONCE-VALID';
+
+		$order = $this->make_order( 'TOKEN-REFUSED-GATEWAY', OrderStatus::APPROVED, '170' );
+		$this->order_endpoint->shouldReceive( 'order' )->with( 'TOKEN-REFUSED-GATEWAY' )->andReturn( $order );
+		$this->return_url_secret->shouldReceive( 'verify' )->with( 'TOKEN-REFUSED-GATEWAY', 'NONCE-VALID' )->andReturn( true );
+		$this->session_handler->shouldReceive( 'replace_order' );
+
+		when( 'wc_get_order' )->justReturn( $this->make_wc_order( 0, $payment_method ) );
+		when( 'wc_add_notice' )->justReturn();
+
+		$gateway = $this->create_refused_gateway( $payment_method, $enabled );
+
+		$payment_gateways = Mockery::mock();
+		$payment_gateways->allows( 'get_available_payment_gateways' )->andReturn(
+			$is_available ? array( $payment_method => $gateway ) : array()
+		);
+		$payment_gateways->allows( 'payment_gateways' )->andReturn( array( $payment_method => $gateway ) );
+		when( 'WC' )->justReturn( (object) array( 'payment_gateways' => $payment_gateways ) );
+
+		try {
+			$this->sut->handle_request();
+			$this->fail( 'Expected handle_request() to redirect.' );
+		} catch ( ReturnUrlRedirected $redirected ) {
+			$this->assertSame( self::CHECKOUT_URL, $redirected->url );
+		}
+	}
+
+	public function refused_gateway_provider(): array {
+		return array(
+			'cod gateway is available and registered'  => array( 'cod', true, 'yes' ),
+			'plugin gateway is registered but disabled' => array( 'ppcp-other', false, 'no' ),
+		);
+	}
+
+	private function create_refused_gateway( string $payment_method, string $enabled ): WC_Payment_Gateway {
+		$gateway          = Mockery::mock( WC_Payment_Gateway::class );
+		$gateway->id      = $payment_method;
+		$gateway->enabled = $enabled;
+		$gateway->shouldNotReceive( 'process_payment' );
+
+		return $gateway;
+	}
+
 	private function create_gateway_expecting_payment(): PayPalGateway {
-		$gateway     = Mockery::mock( PayPalGateway::class );
-		$gateway->id = self::CARD_METHOD;
+		$gateway          = Mockery::mock( PayPalGateway::class );
+		$gateway->id      = self::CARD_METHOD;
+		$gateway->enabled = 'yes';
 		$gateway->expects( 'process_payment' )
 			->with( self::WC_ORDER_ID )
 			->andReturn(

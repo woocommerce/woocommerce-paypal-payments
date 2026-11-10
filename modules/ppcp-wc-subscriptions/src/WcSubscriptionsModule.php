@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
@@ -298,6 +299,37 @@ class WcSubscriptionsModule implements ServiceModule, ExecutableModule {
 				);
 			}
 		);
+
+		// Existing automatic subscriptions still renew with their saved token when manual renewals strip the flags above.
+		add_filter(
+			'woocommerce_subscription_payment_gateway_supports',
+			function ( $supported, $feature, $subscription ) use ( $c ) {
+				if ( $supported || ! $subscription instanceof WC_Subscription || ! in_array( $feature, self::VAULT_SUPPORTS_SUBSCRIPTIONS, true ) ) {
+					return $supported;
+				}
+
+				return $this->keeps_automatic_renewal( $subscription, $c );
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Whether the subscription renews with its saved token although manual renewals disable the subscriptions mode.
+	 */
+	private function keeps_automatic_renewal( WC_Subscription $subscription, ContainerInterface $c ): bool {
+		$settings_provider = $c->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
+
+		$payment_method          = $subscription->get_payment_method();
+		$renews_with_saved_token = PayPalGateway::ID === $payment_method
+			|| ( CreditCardGateway::ID === $payment_method && $settings_provider->save_card_details() );
+
+		return $renews_with_saved_token && $subscription_helper->is_mode_disabled_for_manual_renewals( $settings_provider );
 	}
 
 	/**

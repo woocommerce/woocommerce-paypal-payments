@@ -8,26 +8,6 @@ jest.mock( '../utils/errorHandler', () => ( {
 	handleError: ( ...args ) => mockHandleError( ...args ),
 } ) );
 
-const mockSetSdkBusy = jest.fn();
-jest.mock( '../tokenRefresh', () => ( {
-	releasingSdkBusy: ( sessionConfig ) => {
-		for ( const name of [ 'onApprove', 'onCancel', 'onError' ] ) {
-			const callback = sessionConfig[ name ];
-			if ( ! callback ) {
-				continue;
-			}
-			sessionConfig[ name ] = async ( ...args ) => {
-				try {
-					return await callback( ...args );
-				} finally {
-					mockSetSdkBusy( false );
-				}
-			};
-		}
-		return sessionConfig;
-	},
-} ) );
-
 import { createSavePayPalSession } from '../sessions/createSaveSession';
 import { navigation } from '../utils/navigation';
 
@@ -82,9 +62,43 @@ describe( 'createSavePayPalSession', () => {
 		expect( assign ).toHaveBeenCalledWith( config.payment_methods_page );
 	} );
 
+	test( 'onApprove on a change-payment config assigns the new token to the subscription and redirects back to it', async () => {
+		const sdk = fakeSdk();
+		const subscriptionChange = {
+			subscription_id: 123,
+			redirect_url: '/my-account/view-subscription/123/',
+			ajax: { endpoint: '/change', nonce: 'n-change' },
+		};
+		mockPostJson.mockResolvedValueOnce( 42 ).mockResolvedValueOnce( {} );
+		const assign = jest
+			.spyOn( navigation, 'assign' )
+			.mockImplementation( () => {} );
+
+		createSavePayPalSession( sdk, {
+			...config,
+			subscription_change: subscriptionChange,
+		} );
+		await sdk.capture.config.onApprove( { vaultSetupToken: 'SETUP1' } );
+
+		expect( mockPostJson ).toHaveBeenLastCalledWith(
+			subscriptionChange.ajax,
+			{
+				subscription_id: 123,
+				payment_method: 'ppcp-gateway',
+				wc_payment_token_id: 42,
+			}
+		);
+		expect( assign ).toHaveBeenCalledWith(
+			subscriptionChange.redirect_url
+		);
+		expect( mockHandleError ).not.toHaveBeenCalled();
+	} );
+
 	test( 'onApprove routes to the error handler and does not redirect when the exchange fails', async () => {
 		const sdk = fakeSdk();
-		mockPostJson.mockRejectedValueOnce( new Error( 'token exchange failed' ) );
+		mockPostJson.mockRejectedValueOnce(
+			new Error( 'token exchange failed' )
+		);
 		const assign = jest
 			.spyOn( navigation, 'assign' )
 			.mockImplementation( () => {} );
@@ -92,9 +106,7 @@ describe( 'createSavePayPalSession', () => {
 		createSavePayPalSession( sdk, config );
 		await sdk.capture.config.onApprove( { vaultSetupToken: 'SETUP1' } );
 
-		expect( mockHandleError ).toHaveBeenCalledWith(
-			expect.any( Error )
-		);
+		expect( mockHandleError ).toHaveBeenCalledWith( expect.any( Error ) );
 		expect( assign ).not.toHaveBeenCalled();
 	} );
 
@@ -106,90 +118,5 @@ describe( 'createSavePayPalSession', () => {
 		sdk.capture.config.onError( error );
 
 		expect( mockHandleError ).toHaveBeenCalledWith( error );
-	} );
-
-	describe( 'releasing the SDK busy state', () => {
-		const releasedBusy = () =>
-			mockSetSdkBusy.mock.calls.some( ( [ busy ] ) => busy === false );
-
-		test( 'onApprove releases it only after the token exchange finished', async () => {
-			const sdk = fakeSdk();
-			let finishExchange;
-			mockPostJson.mockReturnValueOnce(
-				new Promise( ( resolve ) => {
-					finishExchange = resolve;
-				} )
-			);
-			jest.spyOn( navigation, 'assign' ).mockImplementation( () => {} );
-			createSavePayPalSession( sdk, config );
-
-			const approval = sdk.capture.config.onApprove( {
-				vaultSetupToken: 'SETUP1',
-			} );
-			await Promise.resolve();
-			expect( releasedBusy() ).toBe( false );
-
-			finishExchange( {} );
-			await approval;
-
-			expect( releasedBusy() ).toBe( true );
-		} );
-
-		test( 'onApprove releases it after a failed exchange', async () => {
-			const sdk = fakeSdk();
-			mockPostJson.mockRejectedValueOnce( new Error( 'exchange failed' ) );
-			createSavePayPalSession( sdk, config );
-
-			await sdk.capture.config.onApprove( { vaultSetupToken: 'SETUP1' } );
-
-			expect( releasedBusy() ).toBe( true );
-		} );
-
-		test( 'onCancel releases it', async () => {
-			const sdk = fakeSdk();
-			createSavePayPalSession( sdk, config );
-
-			await sdk.capture.config.onCancel();
-
-			expect( releasedBusy() ).toBe( true );
-		} );
-
-		test( 'onError releases it', async () => {
-			const sdk = fakeSdk();
-			createSavePayPalSession( sdk, config );
-
-			await sdk.capture.config.onError( new Error( 'sdk session error' ) );
-
-			expect( releasedBusy() ).toBe( true );
-		} );
-
-		test.each( [
-			[
-				'onApprove',
-				( callbacks ) => callbacks.onApprove( { vaultSetupToken: 'S' } ),
-				() => mockPostJson.mockRejectedValueOnce( new Error( 'x' ) ),
-			],
-			[
-				'onError',
-				( callbacks ) => callbacks.onError( new Error( 'x' ) ),
-				() => {},
-			],
-		] )(
-			'%s releases it and rejects the same way when the error handler throws',
-			async ( name, trigger, arrange ) => {
-				const sdk = fakeSdk();
-				const failure = new Error( 'handler failed' );
-				mockHandleError.mockImplementationOnce( () => {
-					throw failure;
-				} );
-				arrange();
-				createSavePayPalSession( sdk, config );
-
-				await expect( trigger( sdk.capture.config ) ).rejects.toBe(
-					failure
-				);
-				expect( releasedBusy() ).toBe( true );
-			}
-		);
 	} );
 } );

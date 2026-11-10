@@ -13,11 +13,13 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
@@ -29,6 +31,31 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * below unverifiable).
  */
 class ReturnUrlEndpointHaltSignal extends Exception {
+}
+
+/**
+ * Uses the `ppcp-` ID prefix of this plugin. process_payment() marks the order
+ * paid, so each call shows as a paid order.
+ */
+class ReturnUrlEndpointTestGateway extends \WC_Payment_Gateway {
+
+	const ID = 'ppcp-return-url-test-gateway';
+
+	public function __construct() {
+		$this->id = self::ID;
+		$this->init_settings();
+		$this->enabled = $this->get_option( 'enabled', 'no' );
+	}
+
+	public function process_payment( $order_id ) {
+		$order = wc_get_order( $order_id );
+		$order->payment_complete();
+
+		return array(
+			'result'   => 'success',
+			'redirect' => $this->get_return_url( $order ),
+		);
+	}
 }
 
 /**
@@ -47,6 +74,11 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 	private $redirect_filter = null;
 
 	/**
+	 * @var array<string, mixed> Stored gateway settings by gateway ID (false when absent), restored in tearDown.
+	 */
+	private array $original_gateway_settings = array();
+
+	/**
 	 * These tests model an unauthenticated third party replaying/guessing a
 	 * return URL. wp_set_current_user( 0 ) forces every test in this class to
 	 * start logged out, regardless of what an earlier test class in the same
@@ -60,15 +92,35 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 		parent::setUp();
 
 		wp_set_current_user( 0 );
+		wc_clear_notices();
 	}
 
 	public function tearDown(): void {
+		wc_clear_notices();
+
 		if ( null !== $this->redirect_filter ) {
 			remove_filter( 'wp_redirect', $this->redirect_filter );
 			$this->redirect_filter = null;
 		}
 
-		unset( $_GET['token'], $_GET['ppcp_return_nonce'] );
+		unset( $_GET['token'], $_GET['ppcp_return_nonce'], $_GET['ppcp_resume_wc_order'], $_GET['ppcp_resume_nonce'] );
+
+		foreach ( $this->original_gateway_settings as $gateway_id => $original ) {
+			$option_name = 'woocommerce_' . $gateway_id . '_settings';
+			if ( false === $original ) {
+				delete_option( $option_name );
+			} else {
+				update_option( $option_name, $original );
+			}
+
+			$registered = WC()->payment_gateways()->payment_gateways();
+			if ( isset( $registered[ $gateway_id ] ) ) {
+				$registered[ $gateway_id ]->init_settings();
+			}
+		}
+		$this->original_gateway_settings = array();
+
+		unset( WC()->payment_gateways()->payment_gateways[ ReturnUrlEndpointTestGateway::ID ] );
 
 		// Reset so this class does not leak an authenticated current user into
 		// classes that run after it in the same PHPUnit process.
@@ -313,6 +365,145 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 	}
 
 	/**
+	 * GIVEN an authorized return (valid bound secret, APPROVED PayPal order)
+	 * AND the pending WC order was switched to a gateway that must not finish it
+	 * WHEN ReturnUrlEndpoint::handle_request() handles the return
+	 * THEN the order stays pending and unpaid
+	 * AND the return secret is not consumed
+	 * AND the buyer is sent back to the checkout
+	 *
+	 * @dataProvider disabled_gateway_provider
+	 */
+	public function test_leaves_order_pending_when_payment_method_is_a_disabled_gateway( string $gateway_id ): void {
+		// Arrange
+		$this->disable_gateway( $gateway_id );
+
+		$order = $this->create_pending_order_with_payment_method( $gateway_id );
+
+		$token  = 'PP-RETURN-DISABLED-GW-' . uniqid();
+		$secret = 'the-real-bound-secret-' . uniqid();
+		set_transient( 'ppcp_ru_' . $token, $secret, DAY_IN_SECONDS );
+
+		$_GET['token']             = $token;
+		$_GET['ppcp_return_nonce'] = $secret;
+
+		$approved_order = $this->create_paypal_order_double( OrderStatus::APPROVED, (string) $order->get_id() );
+
+		$order_endpoint = Mockery::mock( OrderEndpoint::class )->shouldIgnoreMissing();
+		$order_endpoint->shouldReceive( 'order' )->andReturn( $approved_order );
+
+		$endpoint = $this->create_endpoint( $order_endpoint );
+
+		// When
+		$this->invoke_and_halt_before_exit( $endpoint );
+
+		$secret_still_present = false !== get_transient( 'ppcp_ru_' . $token );
+		delete_transient( 'ppcp_ru_' . $token );
+
+		// Then
+		$refreshed = wc_get_order( $order->get_id() );
+		$this->assertSame( 'pending', $refreshed->get_status() );
+		$this->assertFalse( $refreshed->is_paid() );
+		$this->assertTrue( $secret_still_present );
+		$this->assertContains(
+			'Payment gateway is unavailable. Please try again or contact support.',
+			wp_list_pluck( wc_get_notices( 'error' ), 'notice' )
+		);
+	}
+
+	public function disabled_gateway_provider(): array {
+		return array(
+			'disabled cash on delivery'       => array( 'cod' ),
+			'disabled gateway of this plugin' => array( ReturnUrlEndpointTestGateway::ID ),
+		);
+	}
+
+	/**
+	 * GIVEN a card order that waits for its 3-D Secure resume
+	 * AND the request carries the matching resume nonce
+	 * AND the pending WC order was switched to the disabled cash on delivery gateway
+	 * WHEN ReturnUrlEndpoint::handle_request() handles the return without a token
+	 * THEN the order stays pending and unpaid
+	 */
+	public function test_leaves_order_pending_when_3ds_resume_targets_a_disabled_gateway(): void {
+		// Arrange
+		$this->disable_gateway( 'cod' );
+
+		$order = $this->create_pending_order_with_payment_method( 'cod' );
+		$nonce = 'the-resume-nonce-' . uniqid();
+		$order->update_meta_data( CreditCardGateway::THREE_DS_RESUME_META, $nonce );
+		$order->save();
+
+		$_GET['ppcp_resume_wc_order'] = (string) $order->get_id();
+		$_GET['ppcp_resume_nonce']    = $nonce;
+
+		$endpoint = $this->create_endpoint( Mockery::mock( OrderEndpoint::class )->shouldIgnoreMissing() );
+
+		// When
+		$this->invoke_and_halt_before_exit( $endpoint );
+
+		// Then
+		$refreshed = wc_get_order( $order->get_id() );
+		$this->assertSame( 'pending', $refreshed->get_status() );
+		$this->assertFalse( $refreshed->is_paid() );
+	}
+
+	private function create_endpoint( OrderEndpoint $order_endpoint ): ReturnUrlEndpoint {
+		$session_handler = Mockery::mock( SessionHandler::class )->shouldIgnoreMissing();
+
+		$gateway     = Mockery::mock( PayPalGateway::class );
+		$gateway->id = PayPalGateway::ID;
+
+		return new ReturnUrlEndpoint(
+			$gateway,
+			$order_endpoint,
+			$session_handler,
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+		);
+	}
+
+	private function create_pending_order_with_payment_method( string $payment_method ): \WC_Order {
+		$order = $this->getConfiguredOrder(
+			$this->customer_id,
+			$payment_method,
+			array( 'simple' ),
+			array(),
+			false
+		);
+		$order->set_customer_id( 0 );
+		$order->set_status( 'pending' );
+		$order->save();
+
+		$this->assertSame( $payment_method, $order->get_payment_method() );
+
+		return $order;
+	}
+
+	/**
+	 * Stored settings are restored in tearDown().
+	 */
+	private function disable_gateway( string $gateway_id ): void {
+		$option_name = 'woocommerce_' . $gateway_id . '_settings';
+
+		if ( ! array_key_exists( $gateway_id, $this->original_gateway_settings ) ) {
+			$this->original_gateway_settings[ $gateway_id ] = get_option( $option_name, false );
+		}
+
+		$settings            = (array) get_option( $option_name, array() );
+		$settings['enabled'] = 'no';
+		update_option( $option_name, $settings );
+
+		if ( ReturnUrlEndpointTestGateway::ID === $gateway_id ) {
+			WC()->payment_gateways()->payment_gateways[ $gateway_id ] = new ReturnUrlEndpointTestGateway();
+		}
+
+		$registered = WC()->payment_gateways()->payment_gateways();
+		$this->assertArrayHasKey( $gateway_id, $registered );
+		$registered[ $gateway_id ]->init_settings();
+		$this->assertFalse( $registered[ $gateway_id ]->is_available() );
+	}
+
+	/**
 	 * Builds a PayPal order double whose status and purchase-unit custom_id are
 	 * configurable, matching the shape ReturnUrlEndpoint::handle_request() reads
 	 * before any capture happens. Its amount mirrors the WC order, so
@@ -337,8 +528,19 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 		$paypal_order->shouldReceive( 'intent' )->andReturn( 'CAPTURE' );
 		$paypal_order->shouldReceive( 'status' )->andReturn( $order_status );
 		$paypal_order->shouldReceive( 'purchase_units' )->andReturn( array( $purchase_unit ) );
+		$paypal_order->shouldReceive( 'payment_source' )->andReturn( $this->create_paypal_payment_source() );
 
 		return $paypal_order;
+	}
+
+	private function create_paypal_payment_source(): PaymentSource {
+		return new PaymentSource(
+			'paypal',
+			(object) array(
+				'email_address' => 'buyer@example.com',
+				'account_id'    => 'TESTPAYERID123',
+			)
+		);
 	}
 
 	/**
@@ -371,6 +573,7 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 
 		$paypal_order = Mockery::mock( Order::class )->shouldIgnoreMissing();
 		$paypal_order->shouldReceive( 'id' )->andReturn( 'PP-CAPTURED-' . uniqid() );
+		$paypal_order->shouldReceive( 'payment_source' )->andReturn( $this->create_paypal_payment_source() );
 		$paypal_order->shouldReceive( 'intent' )->andReturn( 'CAPTURE' );
 		$paypal_order->shouldReceive( 'status' )->andReturn( $order_status );
 		$paypal_order->shouldReceive( 'purchase_units' )->andReturn( array( $purchase_unit ) );

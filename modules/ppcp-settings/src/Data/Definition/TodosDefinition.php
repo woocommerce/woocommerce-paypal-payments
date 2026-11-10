@@ -262,7 +262,9 @@ class TodosDefinition {
 				'isEligible'  => $eligibility_checks['apply_for_pwc'],
 				'action'      => array(
 					'type' => 'external',
-					'url'  => 'http://example.com/',
+					'url'  => $this->settings->is_sandbox_merchant()
+						? 'https://www.sandbox.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS'
+						: 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
 				),
 				'priority'    => 16,
 			),

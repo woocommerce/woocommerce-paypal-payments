@@ -13,7 +13,6 @@ import { refreshCartUi } from '../utils/cartUi';
 import { handleError, handleWarning } from '../utils/errorHandler';
 import { FundingSources } from '../utils/fundingSources';
 import { MERCHANT_PRESENTED_METHODS } from '../methods/methodRegistry';
-import { releasingSdkBusy } from '../tokenRefresh';
 
 const SESSION_FACTORIES = {
 	[ FundingSources.PAYPAL ]: 'createPayPalOneTimePaymentSession',
@@ -37,6 +36,8 @@ export const SUPPORTED_METHODS = Object.keys( SESSION_FACTORIES );
 // Wallet sessions are merchant-presented, so the SDK shows no popup and these
 // callbacks never fire; wallets collect shipping in their own sheet instead.
 const SHIPPING_POPUP_METHODS = [ FundingSources.PAYPAL ];
+
+const COMMIT_METHODS = [ FundingSources.PAYPAL, FundingSources.PAYLATER ];
 
 // Contexts where the buyer enters shipping on the page: checkout has the form,
 // pay-now pays an order that is already addressed.
@@ -107,6 +108,14 @@ export function createSession(
 			};
 	}
 
+	// Left unset, the SDK commits and the popup button reads "Pay".
+	if (
+		COMMIT_METHODS.includes( method ) &&
+		Array.isArray( config.pay_now_contexts )
+	) {
+		sessionConfig.commit = config.pay_now_contexts.includes( context );
+	}
+
 	// Card-only: the other factories' tolerance for unknown option keys is
 	// unverified, while the guest session documents both handlers.
 	if ( method === FundingSources.CARD ) {
@@ -148,7 +157,5 @@ export function createSession(
 			handleShippingOptionsChange( data, config );
 	}
 
-	return sdkInstance[ SESSION_FACTORIES[ method ] ](
-		releasingSdkBusy( sessionConfig )
-	);
+	return sdkInstance[ SESSION_FACTORIES[ method ] ]( sessionConfig );
 }

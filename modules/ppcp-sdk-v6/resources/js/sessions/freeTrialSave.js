@@ -14,7 +14,6 @@
 
 import { postJson } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
-import { releasingSdkBusy } from '../tokenRefresh';
 
 /**
  * Requests a PayPal wallet setup token from the existing WC AJAX endpoint.
@@ -88,32 +87,30 @@ export function createFreeTrialPayPalSession(
 	config,
 	{ onComplete, onError } = {}
 ) {
-	return sdkInstance.createPayPalSavePaymentSession(
-		releasingSdkBusy( {
-			async onApprove( data ) {
-				try {
-					await exchangeSetupToken( config, data.vaultSetupToken );
-					if ( onComplete ) {
-						onComplete();
-					}
-				} catch ( error ) {
-					if ( onError ) {
-						onError( error );
-					} else {
-						handleError( error );
-					}
+	return sdkInstance.createPayPalSavePaymentSession( {
+		async onApprove( data ) {
+			try {
+				await exchangeSetupToken( config, data.vaultSetupToken );
+				if ( onComplete ) {
+					onComplete();
 				}
-			},
-
-			onCancel() {},
-
-			onError( error ) {
+			} catch ( error ) {
 				if ( onError ) {
 					onError( error );
 				} else {
 					handleError( error );
 				}
-			},
-		} )
-	);
+			}
+		},
+
+		onCancel() {},
+
+		onError( error ) {
+			if ( onError ) {
+				onError( error );
+			} else {
+				handleError( error );
+			}
+		},
+	} );
 }

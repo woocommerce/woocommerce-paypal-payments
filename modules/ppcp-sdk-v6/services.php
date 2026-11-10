@@ -178,7 +178,9 @@ return array(
 			$container->get( 'sdk-v6.apple-pay-config' ),
 			$container->get( 'sdk-v6.fastlane-config' ),
 			$container->get( 'sdk-v6.card-field-styles' ),
-			$container->get( 'button.helper.disabled-funding-sources' )
+			$container->get( 'button.helper.disabled-funding-sources' ),
+			$container->get( 'order-endpoints.pay-now-contexts' ),
+			$container->get( 'api.helper.partner-attribution' )
 		);
 	},
 
@@ -198,7 +200,9 @@ return array(
 				&& $container->get( 'save-payment-methods.eligible' )
 				&& $settings_provider->save_card_details(),
 			$settings_provider,
-			$container->get( 'sdk-v6.card-field-styles' )
+			$container->get( 'sdk-v6.card-field-styles' ),
+			$container->get( 'api.helper.partner-attribution' ),
+			$container->get( 'wc-subscriptions.helper' )
 		);
 	},
 

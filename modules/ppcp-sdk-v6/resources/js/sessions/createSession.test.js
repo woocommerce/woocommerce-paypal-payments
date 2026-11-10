@@ -16,30 +16,7 @@ jest.mock( '../utils/errorHandler', () => ( {
 	handleWarning: jest.fn(),
 } ) );
 
-const mockSetSdkBusy = jest.fn();
-jest.mock( '../tokenRefresh', () => ( {
-	releasingSdkBusy: ( sessionConfig ) => {
-		for ( const name of [ 'onApprove', 'onCancel', 'onError' ] ) {
-			const callback = sessionConfig[ name ];
-			if ( ! callback ) {
-				continue;
-			}
-			sessionConfig[ name ] = async ( ...args ) => {
-				try {
-					return await callback( ...args );
-				} finally {
-					mockSetSdkBusy( false );
-				}
-			};
-		}
-		return sessionConfig;
-	},
-} ) );
-
 import { createSession, SUPPORTED_METHODS } from './createSession';
-
-const releasedBusy = () =>
-	mockSetSdkBusy.mock.calls.some( ( [ busy ] ) => busy === false );
 
 // Captures the session config and requested factory so the built handlers can be inspected.
 function fakeSdk() {
@@ -76,7 +53,6 @@ beforeEach( () => {
 	mockApproveOrder.mockReset();
 	mockAddressChange.mockReset();
 	mockOptionsChange.mockReset();
-	mockSetSdkBusy.mockReset();
 } );
 
 describe( 'SUPPORTED_METHODS', () => {
@@ -90,78 +66,6 @@ describe( 'SUPPORTED_METHODS', () => {
 			'card',
 		] );
 	} );
-} );
-
-describe( 'createSession releasing the SDK busy state', () => {
-	test.each( [ 'onApprove', 'onCancel', 'onError' ] )(
-		'%s releases it once its callback finished, and keeps its result',
-		async ( name ) => {
-			const sdk = fakeSdk();
-			let finish;
-			const callback = jest.fn(
-				() =>
-					new Promise( ( resolve ) => {
-						finish = resolve;
-					} )
-			);
-
-			createSession( sdk, 'paypal', { shipping: {} }, 'cart', {
-				[ name ]: callback,
-			} );
-			const result = sdk.capture.config[ name ]( { orderId: 'O1' } );
-			await Promise.resolve();
-			expect( releasedBusy() ).toBe( false );
-
-			finish( 'callback result' );
-
-			await expect( result ).resolves.toBe( 'callback result' );
-			expect( releasedBusy() ).toBe( true );
-		}
-	);
-
-	test.each( [ 'onApprove', 'onCancel', 'onError' ] )(
-		'%s releases it and rejects the same way when its callback throws',
-		async ( name ) => {
-			const sdk = fakeSdk();
-			const failure = new Error( 'callback failed' );
-
-			createSession( sdk, 'paypal', { shipping: {} }, 'cart', {
-				[ name ]: () => {
-					throw failure;
-				},
-			} );
-
-			await expect(
-				sdk.capture.config[ name ]( { orderId: 'O1' } )
-			).rejects.toBe( failure );
-			expect( releasedBusy() ).toBe( true );
-		}
-	);
-
-	test( 'the default onApprove releases it after approving the order', async () => {
-		const sdk = fakeSdk();
-		mockApproveOrder.mockResolvedValue( undefined );
-
-		createSession( sdk, 'paypal', { shipping: {} }, 'cart' );
-		await sdk.capture.config.onApprove( { orderId: 'O1' } );
-
-		expect( mockApproveOrder ).toHaveBeenCalled();
-		expect( releasedBusy() ).toBe( true );
-	} );
-
-	test.each( [ 'googlepay', 'applepay' ] )(
-		'a %s session, which has no onApprove, releases it through onCancel',
-		async ( method ) => {
-			const sdk = fakeSdk();
-
-			createSession( sdk, method, { shipping: {} }, 'cart', {
-				onCancel: () => {},
-			} );
-			await sdk.capture.config.onCancel();
-
-			expect( releasedBusy() ).toBe( true );
-		}
-	);
 } );
 
 describe( 'createSession', () => {
@@ -298,6 +202,58 @@ describe( 'createSession', () => {
 				sdk.capture.config.onShippingOptionsChange
 			).toBeUndefined();
 		} );
+	} );
+
+	describe( 'commit', () => {
+		const payNowConfig = ( overrides = {} ) => ( {
+			shipping: {},
+			pay_now_contexts: [ 'checkout', 'pay-now' ],
+			...overrides,
+		} );
+
+		test.each( [
+			[ 'paypal', 'checkout', true ],
+			[ 'paypal', 'pay-now', true ],
+			[ 'paypal', 'cart', false ],
+			[ 'paylater', 'checkout', true ],
+			[ 'paylater', 'cart', false ],
+		] )(
+			'%s in the %s context gets commit: %s',
+			( method, context, expected ) => {
+				const sdk = fakeSdk();
+
+				createSession( sdk, method, payNowConfig(), context );
+
+				expect( sdk.capture.config.commit ).toBe( expected );
+			}
+		);
+
+		test.each( [ 'venmo', 'googlepay', 'applepay', 'card' ] )(
+			'%s gets no commit key even when its context is a pay-now context',
+			( method ) => {
+				const sdk = fakeSdk();
+
+				createSession( sdk, method, payNowConfig(), 'checkout' );
+
+				expect( sdk.capture.config ).not.toHaveProperty( 'commit' );
+			}
+		);
+
+		test.each( [ 'paypal', 'paylater' ] )(
+			'%s gets no commit key when pay_now_contexts is absent',
+			( method ) => {
+				const sdk = fakeSdk();
+
+				createSession(
+					sdk,
+					method,
+					payNowConfig( { pay_now_contexts: undefined } ),
+					'checkout'
+				);
+
+				expect( sdk.capture.config ).not.toHaveProperty( 'commit' );
+			}
+		);
 	} );
 
 	describe( 'card', () => {

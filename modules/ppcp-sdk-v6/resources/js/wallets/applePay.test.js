@@ -101,14 +101,7 @@ jest.mock(
 	{ virtual: true }
 );
 
-const mockSetSdkBusy = jest.fn();
-jest.mock( '../tokenRefresh', () => ( {
-	setSdkBusy: ( ...args ) => mockSetSdkBusy( ...args ),
-} ) );
-
 import { renderApplePay } from './applePay';
-
-const isSdkBusy = () => mockSetSdkBusy.mock.calls.at( -1 )?.[ 0 ] === true;
 
 /**
  * Drains pending microtasks.
@@ -205,6 +198,32 @@ async function clickAndGetSession( overrides ) {
 	};
 }
 
+/**
+ * A sheet total whose value the test can change, notifying its subscribers.
+ *
+ * @param {string} initial - The starting total.
+ * @return {Object} The sheet total with set() and listenerCount.
+ */
+function makeSheetTotal( initial ) {
+	let total = initial;
+	const listeners = new Set();
+
+	return {
+		get: () => total,
+		subscribe: ( listener ) => {
+			listeners.add( listener );
+			return () => listeners.delete( listener );
+		},
+		set( next ) {
+			total = next;
+			listeners.forEach( ( listener ) => listener( next ) );
+		},
+		get listenerCount() {
+			return listeners.size;
+		},
+	};
+}
+
 const gateway = { id: 'ppcp-applepay', wrapper: '#gateway-row' };
 
 const paymentEvent = {
@@ -225,7 +244,7 @@ beforeEach( () => {
 	mockHasJQuery.mockReturnValue( true );
 	mockLoadScript.mockResolvedValue( undefined );
 	mockBuildApplePayRequest.mockReturnValue( 'APPLE_REQUEST' );
-	mockWatchSheetTotal.mockReturnValue( { get: jest.fn( () => '12.34' ) } );
+	mockWatchSheetTotal.mockReturnValue( makeSheetTotal( '12.34' ) );
 	mockApplePayPayer.mockReturnValue( 'PAYER_SENTINEL' );
 	mockApplePayShippingAddress.mockReturnValue( 'SHIP_SENTINEL' );
 	mockApplePayWcShippingAddress.mockReturnValue( 'WC_SHIP_SENTINEL' );
@@ -264,6 +283,7 @@ beforeEach( () => {
 } );
 
 afterEach( () => {
+	document.body.innerHTML = '';
 	delete window.ApplePaySession;
 	delete global.jQuery;
 } );
@@ -460,6 +480,67 @@ describe( 'the rendered <apple-pay-button>', () => {
 	} );
 } );
 
+describe( 'the button while the sheet total changes', () => {
+	/**
+	 * Renders into a wrapper attached to the document, so the button counts as
+	 * connected.
+	 *
+	 * @param {string} initialTotal - The total the sheet reports at render time.
+	 * @return {Promise<Object>} The sheet total and the rendered button.
+	 */
+	async function renderConnected( initialTotal ) {
+		const sheetTotal = makeSheetTotal( initialTotal );
+		mockWatchSheetTotal.mockReturnValue( sheetTotal );
+		const wrapper = document.createElement( 'div' );
+		document.body.appendChild( wrapper );
+
+		await render( { wrapper } );
+
+		return {
+			sheetTotal,
+			button: wrapper.querySelector( 'apple-pay-button' ),
+		};
+	}
+
+	test( 'is disabled and ignores pointer events while the total is empty', async () => {
+		const { button } = await renderConnected( '' );
+
+		expect( button.getAttribute( 'aria-disabled' ) ).toBe( 'true' );
+		expect( button.style.pointerEvents ).toBe( 'none' );
+	} );
+
+	test( 'is enabled while a total is known', async () => {
+		const { button } = await renderConnected( '12.34' );
+
+		expect( button.hasAttribute( 'aria-disabled' ) ).toBe( false );
+		expect( button.style.pointerEvents ).toBe( '' );
+	} );
+
+	test( 'switches to disabled when the subscription reports an empty total, and back when it reports a total', async () => {
+		const { button, sheetTotal } = await renderConnected( '12.34' );
+
+		sheetTotal.set( '' );
+
+		expect( button.getAttribute( 'aria-disabled' ) ).toBe( 'true' );
+		expect( button.style.pointerEvents ).toBe( 'none' );
+
+		sheetTotal.set( '20.00' );
+
+		expect( button.hasAttribute( 'aria-disabled' ) ).toBe( false );
+		expect( button.style.pointerEvents ).toBe( '' );
+	} );
+
+	test( 'a replaced button stops following the total and unsubscribes', async () => {
+		const { button, sheetTotal } = await renderConnected( '12.34' );
+		button.remove();
+
+		sheetTotal.set( '' );
+
+		expect( button.hasAttribute( 'aria-disabled' ) ).toBe( false );
+		expect( sheetTotal.listenerCount ).toBe( 0 );
+	} );
+} );
+
 describe( 'a click on the rendered button', () => {
 	test( 'constructs the ApplePaySession and calls begin() synchronously inside the click handler', async () => {
 		// No CI runner is an Apple device, so this is the only guard against a
@@ -480,7 +561,7 @@ describe( 'a click on the rendered button', () => {
 		const session = makeSession( {
 			config: jest.fn().mockResolvedValue( resolvedConfig ),
 		} );
-		const sheetTotal = { get: jest.fn( () => '42.00' ) };
+		const sheetTotal = makeSheetTotal( '42.00' );
 		mockWatchSheetTotal.mockReturnValue( sheetTotal );
 
 		const { wrapper } = await render( {
@@ -542,10 +623,9 @@ describe( 'a click on the rendered button', () => {
 	} );
 
 	test( 'refuses to open a sheet when no total has resolved yet', async () => {
-		// The guard must not latch on this refusal — a second tap, once the
+		// The guard must not latch on this refusal: a second tap, once the
 		// total has resolved, still opens a sheet.
-		const sheetTotal = { get: jest.fn() };
-		sheetTotal.get.mockReturnValueOnce( '' ).mockReturnValue( '12.34' );
+		const sheetTotal = makeSheetTotal( '' );
 		mockWatchSheetTotal.mockReturnValue( sheetTotal );
 
 		const { wrapper } = await render();
@@ -556,6 +636,7 @@ describe( 'a click on the rendered button', () => {
 		expect( ApplePaySessionMock ).not.toHaveBeenCalled();
 		expect( mockHandleError ).toHaveBeenCalledTimes( 1 );
 
+		sheetTotal.set( '12.34' );
 		button.click();
 
 		expect( ApplePaySessionMock ).toHaveBeenCalledTimes( 1 );
@@ -591,87 +672,6 @@ describe( 'a click on the rendered button', () => {
 		const secondSession = ApplePaySessionMock.mock.instances[ 1 ];
 		expect( secondSession.begin ).toHaveBeenCalledTimes( 1 );
 	} );
-} );
-
-describe( 'holding a pending SDK swap while the sheet is open', () => {
-	test( 'a tap that finds no total does not hold it', async () => {
-		mockWatchSheetTotal.mockReturnValue( { get: jest.fn( () => '' ) } );
-
-		const { wrapper } = await render();
-		wrapper.querySelector( 'apple-pay-button' ).click();
-
-		expect( isSdkBusy() ).toBe( false );
-	} );
-
-	test( 'holds it from the tap on', async () => {
-		await clickAndGetSession();
-
-		expect( isSdkBusy() ).toBe( true );
-	} );
-
-	test( 'releases it when Apple rejects the request', async () => {
-		ApplePaySessionMock.mockImplementationOnce( () => {
-			throw new Error( 'bad supportedNetworks' );
-		} );
-
-		await clickAndGetSession();
-
-		expect( isSdkBusy() ).toBe( false );
-	} );
-
-	test.each( [
-		[
-			'the buyer dismisses the sheet',
-			() => ( {} ),
-			async ( appleSession ) => appleSession.oncancel(),
-		],
-		[
-			'merchant validation fails',
-			() => ( {
-				session: makeSession( {
-					validateMerchant: jest
-						.fn()
-						.mockRejectedValue( new Error( 'unregistered domain' ) ),
-				} ),
-			} ),
-			async ( appleSession ) => {
-				appleSession.onvalidatemerchant( { validationURL: 'https://x' } );
-				await flushPromises();
-			},
-		],
-		[
-			'the payment fails',
-			() => {
-				mockPayWithWallet.mockRejectedValueOnce( new Error( 'declined' ) );
-				return {};
-			},
-			async ( appleSession ) => {
-				appleSession.onpaymentauthorized( paymentEvent );
-				await flushPromises();
-			},
-		],
-		[
-			'the payment succeeds',
-			() => ( {} ),
-			async ( appleSession ) => {
-				appleSession.onpaymentauthorized( paymentEvent );
-				await flushPromises();
-				expect( appleSession.completePayment ).toHaveBeenCalledWith(
-					'STATUS_SUCCESS'
-				);
-			},
-		],
-	] )(
-		'keeps holding it while the sheet is open and releases it when %s',
-		async ( _label, arrange, closeSheet ) => {
-			const { appleSession } = await clickAndGetSession( arrange() );
-			expect( isSdkBusy() ).toBe( true );
-
-			await closeSheet( appleSession );
-
-			expect( isSdkBusy() ).toBe( false );
-		}
-	);
 } );
 
 describe( 'surface overrides', () => {
@@ -717,7 +717,7 @@ describe( 'surface overrides', () => {
 	} );
 
 	test( 'a sheetTotal override is read instead of the default watched total', async () => {
-		const sheetTotal = { get: jest.fn( () => '99.00' ) };
+		const sheetTotal = makeSheetTotal( '99.00' );
 
 		const { wrapper } = await render( { overrides: { sheetTotal } } );
 		wrapper.querySelector( 'apple-pay-button' ).click();

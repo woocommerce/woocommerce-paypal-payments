@@ -12,6 +12,7 @@ use WC_Product;
 use WP_Post;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\ApproveOrderEndpoint;
@@ -45,6 +46,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FreeProductHandlerTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\ProductPaymentSupportTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
@@ -53,6 +55,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 class SdkV6Manager {
 	use FreeTrialHandlerTrait;
 	use FreeProductHandlerTrait;
+	use ProductPaymentSupportTrait;
 
 	public const WRAPPER_ID             = 'ppc-button-ppcp-gateway-v6';
 	public const MINI_CART_WRAPPER_ID   = 'ppc-button-minicart-v6';
@@ -84,6 +87,12 @@ class SdkV6Manager {
 	 * The contexts that print a payment-method radio list a method can own a row in.
 	 */
 	private const CONTEXTS_WITH_GATEWAY_ROWS = array( 'checkout', 'pay-now' );
+
+	/**
+	 * PayPal-specific country codes mapped to the ISO 3166-1 code the wallet
+	 * APIs (ApplePaySession, Google Pay) accept.
+	 */
+	private const PAYPAL_TO_ISO_COUNTRY = array( 'C2' => 'CN' );
 
 	// Existing WC credit-card-form field IDs the v6 card fields mount into; see
 	// CardFieldsModule's woocommerce_credit_card_form_fields filter.
@@ -135,6 +144,15 @@ class SdkV6Manager {
 	private FastlaneConfig $fastlane_config;
 	private CardFieldStyles $card_field_styles;
 	private DisabledFundingSources $disabled_funding_sources;
+
+	/**
+	 * Contexts whose PayPal orders complete in the popup.
+	 *
+	 * @var string[]
+	 */
+	private array $pay_now_contexts;
+
+	private PartnerAttribution $partner_attribution;
 
 	/**
 	 * Every method this module places, in the order their rows are printed.
@@ -198,7 +216,9 @@ class SdkV6Manager {
 		ApplePayConfig $apple_pay_config,
 		FastlaneConfig $fastlane_config,
 		CardFieldStyles $card_field_styles,
-		DisabledFundingSources $disabled_funding_sources
+		DisabledFundingSources $disabled_funding_sources,
+		array $pay_now_contexts,
+		PartnerAttribution $partner_attribution
 	) {
 		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
@@ -224,6 +244,8 @@ class SdkV6Manager {
 		$this->fastlane_config             = $fastlane_config;
 		$this->card_field_styles           = $card_field_styles;
 		$this->disabled_funding_sources    = $disabled_funding_sources;
+		$this->pay_now_contexts            = $pay_now_contexts;
+		$this->partner_attribution         = $partner_attribution;
 
 		$this->placements = array(
 			new MethodPlacement(
@@ -306,12 +328,13 @@ class SdkV6Manager {
 	 * @return array<string, bool> Location => enabled (product, cart, checkout, pay-now, mini-cart).
 	 */
 	public function determine_render_places(): array {
-		// Native PayPal Subscriptions defer to v5 (see should_load_on_current_page);
-		// print no v6 wrappers so the classic page hands off cleanly. These render
+		// Native PayPal Subscriptions defer to v5, and the subscription
+		// change-payment page to AddPaymentMethodManager (see
+		// should_load_on_current_page); print no pay-now wrappers there. These render
 		// hooks key on the smart-button locations rather than that method, so they
 		// need this guard explicitly. Every location is returned false (rather than
 		// an empty array) to keep the array shape callers index into.
-		if ( $this->is_native_paypal_subscription_page() ) {
+		if ( $this->is_native_paypal_subscription_page() || $this->subscription_helper->is_subscription_change_payment() ) {
 			return array(
 				'product'   => false,
 				'cart'      => false,
@@ -335,11 +358,11 @@ class SdkV6Manager {
 		$product_enabled = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
 
 		// pay-now is driven by the existing WC order rather than the cart, so
-		// the zero-total guard does not apply to it. The mini-cart checks it at
-		// render time instead (see render_mini_cart_wrapper()).
+		// the zero-total guard does not apply to it. The cart and mini-cart check
+		// it at render time instead (see render_cart_wrapper()).
 		return array(
-			'product'   => $product_enabled && ! $this->is_free_trial_product() && ! $this->is_unpayable_free_product(),
-			'cart'      => $needs_payment && $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
+			'product'   => $product_enabled && ! $this->is_free_trial_product() && ! $this->is_unpayable_free_product() && ! $this->is_unsupported_product(),
+			'cart'      => $this->settings_status->is_smart_button_enabled_for_location( 'cart' ),
 			'checkout'  => ( $needs_payment || $free_trial_checkout ) && $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ),
 			'pay-now'   => $this->settings_status->is_smart_button_enabled_for_location( 'pay-now' ),
 			'mini-cart' => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
@@ -410,6 +433,21 @@ class SdkV6Manager {
 		if ( $this->is_card_button_row() ) {
 			$this->render_gateway_wrapper( CardButtonGateway::ID, self::CARD_BUTTON_WRAPPER_ID );
 		}
+	}
+
+	/**
+	 * Renders the cart button wrapper.
+	 *
+	 * The zero-total check runs here, not when the hook is registered: a cart
+	 * AJAX update (e.g. selecting free shipping) recalculates the totals after
+	 * the hook is registered and before the cart totals render.
+	 */
+	public function render_cart_wrapper(): void {
+		if ( ! $this->cart_needs_payment() ) {
+			return;
+		}
+
+		$this->render_wrapper();
 	}
 
 	/**
@@ -621,6 +659,14 @@ class SdkV6Manager {
 		// actions.subscription.create. Checked before every other gate so it also
 		// overrides the sitewide mini-cart fallback below.
 		if ( $this->is_native_paypal_subscription_page() ) {
+			return false;
+		}
+
+		// The subscription change-payment page is an order-pay URL, but it must
+		// vault the card rather than charge an order. AddPaymentMethodManager owns
+		// that page; two scripts mounting into the same card inputs breaks the
+		// submit.
+		if ( $this->subscription_helper->is_subscription_change_payment() ) {
 			return false;
 		}
 
@@ -1089,6 +1135,10 @@ class SdkV6Manager {
 		$location      = $this->context->location();
 		$location_hook = 'pay-now' === $location ? 'pay_order' : $location;
 
+		if ( 'product' === $location && $this->is_unsupported_product() ) {
+			return;
+		}
+
 		/**
 		 * A hook executed before rendering of the PCP Pay Later messages wrapper.
 		 */
@@ -1247,10 +1297,12 @@ class SdkV6Manager {
 			'currency'            => get_woocommerce_currency(),
 			'amount'              => $this->transaction_amount(),
 			'buyer_country'       => $buyer_country,
-			'merchant_country'    => $this->merchant_country,
+			'merchant_country'    => $this->iso_merchant_country(),
 			'locale'              => SdkLocale::from_wp_locale( get_locale() ),
+			'bn_code'             => $this->partner_attribution->get_bn_code(),
 			'vaulting_enabled'    => $this->vaulting_enabled,
 			'final_review'        => $this->final_review_enabled,
+			'pay_now_contexts'    => $this->pay_now_contexts,
 			'is_free_trial_cart'  => $this->free_trial_helper->is_free_trial_cart(),
 			'cart_needs_vaulting' => $this->free_trial_helper->cart_requires_vaulting(),
 			'has_subscriptions'   => $this->subscription_helper->cart_contains_subscription(),
@@ -1656,6 +1708,14 @@ class SdkV6Manager {
 		$countries = WC()->countries;
 
 		return $countries ? array_keys( $countries->get_shipping_countries() ) : array();
+	}
+
+	/**
+	 * The merchant country as an ISO 3166-1 code. The raw PayPal value (e.g. `C2`
+	 * for China) stays as-is elsewhere, since eligibility lists match on it.
+	 */
+	private function iso_merchant_country(): string {
+		return self::PAYPAL_TO_ISO_COUNTRY[ $this->merchant_country ] ?? $this->merchant_country;
 	}
 
 	/**

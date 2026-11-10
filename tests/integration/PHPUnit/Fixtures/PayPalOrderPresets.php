@@ -41,6 +41,12 @@ final class PayPalOrderPresets {
 				'id'             => $id,
 				'intent'         => 'CAPTURE',
 				'status'         => $status,
+				'payment_source' => array(
+					'paypal' => array(
+						'email_address' => 'buyer@example.com',
+						'account_id'    => 'TESTPAYERID123',
+					),
+				),
 				'purchase_units' => array(
 					array(
 						'reference_id' => 'default',

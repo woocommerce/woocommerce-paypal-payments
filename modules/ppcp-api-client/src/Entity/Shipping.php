@@ -104,6 +104,10 @@ class Shipping {
 		return $this->phone_number;
 	}
 
+	public function set_phone_number( ?Phone $phone_number ): void {
+		$this->phone_number = $phone_number;
+	}
+
 	/**
 	 * Returns the shipping methods.
 	 *

@@ -9,6 +9,7 @@ import { createSdkInstance } from './utils/createSdkInstance';
 import { loadScript } from './utils/scriptLoaders';
 import { methodSdkComponents } from './methods/methodRegistry';
 import { startTokenRefresh } from './tokenRefresh';
+import { logEvent } from './utils/diagnostics';
 
 const INSTANCE_KEY = '__ppcpV6InstancePromise';
 const METADATA_ID_KEY = '__ppcpV6ClientMetadataId';
@@ -95,9 +96,12 @@ export function loadSdkV6( config, context ) {
 			createInstance( config, context ),
 			LOAD_TIMEOUT_MS
 		)
-			.then( ( { sdkInstance, tokenData, renewInstance } ) => {
-				// Later loadSdkV6() calls get the new instance.
-				startTokenRefresh( renewInstance, tokenData );
+			.then( ( { sdkInstance, tokenData } ) => {
+				startTokenRefresh(
+					sdkInstance,
+					() => postJson( config.ajax.client_token ),
+					tokenData
+				);
 
 				document.dispatchEvent(
 					new CustomEvent( 'ppcp-sdk-v6-ready', {
@@ -121,8 +125,7 @@ export function loadSdkV6( config, context ) {
  *
  * @param {Object} config  - The wc_ppcp_sdk_v6 config object.
  * @param {string} context - The page context used for the SDK pageType.
- * @return {Promise<Object>} The { sdkInstance, tokenData } it was created with,
- *                           and renewInstance(), which creates its successor.
+ * @return {Promise<Object>} The { sdkInstance, tokenData } it was created with.
  */
 async function createInstance( config, context ) {
 	const [ , tokenData ] = await Promise.all( [
@@ -162,24 +165,17 @@ async function createInstance( config, context ) {
 		locale: config.locale,
 		clientMetadataId: clientMetadataId(),
 	};
+	// Required: without it PayPal cannot attribute the session to this plugin.
+	if ( config.bn_code ) {
+		instanceOptions.partnerAttributionId = config.bn_code;
+	} else {
+		logEvent( config, 'missing-bn-code', '', 'warning' );
+	}
 
 	const sdkInstance = await createSdkInstance(
 		window.paypal,
 		instanceOptions
 	);
 
-	return {
-		sdkInstance,
-		tokenData,
-		renewInstance: async () => {
-			const nextTokenData = await postJson( config.ajax.client_token );
-			const nextInstance = await createSdkInstance( window.paypal, {
-				...instanceOptions,
-				clientToken: nextTokenData.client_token,
-			} );
-			window[ INSTANCE_KEY ] = Promise.resolve( nextInstance );
-
-			return { sdkInstance: nextInstance, tokenData: nextTokenData };
-		},
-	};
+	return { sdkInstance, tokenData };
 }

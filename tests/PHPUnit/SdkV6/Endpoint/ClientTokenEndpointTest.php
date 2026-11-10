@@ -102,7 +102,7 @@ class ClientTokenEndpointTest extends TestCase {
 			->andReturn(
 				array(
 					'token'      => 'a-client-token',
-					'expires_in' => 3540,
+					'expires_in' => 3600,
 				)
 			);
 
@@ -123,8 +123,8 @@ class ClientTokenEndpointTest extends TestCase {
 	/**
 	 * GIVEN a validated request and a token with a given lifetime
 	 * WHEN the request is handled
-	 * THEN the browser refreshes the token 60 seconds before it expires
-	 * AND waits at least 10 seconds when the lifetime is 60 seconds or less
+	 * THEN the browser refreshes the token 120 seconds before it expires
+	 * AND waits at least 10 seconds when the lifetime is 130 seconds or less
 	 *
 	 * @dataProvider token_lifetime_provider
 	 */
@@ -156,16 +156,17 @@ class ClientTokenEndpointTest extends TestCase {
 
 	public function token_lifetime_provider(): array {
 		return array(
-			'lifetime minus 60 seconds'          => array( 3600, 3540 ),
-			'lifetime just above the minimum'    => array( 71, 11 ),
-			'lifetime giving exactly 10 seconds' => array( 70, 10 ),
-			'lifetime of exactly 60 seconds'     => array( 60, 10 ),
-			'lifetime below 60 seconds'          => array( 30, 10 ),
+			'lifetime minus 120 seconds'         => array( 3600, 3480 ),
+			'short lifetime minus 120 seconds'   => array( 900, 780 ),
+			'lifetime just above the minimum'    => array( 131, 11 ),
+			'lifetime giving exactly 10 seconds' => array( 130, 10 ),
+			'lifetime of exactly 120 seconds'    => array( 120, 10 ),
+			'lifetime below 120 seconds'         => array( 30, 10 ),
 		);
 	}
 
 	/**
-	 * GIVEN a validated request and a token that stays valid for 3540 seconds
+	 * GIVEN a validated request and a token that stays valid for 3600 seconds
 	 * WHEN a filter changes the seconds until the browser refreshes the token
 	 * THEN the shopper is answered with the filtered value, if it is shorter
 	 * AND never with a value longer than the computed one
@@ -184,7 +185,7 @@ class ClientTokenEndpointTest extends TestCase {
 			->andReturn(
 				array(
 					'token'      => 'a-client-token',
-					'expires_in' => 3540,
+					'expires_in' => 3600,
 				)
 			);
 

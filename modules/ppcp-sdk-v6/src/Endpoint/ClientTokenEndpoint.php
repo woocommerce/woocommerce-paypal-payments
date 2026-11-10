@@ -21,7 +21,11 @@ class ClientTokenEndpoint implements EndpointInterface {
 
 	public const ENDPOINT = 'ppc-sdk-v6-client-token';
 
-	private const REFRESH_BEFORE_EXPIRY = 60;
+	/**
+	 * PayPal requires a served token to stay valid for at least two minutes,
+	 * since the first render on a slow page can take that long.
+	 */
+	private const REFRESH_BEFORE_EXPIRY = 120;
 
 	/**
 	 * Minimum seconds until the next browser refresh, also after a failed one.

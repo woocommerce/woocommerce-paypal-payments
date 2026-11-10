@@ -17,6 +17,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
@@ -32,6 +33,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use DomainException;
 
 /**
@@ -128,6 +130,13 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $settings_model;
 
 	/**
+	 * Builds the payer sent with the PayPal order.
+	 */
+	protected PayerFactory $payer_factory;
+
+	protected SubscriptionHelper $subscription_helper;
+
+	/**
 	 * Issues the single-use secret that the 3DS return URL carries.
 	 */
 	protected ReturnUrlSecret $return_url_secret;
@@ -145,6 +154,8 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param LoggerInterface           $logger                      The logger.
 	 * @param ExperienceContextBuilder  $experience_context_builder  The experience context builder.
 	 * @param SettingsModel             $settings_model              The settings model.
+	 * @param PayerFactory              $payer_factory               Builds the payer sent with the PayPal order.
+	 * @param SubscriptionHelper        $subscription_helper         Detects subscriptions in the cart.
 	 * @param ReturnUrlSecret|null      $return_url_secret           Issues the return URL secret.
 	 *                                                               Defaults to a real instance, so the
 	 *                                                               3DS return URL always carries proof.
@@ -162,6 +173,8 @@ class AxoGateway extends WC_Payment_Gateway {
 		LoggerInterface $logger,
 		ExperienceContextBuilder $experience_context_builder,
 		SettingsModel $settings_model,
+		PayerFactory $payer_factory,
+		SubscriptionHelper $subscription_helper,
 		?ReturnUrlSecret $return_url_secret = null
 	) {
 		$this->id = self::ID;
@@ -172,6 +185,8 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->card_icons                 = $card_icons;
 		$this->experience_context_builder = $experience_context_builder;
 		$this->settings_model             = $settings_model;
+		$this->payer_factory              = $payer_factory;
+		$this->subscription_helper        = $subscription_helper;
 		$this->return_url_secret          = $return_url_secret ?? new ReturnUrlSecret();
 
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
@@ -504,7 +519,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		return $this->order_endpoint->create(
 			array( $purchase_unit ),
 			$shipping_preference,
-			null,
+			$this->payer_factory->from_wc_order( $wc_order ),
 			self::ID,
 			$this->build_order_data(),
 			$payment_source
@@ -560,6 +575,14 @@ class AxoGateway extends WC_Payment_Gateway {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Hide Fastlane from subscription carts. With manual renewals enabled,
+	 * WooCommerce Subscriptions lists gateways that lack subscription support.
+	 */
+	public function is_available(): bool {
+		return parent::is_available() && ! $this->subscription_helper->cart_contains_subscription();
 	}
 
 	/**

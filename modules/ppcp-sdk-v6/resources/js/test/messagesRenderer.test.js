@@ -1,19 +1,12 @@
 const mockMessagesInstance = () => ( {
 	fetchContent: jest.fn( () => Promise.resolve() ),
-	learnMore: { detachDefaultListener: jest.fn() },
 } );
 const mockCreatePayPalMessages = jest.fn( mockMessagesInstance );
 const mockLoadSdkV6 = jest.fn( () =>
 	Promise.resolve( { createPayPalMessages: mockCreatePayPalMessages } )
 );
-let mockInstanceChangeCallback = null;
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
-} ) );
-jest.mock( '../tokenRefresh', () => ( {
-	onSdkInstanceChange: ( callback ) => {
-		mockInstanceChangeCallback = callback;
-	},
 } ) );
 
 // The real element comes from the SDK script, which jsdom does not load.
@@ -93,45 +86,6 @@ describe( 'renderMessages()', () => {
 
 		const { fetchContent } = mockCreatePayPalMessages.mock.results[ 0 ].value;
 		expect( fetchContent ).toHaveBeenCalledWith( { amount: '100.00' } );
-	} );
-
-	describe( 'after an SDK instance change', () => {
-		const renderThenSwap = async () => {
-			document.body.innerHTML = '<div class="ppcp-messages"></div>';
-			await renderMessages( baseConfig(), 'product' );
-
-			const oldInstance = mockCreatePayPalMessages.mock.results[ 0 ].value;
-			const newInstance = mockMessagesInstance();
-			mockInstanceChangeCallback( {
-				createPayPalMessages: () => newInstance,
-			} );
-
-			return { oldInstance, newInstance };
-		};
-
-		test( 'fetches no content at swap time', async () => {
-			const { oldInstance, newInstance } = await renderThenSwap();
-
-			expect( oldInstance.fetchContent ).toHaveBeenCalledTimes( 1 );
-			expect( newInstance.fetchContent ).not.toHaveBeenCalled();
-		} );
-
-		test( 'detaches the learn-more listener of the old messages instance', async () => {
-			const { oldInstance } = await renderThenSwap();
-
-			expect( oldInstance.learnMore.detachDefaultListener ).toHaveBeenCalled();
-		} );
-
-		test( 'fetches the next content with the messages instance of the new SDK', async () => {
-			const { oldInstance, newInstance } = await renderThenSwap();
-
-			updateMessagesAmount( '250.00' );
-
-			expect( newInstance.fetchContent ).toHaveBeenCalledWith( {
-				amount: '250.00',
-			} );
-			expect( oldInstance.fetchContent ).toHaveBeenCalledTimes( 1 );
-		} );
 	} );
 
 	test( 'sets the font-size custom property when the config style has one', async () => {
