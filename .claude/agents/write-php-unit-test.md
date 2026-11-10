@@ -86,7 +86,7 @@ Never name a level (`allows( 'warning' )`, `shouldReceive( 'error' )`): it coupl
 
 ### Stateful fixture via closure
 
-For a dependency whose state changes during the test:
+For a dependency whose state changes during the test. Capture the state by reference (`use (&$meta)`); an arrow function copies it:
 
 ```php
 private function create_order_with_meta(array $initial = []): WC_Order {
@@ -94,7 +94,9 @@ private function create_order_with_meta(array $initial = []): WC_Order {
     $meta = $initial;
 
     $order->method('get_meta')
-        ->willReturnCallback(static fn($key) => $meta[$key] ?? '');
+        ->willReturnCallback(static function ($key) use (&$meta) {
+            return $meta[$key] ?? '';
+        });
 
     $order->method('update_meta_data')
         ->willReturnCallback(static function($key, $value) use (&$meta): void {
