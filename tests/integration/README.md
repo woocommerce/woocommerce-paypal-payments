@@ -14,7 +14,7 @@ The npm scripts run the tests in a dedicated database, `wp_integration_tests`, o
 
 Each run of `integration-tests` creates a new test database. `tests/integration/bin/create-database.sh` installs WordPress in it and activates WooCommerce, WooCommerce Subscriptions, and this plugin. Then `setup.php` sets the tax-related WooCommerce options and imports `data/tax_rates.csv`, which several tests depend on.
 
-The bootstrap selects the test database through the `PPCP_INTEGRATION_DB_NAME` environment variable, which the npm scripts set. Without it, the tests use the DDEV site database. The CI workflow does this, because it runs on a new DDEV site each time.
+`wp-config.php` selects the test database through the `PPCP_INTEGRATION_DB_NAME` environment variable, which the npm scripts set. On its first run, `create-database.sh` changes the `DB_NAME` define in `wp-config.php` to read this variable. Without the variable, the tests use the DDEV site database. The CI workflow does this, because it runs on a new DDEV site each time.
 
 ### How to run the tests
 
