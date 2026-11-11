@@ -20,6 +20,12 @@ define('WP_ROOT_DIR', $wpRootDir);
 
 $_SERVER['HTTP_HOST'] = ''; // just to avoid a warning
 
+// The npm scripts set this, so that the tests do not write to the DDEV site database.
+$testDbName = getenv('PPCP_INTEGRATION_DB_NAME');
+if ($testDbName) {
+	define('DB_NAME', $testDbName);
+}
+
 require_once WP_ROOT_DIR . '/wp-load.php';
 
 // Start every run with reCAPTCHA disabled, whatever the site has stored.
