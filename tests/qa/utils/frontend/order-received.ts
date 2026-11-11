@@ -33,6 +33,8 @@ export class OrderReceived extends OrderReceivedBase {
 	 * @param order
 	 */
 	assertOrderDetails = async ( order: WooCommerce.ShopOrder ) => {
+		// The base method waits without a limit: end a hang as a normal failure, before the test timeout
+		await this.page.waitForURL( /order-received/, { timeout: 60_000 } );
 		await super.assertOrderDetails( order );
 
 		if ( order.payment.gateway.shortcut === 'oxxo' ) {
