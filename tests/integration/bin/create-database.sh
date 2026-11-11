@@ -4,6 +4,13 @@
 set -euo pipefail
 
 DB_NAME="${PPCP_INTEGRATION_DB_NAME:?Set PPCP_INTEGRATION_DB_NAME}"
+WP_CONFIG="${DDEV_DOCROOT}/wp-config.php"
+
+# Make wp-config.php read the database name from the environment.
+# The DDEV site has no such variable and keeps "db".
+if ! grep -q PPCP_INTEGRATION_DB_NAME "$WP_CONFIG"; then
+	wp config set DB_NAME "getenv( 'PPCP_INTEGRATION_DB_NAME' ) ?: 'db'" --raw
+fi
 
 # Only root can create a database. DDEV gives the root user the password "root".
 mysql -uroot -proot -hdb -e "
@@ -12,11 +19,7 @@ mysql -uroot -proot -hdb -e "
 	GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO 'db'@'%';
 "
 
-wp_test() {
-	wp --exec="define( 'DB_NAME', '${DB_NAME}' );" "$@"
-}
-
-wp_test core install \
+wp core install \
 	--title="${WP_TITLE}" \
 	--admin_user="${ADMIN_USER}" \
 	--admin_password="${ADMIN_PASS}" \
@@ -24,4 +27,4 @@ wp_test core install \
 	--url="${DDEV_PRIMARY_URL}" \
 	--skip-email
 
-wp_test plugin activate woocommerce woocommerce-subscriptions "${PLUGIN_NAME:-$DDEV_PROJECT}"
+wp plugin activate woocommerce woocommerce-subscriptions "${PLUGIN_NAME:-$DDEV_PROJECT}"
