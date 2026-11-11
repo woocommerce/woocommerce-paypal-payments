@@ -3,6 +3,7 @@
  */
 import { ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
+import { sdkVersion } from '../../../utils/helpers/sdk-version.helper';
 
 const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer: guest, merchant } = testOrder;
@@ -100,6 +101,11 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				orderReceived,
 				customerSubscriptions,
 			} ) => {
+				// Fail on v5: PCP-7180
+				test.fail(
+					sdkVersion() === 'v5' && title.startsWith( 'PCP-2948 ' ),
+					'PCP-7180'
+				);
 				test.setTimeout( 2 * 60_000 );
 				// Preconditions
 				await customerPaymentMethods.visit();

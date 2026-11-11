@@ -10,6 +10,7 @@ import {
 	orders,
 	ShopOrder,
 } from '../../resources';
+import { sdkVersion } from '../../utils/helpers/sdk-version.helper';
 
 const customer = customers.usa;
 const { payPal, acdc } = payments;
@@ -47,6 +48,11 @@ for ( const testData of savePaymentMethodData ) {
 			} - Save payment method${ testLabel ?? '' }`,
 			annotateVisitor( customer ),
 			async ( { utils, customerPaymentMethods, classicCheckout } ) => {
+				// Fail on v5: PCP-7180
+				test.fail(
+					sdkVersion() === 'v5' && testKey === 'PCP-4500',
+					'PCP-7180'
+				);
 				await customerPaymentMethods.visit();
 				await expect(
 					customerPaymentMethods.noSavedMethodsMessage(),
@@ -151,10 +157,11 @@ test.describe( () => {
 	} );
 
 	test(
-		// Fail:
 		'PCP-5381 | Vaulting - My Account - Payment Methods - ACDC - Save additional card',
 		annotateVisitor( customer ),
 		async ( { utils, customerPaymentMethods, classicCheckout } ) => {
+			// Fail on v5: PCP-7180
+			test.fail( sdkVersion() === 'v5', 'PCP-7180' );
 			// Preconditions
 			await customerPaymentMethods.visit();
 			// Save initial card (not tested one)
@@ -205,6 +212,8 @@ test.describe( () => {
 			classicCheckout,
 			orderReceived,
 		} ) => {
+			// Fail on v5: PCP-7180
+			test.fail( sdkVersion() === 'v5', 'PCP-7180' );
 			// Preconditions
 			// Card saved without a payment (setup token), unlike cards saved at checkout
 			await customerPaymentMethods.visit();

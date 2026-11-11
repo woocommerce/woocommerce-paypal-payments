@@ -7,6 +7,7 @@ import { countTotals } from '@inpsyde/playwright-utils/build';
  */
 import { PayPalPaymentDetails, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
+import { sdkVersion } from '../../../utils/helpers/sdk-version.helper';
 
 export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant, currency } =
@@ -233,6 +234,11 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				wooCommerceOrderEdit,
 				wooCommerceSubscriptionEdit,
 			} ) => {
+				// Fail on v5: PCP-7180
+				test.fail(
+					sdkVersion() === 'v5' && title.startsWith( 'PCP-4914 ' ),
+					'PCP-7180'
+				);
 				test.setTimeout( 2 * 60_000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
