@@ -11,5 +11,3 @@ A task is complete when both are true:
    - PHP change: PHP unit tests, PHPCS, PHPStan.
    - JS change: JS unit tests, `lint-js` on the changed files.
    - Checkout, payment, onboarding, or webhook change: also the integration tests.
-
-Integration tests write to the DDEV site database and can delete settings (merchant connection, reCAPTCHA keys, tax settings). Before they run, say so, so the developer can take a `ddev snapshot`.
