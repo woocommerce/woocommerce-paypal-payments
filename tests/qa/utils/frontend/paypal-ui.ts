@@ -45,6 +45,14 @@ export class PayPalUi {
 			.or( this.page.getByRole( 'button', { name: 'Pay for order' } ) )
 			.or( this.page.getByRole( 'button', { name: 'Sign up now' } ) );
 
+	// Classic (and PCP) error notices, and block checkout error notices
+	errorNotice = () =>
+		this.page
+			.locator(
+				'.woocommerce-error:visible, .wc-block-components-notice-banner.is-error:visible'
+			)
+			.first();
+
 	payPalButtonsBlockContainer = () =>
 		this.page.locator(
 			'.wc-block-components-express-payment__event-buttons'
@@ -477,13 +485,12 @@ export class PayPalUi {
 			case 'acdc':
 				if ( payment.isVaulted ) {
 					await this.completeAcdcVaultedPayment( payment, merchant );
-					break;
-				}
-				if ( gateway.threeDSecure === 'always-3d-secure' ) {
+				} else if ( gateway.threeDSecure === 'always-3d-secure' ) {
 					await this.completeAcdc3dsPayment( payment, merchant );
-					break;
+				} else {
+					await this.completeAcdcPayment( payment, merchant );
 				}
-				await this.completeAcdcPayment( payment, merchant );
+				await this.waitForUrlWithoutErrors( /order-received/ );
 				break;
 
 			case 'oxxo':
@@ -512,6 +519,23 @@ export class PayPalUi {
 		await button.focus();
 		await button.click();
 		await this.page.waitForLoadState();
+	};
+
+	/**
+	 * Waits for the URL or an error notice, whichever comes first, and fails with the notice text.
+	 * The 60s limit ends a hang as a normal failure, before the test timeout.
+	 *
+	 * @param url
+	 */
+	waitForUrlWithoutErrors = async ( url: string | RegExp ) => {
+		await Promise.race( [
+			this.page.waitForURL( url, { timeout: 60_000 } ),
+			this.errorNotice().waitFor( { timeout: 60_000 } ),
+		] );
+		const errorText = ( await this.errorNotice().isVisible() )
+			? await this.errorNotice().innerText()
+			: '';
+		expect( errorText, 'Assert no error notice is displayed' ).toBe( '' );
 	};
 
 	/**

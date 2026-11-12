@@ -97,10 +97,15 @@ export const testRefund = ( testData: ShopRefund ) => {
 					wooCommerceOrderEdit.restockRefundedItemsCheckbox(),
 					'Assert "Restock refunded items" checkbox is visible'
 				).toBeVisible();
+				// WooCommerce 11.3+ shows "$0.00", older versions "-$0.00"
+				const zeroAmount = formatMoney( 0, currency ).replace(
+					/[.*+?^${}()|[\]\\]/g,
+					'\\$&'
+				);
 				await expect(
 					wooCommerceOrderEdit.totalAmountAlreadyRefunded(),
 					'Assert total amount already refunded is visible'
-				).toHaveText( `-${ formatMoney( 0, currency ) }` );
+				).toHaveText( new RegExp( `^-?${ zeroAmount }$` ) );
 				await expect(
 					wooCommerceOrderEdit.totalAvailableToRefund(),
 					'Assert total amount available to refund is visible'

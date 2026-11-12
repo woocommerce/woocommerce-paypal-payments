@@ -99,7 +99,7 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 				await this.addPaymentMethodButton().click();
 				break;
 		}
-		await this.page.waitForURL( this.url );
+		await this.payPalUi.waitForUrlWithoutErrors( this.url );
 		await this.assertIsSavedPaymentMethod( payment );
 	};
 
