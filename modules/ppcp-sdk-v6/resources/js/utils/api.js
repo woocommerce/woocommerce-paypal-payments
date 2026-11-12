@@ -66,6 +66,8 @@ export async function postJson( { endpoint, nonce }, body = {} ) {
 		error.errors = json.data?.errors;
 		error.refresh = Boolean( json.data?.refresh );
 		error.status = response.status;
+		// Seconds the server asks the caller to wait before trying again.
+		error.retryIn = json.data?.retry_in;
 		throw error;
 	}
 

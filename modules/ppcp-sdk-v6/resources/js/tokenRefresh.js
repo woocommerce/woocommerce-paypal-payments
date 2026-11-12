@@ -8,22 +8,11 @@
  * @package
  */
 
+import { isRetryable } from './utils/retry';
+
 const HANDLER_KEY = '__ppcpV6TokenRefresh';
 
 const MAX_RETRIES = 3;
-
-/**
- * Other client errors, e.g. an expired nonce, fail the same way on every try,
- * because the page never gets a new nonce.
- *
- * @param {Error} error - The failed fetch.
- * @return {boolean} Whether a later try can succeed.
- */
-function isRetryable( error ) {
-	const status = error?.status;
-
-	return ! status || status >= 500 || status === 408 || status === 429;
-}
 
 export class TokenRefreshHandler {
 	constructor() {
