@@ -51,21 +51,28 @@ export async function createCardSetupToken( config ) {
  * Logged-in buyers get a token linked to their account; the guest endpoint
  * instead stashes the token in the session for the gateway to consume.
  *
- * @param {Object} config          - The wc_ppcp_sdk_v6 config object.
- * @param {string} vaultSetupToken - The approved Vault v3 setup token id.
+ * @param {Object}  config                                - The wc_ppcp_sdk_v6 config object.
+ * @param {string}  vaultSetupToken                       - The approved Vault v3 setup token id.
+ * @param {Object}  [options]                             - Exchange options.
+ * @param {boolean} [options.freeTrialContinuation=false] - Keeps the checkout in continuation until the $0 order is placed.
  * @return {Promise<void>} Resolves once the token has been stored.
  */
-export async function exchangeSetupToken( config, vaultSetupToken ) {
+export async function exchangeSetupToken(
+	config,
+	vaultSetupToken,
+	{ freeTrialContinuation = false } = {}
+) {
+	const body = { vault_setup_token: vaultSetupToken };
+	if ( freeTrialContinuation ) {
+		body.free_trial_continuation = true;
+	}
+
 	if ( config.user?.is_logged ) {
-		await postJson( config.ajax.create_payment_token, {
-			vault_setup_token: vaultSetupToken,
-		} );
+		await postJson( config.ajax.create_payment_token, body );
 		return;
 	}
 
-	await postJson( config.ajax.create_payment_token_for_guest, {
-		vault_setup_token: vaultSetupToken,
-	} );
+	await postJson( config.ajax.create_payment_token_for_guest, body );
 }
 
 /**
@@ -75,22 +82,25 @@ export async function exchangeSetupToken( config, vaultSetupToken ) {
  * surface implements to submit its checkout (classic: `#place_order`; blocks:
  * the Blocks `onSubmit`).
  *
- * @param {Object}     sdkInstance        - The PayPal SDK v6 instance.
- * @param {Object}     config             - The wc_ppcp_sdk_v6 config object.
- * @param {Object}     handlers           - Surface callbacks.
- * @param {() => void} handlers.onComplete - Submits the checkout after the token is stored.
- * @param {(error: Error) => void} [handlers.onError] - Called on failure.
+ * @param {Object}                 sdkInstance                            - The PayPal SDK v6 instance.
+ * @param {Object}                 config                                 - The wc_ppcp_sdk_v6 config object.
+ * @param {Object}                 [handlers]                             - Surface callbacks and options.
+ * @param {() => void}             handlers.onComplete                    - Submits the checkout after the token is stored.
+ * @param {(error: Error) => void} [handlers.onError]                     - Called on failure.
+ * @param {boolean}                [handlers.freeTrialContinuation=false] - Keeps the checkout in continuation until the $0 order is placed.
  * @return {Object} The PayPal save payment session.
  */
 export function createFreeTrialPayPalSession(
 	sdkInstance,
 	config,
-	{ onComplete, onError } = {}
+	{ onComplete, onError, freeTrialContinuation = false } = {}
 ) {
 	return sdkInstance.createPayPalSavePaymentSession( {
 		async onApprove( data ) {
 			try {
-				await exchangeSetupToken( config, data.vaultSetupToken );
+				await exchangeSetupToken( config, data.vaultSetupToken, {
+					freeTrialContinuation,
+				} );
 				if ( onComplete ) {
 					onComplete();
 				}

@@ -17,6 +17,8 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\SetupTokenBinding;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 
 /**
  * Class UpdateCustomerId
@@ -41,25 +43,25 @@ class CreatePaymentTokenForGuest implements EndpointInterface {
 
 	private SetupTokenBinding $setup_token_binding;
 
+	private FreeTrialSubscriptionHelper $free_trial_helper;
+
+	private SessionHandler $session_handler;
+
 	private LoggerInterface $logger;
 
-	/**
-	 * CreatePaymentToken constructor.
-	 *
-	 * @param RequestData                 $request_data The request data.
-	 * @param PaymentMethodTokensEndpoint $payment_method_tokens_endpoint The payment method tokens endpoint.
-	 * @param SetupTokenBinding           $setup_token_binding Binds setup tokens to their creator.
-	 * @param LoggerInterface             $logger The logger.
-	 */
 	public function __construct(
 		RequestData $request_data,
 		PaymentMethodTokensEndpoint $payment_method_tokens_endpoint,
 		SetupTokenBinding $setup_token_binding,
+		FreeTrialSubscriptionHelper $free_trial_helper,
+		SessionHandler $session_handler,
 		LoggerInterface $logger
 	) {
 		$this->request_data                   = $request_data;
 		$this->payment_method_tokens_endpoint = $payment_method_tokens_endpoint;
 		$this->setup_token_binding            = $setup_token_binding;
+		$this->free_trial_helper              = $free_trial_helper;
+		$this->session_handler                = $session_handler;
 		$this->logger                         = $logger;
 	}
 
@@ -104,13 +106,24 @@ class CreatePaymentTokenForGuest implements EndpointInterface {
 		);
 
 		try {
-			$result = $this->payment_method_tokens_endpoint->create_payment_token( $payment_source );
+			$payment_token = $this->payment_method_tokens_endpoint->create_payment_token( $payment_source );
 		} catch ( Exception $exception ) {
 			$this->logger->error( 'Could not exchange a guest setup token: ' . $exception->getMessage() );
 			wp_send_json_error();
 		}
 
-		WC()->session->set( 'ppcp_guest_payment_for_free_trial', $result );
+		WC()->session->set( 'ppcp_guest_payment_for_free_trial', $payment_token );
+
+		// Only the Blocks express buttons send free_trial_continuation; card
+		// vaults call this endpoint without it.
+		$is_free_trial_continuation = ! empty( $data['free_trial_continuation'] );
+		if (
+			$is_free_trial_continuation
+			&& isset( $payment_token->payment_source->paypal )
+			&& $this->free_trial_helper->is_free_trial_cart()
+		) {
+			$this->session_handler->mark_free_trial_vaulted_with_paypal();
+		}
 
 		wp_send_json_success();
 	}

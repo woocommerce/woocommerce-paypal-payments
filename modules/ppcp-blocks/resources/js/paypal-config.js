@@ -57,6 +57,30 @@ export const createOrder = async ( data, config, onError, onClose ) => {
 	}
 };
 
+/**
+ * Places the order now (Pay Now) or redirects to checkout to confirm it.
+ *
+ * @param {Object}   handlers
+ * @param {Function} handlers.shouldskipFinalConfirmation - Whether Pay Now applies.
+ * @param {Function} handlers.getCheckoutRedirectUrl      - The checkout continuation URL.
+ * @param {Function} handlers.setGotoContinuationOnError  - Sends a failed submit to the continuation.
+ * @param {Function} handlers.onSubmit                    - Submits the Blocks checkout.
+ */
+export const completeApproval = ( {
+	shouldskipFinalConfirmation,
+	getCheckoutRedirectUrl,
+	setGotoContinuationOnError,
+	onSubmit,
+} ) => {
+	if ( ! shouldskipFinalConfirmation() ) {
+		window.location.href = getCheckoutRedirectUrl();
+		return;
+	}
+
+	setGotoContinuationOnError( true );
+	onSubmit();
+};
+
 export const handleApprove = async (
 	data,
 	actions,
@@ -167,12 +191,12 @@ export const handleApprove = async (
 			throw new Error( config.scriptData.labels.error.generic );
 		}
 
-		if ( ! shouldskipFinalConfirmation() ) {
-			location.href = getCheckoutRedirectUrl();
-		} else {
-			setGotoContinuationOnError( true );
-			onSubmit();
-		}
+		completeApproval( {
+			shouldskipFinalConfirmation,
+			getCheckoutRedirectUrl,
+			setGotoContinuationOnError,
+			onSubmit,
+		} );
 	} catch ( err ) {
 		console.error( err );
 
@@ -318,13 +342,17 @@ export const createVaultSetupToken = async ( config ) => {
 export const onApproveSavePayment = async (
 	vaultSetupToken,
 	config,
-	onSubmit
+	onComplete,
+	onError,
+	onClose
 ) => {
 	let endpoint =
 		config.scriptData.ajax.create_payment_token_for_guest.endpoint;
 	let bodyContent = {
 		nonce: config.scriptData.ajax.create_payment_token_for_guest.nonce,
 		vault_setup_token: vaultSetupToken,
+		// Keeps the checkout in continuation until the $0 order is placed.
+		free_trial_continuation: true,
 	};
 
 	if ( config.scriptData.user.is_logged_in ) {
@@ -334,22 +362,37 @@ export const onApproveSavePayment = async (
 			nonce: config.scriptData.ajax.create_payment_token.nonce,
 			vault_setup_token: vaultSetupToken,
 			is_free_trial_cart: config.scriptData.is_free_trial_cart,
+			free_trial_continuation: true,
 		};
 	}
 
-	const response = await fetch( endpoint, {
-		method: 'POST',
-		credentials: 'same-origin',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify( bodyContent ),
-	} );
+	try {
+		const response = await fetch( endpoint, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify( bodyContent ),
+		} );
 
-	const result = await response.json();
-	if ( result.success === true ) {
-		onSubmit();
+		const result = await response.json();
+		if ( result.success !== true ) {
+			throw new Error(
+				result.data?.message || config.scriptData.labels.error.generic
+			);
+		}
+	} catch ( err ) {
+		console.error( err );
+
+		onError( err.message );
+
+		onClose();
+
+		// Not rethrown like the order handlers: the vault button's onError is
+		// onClose, so a rethrow would close the flow a second time.
+		return;
 	}
 
-	console.error( result );
+	onComplete();
 };
