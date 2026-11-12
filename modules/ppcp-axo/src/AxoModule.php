@@ -250,19 +250,42 @@ class AxoModule implements ServiceModule, ExecutableModule {
 						$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
 						assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
-						if ( $dcc_configuration->use_fastlane() ) {
-							if ( $c->get( 'axo.insights.enabled' ) ) {
-								printf(
-									// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
-									'<script async src="%s"></script>',
-									esc_url( $c->get( 'axo.insights.script-url' ) )
-								);
-							}
+						$this->add_feature_detection_tag( $dcc_configuration->use_fastlane() );
+					}
+				);
 
-							$this->add_feature_detection_tag( true );
-						} else {
-							$this->add_feature_detection_tag( false );
+				add_action(
+					'wp_enqueue_scripts',
+					function () use ( $c ) {
+						$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
+						assert( $dcc_configuration instanceof CardPaymentsConfiguration );
+
+						if ( ! $dcc_configuration->use_fastlane() || ! is_checkout() ) {
+							return;
 						}
+
+						// Fastlane runs only for guests and not on order-pay; order-received tracks every order.
+						$is_order_received = is_wc_endpoint_url( 'order-received' );
+						if ( ! $is_order_received
+							&& ( is_user_logged_in() || is_wc_endpoint_url( 'order-pay' ) )
+						) {
+							return;
+						}
+
+						wp_enqueue_script(
+							'wc-ppcp-paypal-insights-library',
+							$c->get( 'axo.insights.script-url' ),
+							array(),
+							null, // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- PayPal versions the URL itself.
+							array( 'strategy' => 'async' )
+						);
+					}
+				);
+
+				add_action(
+					'wp_enqueue_scripts',
+					function () use ( $c ) {
+						$this->enqueue_end_checkout_tracker( $c );
 					}
 				);
 
@@ -292,14 +315,6 @@ class AxoModule implements ServiceModule, ExecutableModule {
 				assert( $endpoint instanceof FrontendLogger );
 
 				$endpoint->handle_request();
-			}
-		);
-
-		// Enqueue the PayPal Insights script.
-		add_action(
-			'wp_enqueue_scripts',
-			function () use ( $c ) {
-				$this->enqueue_paypal_insights_script_on_order_received( $c );
 			}
 		);
 
@@ -439,23 +454,12 @@ class AxoModule implements ServiceModule, ExecutableModule {
 		);
 	}
 
-	/**
-	 * Enqueues PayPal Insights on the Order Received endpoint.
-	 *
-	 * @param ContainerInterface $c The service container.
-	 * @return void
-	 */
-	private function enqueue_paypal_insights_script_on_order_received( ContainerInterface $c ): void {
+	private function enqueue_end_checkout_tracker( ContainerInterface $c ): void {
 		global $wp;
-
-		if ( ! $c->get( 'axo.insights.enabled' ) ) {
-			return;
-		}
 
 		$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
 		assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
-		// The Insights script itself is only printed when Fastlane is in use.
 		if ( ! $dcc_configuration->use_fastlane() ) {
 			return;
 		}
@@ -476,8 +480,8 @@ class AxoModule implements ServiceModule, ExecutableModule {
 
 		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$order_key_from_url = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
-		//phpcs:ignore WordPress.WP.Capabilities.Unknown
-		if ( $order->get_order_key() !== $order_key_from_url && ! current_user_can( 'view_order', $order_id ) ) {
+		// Only the key grants access: `view_order` passes for any guest order.
+		if ( ! is_string( $order_key_from_url ) || ! hash_equals( $order->get_order_key(), $order_key_from_url ) ) {
 			return;
 		}
 

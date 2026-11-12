@@ -119,7 +119,6 @@ class AxoManager {
 		};
 
 		if (
-			this.axoConfig?.insights?.enabled &&
 			this.axoConfig?.insights?.client_id &&
 			this.axoConfig?.insights?.session_id
 		) {
