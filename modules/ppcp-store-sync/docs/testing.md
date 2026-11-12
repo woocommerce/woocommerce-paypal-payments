@@ -12,7 +12,7 @@ To run them, use the command:
 ddev npm run tdd StoreSync
 
 # Run integration tests, stop on first failure.
-ddev npm run tdd:integration StoreSync
+ddev npm run integration-tests -- --filter StoreSync --stop-on-failure
 ```
 
 Note that the integration tests require a basic setup. See the [Integration-Test Readme](../../../tests/integration/README.md)

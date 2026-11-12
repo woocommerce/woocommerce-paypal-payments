@@ -20,6 +20,13 @@ define('WP_ROOT_DIR', $wpRootDir);
 
 $_SERVER['HTTP_HOST'] = ''; // just to avoid a warning
 
+// The npm scripts set this variable, and create-database.sh makes wp-config.php read it.
+// Without that wp-config.php line, the tests would write to the DDEV site database.
+$wpConfig = (string) file_get_contents(WP_ROOT_DIR . '/wp-config.php');
+if (getenv('PPCP_INTEGRATION_DB_NAME') && strpos($wpConfig, 'PPCP_INTEGRATION_DB_NAME') === false) {
+	exit('wp-config.php does not read PPCP_INTEGRATION_DB_NAME. Run `ddev npm run integration-tests:reset-db` first.' . PHP_EOL);
+}
+
 require_once WP_ROOT_DIR . '/wp-load.php';
 
 // Start every run with reCAPTCHA disabled, whatever the site has stored.

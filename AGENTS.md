@@ -41,7 +41,7 @@ modules/                         # Feature modules: src/, resources/, services.p
 assets/                          # Built JS/CSS (webpack output)
 lib/                             # Vendored packages, namespace-scoped by Mozart under WooCommerce\PayPalCommerce\Vendor
 tests/PHPUnit/                   # PHP unit tests
-tests/integration/               # Integration tests, run against the DDEV site
+tests/integration/               # Integration tests, run in a dedicated DDEV database
 tests/js/                        # Jest config; Jest tests sit next to their sources
 stubs/                           # PHPStan stubs
 ```
