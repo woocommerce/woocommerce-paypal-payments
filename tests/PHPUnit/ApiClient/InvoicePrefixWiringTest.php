@@ -16,7 +16,7 @@ use function Brain\Monkey\Functions\when;
  * fabricated by 'api.repository.customer'.
  *
  * The behaviour under test lives in container definitions rather than a single
- * class, so the only class-level @covers target is the repository the wiring
+ * class, so the only class-level coverage target is the repository the wiring
  * feeds.
  *
  * @covers \WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository
