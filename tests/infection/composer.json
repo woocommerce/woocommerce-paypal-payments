@@ -1,0 +1,18 @@
+{
+    "name": "woocommerce/woocommerce-paypal-payments-infection",
+    "description": "Mutation testing tool, kept apart from the plugin dependencies.",
+    "type": "project",
+    "license": "GPL-2.0",
+    "require": {
+        "php": "^8.2",
+        "infection/infection": "^0.32"
+    },
+    "config": {
+        "platform": {
+            "php": "8.2"
+        },
+        "allow-plugins": {
+            "infection/extension-installer": true
+        }
+    }
+}

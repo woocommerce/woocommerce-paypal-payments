@@ -25,6 +25,8 @@ modules/*/assets/*
 !.env.example*
 .composer_compiled_assets
 /coverage/
+/infection/
+/tests/infection/vendor/
 /assets
 !modules/ppcp-local-alternative-payment-methods/assets/images
 tests/inc/inpsyde/

@@ -1,0 +1,19 @@
+{
+    "$schema": "vendor/infection/infection/resources/schema.json",
+    "source": {
+        "directories": ["../../src", "../../modules/*/src"]
+    },
+    "bootstrap": "tests/PHPUnit/bootstrap.php",
+    "phpUnit": {
+        "configDir": "../.."
+    },
+    "logs": {
+        "text": "../../infection/infection.log",
+        "html": "../../infection/index.html",
+        "summary": "../../infection/summary.log"
+    },
+    "tmpDir": "../../infection/tmp",
+    "mutators": {
+        "@default": true
+    }
+}
