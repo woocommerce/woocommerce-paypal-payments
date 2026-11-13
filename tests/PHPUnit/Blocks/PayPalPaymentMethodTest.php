@@ -30,6 +30,8 @@ class PayPalPaymentMethodTest extends TestCase
     {
         parent::setUp();
 
+        when('get_current_screen')->justReturn(null);
+
         $this->asset_getter        = Mockery::mock(AssetGetter::class);
         $this->smart_button        = Mockery::mock(SmartButtonInterface::class);
         $this->plugin_settings     = Mockery::mock(SettingsProvider::class);
