@@ -11,11 +11,23 @@ class TokenTest extends TestCase
 {
 
     /**
+     * GIVEN a token that expires in 100 seconds, with or without a creation time
+     * WHEN the token is built and checked right away
+     * THEN it is valid
+     * AND it returns its token string
+     *
      * @dataProvider dataForTestDefault
-     * @param \stdClass $data
      */
-    public function testDefault(\stdClass $data)
+    public function testDefault(bool $has_created)
     {
+        $data = (object)[
+            'expires_in' => 100,
+            'token' => 'abc',
+        ];
+        if ($has_created) {
+            $data->created = time();
+        }
+
         $token = new Token($data);
         $this->assertEquals($data->token, $token->token());
         $this->assertTrue($token->is_valid());
@@ -24,19 +36,8 @@ class TokenTest extends TestCase
     public function dataForTestDefault() : array
     {
         return [
-            'default' => [
-                (object)[
-                    'created' => time(),
-                    'expires_in' => 100,
-                    'token' => 'abc',
-                ],
-            ],
-            'created_not_needed' => [
-                (object)[
-                    'expires_in' => 100,
-                    'token' => 'abc',
-                ],
-            ],
+            'default' => [true],
+            'created_not_needed' => [false],
         ];
     }
 
