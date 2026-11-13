@@ -1,4 +1,0 @@
-services:
-    web:
-        volumes:
-            - ../infection:/var/www/html/.ddev/wordpress/infection:ro

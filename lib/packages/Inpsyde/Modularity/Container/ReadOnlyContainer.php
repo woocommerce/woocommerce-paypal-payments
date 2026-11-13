@@ -1,12 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
-
 /**
  * @phpstan-import-type Service from \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule
  * @phpstan-import-type ExtendingService from \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule
@@ -17,31 +15,24 @@ class ReadOnlyContainer implements ContainerInterface
     private array $services;
     /** @var array<string, bool> */
     private array $factoryIds;
-    private ServiceExtensions $extensions;
+    private \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ServiceExtensions $extensions;
     /** @var ContainerInterface[] */
     private array $containers;
     /** @var array<string, mixed> */
     private array $resolvedServices = [];
-
     /**
      * @param array<string, Service> $services
      * @param array<string, bool> $factoryIds
      * @param ServiceExtensions|array<string, ExtendingService> $extensions
      * @param ContainerInterface[] $containers
      */
-    public function __construct(
-        array $services,
-        array $factoryIds,
-        $extensions,
-        array $containers
-    ) {
-
+    public function __construct(array $services, array $factoryIds, $extensions, array $containers)
+    {
         $this->services = $services;
         $this->factoryIds = $factoryIds;
         $this->extensions = $this->configureServiceExtensions($extensions);
         $this->containers = $containers;
     }
-
     /**
      * @param string $id
      * @return mixed
@@ -51,33 +42,26 @@ class ReadOnlyContainer implements ContainerInterface
         if (array_key_exists($id, $this->resolvedServices)) {
             return $this->resolvedServices[$id];
         }
-
         if (array_key_exists($id, $this->services)) {
             $service = $this->services[$id]($this);
             $resolved = $this->extensions->resolve($service, $id, $this);
-
             if (!isset($this->factoryIds[$id])) {
                 $this->resolvedServices[$id] = $resolved;
                 unset($this->services[$id]);
             }
-
             return $resolved;
         }
-
         foreach ($this->containers as $container) {
             if ($container->has($id)) {
                 $service = $container->get($id);
-
                 return $this->extensions->resolve($service, $id, $this);
             }
         }
-
         $error = "Service with ID {$id} not found.";
-        throw new class (esc_html($error)) extends \Exception implements NotFoundExceptionInterface
+        throw new class(esc_html($error)) extends \Exception implements NotFoundExceptionInterface
         {
         };
     }
-
     /**
      * @param string $id
      * @return bool
@@ -85,22 +69,18 @@ class ReadOnlyContainer implements ContainerInterface
     public function has(string $id): bool
     {
         if (array_key_exists($id, $this->services)) {
-            return true;
+            return \true;
         }
-
         if (array_key_exists($id, $this->resolvedServices)) {
-            return true;
+            return \true;
         }
-
         foreach ($this->containers as $container) {
             if ($container->has($id)) {
-                return true;
+                return \true;
             }
         }
-
-        return false;
+        return \false;
     }
-
     /**
      * Support extensions as array or ServiceExtensions instance for backward compatibility.
      *
@@ -111,26 +91,16 @@ class ReadOnlyContainer implements ContainerInterface
      * @param mixed $extensions
      * @return ServiceExtensions
      */
-    private function configureServiceExtensions($extensions): ServiceExtensions
+    private function configureServiceExtensions($extensions): \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ServiceExtensions
     {
-        if ($extensions instanceof ServiceExtensions) {
+        if ($extensions instanceof \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ServiceExtensions) {
             return $extensions;
         }
-
         if (!is_array($extensions)) {
             $type = is_object($extensions) ? get_class($extensions) : gettype($extensions);
-            throw new \TypeError(
-                sprintf(
-                    '%s::%s(): Argument #3 ($extensions) must be of type %s|array, %s given',
-                    __CLASS__,
-                    '__construct',
-                    ServiceExtensions::class,
-                    esc_html($type)
-                )
-            );
+            throw new \TypeError(sprintf('%s::%s(): Argument #3 ($extensions) must be of type %s|array, %s given', __CLASS__, '__construct', \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ServiceExtensions::class, esc_html($type)));
         }
-
-        $servicesExtensions = new ServiceExtensions();
+        $servicesExtensions = new \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ServiceExtensions();
         foreach ($extensions as $id => $callback) {
             /**
              * @var string $id
@@ -138,7 +108,6 @@ class ReadOnlyContainer implements ContainerInterface
              */
             $servicesExtensions->add($id, $callback);
         }
-
         return $servicesExtensions;
     }
 }
