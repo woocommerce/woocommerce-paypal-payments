@@ -12,7 +12,7 @@
         "html": "../../infection/index.html",
         "summary": "../../infection/summary.log"
     },
-    "tmpDir": "../../infection/tmp",
+    "tmpDir": "/tmp",
     "mutators": {
         "@default": true
     }
