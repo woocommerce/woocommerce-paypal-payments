@@ -25,6 +25,17 @@ class Recaptcha {
 	public const REJECTION_LOGGER_SOURCE         = 'woocommerce-paypal-payments-recaptcha';
 	public const REJECTION_COUNTER_OPTION        = 'ppcp_recaptcha_rejection_counter';
 
+	private const LOGGED_CHECKOUT_FORM_FIELDS = array(
+		'billing_email',
+		'billing_country',
+		'billing_city',
+		'billing_postcode',
+		'ship_to_different_address',
+		'shipping_country',
+		'shipping_city',
+		'shipping_postcode',
+	);
+
 	private RecaptchaIntegration $integration;
 
 	/**
@@ -337,12 +348,17 @@ class Recaptcha {
 
 		if ( ! $success ) {
 			if ( $version === 'v3' ) {
-				$content = $request_data;
-				// Sending only form to reduce the amount of data.
-				if ( isset( $request_data['form'] ) ) {
-					$content = $request_data['form'];
+				$logged_fields = $this->loggable_fields(
+					$request_data,
+					array( 'context', 'funding_source', 'payment_method', 'order_id', 'createaccount' )
+				);
+
+				$form = $request_data['form'] ?? null;
+				if ( is_array( $form ) ) {
+					$logged_fields['form'] = $this->loggable_fields( $form, self::LOGGED_CHECKOUT_FORM_FIELDS );
 				}
-				$this->log_rejection( 'Create Order AJAX', $content );
+
+				$this->log_rejection( 'Create Order AJAX', $logged_fields );
 			}
 
 			wp_send_json_error(
@@ -410,8 +426,13 @@ class Recaptcha {
 
 		if ( ! $success ) {
 			if ( $version === 'v3' ) {
-				$content = $_POST;
-				$this->log_rejection( 'Classic Checkout Submission', $content );
+				$this->log_rejection(
+					'Classic Checkout Submission',
+					$this->loggable_fields(
+						(array) wp_unslash( $_POST ),
+						array_merge( array( 'payment_method', 'createaccount' ), self::LOGGED_CHECKOUT_FORM_FIELDS )
+					)
+				);
 			}
 
 			wc_add_notice(
@@ -475,9 +496,22 @@ class Recaptcha {
 
 		if ( ! $success ) {
 			if ( $version === 'v3' ) {
-				$content = $request->get_params();
-				unset( $content['extensions'] );
-				$this->log_rejection( 'Block Checkout Submission', $content );
+				$logged_fields = $this->loggable_fields(
+					$request->get_params(),
+					array( 'payment_method', 'create_account' )
+				);
+
+				foreach ( array( 'billing_address', 'shipping_address' ) as $address_key ) {
+					$address = $request->get_param( $address_key );
+					if ( is_array( $address ) ) {
+						$logged_fields[ $address_key ] = $this->loggable_fields(
+							$address,
+							array( 'email', 'country', 'city', 'postcode' )
+						);
+					}
+				}
+
+				$this->log_rejection( 'Block Checkout Submission', $logged_fields );
 			}
 
 			throw new RouteException(
@@ -795,7 +829,30 @@ class Recaptcha {
 	}
 
 
-	private function log_rejection( string $endpoint_name, array $request_data ): void {
+	/**
+	 * Returns only the allowed keys, so passwords and third-party checkout fields never reach the log.
+	 *
+	 * @param array<string, mixed> $request_data
+	 * @param string[]             $allowed_keys
+	 * @return array<string, scalar>
+	 */
+	private function loggable_fields( array $request_data, array $allowed_keys ): array {
+		$fields = array();
+
+		foreach ( $allowed_keys as $key ) {
+			$value = $request_data[ $key ] ?? null;
+			if ( is_string( $value ) ) {
+				$value = sanitize_text_field( $value );
+			}
+			if ( is_scalar( $value ) ) {
+				$fields[ $key ] = $value;
+			}
+		}
+
+		return $fields;
+	}
+
+	private function log_rejection( string $endpoint_name, array $logged_fields ): void {
 		$this->rejection_counter->increment();
 
 		if ( ! wc_string_to_bool( $this->integration->get_option( 'log_rejections' ) ) ) {
@@ -805,16 +862,12 @@ class Recaptcha {
 		$ip         = $this->customer_ip();
 		$user_agent = $this->customer_user_agent();
 
-		unset( $request_data['ppcp_recaptcha_token'] );
-		unset( $request_data['ppcp_recaptcha_version'] );
-		unset( $request_data['g-recaptcha-response'] );
-
 		$cart = $this->cart_contents();
 
 		$this->rejection_logger->debug(
 			"Rejected by v3 reCAPTCHA at {$endpoint_name} with score {$this->last_v3_score}, IP: {$ip}, User Agent: {$user_agent}.",
 			array(
-				'request' => $request_data,
+				'request' => $logged_fields,
 				'cart'    => $cart,
 			)
 		);

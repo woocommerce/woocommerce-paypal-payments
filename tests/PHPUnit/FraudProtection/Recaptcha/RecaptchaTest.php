@@ -478,8 +478,8 @@ class RecaptchaTest extends TestCase {
 	 *     "Enable logging" setting is on) never receives any call
 	 * AND the logged context carries the request data and cart contents, but not a
 	 *     'source' key
-	 * AND the token, version and legacy 'g-recaptcha-response' fields are stripped from
-	 *     the logged request data.
+	 * AND only the allowlisted request fields are logged, so the token, version and legacy
+	 *     'g-recaptcha-response' fields are not.
 	 */
 	public function test_v3_rejection_logs_to_rejection_logger_with_sanitized_context_and_never_touches_shared_logger(): void {
 		$this->stub_rejected_v3_verification();
@@ -522,10 +522,350 @@ class RecaptchaTest extends TestCase {
 		$this->assertArrayHasKey( 'request', $captured_context );
 		$this->assertArrayHasKey( 'cart', $captured_context );
 		$this->assertArrayNotHasKey( 'source', $captured_context );
-		$this->assertArrayNotHasKey( 'ppcp_recaptcha_token', $captured_context['request'] );
-		$this->assertArrayNotHasKey( 'ppcp_recaptcha_version', $captured_context['request'] );
-		$this->assertArrayNotHasKey( 'g-recaptcha-response', $captured_context['request'] );
-		$this->assertSame( 123, $captured_context['request']['order_id'] );
+		$this->assertSame( array( 'order_id' => 123 ), $captured_context['request'] );
+	}
+
+	/**
+	 * Builds a testee that logs rejections, and captures the context of the rejection log entry.
+	 *
+	 * @param string[]   $payment_methods
+	 * @param array|null $captured_context Receives the context passed to the rejection logger.
+	 */
+	private function make_rejection_logging_testee( array $payment_methods, ?array &$captured_context ): Recaptcha {
+		$this->stub_rejected_v3_verification();
+
+		$rejection_logger = Mockery::mock( LoggerInterface::class );
+		$rejection_logger->shouldReceive( 'debug' )->andReturnUsing(
+			function ( string $message, array $context ) use ( &$captured_context ): void {
+				$captured_context = $context;
+			}
+		);
+
+		return $this->make_testee(
+			Mockery::mock( SettingsStatus::class ),
+			$payment_methods,
+			array( 'log_rejections' => 'yes' ),
+			null,
+			$rejection_logger
+		);
+	}
+
+	/**
+	 * GIVEN "Log rejected attempts" is on
+	 * WHEN a Create Order AJAX request carrying a password and other personal data is rejected by v3
+	 * THEN only the allowlisted fields are logged, including the allowlisted billing and shipping
+	 *      fields of the form and the ship-to-different-address flag when it was sent
+	 * AND the password and every other field are absent from the logged request.
+	 *
+	 * @dataProvider create_order_ajax_request_provider
+	 */
+	public function test_v3_rejection_of_create_order_ajax_logs_only_allowlisted_fields( array $extra_request_data, array $expected_request ): void {
+		$captured_context = null;
+		$testee           = $this->make_rejection_logging_testee( array(), $captured_context );
+
+		$testee->intercept_paypal_ajax(
+			array_merge(
+				array(
+					'ppcp_recaptcha_token'   => 'test-token',
+					'ppcp_recaptcha_version' => 'v3',
+					'g-recaptcha-response'   => 'legacy-token',
+					'context'                => 'checkout',
+					'funding_source'         => 'paypal',
+					'payment_method'         => 'ppcp-gateway',
+					'order_id'               => '123',
+					'createaccount'          => '1',
+					'nonce'                  => 'abc123',
+					'third_party_field'      => 'something',
+				),
+				$extra_request_data
+			)
+		);
+
+		$this->assertSame( $expected_request, $captured_context['request'] );
+	}
+
+	public function create_order_ajax_request_provider(): array {
+		$top_level = array(
+			'context'        => 'checkout',
+			'funding_source' => 'paypal',
+			'payment_method' => 'ppcp-gateway',
+			'order_id'       => '123',
+			'createaccount'  => '1',
+		);
+
+		return array(
+			'checkout form with account password' => array(
+				array(
+					'form' => array(
+						'account_password'   => 'secret-password',
+						'account_username'   => 'shopper',
+						'billing_first_name' => 'Jane',
+						'billing_email'      => 'jane@example.com',
+						'billing_country'    => 'DE',
+						'billing_city'       => 'Berlin',
+						'billing_postcode'   => '10115',
+						'ship_to_different_address' => '1',
+						'shipping_first_name' => 'John',
+						'shipping_address_1' => '2 Rue de Rivoli',
+						'shipping_country'   => 'FR',
+						'shipping_city'      => 'Paris',
+						'shipping_postcode'  => '75001',
+						'woocommerce-process-checkout-nonce' => 'nonce-value',
+						'third_party_field'  => 'something',
+					),
+				),
+				$top_level + array(
+					'form' => array(
+						'billing_email'    => 'jane@example.com',
+						'billing_country'  => 'DE',
+						'billing_city'     => 'Berlin',
+						'billing_postcode' => '10115',
+						'ship_to_different_address' => '1',
+						'shipping_country' => 'FR',
+						'shipping_city'    => 'Paris',
+						'shipping_postcode' => '75001',
+					),
+				),
+			),
+			'shipping fields without the ship-to-different-address flag' => array(
+				array(
+					'form' => array(
+						'billing_country'     => 'DE',
+						'billing_city'        => 'Berlin',
+						'billing_postcode'    => '10115',
+						'shipping_first_name' => 'John',
+						'shipping_address_1'  => '2 Rue de Rivoli',
+						'shipping_country'    => 'FR',
+						'shipping_city'       => 'Paris',
+						'shipping_postcode'   => '75001',
+					),
+				),
+				$top_level + array(
+					'form' => array(
+						'billing_country'   => 'DE',
+						'billing_city'      => 'Berlin',
+						'billing_postcode'  => '10115',
+						'shipping_country'  => 'FR',
+						'shipping_city'     => 'Paris',
+						'shipping_postcode' => '75001',
+					),
+				),
+			),
+			'cart or product without a form'      => array(
+				array( 'context' => 'cart' ),
+				array_merge( $top_level, array( 'context' => 'cart' ) ),
+			),
+			'form that is not an array'           => array(
+				array( 'form' => 'account_password=secret-password' ),
+				$top_level,
+			),
+		);
+	}
+
+	/**
+	 * GIVEN "Log rejected attempts" is on
+	 * WHEN a Create Order AJAX request is rejected by v3 and an allowlisted form field is not a scalar
+	 * THEN that field is dropped from the logged request instead of being logged.
+	 */
+	public function test_v3_rejection_drops_non_scalar_values_of_allowlisted_fields(): void {
+		$captured_context = null;
+		$testee           = $this->make_rejection_logging_testee( array(), $captured_context );
+
+		$testee->intercept_paypal_ajax(
+			array(
+				'ppcp_recaptcha_token'   => 'test-token',
+				'ppcp_recaptcha_version' => 'v3',
+				'form'                   => array(
+					'billing_email'    => array( 'account_password' => 'secret-password' ),
+					'billing_country'  => 'DE',
+					'billing_postcode' => null,
+				),
+			)
+		);
+
+		$this->assertSame(
+			array( 'form' => array( 'billing_country' => 'DE' ) ),
+			$captured_context['request']
+		);
+	}
+
+	/**
+	 * GIVEN "Log rejected attempts" is on
+	 * WHEN a classic checkout submission carrying the account password is rejected by v3
+	 * AND the shopper ships to a different address than the billing one
+	 * THEN only the allowlisted POST fields are logged, billing and shipping alike
+	 * AND the ship-to-different-address flag is logged only when the checkbox was checked
+	 * AND the password, username, token and name, street and phone fields are absent.
+	 *
+	 * @dataProvider classic_ship_to_different_address_provider
+	 */
+	public function test_v3_rejection_of_classic_checkout_logs_only_allowlisted_fields( array $flag_post, array $expected_flag ): void {
+		when( 'wc_add_notice' )->justReturn( null );
+
+		$captured_context = null;
+		$testee           = $this->make_rejection_logging_testee( array( CreditCardGateway::ID ), $captured_context );
+
+		$_POST = array_merge(
+			array(
+				'payment_method'         => CreditCardGateway::ID,
+				'ppcp_recaptcha_token'   => 'test-token',
+				'ppcp_recaptcha_version' => 'v3',
+				'createaccount'          => '1',
+				'account_username'       => 'shopper',
+				'account_password'       => 'secret-password',
+				'billing_first_name'     => 'Jane',
+				'billing_address_1'      => '1 Main Street',
+				'billing_phone'          => '555-1234',
+				'billing_email'          => 'jane@example.com',
+				'billing_country'        => 'DE',
+				'billing_city'           => 'Berlin',
+				'billing_postcode'       => '10115',
+				'shipping_first_name'    => 'John',
+				'shipping_address_1'     => '2 Rue de Rivoli',
+				'shipping_country'       => 'FR',
+				'shipping_city'          => 'Paris',
+				'shipping_postcode'      => '75001',
+				'woocommerce-process-checkout-nonce' => 'nonce-value',
+				'third_party_field'      => 'something',
+			),
+			$flag_post
+		);
+
+		try {
+			$testee->validate_classic_checkout();
+		} finally {
+			$_POST = array();
+		}
+
+		$this->assertSame(
+			array_merge(
+				array(
+					'payment_method'   => CreditCardGateway::ID,
+					'createaccount'    => '1',
+					'billing_email'    => 'jane@example.com',
+					'billing_country'  => 'DE',
+					'billing_city'     => 'Berlin',
+					'billing_postcode' => '10115',
+				),
+				$expected_flag,
+				array(
+					'shipping_country'  => 'FR',
+					'shipping_city'     => 'Paris',
+					'shipping_postcode' => '75001',
+				)
+			),
+			$captured_context['request']
+		);
+	}
+
+	public function classic_ship_to_different_address_provider(): array {
+		return array(
+			'checkbox checked'                  => array(
+				array( 'ship_to_different_address' => '1' ),
+				array( 'ship_to_different_address' => '1' ),
+			),
+			'checkbox unchecked and absent'     => array(
+				array(),
+				array(),
+			),
+		);
+	}
+
+	/**
+	 * GIVEN "Log rejected attempts" is on
+	 * WHEN a Store API checkout carrying the customer password is rejected by v3
+	 * AND the shipping address differs from the billing one
+	 * THEN only the allowlisted top-level, billing and shipping address fields are logged
+	 * AND a boolean create_account flag stays a boolean
+	 * AND the password, payment data, extensions and personal address fields are absent.
+	 */
+	public function test_v3_rejection_of_store_api_checkout_logs_only_allowlisted_fields(): void {
+		$captured_context = null;
+		$testee           = $this->make_rejection_logging_testee( array( CreditCardGateway::ID ), $captured_context );
+
+		$request = $this->make_store_api_request(
+			'POST',
+			array( 'ppcp_recaptcha' => array( 'token' => 'bad-token', 'version' => 'v3' ) )
+		);
+		$request->set_param( 'payment_method', CreditCardGateway::ID );
+		$request->set_param( 'create_account', true );
+		$request->set_param( 'customer_password', 'secret-password' );
+		$request->set_param( 'payment_data', array( array( 'key' => 'token', 'value' => 'card-token' ) ) );
+		$request->set_param(
+			'billing_address',
+			array(
+				'first_name' => 'Jane',
+				'last_name'  => 'Doe',
+				'address_1'  => '1 Main Street',
+				'phone'      => '555-1234',
+				'email'      => 'jane@example.com',
+				'country'    => 'DE',
+				'city'       => 'Berlin',
+				'postcode'   => '10115',
+			)
+		);
+		$request->set_param(
+			'shipping_address',
+			array(
+				'first_name' => 'John',
+				'address_1'  => '2 Rue de Rivoli',
+				'phone'      => '555-5678',
+				'country'    => 'FR',
+				'city'       => 'Paris',
+				'postcode'   => '75001',
+			)
+		);
+
+		$this->capture_route_exception(
+			fn() => $testee->validate_store_api_checkout( $this->make_order( CreditCardGateway::ID ), $request )
+		);
+
+		$this->assertSame(
+			array(
+				'payment_method'   => CreditCardGateway::ID,
+				'create_account'   => true,
+				'billing_address'  => array(
+					'email'    => 'jane@example.com',
+					'country'  => 'DE',
+					'city'     => 'Berlin',
+					'postcode' => '10115',
+				),
+				'shipping_address' => array(
+					'country'  => 'FR',
+					'city'     => 'Paris',
+					'postcode' => '75001',
+				),
+			),
+			$captured_context['request']
+		);
+	}
+
+	/**
+	 * GIVEN "Log rejected attempts" is on
+	 * WHEN a Store API checkout without a billing address and with a non-array shipping address
+	 *      is rejected by v3
+	 * THEN neither a billing_address nor a shipping_address key is logged.
+	 */
+	public function test_v3_rejection_of_store_api_checkout_without_billing_address_logs_no_address(): void {
+		$captured_context = null;
+		$testee           = $this->make_rejection_logging_testee( array( CreditCardGateway::ID ), $captured_context );
+
+		$request = $this->make_store_api_request(
+			'POST',
+			array( 'ppcp_recaptcha' => array( 'token' => 'bad-token', 'version' => 'v3' ) )
+		);
+		$request->set_param( 'payment_method', CreditCardGateway::ID );
+		$request->set_param( 'customer_password', 'secret-password' );
+		$request->set_param( 'shipping_address', '2 Rue de Rivoli, Paris' );
+
+		$this->capture_route_exception(
+			fn() => $testee->validate_store_api_checkout( $this->make_order( CreditCardGateway::ID ), $request )
+		);
+
+		$this->assertSame(
+			array( 'payment_method' => CreditCardGateway::ID ),
+			$captured_context['request']
+		);
 	}
 
 	/**
