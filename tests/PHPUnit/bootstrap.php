@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+use Infection\StreamWrapper\IncludeInterceptor;
+
 define('TESTS_ROOT_DIR', dirname(__DIR__));
 define('ROOT_DIR', dirname(TESTS_ROOT_DIR));
 
@@ -46,3 +48,29 @@ require_once TESTS_ROOT_DIR . '/stubs/WP_Block_Template.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_HTML_Tag_Processor.php';
 
 Hamcrest\Util::registerGlobalFunctions();
+
+// In Infection runs, make Patchwork compile the mutant instead of the original file.
+if ( class_exists( IncludeInterceptor::class, false ) ) {
+	require_once ROOT_DIR . '/vendor/brain/monkey/inc/patchwork-loader.php';
+
+	$interceptor = new ReflectionClass( IncludeInterceptor::class );
+	$original    = $interceptor->getProperty( 'intercept' );
+	$replacement = $interceptor->getProperty( 'replacement' );
+	$original->setAccessible( true );
+	$replacement->setAccessible( true );
+
+	$original_path = realpath( (string) $original->getValue() );
+	$mutant_path   = (string) $replacement->getValue();
+
+	array_unshift(
+		Patchwork\CodeManipulation\State::$actions,
+		static function ( Patchwork\CodeManipulation\Source $source ) use ( $original_path, $mutant_path ): void {
+			if ( false === $original_path || ! is_string( $source->file ) || realpath( $source->file ) !== $original_path ) {
+				return;
+			}
+
+			$source->code = file_get_contents( $mutant_path );
+			$source->initialize();
+		}
+	);
+}
