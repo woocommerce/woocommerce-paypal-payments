@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint;
 
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
@@ -29,6 +30,9 @@ class CreateSetupTokenTest extends TestCase {
 	/** @var SetupTokenBinding&\Mockery\MockInterface */
 	private $setup_token_binding;
 
+	/** @var LoggerInterface&\Mockery\MockInterface */
+	private $logger;
+
 	/** @var CreateSetupToken */
 	private $sut;
 
@@ -41,10 +45,13 @@ class CreateSetupTokenTest extends TestCase {
 		$this->setup_token_binding = Mockery::mock( SetupTokenBinding::class );
 		$this->setup_token_binding->shouldReceive( 'bind' )->byDefault();
 
+		$this->logger = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
+
 		$this->sut = new CreateSetupToken(
 			$this->request_data,
 			$this->tokens_endpoint,
-			$this->setup_token_binding
+			$this->setup_token_binding,
+			$this->logger
 		);
 
 		// Common WP stubs used by handle_request(). get_user_meta is intentionally
@@ -268,6 +275,37 @@ class CreateSetupTokenTest extends TestCase {
 		$this->sut->handle_request();
 
 		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN PayPal rejects the setup token request (e.g. the app lacks the vault scope)
+	 * WHEN handle_request() is called
+	 * THEN the shopper receives the generic error response
+	 * AND the failure reason is logged once as an error
+	 */
+	public function test_setup_token_failure_returns_generic_error_and_logs_reason(): void {
+		$this->request_data
+			->shouldReceive( 'read_request' )
+			->once()
+			->andReturn( array( 'payment_method' => 'ppcp-gateway' ) );
+
+		when( 'get_user_meta' )->justReturn( '' );
+
+		$this->tokens_endpoint
+			->shouldReceive( 'setup_tokens' )
+			->once()
+			->andThrow( new \RuntimeException( 'NOT_AUTHORIZED' ) );
+
+		$this->setup_token_binding->shouldNotReceive( 'bind' );
+
+		$this->logger
+			->shouldReceive( 'error' )
+			->once()
+			->with( Mockery::pattern( '/NOT_AUTHORIZED/' ) );
+
+		expect( 'wp_send_json_error' )->once()->withNoArgs();
+
+		$this->sut->handle_request();
 	}
 
 	/**
