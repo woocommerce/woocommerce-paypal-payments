@@ -32,6 +32,7 @@ class SettingsProviderTest extends TestCase {
 	private StylingSettings $styling_settings;
 	private FastlaneSettings $fastlane_settings;
 	private PayLaterMessagingSettings $paylater_messaging_settings;
+	private SettingsProvider $provider;
 
 	public function setUp(): void {
 		$this->general_settings            = Mockery::mock( GeneralSettings::class );
