@@ -1,13 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module;
 
 /**
  * @phpstan-import-type Service from ServiceModule
  */
-interface FactoryModule extends Module
+interface FactoryModule extends \WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\Module
 {
     /**
      * Return application factories.
