@@ -154,6 +154,8 @@ class AbilityHandlersTest extends TestCase
 	 *       cannot be built
 	 * When the ability is executed
 	 * Then a WP_Error is returned and nothing propagates.
+	 * And the failure is written to the PHP error log, naming the ability, the
+	 *     exception class, and the message (captured in a file, not STDERR).
 	 *
 	 * PCP-6418 review: the removed resolve_service() caught Throwable and
 	 * returned this WP_Error. Without it, a container exception thrown while
@@ -174,10 +176,24 @@ class AbilityHandlersTest extends TestCase
 		$callback = AbilityHandlers::callback(self::ABILITY);
 		$this->assertIsCallable($callback);
 
-		$result = $callback(array());
+		$log_file     = tempnam(sys_get_temp_dir(), 'ppcp-abilities-log');
+		$previous_log = ini_get('error_log');
+		ini_set('error_log', $log_file);
+
+		try {
+			$result = $callback(array());
+			$logged = (string) file_get_contents($log_file);
+		} finally {
+			ini_set('error_log', (string) $previous_log);
+			unlink($log_file);
+		}
 
 		$this->assertInstanceOf(WP_Error::class, $result);
 		$this->assertSame('woocommerce_paypal_payments_service_unavailable', $result->get_error_code());
+		$this->assertStringContainsString(
+			'[ppcp-abilities] resolving the handler for ' . self::ABILITY . ' threw RuntimeException: settings.rest.common could not be built',
+			$logged
+		);
 	}
 
 	/**
