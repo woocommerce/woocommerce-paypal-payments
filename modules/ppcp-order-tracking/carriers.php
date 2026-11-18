@@ -35,7 +35,7 @@ if ( ! function_exists( 'WooCommerce\PayPalCommerce\OrderTracking\tr' ) ) {
  * This array of data has been populated from https://developer.paypal.com/docs/tracking/reference/carriers/
  * For updating the carries data (more than 1000 carriers) you can use `ddev carriers-extractor` tool.
  *
- * @see .ddev/commands/playwright/carriers-extractor
+ * @see .ddev/commands/web/carriers-extractor
  * @see .ddev/bin/carriers-extractor.js
  */
 return (array) apply_filters(
