@@ -1,17 +1,16 @@
 /**
- * Carriers Extractor - Playwright Version
+ * Carriers Extractor
  *
- * This script extracts carrier data from PayPal's documentation using Playwright
- * and formats it into a PHP array for use with WooCommerce PayPal Payments.
+ * Extracts carrier data from PayPal's documentation and formats it into a PHP array
+ * for use with WooCommerce PayPal Payments. The page is server-rendered, so a plain fetch is enough.
  *
  * Usage:
- * 1. Run: node carriers-extractor.js
- * 2. Copy the array generated in carriers_data.php and paste it into the $carriers array in the PayPal Payments plugin.
- * 3. Apply the linter using npm run ddev:fix-lint to format the array.
+ * 1. Run: ddev carriers-extractor
+ * 2. Copy the array generated in carriers_data.php into modules/ppcp-order-tracking/carriers.php.
+ * 3. Format it with `ddev npm run fix-lint -- modules/ppcp-order-tracking/carriers.php`.
  * 4. Check the changes
  */
 
-const { chromium } = require( 'playwright' );
 const fs = require( 'fs' );
 
 /**
@@ -274,90 +273,85 @@ const URL = 'https://developer.paypal.com/docs/tracking/reference/carriers/';
  * Extract carrier data from PayPal documentation page
  */
 async function extractCarrierData() {
-	console.log( 'Launching browser and fetching PayPal carrier data...' );
+	console.log( 'Fetching PayPal carrier data...' );
 
-	const browser = await chromium.launch( {
-		headless: true,
-	} );
+	const response = await fetch( URL );
+	if ( ! response.ok ) {
+		throw new Error(
+			`Failed to fetch ${ URL }: HTTP ${ response.status }`
+		);
+	}
+	const html = await response.text();
 
-	const page = await browser.newPage();
+	const data = [];
 
-	try {
-		await page.goto( URL );
-        await page.waitForSelector( 'h2[id]', { timeout: 10000 } );
+	// Each country is an <h2 id="…"> followed by a table of carriers.
+	html.split( /<h2\s/ )
+		.slice( 1 )
+		.forEach( ( section ) => {
+			const headingEnd = section.indexOf( '</h2>' );
+			if ( ! /^[^>]*\bid=/.test( section ) || headingEnd === -1 ) {
+				return;
+			}
 
-		const carrierData = await page.evaluate( () => {
-			const data = [];
+			const countryName = htmlToText(
+				section.slice( section.indexOf( '>' ) + 1, headingEnd )
+			);
+			const tbody = section.match( /<tbody[^>]*>([\s\S]*?)<\/tbody>/ );
+			if ( ! tbody ) {
+				return;
+			}
 
-			// Find all h2 elements that represent countries
-			const countryHeaders = document.querySelectorAll( 'h2[id]' );
+			for ( const row of tbody[ 1 ].matchAll(
+				/<tr[^>]*>([\s\S]*?)<\/tr>/g
+			) ) {
+				const cells = [
+					...row[ 1 ].matchAll( /<td[^>]*>([\s\S]*?)<\/td>/g ),
+				].map( ( cell ) => htmlToText( cell[ 1 ] ) );
+				const [ carrierName, carrierKey, countryCode ] = cells;
 
-			countryHeaders.forEach( ( header ) => {
-				const countryName = header.textContent.trim();
-				const table = header.nextElementSibling;
-
-				// Find the table after the header
-				let currentElement = header.nextElementSibling;
-				while ( currentElement && currentElement.tagName !== 'TABLE' ) {
-					currentElement = currentElement.nextElementSibling;
+				if ( carrierName && carrierKey && countryCode ) {
+					data.push( {
+						carrierName,
+						carrierKey,
+						countryCode,
+						countryName,
+					} );
 				}
-
-				if ( currentElement && currentElement.tagName === 'TABLE' ) {
-					const tbody = currentElement.querySelector( 'tbody' );
-					if ( tbody ) {
-						const rows = tbody.querySelectorAll( 'tr' );
-
-						rows.forEach( ( row ) => {
-							const cells = row.querySelectorAll( 'td' );
-							if ( cells.length >= 3 ) {
-								const carrierName =
-									cells[ 0 ].textContent.trim();
-
-								// Extract carrier key from code element
-								const keyCodeElement =
-									cells[ 1 ].querySelector( 'code span' );
-								const carrierKey = keyCodeElement
-									? keyCodeElement.textContent.trim()
-									: '';
-
-								// Extract country code from code element
-								const countryCodeElement =
-									cells[ 2 ].querySelector( 'code span' );
-								const countryCode = countryCodeElement
-									? countryCodeElement.textContent.trim()
-									: '';
-
-								if (
-									carrierName &&
-									carrierKey &&
-									countryCode
-								) {
-									data.push( {
-										carrierName,
-										carrierKey,
-										countryCode,
-										countryName,
-									} );
-								}
-							}
-						} );
-					}
-				}
-			} );
-
-			return data;
+			}
 		} );
 
-		await browser.close();
-
-		console.log(
-			`Extracted ${ carrierData.length } carriers from PayPal documentation`
+	if ( ! data.length ) {
+		throw new Error(
+			'No carriers found, the page markup has probably changed'
 		);
-		return carrierData;
-	} catch ( error ) {
-		await browser.close();
-		throw new Error( `Failed to extract data: ${ error.message }` );
 	}
+
+	console.log(
+		`Extracted ${ data.length } carriers from PayPal documentation`
+	);
+	return data;
+}
+
+/**
+ * Strip tags and decode the entities the docs page uses.
+ * @param html
+ */
+function htmlToText( html ) {
+	return html
+		.replace( /<[^>]*>/g, '' )
+		.replace( /&#x([0-9a-f]+);/gi, ( _, hex ) =>
+			String.fromCodePoint( parseInt( hex, 16 ) )
+		)
+		.replace( /&#(\d+);/g, ( _, dec ) =>
+			String.fromCodePoint( parseInt( dec, 10 ) )
+		)
+		.replace( /&quot;/g, '"' )
+		.replace( /&lt;/g, '<' )
+		.replace( /&gt;/g, '>' )
+		.replace( /&nbsp;/g, ' ' )
+		.replace( /&amp;/g, '&' )
+		.trim();
 }
 
 /**
@@ -444,7 +438,7 @@ function generateCarriersPhpFile( carriersArray ) {
 /**
  * Carriers data for PayPal tracking.
  *
- * Generated by carriers-extractor.js using Playwright
+ * Generated by carriers-extractor.js
  */
 
 return (array) apply_filters(
