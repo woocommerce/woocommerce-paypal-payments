@@ -64,7 +64,6 @@ const FIELD_STATE_EVENTS = [ 'focus', 'blur', 'empty', 'notempty' ];
  * @param {Object}  args.session           - The v6 card-fields session.
  * @param {Object}  args.responseTypes     - The Blocks response-type constants.
  * @param {boolean} args.savePaymentMethod - Whether to vault the card.
- * @param {Object} [args.billingAddress] - Billing address for AVS/3D Secure.
  * @return {Promise<Object>} A Blocks onPaymentSetup response object.
  */
 async function submitCardPayment( {
@@ -73,7 +72,6 @@ async function submitCardPayment( {
 	session,
 	responseTypes,
 	savePaymentMethod,
-	billingAddress,
 } ) {
 	if ( ! session ) {
 		return {
@@ -91,9 +89,9 @@ async function submitCardPayment( {
 			context,
 			savePaymentMethod
 		);
-		const result = billingAddress
-			? await session.submit( orderId, { billingAddress } )
-			: await session.submit( orderId );
+		// No billingAddress option: with it, some issuers decline before 3D
+		// Secure (PAYER_CANNOT_PAY).
+		const result = await session.submit( orderId );
 
 		// The buyer dismissed the 3DS challenge; prompt a retry rather than
 		// showing a payment error.
@@ -247,19 +245,6 @@ export function V6CardFieldsComponent( {
 	const isVaultingEnabled = Boolean( config.card_fields.is_vaulting_enabled );
 	const showLockedSaveOption = hasSubscriptions && isVaultingEnabled;
 
-	// Billing address for the card submit: countryCode is required, postalCode optional.
-	const billingAddress = billing?.billingAddress || billing?.billingData;
-	const countryCode = billingAddress?.country?.trim();
-	const postalCode = billingAddress?.postcode?.trim();
-	const billingRef = useLatestRef(
-		countryCode
-			? {
-					countryCode,
-					...( postalCode ? { postalCode } : {} ),
-			  }
-			: null
-	);
-
 	// One card session per SDK instance: the SDK cannot dispose a session, so
 	// it must not be recreated on ordinary re-renders.
 	useEffect( () => {
@@ -395,8 +380,6 @@ export function V6CardFieldsComponent( {
 						session: sessionRef.current,
 						responseTypes,
 						savePaymentMethod: savePaymentRef.current,
-						// null when no billing address is available.
-						billingAddress: billingRef.current,
 				  } );
 		} );
 	}, [

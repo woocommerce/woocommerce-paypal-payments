@@ -30,32 +30,6 @@ import {
 } from '../utils/cardDeclineMessages';
 
 /**
- * Reads the billing address from the classic checkout form for the card
- * session submit: countryCode is required, postalCode is included when present.
- *
- * @return {Object|undefined} A { billingAddress } options object, or undefined
- *                            when no country is present.
- */
-function billingAddressForSubmit() {
-	const countryCode = document
-		.querySelector( '#billing_country' )
-		?.value?.trim();
-	if ( ! countryCode ) {
-		return undefined;
-	}
-
-	const billingAddress = { countryCode };
-	const postalCode = document
-		.querySelector( '#billing_postcode' )
-		?.value?.trim();
-	if ( postalCode ) {
-		billingAddress.postalCode = postalCode;
-	}
-
-	return { billingAddress };
-}
-
-/**
  * Whether the buyer selected an existing saved payment token rather than
  * entering a new card — out of scope here, the native submit handles it.
  *
@@ -218,7 +192,6 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 
 		try {
 			const cardSession = await ensureCardSession();
-			const submitOptions = billingAddressForSubmit();
 
 			const fieldError = fieldStateError(
 				getFieldState(),
@@ -255,9 +228,9 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 				config.page_context || 'checkout',
 				shouldSavePaymentMethod()
 			);
-			const result = submitOptions
-				? await cardSession.submit( orderId, submitOptions )
-				: await cardSession.submit( orderId );
+			// No billingAddress option: with it, some issuers decline before 3D
+			// Secure (PAYER_CANNOT_PAY).
+			const result = await cardSession.submit( orderId );
 
 			// Buyer closed the 3DS challenge or the popup; let them retry.
 			if ( result.state === 'canceled' ) {
