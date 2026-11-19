@@ -535,6 +535,43 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 		);
 	}
 
+	/**
+	 * GIVEN a logged-in owner returned from PayPal and the payment was processed
+	 * WHEN the same return URL is opened again in the same session while the remembered return is valid
+	 * THEN the owner is treated like a guest: the visitor ends on the order-received URL of the WC order
+	 * AND PayPal is not asked for the order again
+	 * AND no payment is processed a second time
+	 */
+	public function test_repeated_return_while_marker_is_valid_treats_logged_in_owner_like_a_guest(): void {
+		$return = $this->complete_first_return( $this->customer_id );
+
+		$location = $this->repeat_return( $return );
+
+		$this->assertSame( $return['wc_order']->get_checkout_order_received_url(), $location );
+		$this->assertSame( 1, $this->processed_payments );
+		$this->assertSame( 1, $this->paypal_order_requests );
+		$this->assertSame( array(), wc_get_notices( 'error' ) );
+	}
+
+	/**
+	 * GIVEN a logged-in owner returned from PayPal and the payment was processed
+	 * AND the remembered return expired
+	 * WHEN the same return URL is opened again
+	 * THEN the request is handled as before: PayPal is asked for the order and the ownership check passes
+	 * AND the owner ends on the order-received URL of the WC order
+	 */
+	public function test_repeated_return_after_marker_expired_is_handled_as_before_for_logged_in_owner(): void {
+		delete_option( self::BINDING_SINCE_OPTION );
+		$return = $this->complete_first_return( $this->customer_id );
+		$this->expire_completed_return();
+
+		$location = $this->repeat_return( $return );
+
+		$this->assertSame( $return['wc_order']->get_checkout_order_received_url(), $location );
+		$this->assertSame( 2, $this->paypal_order_requests );
+		$this->assertSame( array(), wc_get_notices( 'error' ) );
+	}
+
 	private function expire_completed_return(): void {
 		$marker            = WC()->session->get( self::COMPLETED_RETURN_SESSION_KEY );
 		$marker['expires'] = time() - 1;
