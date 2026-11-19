@@ -13,6 +13,7 @@ import {
 	isPayPalSubscription,
 } from '../Helper/Subscription';
 import {
+	completeApproval,
 	createOrder,
 	createSubscription,
 	createVaultSetupToken,
@@ -466,7 +467,19 @@ export const PayPalComponent = ( {
 				onError={ onClose }
 				createVaultSetupToken={ () => createVaultSetupToken( config ) }
 				onApprove={ ( { vaultSetupToken } ) =>
-					onApproveSavePayment( vaultSetupToken, config, onSubmit )
+					onApproveSavePayment(
+						vaultSetupToken,
+						config,
+						() =>
+							completeApproval( {
+								shouldskipFinalConfirmation,
+								getCheckoutRedirectUrl,
+								setGotoContinuationOnError,
+								onSubmit,
+							} ),
+						onError,
+						onClose
+					)
 				}
 			/>
 		);
