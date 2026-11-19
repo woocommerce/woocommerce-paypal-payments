@@ -1089,7 +1089,7 @@ class SdkV6Manager
             'verification_method' => (string) apply_filters('woocommerce_paypal_payments_three_d_secure_contingency', $this->three_d_secure_contingency),
             'user' => array('is_logged' => is_user_logged_in()),
             'ajax' => array(
-                'client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ClientTokenEndpoint::nonce())),
+                'client_token' => array('endpoint' => \WC_AJAX::get_endpoint(ClientTokenEndpoint::ENDPOINT)),
                 'change_cart' => array('endpoint' => \WC_AJAX::get_endpoint(ChangeCartEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(ChangeCartEndpoint::nonce())),
                 'simulate_cart' => array('endpoint' => \WC_AJAX::get_endpoint(SimulateCartEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(SimulateCartEndpoint::nonce())),
                 'wallet_shipping' => array('endpoint' => \WC_AJAX::get_endpoint(CartQuoteEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(CartQuoteEndpoint::nonce())),

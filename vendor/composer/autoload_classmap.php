@@ -128,6 +128,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\ApiClient\\Exception\\NotFoundException' => $baseDir . '/modules/ppcp-api-client/src/Exception/NotFoundException.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Exception\\PayPalApiException' => $baseDir . '/modules/ppcp-api-client/src/Exception/PayPalApiException.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Exception\\RuntimeException' => $baseDir . '/modules/ppcp-api-client/src/Exception/RuntimeException.php',
+    'WooCommerce\\PayPalCommerce\\ApiClient\\Exception\\TokenUnavailableException' => $baseDir . '/modules/ppcp-api-client/src/Exception/TokenUnavailableException.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\AddressFactory' => $baseDir . '/modules/ppcp-api-client/src/Factory/AddressFactory.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\AmountFactory' => $baseDir . '/modules/ppcp-api-client/src/Factory/AmountFactory.php',
     'WooCommerce\\PayPalCommerce\\ApiClient\\Factory\\AuthorizationFactory' => $baseDir . '/modules/ppcp-api-client/src/Factory/AuthorizationFactory.php',

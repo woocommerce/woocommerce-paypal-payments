@@ -161,7 +161,7 @@ return array(
         );
     },
     'sdk-v6.endpoint.client-token' => static function (ContainerInterface $container): ClientTokenEndpoint {
-        return new ClientTokenEndpoint($container->get('order-endpoints.request-data'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.sdk-client-token'));
+        return new ClientTokenEndpoint($container->get('woocommerce.logger.woocommerce'), $container->get('api.sdk-client-token'));
     },
     'sdk-v6.endpoint.simulate-cart' => static function (ContainerInterface $container): SimulateCartEndpoint {
         return new SimulateCartEndpoint($container->get('order-endpoints.request-data'), $container->get('order-endpoints.helper.cart-products'), $container->get('button.helper.isolated-cart-simulator'), $container->get('woocommerce.logger.woocommerce'));
