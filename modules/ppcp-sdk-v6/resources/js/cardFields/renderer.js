@@ -22,6 +22,7 @@ import {
 } from '../sessions/freeTrialSave';
 import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
+import { cardSubmitFailureDetail, logEvent } from '../utils/diagnostics';
 import { isFreeTrialCart } from '../utils/freeTrial';
 import {
 	CARD_DECLINE_MESSAGE,
@@ -238,6 +239,11 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 			}
 
 			if ( result.state !== 'succeeded' ) {
+				logEvent(
+					config,
+					'card-submit-failed',
+					cardSubmitFailureDetail( 'classic', orderId, result )
+				);
 				throw userFacingError( CARD_DECLINE_MESSAGE );
 			}
 

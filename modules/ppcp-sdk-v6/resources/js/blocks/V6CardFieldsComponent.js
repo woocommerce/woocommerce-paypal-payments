@@ -19,6 +19,7 @@ import {
 import { __ } from '@wordpress/i18n';
 import { loadSdkV6 } from '../sdkLoader';
 import { createCardOrder, approveCardOrder } from '../endpointsAdapter';
+import { cardSubmitFailureDetail, logEvent } from '../utils/diagnostics';
 import {
 	createCardSetupToken,
 	exchangeSetupToken,
@@ -106,6 +107,12 @@ async function submitCardPayment( {
 		}
 
 		if ( result.state !== 'succeeded' ) {
+			logEvent(
+				config,
+				'card-submit-failed',
+				cardSubmitFailureDetail( 'block', orderId, result )
+			);
+
 			return {
 				type: responseTypes.ERROR,
 				message: CARD_DECLINE_MESSAGE,
