@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockHostedFieldTextStyles = jest.fn( () => ( {
 	color: 'rgb(0, 0, 0)',
 } ) );
@@ -817,9 +819,103 @@ describe( 'initCardFields', () => {
 		placeOrder.click();
 		await flushPromises();
 
-		expect( mockHandleError ).toHaveBeenCalled();
+		expect( mockHandleError ).toHaveBeenCalledWith(
+			expect.objectContaining( {
+				message:
+					'This card could not be authorized. Please try a different payment method.',
+			} )
+		);
 		expect( mockApproveCardOrder ).not.toHaveBeenCalled();
 		expect( nativeSubmits ).toBe( 0 );
+	} );
+
+	describe( 'card submit failure log', () => {
+		const loggingConfig = () =>
+			baseConfig( {
+				ajax: {
+					frontend_log: { endpoint: '/log', nonce: 'n-log' },
+				},
+			} );
+
+		let originalFetch;
+
+		beforeEach( () => {
+			originalFetch = global.fetch;
+			global.fetch = jest.fn().mockResolvedValue( {} );
+		} );
+
+		afterEach( () => {
+			global.fetch = originalFetch;
+		} );
+
+		async function submitWithResult( result ) {
+			buildCheckoutDom( 'ppcp-credit-card-gateway' );
+			document.body.insertAdjacentHTML(
+				'beforeend',
+				'<input id="billing_postcode" value="90001" /><input id="billing_country" value="US" />'
+			);
+			const cardSession = makeCardSession();
+			cardSession.submit.mockResolvedValue( result );
+			mockLoadSdkV6.mockResolvedValue( {
+				createCardFieldsOneTimePaymentSession: () => cardSession,
+			} );
+			mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+			mockApproveCardOrder.mockResolvedValue( undefined );
+
+			await initCardFields( loggingConfig() );
+			await flushPromises();
+
+			document.querySelector( '#place_order' ).click();
+			await flushPromises();
+		}
+
+		test.each( [ 'failed', 'declined' ] )(
+			'writes one error entry with the checkout type and order ID when the state is %s',
+			async ( state ) => {
+				await submitWithResult( { state, data: {} } );
+
+				expect( global.fetch ).toHaveBeenCalledTimes( 1 );
+				const body = JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body );
+				expect( body.level ).toBe( 'error' );
+				expect( body.message ).toContain( 'classic' );
+				expect( body.message ).toContain( 'CARDORDER1' );
+			}
+		);
+
+		test( 'includes the error code when the result carries one', async () => {
+			await submitWithResult( {
+				state: 'failed',
+				data: { errorCode: 'PAYER_CANNOT_PAY' },
+			} );
+
+			const body = JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body );
+			expect( body.message ).toContain( 'PAYER_CANNOT_PAY' );
+		} );
+
+		test( 'contains no address or card data', async () => {
+			await submitWithResult( {
+				state: 'failed',
+				data: {
+					errorCode: 'X',
+					billingAddress: { postalCode: '90001', countryCode: 'US' },
+					cardNumber: '4111111111111111',
+				},
+			} );
+
+			const sent = global.fetch.mock.calls[ 0 ][ 1 ].body;
+			expect( sent ).not.toContain( '90001' );
+			expect( sent ).not.toContain( '4111' );
+			expect( sent ).not.toContain( 'US' );
+		} );
+
+		test.each( [ 'canceled', 'succeeded' ] )(
+			'writes no entry when the state is %s',
+			async ( state ) => {
+				await submitWithResult( { state, data: {} } );
+
+				expect( global.fetch ).not.toHaveBeenCalled();
+			}
+		);
 	} );
 
 	test( 'a canceled 3DS challenge is silent (no error) and does not click place_order again', async () => {

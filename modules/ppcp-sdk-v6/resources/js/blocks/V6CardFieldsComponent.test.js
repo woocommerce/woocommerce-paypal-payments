@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockLoadSdkV6 = jest.fn();
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
@@ -661,6 +663,94 @@ describe( 'V6CardFieldsComponent', () => {
 			expect( session.submit.mock.calls[ 0 ] ).toEqual( [ 'ORDER1' ] );
 		}
 	);
+
+	describe( 'card submit failure log', () => {
+		const loggingConfig = () =>
+			cardConfig( {
+				ajax: {
+					...cardConfig().ajax,
+					frontend_log: { endpoint: '/log', nonce: 'n-log' },
+				},
+			} );
+
+		let originalFetch;
+
+		beforeEach( () => {
+			originalFetch = global.fetch;
+			global.fetch = jest.fn().mockResolvedValue( {} );
+		} );
+
+		afterEach( () => {
+			global.fetch = originalFetch;
+		} );
+
+		async function submitWithResult( result ) {
+			mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+			session.submit.mockResolvedValueOnce( result );
+
+			renderComponent( {
+				config: loggingConfig(),
+				billing: {
+					billingAddress: { postcode: '90001', country: 'US' },
+				},
+			} );
+			await waitForSessionReady();
+
+			let response;
+			await act( async () => {
+				response = await paymentSetupCb();
+			} );
+			return response;
+		}
+
+		test.each( [ 'failed', 'declined' ] )(
+			'writes one error entry with the checkout type and order ID when the state is %s',
+			async ( state ) => {
+				await submitWithResult( { state, data: {} } );
+
+				expect( global.fetch ).toHaveBeenCalledTimes( 1 );
+				const body = JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body );
+				expect( body.level ).toBe( 'error' );
+				expect( body.message ).toContain( 'block' );
+				expect( body.message ).toContain( 'ORDER1' );
+			}
+		);
+
+		test( 'includes the error code when the result carries one', async () => {
+			await submitWithResult( {
+				state: 'failed',
+				data: { errorCode: 'PAYER_CANNOT_PAY' },
+			} );
+
+			const body = JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body );
+			expect( body.message ).toContain( 'PAYER_CANNOT_PAY' );
+		} );
+
+		test( 'contains no address or card data', async () => {
+			await submitWithResult( {
+				state: 'failed',
+				data: {
+					errorCode: 'X',
+					billingAddress: { postalCode: '90001', countryCode: 'US' },
+					cardNumber: '4111111111111111',
+				},
+			} );
+
+			const sent = global.fetch.mock.calls[ 0 ][ 1 ].body;
+			expect( sent ).not.toContain( '90001' );
+			expect( sent ).not.toContain( '4111' );
+			expect( sent ).not.toContain( 'US' );
+		} );
+
+		test.each( [ 'canceled', 'succeeded' ] )(
+			'writes no entry when the state is %s',
+			async ( state ) => {
+				await submitWithResult( { state, data: {} } );
+
+				expect( global.fetch ).not.toHaveBeenCalled();
+			}
+		);
+	} );
 
 	describe( 'free-trial ($0 subscription) cart', () => {
 		function freeTrialConfig( overrides = {} ) {
