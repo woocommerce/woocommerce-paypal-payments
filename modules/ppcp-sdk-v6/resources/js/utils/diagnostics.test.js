@@ -1,6 +1,10 @@
 import '@ppcp-test/helpers/silenceConsole';
 
-import { describeError, logEvent } from './diagnostics';
+import {
+	cardSubmitFailureDetail,
+	describeError,
+	logEvent,
+} from './diagnostics';
 
 const config = ( overrides = {} ) => ( {
 	ajax: {
@@ -28,6 +32,55 @@ describe( 'describeError()', () => {
 	test( 'falls back to "unknown error" when the error has no message', () => {
 		expect( describeError( {} ) ).toBe( 'unknown error' );
 	} );
+} );
+
+describe( 'cardSubmitFailureDetail()', () => {
+	test.each( [ 'classic', 'block' ] )(
+		'names the %s checkout, the order ID, and the state',
+		( checkout ) => {
+			const detail = cardSubmitFailureDetail( checkout, 'ORDER1', {
+				state: 'failed',
+			} );
+
+			expect( detail ).toContain( checkout );
+			expect( detail ).toContain( 'ORDER1' );
+			expect( detail ).toContain( 'failed' );
+			expect( detail ).not.toContain( 'errorCode' );
+		}
+	);
+
+	test( 'includes the error code when the result data carries one', () => {
+		const detail = cardSubmitFailureDetail( 'classic', 'ORDER1', {
+			state: 'failed',
+			data: { errorCode: 'PAYER_CANNOT_PAY' },
+		} );
+
+		expect( detail ).toContain( 'PAYER_CANNOT_PAY' );
+	} );
+
+	test( 'leaves out any other result data, such as address or card values', () => {
+		const detail = cardSubmitFailureDetail( 'block', 'ORDER1', {
+			state: 'failed',
+			data: {
+				errorCode: 'X',
+				billingAddress: { postalCode: '90001', countryCode: 'US' },
+				cardNumber: '4111111111111111',
+			},
+		} );
+
+		expect( detail ).not.toContain( '90001' );
+		expect( detail ).not.toContain( 'US' );
+		expect( detail ).not.toContain( '4111' );
+	} );
+
+	test.each( [ undefined, null, {} ] )(
+		'does not throw when the result is %p',
+		( result ) => {
+			expect( () =>
+				cardSubmitFailureDetail( 'classic', 'ORDER1', result )
+			).not.toThrow();
+		}
+	);
 } );
 
 describe( 'logEvent()', () => {
