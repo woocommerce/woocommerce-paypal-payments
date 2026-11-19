@@ -1322,7 +1322,6 @@ class SdkV6Manager {
 			'ajax'                => array(
 				'client_token'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ClientTokenEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( ClientTokenEndpoint::nonce() ),
 				),
 				'change_cart'                    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
