@@ -18,7 +18,7 @@ $wpRootDir =  str_replace('${ROOT_DIR}', ROOT_DIR, $_ENV['PPCP_INTEGRATION_WP_DI
 
 define('WP_ROOT_DIR', $wpRootDir);
 
-$_SERVER['HTTP_HOST'] = ''; // just to avoid a warning
+$_SERVER['HTTP_HOST'] = 'woocommerce-paypal-payments.ddev.site'; // wp-config.php builds WP_HOME from it, and home_url() needs a host.
 
 // The npm scripts set this variable, and create-database.sh makes wp-config.php read it.
 // Without that wp-config.php line, the tests would write to the DDEV site database.
