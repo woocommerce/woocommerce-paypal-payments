@@ -36,6 +36,23 @@ class ReturnUrlRedirected extends RuntimeException {
 }
 
 /**
+ * The unit-test stub of WC_Payment_Gateway declares get_return_url() protected, so a mock cannot
+ * stub it. Real WooCommerce has it public. Payment processing is a failure here.
+ */
+class ReturnUrlEndpointTestGateway extends PayPalGateway {
+
+	public const ORDER_RECEIVED_URL = 'https://example.com/order-received';
+
+	public function get_return_url( $order = null ) {
+		return self::ORDER_RECEIVED_URL;
+	}
+
+	public function process_payment( $order_id ): array {
+		throw new \LogicException( 'No payment may be processed.' );
+	}
+}
+
+/**
  * @covers \WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint
  */
 class ReturnUrlEndpointTest extends TestCase {
@@ -425,6 +442,75 @@ class ReturnUrlEndpointTest extends TestCase {
 		} catch ( ReturnUrlRedirected $redirected ) {
 			// Then
 			$this->assertSame( 'https://www.paypal.com/ok', $redirected->url );
+		}
+	}
+
+	/**
+	 * GIVEN a successful return remembered by the WC session of the requester
+	 * WHEN the same token arrives again in that session
+	 * THEN the requester is redirected to the order-received URL of the WC order
+	 * AND PayPal is not asked for the order
+	 * AND no payment is processed and no notice is added
+	 */
+	public function test_repeated_return_in_same_session_redirects_to_order_received_page(): void {
+		$_GET['token'] = 'TOKEN-REPEAT';
+
+		$wc_order = $this->make_wc_order( 0 );
+		$this->completed_return_session->allows( 'remembered_order_for' )
+			->with( 'TOKEN-REPEAT' )
+			->andReturn( $wc_order );
+
+		$gateway     = ( new \ReflectionClass( ReturnUrlEndpointTestGateway::class ) )->newInstanceWithoutConstructor();
+		$gateway->id = 'ppcp-gateway';
+		$sut         = new ReturnUrlEndpoint(
+			$gateway,
+			$this->order_endpoint,
+			$this->session_handler,
+			$this->logger,
+			$this->completed_return_session,
+			$this->return_url_secret
+		);
+
+		$this->order_endpoint->shouldNotReceive( 'order' );
+		$this->order_endpoint->shouldNotReceive( 'capture' );
+		expect( 'wc_add_notice' )->never();
+
+		try {
+			$sut->handle_request();
+			$this->fail( 'Expected handle_request() to redirect.' );
+		} catch ( ReturnUrlRedirected $redirected ) {
+			$this->assertSame( ReturnUrlEndpointTestGateway::ORDER_RECEIVED_URL, $redirected->url );
+		}
+	}
+
+	/**
+	 * GIVEN an authorized return whose payment processing fails
+	 * WHEN handle_request() finishes the return
+	 * THEN the return is not remembered
+	 * AND the return secret is not consumed
+	 */
+	public function test_does_not_remember_return_when_payment_fails(): void {
+		$_GET['token']             = 'TOKEN-FAILED';
+		$_GET['ppcp_return_nonce'] = 'NONCE-VALID';
+
+		$order = $this->make_order( 'TOKEN-FAILED', OrderStatus::APPROVED, '78' );
+		$this->order_endpoint->allows( 'order' )->with( 'TOKEN-FAILED' )->andReturn( $order );
+		when( 'wc_get_order' )->justReturn( $this->make_wc_order( 0 ) );
+		when( 'wc_add_notice' )->justReturn();
+
+		$this->return_url_secret->allows( 'verify' )->with( 'TOKEN-FAILED', 'NONCE-VALID' )->andReturn( true );
+		$this->return_url_secret->shouldNotReceive( 'consume' );
+		$this->session_handler->allows( 'replace_order' );
+
+		$this->gateway->allows( 'process_payment' )->with( 78 )->andReturn( array( 'result' => 'failure' ) );
+
+		$this->completed_return_session->shouldNotReceive( 'remember' );
+
+		try {
+			$this->sut->handle_request();
+			$this->fail( 'Expected handle_request() to redirect.' );
+		} catch ( ReturnUrlRedirected $redirected ) {
+			$this->assertSame( self::CHECKOUT_URL, $redirected->url );
 		}
 	}
 
