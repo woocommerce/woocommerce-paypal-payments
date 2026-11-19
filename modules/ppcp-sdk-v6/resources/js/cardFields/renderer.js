@@ -253,7 +253,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 			const { orderId } = await createCardOrder(
 				config,
 				config.page_context || 'checkout',
-                shouldSavePaymentMethod(),
+				shouldSavePaymentMethod()
 			);
 			const result = submitOptions
 				? await cardSession.submit( orderId, submitOptions )

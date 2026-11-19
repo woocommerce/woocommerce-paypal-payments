@@ -203,7 +203,7 @@ async function submitCardSave( { config, session, responseTypes } ) {
  * @param {Object}  props.emitResponse        - Blocks response-type constants.
  * @param {string}  props.activePaymentMethod - The active payment method id.
  * @param {boolean} props.shouldSavePayment   - WC Blocks' native "save payment method" choice.
- * @param {Object} [props.billing]           - Blocks billing data (address, totals).
+ * @param {Object}  [props.billing]           - Blocks billing data (address, totals).
  * @return {?Object} The card fields element, or null before the session is ready.
  */
 export function V6CardFieldsComponent( {
@@ -329,14 +329,16 @@ export function V6CardFieldsComponent( {
 		// The session exposes no per-listener removal, only destroy(), so this
 		// flag is what stops a late event from reaching an unmounted component.
 		FIELD_STATE_EVENTS.forEach( ( event ) => {
-			Promise.resolve( session.on( event, handler ) ).catch( ( error ) => {
-				// eslint-disable-next-line no-console
-				console.warn(
-					'[PPCP SDK v6] card field event not available',
-					event,
-					error
-				);
-			} );
+			Promise.resolve( session.on( event, handler ) ).catch(
+				( error ) => {
+					// eslint-disable-next-line no-console
+					console.warn(
+						'[PPCP SDK v6] card field event not available',
+						event,
+						error
+					);
+				}
+			);
 		} );
 
 		return () => {
@@ -413,8 +415,8 @@ export function V6CardFieldsComponent( {
 	// against an invalid form.
 	//
 	// Gated on the active method because this is a global event.
-    // For other methods like express PayPal or Venmo checkout an invalid form
-    // can be ok, since PayPal returns the address.
+	// For other methods like express PayPal or Venmo checkout an invalid form
+	// can be ok, since PayPal returns the address.
 	useEffect( () => {
 		if (
 			activePaymentMethod !== methodId ||
