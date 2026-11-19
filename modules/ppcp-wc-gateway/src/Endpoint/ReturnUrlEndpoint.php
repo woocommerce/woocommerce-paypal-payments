@@ -119,6 +119,13 @@ class ReturnUrlEndpoint {
 		}
 		$token = sanitize_text_field( wp_unslash( $_GET['token'] ) );
 
+		// A repeat of a return that this WC session completed goes to the order page, with no processing.
+		$completed_order = $this->completed_return_session->remembered_order_for( $token );
+		if ( $completed_order ) {
+			wp_safe_redirect( $this->gateway->get_return_url( $completed_order ) );
+			exit();
+		}
+
 		// wp_unslash() can return an array, so the value is sanitized on the next line behind an is_string() guard.
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$provided_nonce = wp_unslash( $_GET['ppcp_return_nonce'] ?? '' );
@@ -213,8 +220,9 @@ class ReturnUrlEndpoint {
 		$success = $payment_gateway->process_payment( $wc_order_id );
 
 		if ( isset( $success['result'] ) && 'success' === $success['result'] ) {
-			// The secret works one time only, so a replay of the same URL is refused.
+			// The secret works one time only, so a replay from another session is refused.
 			$this->return_url_secret->consume( $token );
+			$this->completed_return_session->remember( $token, $wc_order_id );
 
 			add_filter(
 				'allowed_redirect_hosts',
