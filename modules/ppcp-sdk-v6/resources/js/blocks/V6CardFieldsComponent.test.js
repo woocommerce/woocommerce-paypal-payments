@@ -1,3 +1,5 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockLoadSdkV6 = jest.fn();
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
@@ -635,72 +637,119 @@ describe( 'V6CardFieldsComponent', () => {
 		} );
 	} );
 
-	test( 'submits the session with the billing address derived from the Blocks billing prop', async () => {
-		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
-		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+	test.each( [
+		[
+			'a country and a postcode',
+			{ billingAddress: { postcode: '90001', country: 'US' } },
+		],
+		[ 'only a country', { billingAddress: { country: 'US' } } ],
+		[ 'only a postcode', { billingAddress: { postcode: '90001' } } ],
+		[ 'an empty address', { billingAddress: {} } ],
+		[ 'no billing data', undefined ],
+	] )(
+		'submits the session with the order ID only when the Blocks billing prop has %s',
+		async ( _label, billing ) => {
+			mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+			session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
 
-		renderComponent( {
-			billing: {
-				billingAddress: { postcode: '90001', country: 'US' },
-			},
-		} );
-		await waitForSessionReady();
+			renderComponent( { billing } );
+			await waitForSessionReady();
 
-		await act( async () => {
-			await paymentSetupCb();
-		} );
+			await act( async () => {
+				await paymentSetupCb();
+			} );
 
-		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1', {
-			billingAddress: { postalCode: '90001', countryCode: 'US' },
-		} );
-	} );
+			expect( session.submit ).toHaveBeenCalledTimes( 1 );
+			expect( session.submit.mock.calls[ 0 ] ).toEqual( [ 'ORDER1' ] );
+		}
+	);
 
-	test( 'submits the session with only the country when the Blocks billing prop has no postcode', async () => {
-		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
-		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
+	describe( 'card submit failure log', () => {
+		const loggingConfig = () =>
+			cardConfig( {
+				ajax: {
+					...cardConfig().ajax,
+					frontend_log: { endpoint: '/log', nonce: 'n-log' },
+				},
+			} );
 
-		renderComponent( {
-			billing: { billingAddress: { country: 'US' } },
-		} );
-		await waitForSessionReady();
+		let originalFetch;
 
-		await act( async () => {
-			await paymentSetupCb();
-		} );
-
-		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1', {
-			billingAddress: { countryCode: 'US' },
-		} );
-	} );
-
-	test( 'submits the session with no options when the Blocks billing prop has no country', async () => {
-		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
-		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
-
-		renderComponent( { billing: { billingAddress: {} } } );
-		await waitForSessionReady();
-
-		await act( async () => {
-			await paymentSetupCb();
+		beforeEach( () => {
+			originalFetch = global.fetch;
+			global.fetch = jest.fn().mockResolvedValue( {} );
 		} );
 
-		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
-	} );
-
-	test( 'submits the session with no options when the Blocks billing prop has a postcode but no country', async () => {
-		mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
-		session.submit.mockResolvedValueOnce( { state: 'succeeded' } );
-
-		renderComponent( {
-			billing: { billingAddress: { postcode: '90001' } },
-		} );
-		await waitForSessionReady();
-
-		await act( async () => {
-			await paymentSetupCb();
+		afterEach( () => {
+			global.fetch = originalFetch;
 		} );
 
-		expect( session.submit ).toHaveBeenCalledWith( 'ORDER1' );
+		async function submitWithResult( result ) {
+			mockCreateCardOrder.mockResolvedValueOnce( { orderId: 'ORDER1' } );
+			session.submit.mockResolvedValueOnce( result );
+
+			renderComponent( {
+				config: loggingConfig(),
+				billing: {
+					billingAddress: { postcode: '90001', country: 'US' },
+				},
+			} );
+			await waitForSessionReady();
+
+			let response;
+			await act( async () => {
+				response = await paymentSetupCb();
+			} );
+			return response;
+		}
+
+		test.each( [ 'failed', 'declined' ] )(
+			'writes one error entry with the checkout type and order ID when the state is %s',
+			async ( state ) => {
+				await submitWithResult( { state, data: {} } );
+
+				expect( global.fetch ).toHaveBeenCalledTimes( 1 );
+				const body = JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body );
+				expect( body.level ).toBe( 'error' );
+				expect( body.message ).toContain( 'block' );
+				expect( body.message ).toContain( 'ORDER1' );
+			}
+		);
+
+		test( 'includes the error code when the result carries one', async () => {
+			await submitWithResult( {
+				state: 'failed',
+				data: { errorCode: 'PAYER_CANNOT_PAY' },
+			} );
+
+			const body = JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body );
+			expect( body.message ).toContain( 'PAYER_CANNOT_PAY' );
+		} );
+
+		test( 'contains no address or card data', async () => {
+			await submitWithResult( {
+				state: 'failed',
+				data: {
+					errorCode: 'X',
+					billingAddress: { postalCode: '90001', countryCode: 'US' },
+					cardNumber: '4111111111111111',
+				},
+			} );
+
+			const sent = global.fetch.mock.calls[ 0 ][ 1 ].body;
+			expect( sent ).not.toContain( '90001' );
+			expect( sent ).not.toContain( '4111' );
+			expect( sent ).not.toContain( 'US' );
+		} );
+
+		test.each( [ 'canceled', 'succeeded' ] )(
+			'writes no entry when the state is %s',
+			async ( state ) => {
+				await submitWithResult( { state, data: {} } );
+
+				expect( global.fetch ).not.toHaveBeenCalled();
+			}
+		);
 	} );
 
 	describe( 'free-trial ($0 subscription) cart', () => {
