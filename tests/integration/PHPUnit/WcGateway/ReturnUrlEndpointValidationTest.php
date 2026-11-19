@@ -489,7 +489,7 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 	 * AND no payment is processed a second time
 	 */
 	public function test_repeated_guest_return_in_same_session_ends_on_order_received_page(): void {
-		$return = $this->complete_first_guest_return();
+		$return = $this->complete_first_return();
 
 		$location = $this->repeat_return( $return );
 
@@ -510,12 +510,10 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 	 */
 	public function test_repeated_guest_return_is_refused_when_session_holds_no_valid_marker( string $marker_state ): void {
 		delete_option( self::BINDING_SINCE_OPTION );
-		$return = $this->complete_first_guest_return();
+		$return = $this->complete_first_return();
 
 		if ( 'expired' === $marker_state ) {
-			$marker            = WC()->session->get( self::COMPLETED_RETURN_SESSION_KEY );
-			$marker['expires'] = time() - 1;
-			WC()->session->set( self::COMPLETED_RETURN_SESSION_KEY, $marker );
+			$this->expire_completed_return();
 		} else {
 			WC()->session->set( self::COMPLETED_RETURN_SESSION_KEY, null );
 		}
@@ -537,15 +535,27 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 		);
 	}
 
+	private function expire_completed_return(): void {
+		$marker            = WC()->session->get( self::COMPLETED_RETURN_SESSION_KEY );
+		$marker['expires'] = time() - 1;
+		WC()->session->set( self::COMPLETED_RETURN_SESSION_KEY, $marker );
+	}
+
 	/**
-	 * Runs a successful guest return through the real CompletedReturnSession and WC session.
+	 * Runs a successful return through the real CompletedReturnSession and WC session.
 	 *
+	 * @param int $owner_id The logged-in owner of the WC order; 0 for a guest.
 	 * @return array{wc_order: \WC_Order, token: string, gateway: PayPalGateway, paypal_order: Order}
 	 */
-	private function complete_first_guest_return(): array {
+	private function complete_first_return( int $owner_id = 0 ): array {
 		$this->resetWcFrontendState();
 
 		$wc_order = $this->create_pending_order_with_payment_method( PayPalGateway::ID );
+		if ( $owner_id ) {
+			$wc_order->set_customer_id( $owner_id );
+			$wc_order->save();
+			wp_set_current_user( $owner_id );
+		}
 
 		$token  = 'PP-RETURN-REPEAT-' . uniqid();
 		$secret = 'the-real-bound-secret-' . uniqid();
@@ -614,7 +624,7 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 
 				return array(
 					'result'   => 'success',
-					'redirect' => 'https://www.paypal.com/success',
+					'redirect' => $order->get_checkout_order_received_url(),
 				);
 			}
 		);
