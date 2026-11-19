@@ -62,6 +62,8 @@ class ReturnUrlEndpoint {
 	 */
 	protected ReturnUrlSecret $return_url_secret;
 
+	private CompletedReturnSession $completed_return_session;
+
 	/**
 	 * Holds the moment at which an update bound return-URL secrets to new orders.
 	 */
@@ -77,27 +79,30 @@ class ReturnUrlEndpoint {
 	/**
 	 * ReturnUrlEndpoint constructor.
 	 *
-	 * @param PayPalGateway        $gateway           The PayPal Gateway.
-	 * @param OrderEndpoint        $order_endpoint    The Order Endpoint.
-	 * @param SessionHandler       $session_handler   The session handler.
-	 * @param LoggerInterface      $logger            The logger.
-	 * @param ReturnUrlSecret|null $return_url_secret Verifies the return URL secret.
-	 *                                                Defaults to a real instance, so
-	 *                                                that a caller can never turn the
-	 *                                                authorization test off by accident.
+	 * @param PayPalGateway          $gateway                  The PayPal Gateway.
+	 * @param OrderEndpoint          $order_endpoint           The Order Endpoint.
+	 * @param SessionHandler         $session_handler          The session handler.
+	 * @param LoggerInterface        $logger                   The logger.
+	 * @param CompletedReturnSession $completed_return_session Remembers a successful return.
+	 * @param ReturnUrlSecret|null   $return_url_secret        Verifies the return URL secret.
+	 *                                                         Defaults to a real instance, so
+	 *                                                         that a caller can never turn the
+	 *                                                         authorization test off by accident.
 	 */
 	public function __construct(
 		PayPalGateway $gateway,
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
 		LoggerInterface $logger,
+		CompletedReturnSession $completed_return_session,
 		?ReturnUrlSecret $return_url_secret = null
 	) {
-		$this->gateway           = $gateway;
-		$this->order_endpoint    = $order_endpoint;
-		$this->session_handler   = $session_handler;
-		$this->logger            = $logger;
-		$this->return_url_secret = $return_url_secret ?? new ReturnUrlSecret();
+		$this->gateway                  = $gateway;
+		$this->order_endpoint           = $order_endpoint;
+		$this->session_handler          = $session_handler;
+		$this->logger                   = $logger;
+		$this->completed_return_session = $completed_return_session;
+		$this->return_url_secret        = $return_url_secret ?? new ReturnUrlSecret();
 	}
 
 	/**

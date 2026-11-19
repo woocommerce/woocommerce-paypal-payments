@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CompletedReturnSession;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -200,7 +201,8 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 			$gateway,
 			$order_endpoint,
 			$session_handler,
-			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			new CompletedReturnSession()
 		);
 
 		// When
@@ -284,7 +286,8 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 			$gateway,
 			$order_endpoint,
 			$session_handler,
-			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			new CompletedReturnSession()
 		);
 
 		// When
@@ -350,7 +353,8 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 			$gateway,
 			$order_endpoint,
 			$session_handler,
-			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			new CompletedReturnSession()
 		);
 
 		// When
@@ -458,7 +462,8 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 			$gateway,
 			$order_endpoint,
 			$session_handler,
-			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			new CompletedReturnSession()
 		);
 	}
 

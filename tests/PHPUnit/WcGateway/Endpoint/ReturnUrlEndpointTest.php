@@ -50,6 +50,7 @@ class ReturnUrlEndpointTest extends TestCase {
 	private $order_endpoint;
 	private $session_handler;
 	private $return_url_secret;
+	private $completed_return_session;
 	private LoggerInterface $logger;
 	private ReturnUrlEndpoint $sut;
 
@@ -78,11 +79,16 @@ class ReturnUrlEndpointTest extends TestCase {
 		$this->return_url_secret = Mockery::mock( ReturnUrlSecret::class );
 		$this->logger            = Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing();
 
+		$this->completed_return_session = Mockery::mock( CompletedReturnSession::class );
+		$this->completed_return_session->allows( 'remembered_order_for' )->andReturn( null )->byDefault();
+		$this->completed_return_session->allows( 'remember' )->byDefault();
+
 		$this->sut = new ReturnUrlEndpoint(
 			$this->gateway,
 			$this->order_endpoint,
 			$this->session_handler,
 			$this->logger,
+			$this->completed_return_session,
 			$this->return_url_secret
 		);
 
@@ -1168,7 +1174,8 @@ class ReturnUrlEndpointTest extends TestCase {
 			$gateway,
 			Mockery::mock( OrderEndpoint::class ),
 			Mockery::mock( SessionHandler::class ),
-			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			$this->completed_return_session
 		);
 	}
 
