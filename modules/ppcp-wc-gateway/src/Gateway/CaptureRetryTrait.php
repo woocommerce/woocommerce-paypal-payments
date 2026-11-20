@@ -25,29 +25,26 @@ trait CaptureRetryTrait {
 	 * resolve the error.
 	 */
 	protected function handle_capture_retry( WC_Order $wc_order, PayPalApiException $error ): ?array {
-		$retry_keys_messages = array(
+		$messages_by_detail_key = array(
 			'INSTRUMENT_DECLINED'   => __( 'Instrument declined.', 'woocommerce-paypal-payments' ),
 			'PAYER_ACTION_REQUIRED' => __( 'Payer action required, possibly overcharge.', 'woocommerce-paypal-payments' ),
 		);
-		$retry_errors        = array_values(
-			array_filter(
-				array_keys( $retry_keys_messages ),
-				function ( string $key ) use ( $error ): bool {
-					return $error->has_detail( $key );
-				}
-			)
-		);
 
-		if ( ! $retry_errors ) {
+		$failure_reason = null;
+		foreach ( $messages_by_detail_key as $key => $message ) {
+			if ( $error->has_detail( $key ) ) {
+				$failure_reason = $message . ' ' . ( $error->details()[0]->description ?? '' );
+				break;
+			}
+		}
+
+		if ( null === $failure_reason ) {
 			return null;
 		}
 
-		$retry_error_key = $retry_errors[0];
-		$retry_message   = $retry_keys_messages[ $retry_error_key ] . ' ' . ( $error->details()[0]->description ?? '' );
-
 		$this->session_handler->increment_insufficient_funding_tries();
 		if ( $this->session_handler->insufficient_funding_tries() >= 3 ) {
-			$wc_order->update_status( 'failed', $retry_message );
+			$wc_order->update_status( 'failed', $failure_reason );
 
 			return $this->handle_payment_failure(
 				null,
@@ -61,7 +58,7 @@ trait CaptureRetryTrait {
 
 		$session_order = $this->session_handler->order();
 		if ( ! ( $session_order instanceof Order ) ) {
-			$wc_order->update_status( 'failed', $retry_message );
+			$wc_order->update_status( 'failed', $failure_reason );
 
 			return $this->handle_payment_failure(
 				null,
@@ -69,10 +66,8 @@ trait CaptureRetryTrait {
 			);
 		}
 
-		// The payer action or retry is still possible, so keep the order
-		// in its current status instead of failing it prematurely - only
-		// note the reason and send the customer back to complete it.
-		$wc_order->add_order_note( $retry_message );
+		// Leave the order open for another PayPal approval; the reason only goes into an order note.
+		$wc_order->add_order_note( $failure_reason );
 		$this->session_handler->replace_payer_action_order_id( $session_order->id() );
 
 		return array(
