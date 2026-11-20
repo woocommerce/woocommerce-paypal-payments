@@ -193,7 +193,8 @@ class RefundProcessor {
 		 * PayPal refunds a capture only in the currency of that capture. When the
 		 * PayPal order was created in another currency than the WC order (for example
 		 * by a multi-currency plugin), the refund amount must be converted to the
-		 * currency of the capture.
+		 * currency of the capture. Return a Money in that currency; any other value
+		 * is ignored.
 		 *
 		 * @param Money    $money    The refund money, in the WC order currency.
 		 * @param WC_Order $wc_order The WC order.
