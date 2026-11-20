@@ -210,4 +210,23 @@ class CardButtonGatewayTest extends TestCase {
 		$this->assertSame( 'failure', $result['result'] );
 		$this->assertSame( 'Payment session expired. Please try again.', $result['errorMessage'] );
 	}
+
+	/**
+	 * GIVEN a card button order whose capture fails with an issue another approval cannot resolve
+	 * WHEN the gateway processes the payment
+	 * THEN the WooCommerce order is marked as failed
+	 * AND the buyer is not sent back to PayPal
+	 */
+	public function test_unrecoverable_capture_issue_fails_the_order_without_redirect_to_paypal(): void {
+		$this->create_wc_order();
+		$this->capture_fails_with( 'UNPROCESSABLE_ENTITY' );
+		$this->session_has_order( self::SESSION_ORDER_ID );
+
+		$result = $this->create_gateway()->process_payment( 1 );
+
+		$this->assertSame( 'failed', $this->order_status );
+		$this->assertSame( 'failure', $result['result'] );
+		$this->assertSame( 'http://example.com/checkout', $result['redirect'] );
+		$this->assertStringStartsWith( Messages::generic_payment_error_message(), $result['errorMessage'] );
+	}
 }
