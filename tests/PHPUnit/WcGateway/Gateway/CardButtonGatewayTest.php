@@ -167,4 +167,25 @@ class CardButtonGatewayTest extends TestCase {
 
 		$this->addToAssertionCount( 1 );
 	}
+
+	/**
+	 * GIVEN a card button order whose capture has already failed with a recoverable issue three times
+	 * WHEN the gateway processes the payment
+	 * THEN the WooCommerce order is marked as failed
+	 * AND the buyer is asked to use a different payment method
+	 *
+	 * @dataProvider retry_issue_provider
+	 */
+	public function test_recoverable_capture_issue_on_third_try_fails_the_order( string $issue ): void {
+		$this->create_wc_order();
+		$this->capture_fails_with( $issue );
+		$this->session_handler->allows( 'insufficient_funding_tries' )->andReturn( 3 );
+		$this->session_has_order( self::SESSION_ORDER_ID );
+
+		$result = $this->create_gateway()->process_payment( 1 );
+
+		$this->assertSame( 'failed', $this->order_status );
+		$this->assertSame( 'failure', $result['result'] );
+		$this->assertSame( 'Please use a different payment method.', $result['errorMessage'] );
+	}
 }
