@@ -120,6 +120,37 @@ class RefundProcessorTest extends TestCase
 		);
 	}
 
+	/**
+	 * GIVEN a WooCommerce order of 400.00 AED that was captured in PayPal
+	 * WHEN 40.00 AED is refunded
+	 * THEN third-party code can read the refund as 40.00 AED money, the WC order, the refunded capture and the PayPal order
+	 */
+	public function test_refund_filter_receives_refund_money_order_capture_and_paypal_order(): void
+	{
+		$received = array();
+		expectApplied( 'woocommerce_paypal_payments_refund_money' )
+			->once()
+			->andReturnUsing(
+				static function ( ...$args ) use ( &$received ) {
+					$received = $args;
+					return $args[0];
+				}
+			);
+		$wc_order     = $this->make_wc_order( 'AED' );
+		$paypal_order = $this->make_paypal_order();
+
+		$this->sut->refund( $paypal_order, $wc_order, 40.0 );
+
+		$this->assertCount( 4, $received );
+		[ $money, $filtered_wc_order, $capture, $filtered_paypal_order ] = $received;
+		$this->assertInstanceOf( Money::class, $money );
+		$this->assertSame( 'AED', $money->currency_code() );
+		$this->assertSame( 40.0, $money->value() );
+		$this->assertSame( $wc_order, $filtered_wc_order );
+		$this->assertSame( $paypal_order->purchase_units()[0]->payments()->captures()[0], $capture );
+		$this->assertSame( $paypal_order, $filtered_paypal_order );
+	}
+
 	private function make_wc_order( string $currency ): WC_Order
 	{
 		$wc_order = Mockery::mock( WC_Order::class );
