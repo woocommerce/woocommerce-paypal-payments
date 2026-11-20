@@ -199,6 +199,37 @@ class PaymentCaptureCompletedTest extends TestCase
 	}
 
 	/**
+	 * GIVEN an on-hold order of 400.00 AED
+	 * WHEN PayPal reports a completed capture of 100.00 USD
+	 * THEN third-party code can read the order total as 400.00 AED money, the order and the captured 100.00 USD money
+	 */
+	public function test_expected_capture_filter_receives_order_total_order_and_captured_money(): void
+	{
+		$received = array();
+		expectApplied( 'woocommerce_paypal_payments_expected_capture_money' )
+			->once()
+			->andReturnUsing(
+				static function ( ...$args ) use ( &$received ) {
+					$received = $args;
+					return $args[0];
+				}
+			);
+		$order = $this->make_order( 'on-hold', '400.00', 'AED' );
+
+		$this->handle( $order, array( 'value' => '100.00', 'currency_code' => 'USD' ) );
+
+		$this->assertCount( 3, $received );
+		[ $total, $filtered_order, $captured ] = $received;
+		$this->assertInstanceOf( Money::class, $total );
+		$this->assertSame( 'AED', $total->currency_code() );
+		$this->assertSame( 400.0, $total->value() );
+		$this->assertSame( $order, $filtered_order );
+		$this->assertInstanceOf( Money::class, $captured );
+		$this->assertSame( 'USD', $captured->currency_code() );
+		$this->assertSame( 100.0, $captured->value() );
+	}
+
+	/**
 	 * @return WC_Order&\Mockery\MockInterface
 	 */
 	private function make_order( string $status, string $total, string $currency )
