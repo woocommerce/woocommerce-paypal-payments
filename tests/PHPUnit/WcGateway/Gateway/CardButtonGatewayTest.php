@@ -130,4 +130,22 @@ class CardButtonGatewayTest extends TestCase {
 		$this->assertSame( 'checkoutnow=' . self::SESSION_ORDER_ID, $result['redirect'] );
 		$this->assertNull( $this->order_status );
 	}
+
+	/**
+	 * GIVEN a card button order whose capture fails with a recoverable issue on the first try
+	 * WHEN the gateway processes the payment
+	 * THEN an order note records the reason for the retry
+	 *
+	 * @dataProvider retry_issue_provider
+	 */
+	public function test_recoverable_capture_issue_is_noted_on_the_order( string $issue, string $expected_note ): void {
+		$this->create_wc_order();
+		$this->capture_fails_with( $issue );
+		$this->session_handler->allows( 'insufficient_funding_tries' )->andReturn( 1 );
+		$this->session_has_order( self::SESSION_ORDER_ID );
+
+		$this->create_gateway()->process_payment( 1 );
+
+		$this->assertSame( array( $expected_note . ' Additional action needed.' ), $this->order_notes );
+	}
 }
