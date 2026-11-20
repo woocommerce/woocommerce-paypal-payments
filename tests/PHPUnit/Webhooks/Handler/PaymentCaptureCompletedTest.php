@@ -9,9 +9,11 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WP_REST_Request;
+use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\when;
 
 /**
@@ -140,6 +142,91 @@ class PaymentCaptureCompletedTest extends TestCase
 		$response = $this->handle( $order, array( 'value' => '0.01', 'currency_code' => 'USD' ) );
 
 		$this->assertTrue( $response->get_data()['success'] );
+	}
+
+	/**
+	 * GIVEN an on-hold order of 400.00 AED that was sent to PayPal as 100.00 USD
+	 * WHEN PayPal reports a completed capture of 100.00 USD
+	 * AND a multi-currency plugin returns 100.00 USD as the expected capture
+	 * THEN the order is marked as paid
+	 * AND the webhook is answered with success
+	 */
+	public function test_order_is_marked_paid_when_capture_covers_the_money_sent_to_paypal(): void
+	{
+		expectApplied( 'woocommerce_paypal_payments_expected_capture_money' )->andReturn( new Money( 100.0, 'USD' ) );
+		$order = $this->make_order( 'on-hold', '400.00', 'AED' );
+		$order->expects( 'payment_complete' )->once();
+
+		$response = $this->handle( $order, array( 'value' => '100.00', 'currency_code' => 'USD' ) );
+
+		$this->assertTrue( $response->get_data()['success'] );
+	}
+
+	/**
+	 * GIVEN an on-hold order of 400.00 AED that was sent to PayPal as 100.00 USD
+	 * WHEN PayPal reports a capture of 99.99 USD
+	 * AND a multi-currency plugin returns 100.00 USD as the expected capture
+	 * THEN the order is not marked as paid
+	 * AND the webhook is answered with a failure
+	 */
+	public function test_order_is_not_marked_paid_when_capture_is_below_the_money_sent_to_paypal(): void
+	{
+		expectApplied( 'woocommerce_paypal_payments_expected_capture_money' )->andReturn( new Money( 100.0, 'USD' ) );
+		$order = $this->make_order( 'on-hold', '400.00', 'AED' );
+		$order->expects( 'payment_complete' )->never();
+
+		$response = $this->handle( $order, array( 'value' => '99.99', 'currency_code' => 'USD' ) );
+
+		$this->assertFalse( $response->get_data()['success'] );
+	}
+
+	/**
+	 * GIVEN an on-hold order of 400.00 AED
+	 * WHEN PayPal reports a capture of 100.00 USD
+	 * AND a third-party callback returns a value that is not money as the expected capture
+	 * THEN the order total in the order currency is still required
+	 * AND the order is not marked as paid
+	 */
+	public function test_order_is_not_marked_paid_when_the_filter_value_is_not_money(): void
+	{
+		expectApplied( 'woocommerce_paypal_payments_expected_capture_money' )->andReturn( '100.00 USD' );
+		$order = $this->make_order( 'on-hold', '400.00', 'AED' );
+		$order->expects( 'payment_complete' )->never();
+
+		$response = $this->handle( $order, array( 'value' => '100.00', 'currency_code' => 'USD' ) );
+
+		$this->assertFalse( $response->get_data()['success'] );
+	}
+
+	/**
+	 * GIVEN an on-hold order of 400.00 AED
+	 * WHEN PayPal reports a completed capture of 100.00 USD
+	 * THEN third-party code can read the order total as 400.00 AED money, the order and the captured 100.00 USD money
+	 */
+	public function test_expected_capture_filter_receives_order_total_order_and_captured_money(): void
+	{
+		$received = array();
+		expectApplied( 'woocommerce_paypal_payments_expected_capture_money' )
+			->once()
+			->andReturnUsing(
+				static function ( ...$args ) use ( &$received ) {
+					$received = $args;
+					return $args[0];
+				}
+			);
+		$order = $this->make_order( 'on-hold', '400.00', 'AED' );
+
+		$this->handle( $order, array( 'value' => '100.00', 'currency_code' => 'USD' ) );
+
+		$this->assertCount( 3, $received );
+		[ $total, $filtered_order, $captured ] = $received;
+		$this->assertInstanceOf( Money::class, $total );
+		$this->assertSame( 'AED', $total->currency_code() );
+		$this->assertSame( 400.0, $total->value() );
+		$this->assertSame( $order, $filtered_order );
+		$this->assertInstanceOf( Money::class, $captured );
+		$this->assertSame( 'USD', $captured->currency_code() );
+		$this->assertSame( 100.0, $captured->value() );
 	}
 
 	/**

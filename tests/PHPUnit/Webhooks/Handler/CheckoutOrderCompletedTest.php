@@ -7,10 +7,12 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 use Mockery;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WP_REST_Request;
+use function Brain\Monkey\Filters\expectApplied;
 use function Brain\Monkey\Functions\when;
 
 /**
@@ -151,6 +153,28 @@ class CheckoutOrderCompletedTest extends TestCase
 			),
 			'processing order with refunded capture' => array( $this->purchase_unit( '42', array( $this->capture( 'REFUNDED', $full ) ) ) ),
 		);
+	}
+
+	/**
+	 * GIVEN a pending WooCommerce order of 400.00 AED that was sent to PayPal as 100.00 USD
+	 * WHEN PayPal reports the order completed with a COMPLETED capture of 100.00 USD
+	 * AND a multi-currency plugin returns 100.00 USD as the expected capture
+	 * THEN the order is marked as paid without a warning note
+	 * AND the webhook is answered with success
+	 */
+	public function test_order_is_marked_paid_when_capture_covers_the_money_sent_to_paypal(): void
+	{
+		expectApplied( 'woocommerce_paypal_payments_expected_capture_money' )->andReturn( new Money( 100.0, 'USD' ) );
+		$order = $this->make_order( 42, '400.00', 'AED' );
+		$order->expects( 'payment_complete' )->once();
+		$order->expects( 'add_order_note' )->never();
+
+		$response = $this->handle(
+			array( $order ),
+			array( $this->purchase_unit( '42', array( $this->capture( 'COMPLETED', array( 'value' => '100.00', 'currency_code' => 'USD' ) ) ) ) )
+		);
+
+		$this->assertTrue( $response->get_data()['success'] );
 	}
 
 	/**
