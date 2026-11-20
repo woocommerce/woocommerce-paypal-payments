@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
@@ -41,6 +42,8 @@ class CreateSetupToken implements EndpointInterface {
 
 	private SetupTokenBinding $setup_token_binding;
 
+	private LoggerInterface $logger;
+
 	/**
 	 * CreateSetupToken constructor.
 	 *
@@ -51,11 +54,13 @@ class CreateSetupToken implements EndpointInterface {
 	public function __construct(
 		RequestData $request_data,
 		PaymentMethodTokensEndpoint $payment_method_tokens_endpoint,
-		SetupTokenBinding $setup_token_binding
+		SetupTokenBinding $setup_token_binding,
+		LoggerInterface $logger
 	) {
 		$this->request_data                   = $request_data;
 		$this->payment_method_tokens_endpoint = $payment_method_tokens_endpoint;
 		$this->setup_token_binding            = $setup_token_binding;
+		$this->logger                         = $logger;
 	}
 
 	/**
@@ -121,6 +126,7 @@ class CreateSetupToken implements EndpointInterface {
 		} catch ( NonceValidationException $error ) {
 			wp_send_json_error( array( 'message' => $error->getMessage() ), 400 );
 		} catch ( Exception $exception ) {
+			$this->logger->error( 'Could not create a setup token: ' . $exception->getMessage() );
 			wp_send_json_error();
 		}
 	}

@@ -41,13 +41,26 @@ class SavePaymentMethodsModuleTest extends TestCase
 
 	/**
 	 * Runs the module, fires the deferred `after_setup_theme` registration (gated by the save
-	 * settings), and returns the captured `ppcp_create_order_request_body_data` filter so it can
-	 * be invoked directly in assertions.
+	 * settings), and returns the callback the module registered for the given filter hook so it
+	 * can be invoked directly in assertions.
 	 */
-	private function captured_request_body_filter(): callable
+	private function captured_filter( string $hook ): callable
 	{
-		$captured_setup  = null;
-		$captured_filter = null;
+		return $this->captured_registration($hook, false);
+	}
+
+	/**
+	 * Same as captured_filter(), for a callback the module registered with add_action().
+	 */
+	private function captured_action( string $hook ): callable
+	{
+		return $this->captured_registration($hook, true);
+	}
+
+	private function captured_registration( string $hook, bool $is_action ): callable
+	{
+		$captured_setup    = null;
+		$captured_callback = null;
 
 		expectActionAdded('after_setup_theme')
 			->once()
@@ -57,11 +70,12 @@ class SavePaymentMethodsModuleTest extends TestCase
 				}
 			);
 
-		expectFilterAdded('ppcp_create_order_request_body_data')
+		$expectation = $is_action ? expectActionAdded($hook) : expectFilterAdded($hook);
+		$expectation
 			->once()
 			->whenHappen(
-				static function ( $callback ) use ( &$captured_filter ) {
-					$captured_filter = $callback;
+				static function ( $callback ) use ( &$captured_callback ) {
+					$captured_callback = $callback;
 				}
 			);
 
@@ -69,12 +83,109 @@ class SavePaymentMethodsModuleTest extends TestCase
 
 		$this->assertIsCallable($captured_setup);
 
-		// Fires the deferred registration that adds the request-body filter.
+		// Fires the deferred registration that adds the hook callback.
 		$captured_setup();
 
-		$this->assertIsCallable($captured_filter);
+		$this->assertIsCallable($captured_callback);
 
-		return $captured_filter;
+		return $captured_callback;
+	}
+
+	public function can_save_paypal_provider(): array
+	{
+		return array(
+			'setting on and vault scope granted'    => array( true, true, true ),
+			'setting on but vault scope missing'    => array( true, false, false ),
+			'setting off even with vault scope'     => array( false, true, false ),
+		);
+	}
+
+	/**
+	 * GIVEN a merchant whose "save PayPal" setting and vault scope vary
+	 * WHEN the available payment gateways are listed on the Add payment method page
+	 * THEN PayPal is only listed when the setting is on and the vault scope is granted
+	 * AND the card gateway is always listed
+	 *
+	 * @dataProvider can_save_paypal_provider
+	 */
+	public function test_add_payment_method_page_lists_paypal_only_when_it_can_be_saved(
+		bool $setting_enabled,
+		bool $has_vault_scope,
+		bool $expected_listed
+	): void {
+		when('is_add_payment_method_page')->justReturn(true);
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn($setting_enabled);
+		$this->settings->shouldReceive('save_card_details')->andReturn(true);
+		$this->container->shouldReceive('get')->with('wcgateway.helper.vaulting-scope')->andReturn($has_vault_scope);
+
+		$filter = $this->captured_filter('woocommerce_available_payment_gateways');
+
+		$result = $filter(
+			array(
+				PayPalGateway::ID     => 'paypal',
+				CreditCardGateway::ID => 'card',
+			)
+		);
+
+		$this->assertSame($expected_listed, array_key_exists(PayPalGateway::ID, $result));
+		$this->assertSame('card', $result[ CreditCardGateway::ID ]);
+	}
+
+	/**
+	 * GIVEN PayPal cannot be saved because the vault scope is missing
+	 * WHEN the available payment gateways are listed outside the Add payment method page
+	 * THEN PayPal stays listed, as it is still valid for regular checkout
+	 */
+	public function test_paypal_stays_listed_outside_add_payment_method_page_when_it_cannot_be_saved(): void
+	{
+		when('is_add_payment_method_page')->justReturn(false);
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+		$this->settings->shouldReceive('save_card_details')->andReturn(true);
+		$this->container->shouldReceive('get')->with('wcgateway.helper.vaulting-scope')->andReturn(false);
+
+		$filter = $this->captured_filter('woocommerce_available_payment_gateways');
+
+		$result = $filter(
+			array(
+				PayPalGateway::ID     => 'paypal',
+				CreditCardGateway::ID => 'card',
+			)
+		);
+
+		$this->assertSame(
+			array(
+				PayPalGateway::ID     => 'paypal',
+				CreditCardGateway::ID => 'card',
+			),
+			$result
+		);
+	}
+
+	/**
+	 * GIVEN a logged-in customer on the Add payment method page
+	 * WHEN the bottom of the add payment method form is rendered
+	 * THEN the PayPal save button placeholder is printed only when PayPal can be saved
+	 *
+	 * @dataProvider can_save_paypal_provider
+	 */
+	public function test_add_payment_method_form_prints_paypal_button_only_when_it_can_be_saved(
+		bool $setting_enabled,
+		bool $has_vault_scope,
+		bool $expected_printed
+	): void {
+		when('is_user_logged_in')->justReturn(true);
+		when('is_add_payment_method_page')->justReturn(true);
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn($setting_enabled);
+		$this->settings->shouldReceive('save_card_details')->andReturn(true);
+		$this->container->shouldReceive('get')->with('wcgateway.helper.vaulting-scope')->andReturn($has_vault_scope);
+
+		$action = $this->captured_action('woocommerce_add_payment_method_form_bottom');
+
+		$this->expectOutputString(
+			$expected_printed ? '<div id="ppc-button-' . PayPalGateway::ID . '-save-payment-method"></div>' : ''
+		);
+
+		$action();
 	}
 
 	private function apple_pay_order_data(): array
@@ -100,7 +211,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
@@ -137,7 +248,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
@@ -163,7 +274,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
@@ -184,7 +295,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn(false);
 		$this->settings->shouldReceive('save_card_details')->andReturn(true);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
@@ -241,7 +352,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->venmo_order_data(),
@@ -265,7 +376,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->venmo_order_data(),
@@ -289,7 +400,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 	{
 		$this->stub_pay_now_subscription_order();
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->venmo_order_data(),
@@ -319,7 +430,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 		$this->subscription_helper->shouldReceive('current_product_is_subscription')->andReturn(false);
 		$this->subscription_helper->shouldReceive('order_pay_contains_subscription')->andReturn(false);
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->paypal_order_data(),
@@ -342,7 +453,7 @@ class SavePaymentMethodsModuleTest extends TestCase
 	{
 		$this->stub_pay_now_subscription_order();
 
-		$filter = $this->captured_request_body_filter();
+		$filter = $this->captured_filter('ppcp_create_order_request_body_data');
 
 		$result = $filter(
 			$this->apple_pay_order_data(),
