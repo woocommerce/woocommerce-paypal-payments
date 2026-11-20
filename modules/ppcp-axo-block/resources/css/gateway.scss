@@ -141,7 +141,8 @@ $fast-transition-duration: 0.5s;
 		scale: 1.1;
 	}
 
-	&.wc-block-axo-is-authenticated {
+	&.wc-block-axo-is-authenticated,
+	&.wc-block-axo-is-authenticated ~ .wc-block-components-express-payment-continue-rule {
 		opacity: 0;
 		scale: 0.9;
 		display: none !important;
