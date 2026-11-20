@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
@@ -184,13 +185,31 @@ class RefundProcessor {
 		}
 
 		$capture = $captures[0];
-		$refund  = new RefundCapture(
+		$money   = new Money( $amount, $wc_order->get_currency() );
+
+		/**
+		 * Filters the money of a refund before it is sent to PayPal.
+		 *
+		 * PayPal refunds a capture only in the currency of that capture. When the
+		 * PayPal order was created in another currency than the WC order (for example
+		 * by a multi-currency plugin), the refund amount must be converted to the
+		 * currency of the capture.
+		 *
+		 * @param Money    $money    The refund money, in the WC order currency.
+		 * @param WC_Order $wc_order The WC order.
+		 * @param Capture  $capture  The PayPal capture that is refunded.
+		 * @param Order    $order    The PayPal order, with the refunds already made.
+		 */
+		$filtered_money = apply_filters( 'woocommerce_paypal_payments_refund_money', $money, $wc_order, $capture, $order );
+		if ( $filtered_money instanceof Money ) {
+			$money = $filtered_money;
+		}
+
+		$refund = new RefundCapture(
 			$capture,
 			$capture->invoice_id() ?: $this->prefix->get() . $wc_order->get_order_number(),
 			$reason,
-			new Amount(
-				new Money( $amount, $wc_order->get_currency() )
-			)
+			new Amount( $money )
 		);
 
 		return $this->payments_endpoint->refund( $refund );
