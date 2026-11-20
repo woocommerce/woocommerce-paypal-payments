@@ -188,4 +188,26 @@ class CardButtonGatewayTest extends TestCase {
 		$this->assertSame( 'failure', $result['result'] );
 		$this->assertSame( 'Please use a different payment method.', $result['errorMessage'] );
 	}
+
+	/**
+	 * GIVEN a card button order whose capture fails with a recoverable issue
+	 * AND the PayPal order is no longer in the session
+	 * WHEN the gateway processes the payment
+	 * THEN the WooCommerce order is marked as failed
+	 * AND the buyer is told the payment session expired
+	 *
+	 * @dataProvider retry_issue_provider
+	 */
+	public function test_recoverable_capture_issue_without_session_order_fails_the_order( string $issue ): void {
+		$this->create_wc_order();
+		$this->capture_fails_with( $issue );
+		$this->session_handler->allows( 'insufficient_funding_tries' )->andReturn( 1 );
+		$this->session_handler->allows( 'order' )->andReturn( null );
+
+		$result = $this->create_gateway()->process_payment( 1 );
+
+		$this->assertSame( 'failed', $this->order_status );
+		$this->assertSame( 'failure', $result['result'] );
+		$this->assertSame( 'Payment session expired. Please try again.', $result['errorMessage'] );
+	}
 }
