@@ -148,4 +148,23 @@ class CardButtonGatewayTest extends TestCase {
 
 		$this->assertSame( array( $expected_note . ' Additional action needed.' ), $this->order_notes );
 	}
+
+	/**
+	 * GIVEN a card button order whose capture fails with a recoverable issue on the first try
+	 * WHEN the gateway processes the payment
+	 * THEN the session keeps the PayPal order id the buyer is sent back to
+	 *
+	 * @dataProvider retry_issue_provider
+	 */
+	public function test_recoverable_capture_issue_keeps_session_order_for_the_retry( string $issue ): void {
+		$this->create_wc_order();
+		$this->capture_fails_with( $issue );
+		$this->session_handler->allows( 'insufficient_funding_tries' )->andReturn( 1 );
+		$this->session_has_order( self::SESSION_ORDER_ID );
+		$this->session_handler->shouldReceive( 'replace_payer_action_order_id' )->once()->with( self::SESSION_ORDER_ID );
+
+		$this->create_gateway()->process_payment( 1 );
+
+		$this->addToAssertionCount( 1 );
+	}
 }
