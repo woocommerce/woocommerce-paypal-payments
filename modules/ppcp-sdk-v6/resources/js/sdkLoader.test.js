@@ -16,6 +16,7 @@ jest.mock( './utils/diagnostics', () => ( {
 // loadSdkV6() memoizes on window-level state (shared across webpack bundles),
 // which survives jest.resetModules(), so each test also needs its own window keys.
 let loadSdkV6;
+let isSdkLoadAbandoned;
 let pageListeners;
 
 const PAGE_EVENTS = [ 'visibilitychange', 'online', 'pageshow' ];
@@ -56,7 +57,7 @@ beforeEach( () => {
 		);
 	}
 
-	( { loadSdkV6 } = require( './sdkLoader' ) );
+	( { loadSdkV6, isSdkLoadAbandoned } = require( './sdkLoader' ) );
 	window.paypal = { createInstance: jest.fn().mockResolvedValue( {} ) };
 } );
 
@@ -655,6 +656,54 @@ describe( 'loadSdkV6', () => {
 				expect( mockPostJson ).toHaveBeenCalledTimes( 2 );
 			}
 		);
+
+		describe( 'isSdkLoadAbandoned()', () => {
+			test( 'is false before any load has failed', () => {
+				expect( isSdkLoadAbandoned() ).toBe( false );
+			} );
+
+			test( 'is false after a successful load', async () => {
+				await loadSdkV6( baseConfig(), 'checkout' );
+
+				expect( isSdkLoadAbandoned() ).toBe( false );
+			} );
+
+			test( 'is false after a single 4xx failure', async () => {
+				mockPostJson.mockRejectedValue( failure( 403 ) );
+				await failedLoad();
+
+				expect( isSdkLoadAbandoned() ).toBe( false );
+			} );
+
+			test( 'is true after two 4xx failures in a row', async () => {
+				mockPostJson.mockRejectedValue( failure( 403 ) );
+				await failedLoad();
+				await jest.advanceTimersByTimeAsync( 5000 );
+				await failedLoad();
+
+				expect( isSdkLoadAbandoned() ).toBe( true );
+			} );
+
+			test( 'is false after repeated 500 failures', async () => {
+				mockPostJson.mockRejectedValue( failure( 500 ) );
+				await failedLoad();
+				await jest.advanceTimersByTimeAsync( 5000 );
+				await failedLoad();
+
+				expect( isSdkLoadAbandoned() ).toBe( false );
+			} );
+
+			test( 'is false when a 4xx failure is followed by a 500', async () => {
+				mockPostJson
+					.mockRejectedValueOnce( failure( 403 ) )
+					.mockRejectedValueOnce( failure( 500 ) );
+				await failedLoad();
+				await jest.advanceTimersByTimeAsync( 5000 );
+				await failedLoad();
+
+				expect( isSdkLoadAbandoned() ).toBe( false );
+			} );
+		} );
 
 		test( 'keeps trying when a single 4xx answer is followed by a different failure', async () => {
 			mockPostJson
