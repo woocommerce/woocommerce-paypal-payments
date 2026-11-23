@@ -2,11 +2,13 @@ const mockMessagesInstance = () => ( {
 	fetchContent: jest.fn( () => Promise.resolve() ),
 } );
 const mockCreatePayPalMessages = jest.fn( mockMessagesInstance );
-const mockLoadSdkV6 = jest.fn( () =>
-	Promise.resolve( { createPayPalMessages: mockCreatePayPalMessages } )
-);
+const loadSdkSucceeds = () =>
+	Promise.resolve( { createPayPalMessages: mockCreatePayPalMessages } );
+const mockLoadSdkV6 = jest.fn( loadSdkSucceeds );
+const mockIsSdkLoadAbandoned = jest.fn( () => false );
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+	isSdkLoadAbandoned: () => mockIsSdkLoadAbandoned(),
 } ) );
 
 // The real element comes from the SDK script, which jsdom does not load.
@@ -55,6 +57,8 @@ const baseConfig = ( overrides = {} ) => ( {
 
 beforeEach( () => {
 	jest.clearAllMocks();
+	mockLoadSdkV6.mockImplementation( loadSdkSucceeds );
+	mockIsSdkLoadAbandoned.mockReset().mockReturnValue( false );
 	resetMessages();
 	document.body.innerHTML = '';
 } );
@@ -491,6 +495,60 @@ describe( 'initMessages()', () => {
 		const messages = document.querySelectorAll( 'paypal-message' );
 		expect( messages ).toHaveLength( 1 );
 		expect( freshWrapper.contains( messages[ 0 ] ) ).toBe( true );
+	} );
+
+	describe( 'when the SDK load fails', () => {
+		const addPlaceholder = async () => {
+			document.body.appendChild( document.createElement( 'div' ) ).className =
+				'ppcp-messages';
+			await jest.advanceTimersByTimeAsync( RESCAN_DEBOUNCE_MS );
+		};
+
+		test( 'stops rescanning for good once a failed rescan leaves the SDK load abandoned', async () => {
+			await initMessages( baseConfig(), 'product' );
+			mockLoadSdkV6.mockImplementation( () => {
+				mockIsSdkLoadAbandoned.mockReturnValue( true );
+				return Promise.reject( { status: 403 } );
+			} );
+
+			await addPlaceholder();
+			expect( mockLoadSdkV6 ).toHaveBeenCalledTimes( 1 );
+
+			await addPlaceholder();
+			await addPlaceholder();
+
+			expect( mockLoadSdkV6 ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'keeps rescanning after a failure that may pass on a later attempt', async () => {
+			await initMessages( baseConfig(), 'product' );
+			mockLoadSdkV6.mockRejectedValue( { status: 500 } );
+
+			await addPlaceholder();
+			await addPlaceholder();
+
+			expect( mockLoadSdkV6 ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test( 'skips the rescan without calling loadSdkV6 when the SDK load was abandoned before the observer fired', async () => {
+			await initMessages( baseConfig(), 'product' );
+			mockIsSdkLoadAbandoned.mockReturnValue( true );
+
+			await addPlaceholder();
+
+			expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+			expect( document.querySelector( 'paypal-message' ) ).toBeNull();
+		} );
+
+		test( 'does not start watching when the SDK load is already abandoned', async () => {
+			mockIsSdkLoadAbandoned.mockReturnValue( true );
+			await initMessages( baseConfig(), 'product' );
+
+			mockIsSdkLoadAbandoned.mockReturnValue( false );
+			await addPlaceholder();
+
+			expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+		} );
 	} );
 
 	test( 'does not keep re-rendering once our own appended message settles', async () => {

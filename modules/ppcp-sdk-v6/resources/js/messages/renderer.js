@@ -9,7 +9,7 @@
  * @package
  */
 
-import { loadSdkV6 } from '../sdkLoader';
+import { isSdkLoadAbandoned, loadSdkV6 } from '../sdkLoader';
 
 const MESSAGE_TAG_NAME = 'paypal-message';
 
@@ -18,7 +18,7 @@ const MESSAGE_TAG_NAME = 'paypal-message';
 // and a marker attribute would go with the old one. The WeakSet covers the
 // window where callers race across the awaited SDK load.
 let inFlight = new WeakSet();
-let watching = false;
+let observer = null;
 let rescanTimer = null;
 
 const RESCAN_DEBOUNCE_MS = 100;
@@ -64,7 +64,8 @@ export function resetMessages() {
 	rendered = [];
 	latestAmount = null;
 	inFlight = new WeakSet();
-	watching = false;
+	observer?.disconnect();
+	observer = null;
 	clearTimeout( rescanTimer );
 	rescanTimer = null;
 }
@@ -173,21 +174,50 @@ function wrappersNeedingMessage( config ) {
  * Observes document.body, not the placeholders: block pages replace those,
  * which would leave an observer holding a detached node.
  *
+ * Stops for good once the SDK load is abandoned: every later rescan would
+ * reject at once, and pages with frequent DOM changes would keep paying for it.
+ *
  * @param {Object} config      - The wc_ppcp_sdk_v6 config object.
  * @param {string} sdkPageType - The page context for the shared SDK instance.
  */
 function watchForWrappers( config, sdkPageType ) {
-	if ( watching || ! document.body ) {
+	if ( observer || ! document.body || isSdkLoadAbandoned() ) {
 		return;
 	}
-	watching = true;
 
-	new MutationObserver( () => {
+	const rescan = () => {
+		if ( stopWatchingIfAbandoned() ) {
+			return;
+		}
+
+		renderMessages( config, sdkPageType ).catch( stopWatchingIfAbandoned );
+	};
+
+	observer = new MutationObserver( () => {
 		clearTimeout( rescanTimer );
-		rescanTimer = setTimeout( () => {
-			renderMessages( config, sdkPageType ).catch( () => {} );
-		}, RESCAN_DEBOUNCE_MS );
-	} ).observe( document.body, { childList: true, subtree: true } );
+		rescanTimer = setTimeout( rescan, RESCAN_DEBOUNCE_MS );
+	} );
+	observer.observe( document.body, { childList: true, subtree: true } );
+}
+
+/**
+ * Disconnects the observer when the SDK will not load again.
+ *
+ * The disconnected observer is kept, so watchForWrappers() does not start a
+ * new one.
+ *
+ * @return {boolean} Whether watching has stopped.
+ */
+function stopWatchingIfAbandoned() {
+	if ( ! isSdkLoadAbandoned() ) {
+		return false;
+	}
+
+	observer?.disconnect();
+	clearTimeout( rescanTimer );
+	rescanTimer = null;
+
+	return true;
 }
 
 /**
