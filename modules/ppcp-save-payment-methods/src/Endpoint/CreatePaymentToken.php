@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\OrderEndpoints\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\NonceValidationException;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\SetupTokenBinding;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcPaymentTokens\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 /**
@@ -44,14 +45,16 @@ class CreatePaymentToken implements EndpointInterface
     private $wc_payment_tokens;
     private FreeTrialSubscriptionHelper $free_trial_helper;
     private SetupTokenBinding $setup_token_binding;
+    private SessionHandler $session_handler;
     private LoggerInterface $logger;
-    public function __construct(RequestData $request_data, PaymentMethodTokensEndpoint $payment_method_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, FreeTrialSubscriptionHelper $free_trial_helper, SetupTokenBinding $setup_token_binding, LoggerInterface $logger)
+    public function __construct(RequestData $request_data, PaymentMethodTokensEndpoint $payment_method_tokens_endpoint, WooCommercePaymentTokens $wc_payment_tokens, FreeTrialSubscriptionHelper $free_trial_helper, SetupTokenBinding $setup_token_binding, SessionHandler $session_handler, LoggerInterface $logger)
     {
         $this->request_data = $request_data;
         $this->payment_method_tokens_endpoint = $payment_method_tokens_endpoint;
         $this->wc_payment_tokens = $wc_payment_tokens;
         $this->free_trial_helper = $free_trial_helper;
         $this->setup_token_binding = $setup_token_binding;
+        $this->session_handler = $session_handler;
         $this->logger = $logger;
     }
     /**
@@ -99,6 +102,12 @@ class CreatePaymentToken implements EndpointInterface
                         $email = $result->payment_source->paypal->email_address;
                     }
                     $wc_token_id = $this->wc_payment_tokens->create_payment_token_paypal($current_user_id, $result->id, $email);
+                    // Only the Blocks express buttons send free_trial_continuation;
+                    // classic checkout and the add-payment-method page do not.
+                    $is_free_trial_continuation = !empty($data['free_trial_continuation']);
+                    if ($is_free_trial_continuation && $this->free_trial_helper->is_free_trial_cart()) {
+                        $this->session_handler->mark_free_trial_vaulted_with_paypal();
+                    }
                 }
                 if (isset($result->payment_source->card)) {
                     $wc_token_id = $this->wc_payment_tokens->create_payment_token_card($current_user_id, $result);

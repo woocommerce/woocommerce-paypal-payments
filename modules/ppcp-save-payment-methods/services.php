@@ -50,10 +50,10 @@ return array(
         return new CreateSetupToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('save-payment-methods.service.setup-token-binding'));
     },
     'save-payment-methods.endpoint.create-payment-token' => static function (ContainerInterface $container): CreatePaymentToken {
-        return new CreatePaymentToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wc-subscriptions.free-trial-subscription-helper'), $container->get('save-payment-methods.service.setup-token-binding'), $container->get('woocommerce.logger.woocommerce'));
+        return new CreatePaymentToken($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('wc-payment-tokens.wc-payment-tokens'), $container->get('wc-subscriptions.free-trial-subscription-helper'), $container->get('save-payment-methods.service.setup-token-binding'), $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'));
     },
     'save-payment-methods.endpoint.create-payment-token-for-guest' => static function (ContainerInterface $container): CreatePaymentTokenForGuest {
-        return new CreatePaymentTokenForGuest($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('save-payment-methods.service.setup-token-binding'), $container->get('woocommerce.logger.woocommerce'));
+        return new CreatePaymentTokenForGuest($container->get('button.request-data'), $container->get('api.endpoint.payment-method-tokens'), $container->get('save-payment-methods.service.setup-token-binding'), $container->get('wc-subscriptions.free-trial-subscription-helper'), $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'));
     },
     'save-payment-methods.service.setup-token-binding' => static function (): SetupTokenBinding {
         return new SetupTokenBinding();

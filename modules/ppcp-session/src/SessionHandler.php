@@ -51,6 +51,7 @@ class SessionHandler
     private $checkout_form = array();
     private string $payer_action_order_id = '';
     private string $created_order_id = '';
+    private bool $free_trial_vaulted = \false;
     public function __construct(?LoggerInterface $logger = null)
     {
         $this->logger = $logger ?? new NullLogger();
@@ -171,6 +172,30 @@ class SessionHandler
         return '' !== $order_id && $order_id === $this->created_order_id;
     }
     /**
+     * Keeps a free-trial checkout in continuation, which has no PayPal order.
+     */
+    public function is_free_trial_vaulted(): bool
+    {
+        $this->load_session();
+        return $this->free_trial_vaulted;
+    }
+    /**
+     * Overrides an earlier Venmo or Pay Later funding source.
+     */
+    public function mark_free_trial_vaulted_with_paypal(): void
+    {
+        $this->load_session();
+        $this->free_trial_vaulted = \true;
+        $this->funding_source = 'paypal';
+        $this->store_session();
+    }
+    public function forget_free_trial_vaulted(): void
+    {
+        $this->load_session();
+        $this->free_trial_vaulted = \false;
+        $this->store_session();
+    }
+    /**
      * Returns how many times the customer tried to use the PayPal Gateway in this session.
      *
      * @return int
@@ -214,6 +239,7 @@ class SessionHandler
         $this->checkout_form = array();
         $this->payer_action_order_id = '';
         $this->created_order_id = '';
+        $this->free_trial_vaulted = \false;
         $this->store_session();
         return $this;
     }
@@ -252,6 +278,7 @@ class SessionHandler
         $this->checkout_form = $data['checkout_form'] ?? array();
         $this->payer_action_order_id = (string) ($data['payer_action_order_id'] ?? '');
         $this->created_order_id = (string) ($data['created_order_id'] ?? '');
+        $this->free_trial_vaulted = (bool) ($data['free_trial_vaulted'] ?? \false);
     }
     /**
      * Converts given SessionHandler object into an array.
@@ -261,6 +288,6 @@ class SessionHandler
      */
     private static function make_array(\WooCommerce\PayPalCommerce\Session\SessionHandler $obj): array
     {
-        return array('order' => $obj->order, 'bn_code' => $obj->bn_code, 'insufficient_funding_tries' => $obj->insufficient_funding_tries, 'funding_source' => $obj->funding_source, 'checkout_form' => $obj->checkout_form, 'payer_action_order_id' => $obj->payer_action_order_id, 'created_order_id' => $obj->created_order_id);
+        return array('order' => $obj->order, 'bn_code' => $obj->bn_code, 'insufficient_funding_tries' => $obj->insufficient_funding_tries, 'funding_source' => $obj->funding_source, 'checkout_form' => $obj->checkout_form, 'payer_action_order_id' => $obj->payer_action_order_id, 'created_order_id' => $obj->created_order_id, 'free_trial_vaulted' => $obj->free_trial_vaulted);
     }
 }

@@ -845,6 +845,7 @@ class ComposerStaticInita712320141b04cc5c486f9729bb428e3
         'WooCommerce\\PayPalCommerce\\WcGateway\\FraudNet\\FraudNet' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/FraudNet/FraudNet.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\FraudNet\\FraudNetSourceWebsiteId' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/FraudNet/FraudNetSourceWebsiteId.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\FundingSource\\FundingSourceRenderer' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/FundingSource/FundingSourceRenderer.php',
+        'WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CaptureRetryTrait' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Gateway/CaptureRetryTrait.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CardButtonGateway' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Gateway/CardButtonGateway.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CreditCardGateway' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Gateway/CreditCardGateway.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\GatewayRepository' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Gateway/GatewayRepository.php',

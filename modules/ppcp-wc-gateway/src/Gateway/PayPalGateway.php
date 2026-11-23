@@ -13,7 +13,6 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
@@ -44,6 +43,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 class PayPalGateway extends \WC_Payment_Gateway
 {
     use \WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
+    use \WooCommerce\PayPalCommerce\WcGateway\Gateway\CaptureRetryTrait;
     use FreeTrialHandlerTrait;
     use OrderMetaTrait;
     use TransactionIdHandlingTrait;
@@ -477,29 +477,9 @@ class PayPalGateway extends \WC_Payment_Gateway
             if ($wallet_failure) {
                 return $wallet_failure;
             }
-            $retry_keys_messages = array('INSTRUMENT_DECLINED' => __('Instrument declined.', 'woocommerce-paypal-payments'), 'PAYER_ACTION_REQUIRED' => __('Payer action required, possibly overcharge.', 'woocommerce-paypal-payments'));
-            $retry_errors = array_values(array_filter(array_keys($retry_keys_messages), function (string $key) use ($error): bool {
-                return $error->has_detail($key);
-            }));
-            if ($retry_errors) {
-                $retry_error_key = $retry_errors[0];
-                $retry_message = $retry_keys_messages[$retry_error_key] . ' ' . ($error->details()[0]->description ?? '');
-                $this->session_handler->increment_insufficient_funding_tries();
-                if ($this->session_handler->insufficient_funding_tries() >= 3) {
-                    $wc_order->update_status('failed', $retry_message);
-                    return $this->handle_payment_failure(null, new Exception(__('Please use a different payment method.', 'woocommerce-paypal-payments'), $error->getCode(), $error));
-                }
-                $session_order = $this->session_handler->order();
-                if (!$session_order instanceof Order) {
-                    $wc_order->update_status('failed', $retry_message);
-                    return $this->handle_payment_failure(null, new Exception(__('Payment session expired. Please try again.', 'woocommerce-paypal-payments')));
-                }
-                // The payer action or retry is still possible, so keep the order
-                // in its current status instead of failing it prematurely - only
-                // note the reason and send the customer back to complete it.
-                $wc_order->add_order_note($retry_message);
-                $this->session_handler->replace_payer_action_order_id($session_order->id());
-                return array('result' => 'success', 'redirect' => ($this->paypal_checkout_url_factory)($session_order->id()));
+            $retry_response = $this->handle_capture_retry($wc_order, $error);
+            if ($retry_response) {
+                return $retry_response;
             }
             return $this->handle_payment_failure($wc_order, new Exception(\WooCommerce\PayPalCommerce\WcGateway\Gateway\Messages::generic_payment_error_message() . ' ' . $error->getMessage(), $error->getCode(), $error));
         } catch (Exception $error) {

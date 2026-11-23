@@ -160,8 +160,10 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType
         if (isset($script_data['continuation'])) {
             $url = add_query_arg(array(CancelController::NONCE => wp_create_nonce(CancelController::NONCE)), wc_get_checkout_url());
             $script_data['continuation']['cancel'] = array('html' => $this->cancellation_view->render_session_cancellation($url, $this->session_handler->funding_source()));
+            // A free-trial continuation saved an account rather than approving an
+            // order, so a leftover session order must not prefill the form.
             $order = $this->session_handler->order();
-            if ($order) {
+            if ($order && empty($script_data['continuation']['free_trial'])) {
                 $script_data['continuation']['order'] = $order->to_array();
             }
         }

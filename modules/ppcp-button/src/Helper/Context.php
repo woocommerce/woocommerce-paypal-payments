@@ -8,14 +8,17 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionStatus;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 class Context
 {
     protected SessionHandler $session_handler;
     protected SubscriptionStatus $subscription_status;
-    public function __construct(SessionHandler $session_handler, SubscriptionStatus $subscription_status)
+    private FreeTrialSubscriptionHelper $free_trial_helper;
+    public function __construct(SessionHandler $session_handler, SubscriptionStatus $subscription_status, FreeTrialSubscriptionHelper $free_trial_helper)
     {
         $this->session_handler = $session_handler;
         $this->subscription_status = $subscription_status;
+        $this->free_trial_helper = $free_trial_helper;
     }
     /**
      * Initializes context preconditions like is_cart() and is_checkout().
@@ -212,12 +215,13 @@ class Context
         return '';
     }
     /**
-     * Checks if PayPal payment was already initiated (on the product or cart pages).
-     *
-     * @return bool
+     * Checks if a PayPal (non-card) checkout is in progress, including a free-trial vault.
      */
     public function is_paypal_continuation(): bool
     {
+        if ($this->is_free_trial_continuation()) {
+            return \true;
+        }
         /**
          * Property is already defined in trait consumers.
          *
@@ -253,6 +257,13 @@ class Context
             // Ignore for card buttons.
         }
         return \true;
+    }
+    /**
+     * Whether a PayPal account was vaulted and the cart is still a free trial.
+     */
+    public function is_free_trial_continuation(): bool
+    {
+        return $this->session_handler->is_free_trial_vaulted() && $this->free_trial_helper->is_free_trial_cart();
     }
     /**
      * Checks whether current page is Add payment method.

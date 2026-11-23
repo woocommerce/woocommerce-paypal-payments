@@ -628,6 +628,7 @@ return array(
     'WooCommerce\\PayPalCommerce\\WcGateway\\FraudNet\\FraudNet' => $baseDir . '/modules/ppcp-wc-gateway/src/FraudNet/FraudNet.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\FraudNet\\FraudNetSourceWebsiteId' => $baseDir . '/modules/ppcp-wc-gateway/src/FraudNet/FraudNetSourceWebsiteId.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\FundingSource\\FundingSourceRenderer' => $baseDir . '/modules/ppcp-wc-gateway/src/FundingSource/FundingSourceRenderer.php',
+    'WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CaptureRetryTrait' => $baseDir . '/modules/ppcp-wc-gateway/src/Gateway/CaptureRetryTrait.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CardButtonGateway' => $baseDir . '/modules/ppcp-wc-gateway/src/Gateway/CardButtonGateway.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\CreditCardGateway' => $baseDir . '/modules/ppcp-wc-gateway/src/Gateway/CreditCardGateway.php',
     'WooCommerce\\PayPalCommerce\\WcGateway\\Gateway\\GatewayRepository' => $baseDir . '/modules/ppcp-wc-gateway/src/Gateway/GatewayRepository.php',
