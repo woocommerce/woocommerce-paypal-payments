@@ -113,6 +113,7 @@ return array(
 			$container->get( 'wc-payment-tokens.wc-payment-tokens' ),
 			$container->get( 'wc-subscriptions.free-trial-subscription-helper' ),
 			$container->get( 'save-payment-methods.service.setup-token-binding' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -121,6 +122,8 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-method-tokens' ),
 			$container->get( 'save-payment-methods.service.setup-token-binding' ),
+			$container->get( 'wc-subscriptions.free-trial-subscription-helper' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

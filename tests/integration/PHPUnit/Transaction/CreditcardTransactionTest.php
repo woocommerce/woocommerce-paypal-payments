@@ -142,6 +142,7 @@ class CreditcardTransactionTest extends IntegrationMockedTestCase
 		// Mock the session handler to return null (forcing the order ID to come from order meta)
 		$sessionHandler = \Mockery::mock(\WooCommerce\PayPalCommerce\Session\SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn(null);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 		$sessionHandler->shouldReceive('destroy_session_data')->once();
 
 		// Add session handler to container overrides
@@ -212,6 +213,7 @@ class CreditcardTransactionTest extends IntegrationMockedTestCase
 
 		$sessionHandler = \Mockery::mock(\WooCommerce\PayPalCommerce\Session\SessionHandler::class);
 		$sessionHandler->shouldReceive('order')->andReturn(null);
+		$sessionHandler->shouldReceive('is_free_trial_vaulted')->andReturn(false);
 		$sessionHandler->shouldReceive('destroy_session_data')->once();
 
 		$additionalServices = [

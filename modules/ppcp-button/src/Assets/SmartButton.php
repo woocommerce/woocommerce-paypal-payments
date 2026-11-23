@@ -1260,7 +1260,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$localize['pay_now'] = $this->pay_now_script_data();
 		}
 
-		if ( $this->context->is_paypal_continuation() ) {
+		if ( $this->context->is_free_trial_continuation() ) {
+			$localize['continuation'] = array(
+				'free_trial' => true,
+			);
+		} elseif ( $this->context->is_paypal_continuation() ) {
 			$order = $this->session_handler->order();
 			assert( $order !== null );
 

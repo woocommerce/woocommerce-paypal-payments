@@ -123,4 +123,84 @@ class SessionHandlerTest extends TestCase
 		$this->assertFalse($this->testee->is_created_order('ORDER-1'));
 		$this->assertTrue($this->testee->is_created_order('ORDER-2'));
 	}
+
+	/**
+	 * GIVEN a fresh session
+	 * WHEN it is asked whether a free-trial PayPal account was saved
+	 * THEN the answer is no
+	 */
+	public function test_free_trial_is_not_vaulted_by_default(): void
+	{
+		$this->assertFalse($this->testee->is_free_trial_vaulted());
+	}
+
+	/**
+	 * GIVEN a fresh session
+	 * WHEN the free trial is marked as vaulted
+	 * THEN it is reported as vaulted
+	 * AND a new handler reading the same session reports it as vaulted too
+	 */
+	public function test_marked_free_trial_is_vaulted_and_persisted(): void
+	{
+		$this->testee->mark_free_trial_vaulted_with_paypal();
+
+		$this->assertTrue($this->testee->is_free_trial_vaulted());
+		$this->assertTrue((new SessionHandler())->is_free_trial_vaulted());
+	}
+
+	/**
+	 * GIVEN a session whose earlier checkout attempt used a given funding source
+	 * WHEN the free trial is marked as vaulted
+	 * THEN the funding source is PayPal, because only PayPal accounts are vaulted for free trials
+	 *
+	 * @dataProvider earlier_funding_source_provider
+	 */
+	public function test_marking_free_trial_vaulted_sets_funding_source_to_paypal(?string $earlier_source): void
+	{
+		$this->testee->replace_funding_source($earlier_source);
+
+		$this->testee->mark_free_trial_vaulted_with_paypal();
+
+		$this->assertSame('paypal', $this->testee->funding_source());
+	}
+
+	public function earlier_funding_source_provider(): array
+	{
+		return array(
+			'no earlier funding source' => array(null),
+			'earlier venmo attempt'     => array('venmo'),
+		);
+	}
+
+	/**
+	 * GIVEN a session in which the free trial was marked as vaulted
+	 * WHEN the free trial vaulting is forgotten
+	 * THEN the free trial is no longer vaulted
+	 * AND the funding source is kept
+	 */
+	public function test_forgotten_free_trial_is_not_vaulted_and_keeps_funding_source(): void
+	{
+		$this->testee->mark_free_trial_vaulted_with_paypal();
+
+		$this->testee->forget_free_trial_vaulted();
+
+		$this->assertFalse($this->testee->is_free_trial_vaulted());
+		$this->assertFalse((new SessionHandler())->is_free_trial_vaulted());
+		$this->assertSame('paypal', $this->testee->funding_source());
+	}
+
+	/**
+	 * GIVEN a session in which the free trial was marked as vaulted
+	 * WHEN the session data is destroyed
+	 * THEN the free trial is no longer vaulted
+	 */
+	public function test_free_trial_is_not_vaulted_after_session_data_is_destroyed(): void
+	{
+		$this->testee->mark_free_trial_vaulted_with_paypal();
+
+		$this->testee->destroy_session_data();
+
+		$this->assertFalse($this->testee->is_free_trial_vaulted());
+		$this->assertFalse((new SessionHandler())->is_free_trial_vaulted());
+	}
 }
