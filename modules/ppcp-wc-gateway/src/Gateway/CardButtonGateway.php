@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 class CardButtonGateway extends \WC_Payment_Gateway {
 
 	use ProcessPaymentTrait;
+	use CaptureRetryTrait;
 	use FreeTrialHandlerTrait;
 
 	const ID = 'ppcp-card-button-gateway';
@@ -284,6 +285,11 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 				);
 			}
 		} catch ( PayPalApiException $error ) {
+			$retry_response = $this->handle_capture_retry( $wc_order, $error );
+			if ( $retry_response ) {
+				return $retry_response;
+			}
+
 			return $this->handle_payment_failure(
 				$wc_order,
 				new Exception(
