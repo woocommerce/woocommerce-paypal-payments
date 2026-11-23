@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CompletedReturnSession;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -382,7 +383,8 @@ class VaultedCard3dsTransactionTest extends IntegrationMockedTestCase {
 			$gateway,
 			Mockery::mock( OrderEndpoint::class ),
 			Mockery::mock( SessionHandler::class ),
-			Mockery::mock( LoggerInterface::class )
+			Mockery::mock( LoggerInterface::class ),
+			new CompletedReturnSession()
 		);
 
 		$method = new \ReflectionMethod( ReturnUrlEndpoint::class, 'maybe_resume_card_3ds' );

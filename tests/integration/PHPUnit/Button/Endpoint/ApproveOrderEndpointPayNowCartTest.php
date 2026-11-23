@@ -137,7 +137,15 @@ class ApproveOrderEndpointPayNowCartTest extends WcAjaxEndpointTestCase {
 	 * For an unpaid order it must leave the cart as it is.
 	 */
 	private function loadNextFrontendPage(): void {
-		do_action( 'template_redirect' );
+		// Cancels the canonical redirect, which would exit. The other template_redirect callbacks still run.
+		$cancel_canonical_redirect = '__return_false';
+		add_filter( 'redirect_canonical', $cancel_canonical_redirect );
+
+		try {
+			do_action( 'template_redirect' );
+		} finally {
+			remove_filter( 'redirect_canonical', $cancel_canonical_redirect );
+		}
 	}
 
 	/**
