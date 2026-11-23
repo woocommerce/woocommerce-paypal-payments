@@ -834,6 +834,7 @@ class ComposerStaticInita712320141b04cc5c486f9729bb428e3
         'WooCommerce\\PayPalCommerce\\WcGateway\\Checkout\\DisableGateways' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Checkout/DisableGateways.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\CaptureCardPayment' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Endpoint/CaptureCardPayment.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\CapturePayPalPayment' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Endpoint/CapturePayPalPayment.php',
+        'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\CompletedReturnSession' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Endpoint/CompletedReturnSession.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\PayerActionReturnForwarder' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Endpoint/PayerActionReturnForwarder.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\RefreshFeatureStatusEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Endpoint/RefreshFeatureStatusEndpoint.php',
         'WooCommerce\\PayPalCommerce\\WcGateway\\Endpoint\\ReturnUrlEndpoint' => __DIR__ . '/../..' . '/modules/ppcp-wc-gateway/src/Endpoint/ReturnUrlEndpoint.php',

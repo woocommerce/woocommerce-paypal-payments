@@ -54,6 +54,7 @@ class ReturnUrlEndpoint
      * Verifies the single-use secret that the return URL carries.
      */
     protected ReturnUrlSecret $return_url_secret;
+    private \WooCommerce\PayPalCommerce\WcGateway\Endpoint\CompletedReturnSession $completed_return_session;
     /**
      * Holds the moment at which an update bound return-URL secrets to new orders.
      */
@@ -67,21 +68,23 @@ class ReturnUrlEndpoint
     /**
      * ReturnUrlEndpoint constructor.
      *
-     * @param PayPalGateway        $gateway           The PayPal Gateway.
-     * @param OrderEndpoint        $order_endpoint    The Order Endpoint.
-     * @param SessionHandler       $session_handler   The session handler.
-     * @param LoggerInterface      $logger            The logger.
-     * @param ReturnUrlSecret|null $return_url_secret Verifies the return URL secret.
-     *                                                Defaults to a real instance, so
-     *                                                that a caller can never turn the
-     *                                                authorization test off by accident.
+     * @param PayPalGateway          $gateway                  The PayPal Gateway.
+     * @param OrderEndpoint          $order_endpoint           The Order Endpoint.
+     * @param SessionHandler         $session_handler          The session handler.
+     * @param LoggerInterface        $logger                   The logger.
+     * @param CompletedReturnSession $completed_return_session Remembers a successful return.
+     * @param ReturnUrlSecret|null   $return_url_secret        Verifies the return URL secret.
+     *                                                         Defaults to a real instance, so
+     *                                                         that a caller can never turn the
+     *                                                         authorization test off by accident.
      */
-    public function __construct(PayPalGateway $gateway, OrderEndpoint $order_endpoint, SessionHandler $session_handler, LoggerInterface $logger, ?ReturnUrlSecret $return_url_secret = null)
+    public function __construct(PayPalGateway $gateway, OrderEndpoint $order_endpoint, SessionHandler $session_handler, LoggerInterface $logger, \WooCommerce\PayPalCommerce\WcGateway\Endpoint\CompletedReturnSession $completed_return_session, ?ReturnUrlSecret $return_url_secret = null)
     {
         $this->gateway = $gateway;
         $this->order_endpoint = $order_endpoint;
         $this->session_handler = $session_handler;
         $this->logger = $logger;
+        $this->completed_return_session = $completed_return_session;
         $this->return_url_secret = $return_url_secret ?? new ReturnUrlSecret();
     }
     /**
@@ -97,6 +100,12 @@ class ReturnUrlEndpoint
             exit;
         }
         $token = sanitize_text_field(wp_unslash($_GET['token']));
+        // A repeat of a return that this WC session completed goes to the order page, with no processing.
+        $completed_order = $this->completed_return_session->remembered_order_for($token);
+        if ($completed_order) {
+            wp_safe_redirect($this->gateway->get_return_url($completed_order));
+            exit;
+        }
         // wp_unslash() can return an array, so the value is sanitized on the next line behind an is_string() guard.
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $provided_nonce = wp_unslash($_GET['ppcp_return_nonce'] ?? '');
@@ -173,8 +182,9 @@ class ReturnUrlEndpoint
         }
         $success = $payment_gateway->process_payment($wc_order_id);
         if (isset($success['result']) && 'success' === $success['result']) {
-            // The secret works one time only, so a replay of the same URL is refused.
+            // The secret works one time only, so a replay from another session is refused.
             $this->return_url_secret->consume($token);
+            $this->completed_return_session->remember($token, $wc_order_id);
             add_filter('allowed_redirect_hosts', function ($allowed_hosts): array {
                 $allowed_hosts[] = 'www.paypal.com';
                 $allowed_hosts[] = 'www.sandbox.paypal.com';

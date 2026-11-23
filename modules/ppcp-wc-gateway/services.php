@@ -39,6 +39,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CapturePayPalPayment;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CompletedReturnSession;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\PayerActionReturnForwarder;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
@@ -298,7 +299,10 @@ return array(
     'wcgateway.endpoint.return-url' => static function (ContainerInterface $container): ReturnUrlEndpoint {
         $gateway = $container->get('wcgateway.paypal-gateway');
         $endpoint = $container->get('api.endpoint.order');
-        return new ReturnUrlEndpoint($gateway, $endpoint, $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'), $container->get('api.helper.return-url-secret'));
+        return new ReturnUrlEndpoint($gateway, $endpoint, $container->get('session.handler'), $container->get('woocommerce.logger.woocommerce'), $container->get('wcgateway.completed-return-session'), $container->get('api.helper.return-url-secret'));
+    },
+    'wcgateway.completed-return-session' => static function (): CompletedReturnSession {
+        return new CompletedReturnSession();
     },
     'wcgateway.payer-action-return-forwarder' => static function (ContainerInterface $container): PayerActionReturnForwarder {
         return new PayerActionReturnForwarder($container->get('session.handler'), $container->get('http.redirector'));
