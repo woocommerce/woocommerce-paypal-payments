@@ -18,6 +18,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Tests\Integration\IntegrationMockedTestCase;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\HandlesWcAjaxEndpoints;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CompletedReturnSession;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -68,6 +70,21 @@ class ReturnUrlEndpointTestGateway extends \WC_Payment_Gateway {
  */
 class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 
+	use HandlesWcAjaxEndpoints;
+
+	private const COMPLETED_RETURN_SESSION_KEY = 'ppcp_completed_return';
+
+	private const BINDING_SINCE_OPTION = 'ppcp_return_url_binding_since';
+
+	private int $processed_payments = 0;
+
+	private int $paypal_order_requests = 0;
+
+	/**
+	 * @var mixed Stored binding option before a test, false when absent.
+	 */
+	private $original_binding_since = false;
+
 	/**
 	 * @var callable|null Filter registered per-test to intercept wp_safe_redirect(); removed in tearDown as a safety net.
 	 */
@@ -93,10 +110,23 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 
 		wp_set_current_user( 0 );
 		wc_clear_notices();
+
+		$this->processed_payments     = 0;
+		$this->paypal_order_requests  = 0;
+		$this->original_binding_since = get_option( self::BINDING_SINCE_OPTION, false );
 	}
 
 	public function tearDown(): void {
 		wc_clear_notices();
+
+		if ( WC()->session instanceof \WC_Session_Handler ) {
+			WC()->session->set( self::COMPLETED_RETURN_SESSION_KEY, null );
+		}
+		if ( false === $this->original_binding_since ) {
+			delete_option( self::BINDING_SINCE_OPTION );
+		} else {
+			update_option( self::BINDING_SINCE_OPTION, $this->original_binding_since );
+		}
 
 		if ( null !== $this->redirect_filter ) {
 			remove_filter( 'wp_redirect', $this->redirect_filter );
@@ -200,7 +230,8 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 			$gateway,
 			$order_endpoint,
 			$session_handler,
-			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			new CompletedReturnSession()
 		);
 
 		// When
@@ -284,7 +315,8 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 			$gateway,
 			$order_endpoint,
 			$session_handler,
-			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			new CompletedReturnSession()
 		);
 
 		// When
@@ -350,7 +382,8 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 			$gateway,
 			$order_endpoint,
 			$session_handler,
-			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			new CompletedReturnSession()
 		);
 
 		// When
@@ -448,6 +481,194 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 		$this->assertFalse( $refreshed->is_paid() );
 	}
 
+	/**
+	 * GIVEN a guest returned from PayPal and the payment was processed
+	 * WHEN the same return URL is opened again in the same session
+	 * THEN the visitor ends on the order-received URL of the WC order
+	 * AND PayPal is not asked for the order again
+	 * AND no payment is processed a second time
+	 */
+	public function test_repeated_guest_return_in_same_session_ends_on_order_received_page(): void {
+		$return = $this->complete_first_return();
+
+		$location = $this->repeat_return( $return );
+
+		$this->assertSame( $return['wc_order']->get_checkout_order_received_url(), $location );
+		$this->assertSame( 1, $this->processed_payments );
+		$this->assertSame( 1, $this->paypal_order_requests );
+		$this->assertSame( array(), wc_get_notices( 'error' ) );
+	}
+
+	/**
+	 * GIVEN a guest returned from PayPal and the payment was processed
+	 * AND the remembered return is gone, because 5 minutes passed or the session is another one
+	 * WHEN the same return URL is opened again
+	 * THEN the guest is refused and sent back to the checkout with a notice
+	 * AND no payment is processed a second time
+	 *
+	 * @dataProvider lost_marker_provider
+	 */
+	public function test_repeated_guest_return_is_refused_when_session_holds_no_valid_marker( string $marker_state ): void {
+		delete_option( self::BINDING_SINCE_OPTION );
+		$return = $this->complete_first_return();
+
+		if ( 'expired' === $marker_state ) {
+			$this->expire_completed_return();
+		} else {
+			WC()->session->set( self::COMPLETED_RETURN_SESSION_KEY, null );
+		}
+
+		$location = $this->repeat_return( $return );
+
+		$this->assertStringStartsWith( wc_get_checkout_url(), $location );
+		$this->assertSame( 1, $this->processed_payments );
+		$this->assertContains(
+			'We could not confirm this payment session. Please try again.',
+			wp_list_pluck( wc_get_notices( 'error' ), 'notice' )
+		);
+	}
+
+	public function lost_marker_provider(): array {
+		return array(
+			'the remembered return is older than 5 minutes' => array( 'expired' ),
+			'the session holds no remembered return'         => array( 'missing' ),
+		);
+	}
+
+	/**
+	 * GIVEN a logged-in owner returned from PayPal and the payment was processed
+	 * WHEN the same return URL is opened again in the same session while the remembered return is valid
+	 * THEN the owner is treated like a guest: the visitor ends on the order-received URL of the WC order
+	 * AND PayPal is not asked for the order again
+	 * AND no payment is processed a second time
+	 */
+	public function test_repeated_return_while_marker_is_valid_treats_logged_in_owner_like_a_guest(): void {
+		$return = $this->complete_first_return( $this->customer_id );
+
+		$location = $this->repeat_return( $return );
+
+		$this->assertSame( $return['wc_order']->get_checkout_order_received_url(), $location );
+		$this->assertSame( 1, $this->processed_payments );
+		$this->assertSame( 1, $this->paypal_order_requests );
+		$this->assertSame( array(), wc_get_notices( 'error' ) );
+	}
+
+	/**
+	 * GIVEN a logged-in owner returned from PayPal and the payment was processed
+	 * AND the remembered return expired
+	 * WHEN the same return URL is opened again
+	 * THEN the request is handled as before: PayPal is asked for the order and the ownership check passes
+	 * AND the owner ends on the order-received URL of the WC order
+	 */
+	public function test_repeated_return_after_marker_expired_is_handled_as_before_for_logged_in_owner(): void {
+		delete_option( self::BINDING_SINCE_OPTION );
+		$return = $this->complete_first_return( $this->customer_id );
+		$this->expire_completed_return();
+
+		$location = $this->repeat_return( $return );
+
+		$this->assertSame( $return['wc_order']->get_checkout_order_received_url(), $location );
+		$this->assertSame( 2, $this->paypal_order_requests );
+		$this->assertSame( array(), wc_get_notices( 'error' ) );
+	}
+
+	private function expire_completed_return(): void {
+		$marker            = WC()->session->get( self::COMPLETED_RETURN_SESSION_KEY );
+		$marker['expires'] = time() - 1;
+		WC()->session->set( self::COMPLETED_RETURN_SESSION_KEY, $marker );
+	}
+
+	/**
+	 * Runs a successful return through the real CompletedReturnSession and WC session.
+	 *
+	 * @param int $owner_id The logged-in owner of the WC order; 0 for a guest.
+	 * @return array{wc_order: \WC_Order, token: string, gateway: PayPalGateway, paypal_order: Order}
+	 */
+	private function complete_first_return( int $owner_id = 0 ): array {
+		$this->resetWcFrontendState();
+
+		$wc_order = $this->create_pending_order_with_payment_method( PayPalGateway::ID );
+		if ( $owner_id ) {
+			$wc_order->set_customer_id( $owner_id );
+			$wc_order->save();
+			wp_set_current_user( $owner_id );
+		}
+
+		$token  = 'PP-RETURN-REPEAT-' . uniqid();
+		$secret = 'the-real-bound-secret-' . uniqid();
+		set_transient( 'ppcp_ru_' . $token, $secret, DAY_IN_SECONDS );
+
+		$_GET['token']             = $token;
+		$_GET['ppcp_return_nonce'] = $secret;
+
+		$return = array(
+			'wc_order'     => $wc_order,
+			'token'        => $token,
+			'gateway'      => $this->create_gateway_that_pays_order( $token ),
+			'paypal_order' => $this->create_paypal_order_double( OrderStatus::APPROVED, (string) $wc_order->get_id(), $token ),
+		);
+
+		$this->invoke_and_halt_before_exit( $this->create_endpoint_for_return( $return ) );
+
+		$this->assertSame( 1, $this->processed_payments );
+		$this->assertTrue( wc_get_order( $wc_order->get_id() )->is_paid() );
+		wc_clear_notices();
+
+		return $return;
+	}
+
+	/**
+	 * @param array{wc_order: \WC_Order, token: string, gateway: PayPalGateway, paypal_order: Order} $return
+	 */
+	private function repeat_return( array $return ): string {
+		return $this->invoke_and_halt_before_exit( $this->create_endpoint_for_return( $return ) );
+	}
+
+	/**
+	 * @param array{wc_order: \WC_Order, token: string, gateway: PayPalGateway, paypal_order: Order} $return
+	 */
+	private function create_endpoint_for_return( array $return ): ReturnUrlEndpoint {
+		$order_endpoint = Mockery::mock( OrderEndpoint::class )->shouldIgnoreMissing();
+		$order_endpoint->shouldReceive( 'order' )->andReturnUsing(
+			function () use ( $return ): Order {
+				++$this->paypal_order_requests;
+				return $return['paypal_order'];
+			}
+		);
+
+		return new ReturnUrlEndpoint(
+			$return['gateway'],
+			$order_endpoint,
+			Mockery::mock( SessionHandler::class )->shouldIgnoreMissing(),
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			new CompletedReturnSession()
+		);
+	}
+
+	/**
+	 * Real get_return_url(); process_payment() pays the order and counts the call.
+	 */
+	private function create_gateway_that_pays_order( string $paypal_order_id ): PayPalGateway {
+		$gateway     = Mockery::mock( PayPalGateway::class )->makePartial();
+		$gateway->id = PayPalGateway::ID;
+		$gateway->shouldReceive( 'process_payment' )->andReturnUsing(
+			function ( $order_id ) use ( $paypal_order_id ): array {
+				++$this->processed_payments;
+
+				$order = wc_get_order( $order_id );
+				$order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $paypal_order_id );
+				$order->payment_complete();
+
+				return array(
+					'result'   => 'success',
+					'redirect' => $order->get_checkout_order_received_url(),
+				);
+			}
+		);
+
+		return $gateway;
+	}
+
 	private function create_endpoint( OrderEndpoint $order_endpoint ): ReturnUrlEndpoint {
 		$session_handler = Mockery::mock( SessionHandler::class )->shouldIgnoreMissing();
 
@@ -458,7 +679,8 @@ class ReturnUrlEndpointValidationTest extends IntegrationMockedTestCase {
 			$gateway,
 			$order_endpoint,
 			$session_handler,
-			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing()
+			Mockery::mock( LoggerInterface::class )->shouldIgnoreMissing(),
+			new CompletedReturnSession()
 		);
 	}
 
