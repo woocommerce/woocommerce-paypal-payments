@@ -530,6 +530,39 @@ describe( 'initCardFields', () => {
 		expect( newNumberInput.nextSibling.dataset.session ).toBe( 'second' );
 	} );
 
+	test( 'runs the card flow once on the new session when #place_order is clicked after a refresh that kept it', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		const firstSession = makeCardSession( { id: 'first' } );
+		const secondSession = makeCardSession( { id: 'second' } );
+		mockLoadSdkV6
+			.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: () => firstSession,
+			} )
+			.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: () => secondSession,
+			} );
+		mockCreateCardOrder.mockResolvedValue( { orderId: 'CARDORDER1' } );
+		mockApproveCardOrder.mockResolvedValue( undefined );
+
+		await initCardFields( baseConfig() );
+		await flushPromises();
+
+		replaceCardInputsKeepingPlaceOrder();
+		triggerBodyEvent( 'updated_checkout' );
+		await flushPromises();
+
+		const placeOrder = document.querySelector( '#place_order' );
+		let nativeSubmits = 0;
+		placeOrder.addEventListener( 'click', () => nativeSubmits++ );
+		placeOrder.click();
+		await flushPromises();
+
+		expect( mockCreateCardOrder ).toHaveBeenCalledTimes( 1 );
+		expect( secondSession.submit ).toHaveBeenCalledTimes( 1 );
+		expect( firstSession.submit ).not.toHaveBeenCalled();
+		expect( nativeSubmits ).toBe( 1 );
+	} );
+
 	test( 'does not re-bind when updated_checkout fires without actually replacing the DOM', async () => {
 		buildCheckoutDom( 'ppcp-credit-card-gateway' );
 		const cardSession = makeCardSession();
