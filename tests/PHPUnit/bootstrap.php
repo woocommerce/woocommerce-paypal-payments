@@ -44,5 +44,6 @@ require_once TESTS_ROOT_DIR . '/stubs/WP_Post.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_Screen.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_Block_Template.php';
 require_once TESTS_ROOT_DIR . '/stubs/WP_HTML_Tag_Processor.php';
+require_once TESTS_ROOT_DIR . '/stubs/wp_parse_str.php';
 
 Hamcrest\Util::registerGlobalFunctions();
