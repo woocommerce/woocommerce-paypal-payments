@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Compat;
 
 use Exception;
+use SitePress;
 use WC_Order;
 use WC_Order_Item_Product;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
@@ -75,7 +76,7 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			( new WcAccountFundsCompat() )->register();
 		}
 
-		if ( class_exists( 'SitePress' ) ) {
+		if ( class_exists( SitePress::class ) ) {
 			$wpml_compat = $c->get( 'compat.wpml' );
 			assert( $wpml_compat instanceof WpmlCompat );
 
