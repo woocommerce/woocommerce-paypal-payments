@@ -93,6 +93,24 @@ function buildCheckoutDom( selectedGateway = 'ppcp-credit-card-gateway' ) {
 	`;
 }
 
+/**
+ * Simulates WC's checkout refresh on a page where #place_order sits outside
+ * #payment: the card inputs are new nodes, the button is the same node.
+ */
+function replaceCardInputsKeepingPlaceOrder() {
+	document
+		.querySelectorAll( '.input-wrapper' )
+		.forEach( ( wrapper ) => wrapper.remove() );
+	document.querySelector( '#place_order' ).insertAdjacentHTML(
+		'beforebegin',
+		`
+			<div class="input-wrapper"><input id="ppcp-credit-card-gateway-card-number" /></div>
+			<div class="input-wrapper"><input id="ppcp-credit-card-gateway-card-expiry" /></div>
+			<div class="input-wrapper"><input id="ppcp-credit-card-gateway-card-cvc" /></div>
+		`
+	);
+}
+
 const labels = {
 	fields_empty: 'Please fill in your card details.',
 	fields_not_valid: 'Please check your card details.',
@@ -482,6 +500,34 @@ describe( 'initCardFields', () => {
 		expect( mockCreateCardOrder ).toHaveBeenCalled();
 		expect( secondSession.submit ).toHaveBeenCalledWith( 'CARDORDER1' );
 		expect( nativeSubmits ).toBe( 1 );
+	} );
+
+	test( 'mounts the fields into the new inputs when updated_checkout replaces them but keeps #place_order', async () => {
+		buildCheckoutDom( 'ppcp-credit-card-gateway' );
+		const firstSession = makeCardSession( { id: 'first' } );
+		const secondSession = makeCardSession( { id: 'second' } );
+		mockLoadSdkV6
+			.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: () => firstSession,
+			} )
+			.mockResolvedValueOnce( {
+				createCardFieldsOneTimePaymentSession: () => secondSession,
+			} );
+
+		await initCardFields( baseConfig() );
+		await flushPromises();
+
+		replaceCardInputsKeepingPlaceOrder();
+		triggerBodyEvent( 'updated_checkout' );
+		await flushPromises();
+
+		const newNumberInput = document.querySelector(
+			'#ppcp-credit-card-gateway-card-number'
+		);
+		expect( secondSession.createCardFieldsComponent ).toHaveBeenCalledTimes(
+			3
+		);
+		expect( newNumberInput.nextSibling.dataset.session ).toBe( 'second' );
 	} );
 
 	test( 'does not re-bind when updated_checkout fires without actually replacing the DOM', async () => {
