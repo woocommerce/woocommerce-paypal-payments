@@ -27,6 +27,9 @@ if (getenv('PPCP_INTEGRATION_DB_NAME') && strpos($wpConfig, 'PPCP_INTEGRATION_DB
 	exit('wp-config.php does not read PPCP_INTEGRATION_DB_NAME. Run `ddev npm run integration-tests:reset-db` first.' . PHP_EOL);
 }
 
+// CompatModule registers the WPML compatibility only when this class exists.
+require_once ROOT_DIR . '/tests/stubs/SitePress.php';
+
 require_once WP_ROOT_DIR . '/wp-load.php';
 
 // Start every run with reCAPTCHA disabled, whatever the site has stored.
