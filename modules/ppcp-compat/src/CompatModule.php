@@ -75,6 +75,13 @@ class CompatModule implements ServiceModule, ExecutableModule {
 			( new WcAccountFundsCompat() )->register();
 		}
 
+		if ( class_exists( 'SitePress' ) ) {
+			$wpml_compat = $c->get( 'compat.wpml' );
+			assert( $wpml_compat instanceof WpmlCompat );
+
+			$wpml_compat->register();
+		}
+
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
 		$this->migrate_sdk_v6_default( $c );
