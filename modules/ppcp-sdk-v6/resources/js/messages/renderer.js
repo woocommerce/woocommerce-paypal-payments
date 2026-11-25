@@ -23,6 +23,12 @@ let rescanTimer = null;
 
 const RESCAN_DEBOUNCE_MS = 100;
 
+// Coalesces a burst of amount changes into one request per message.
+const AMOUNT_DEBOUNCE_MS = 250;
+let amountTimer = null;
+
+let fetchedAmounts = new WeakMap();
+
 // Mapping of v5 placements from `data-pp-placement` of the Pay Later block.
 // `payment` is what the checkout block emits.
 const PLACEMENT_PAGE_TYPES = {
@@ -64,10 +70,13 @@ export function resetMessages() {
 	rendered = [];
 	latestAmount = null;
 	inFlight = new WeakSet();
+	fetchedAmounts = new WeakMap();
 	observer?.disconnect();
 	observer = null;
 	clearTimeout( rescanTimer );
 	rescanTimer = null;
+	clearTimeout( amountTimer );
+	amountTimer = null;
 }
 
 /**
@@ -81,13 +90,13 @@ export function resetMessages() {
  * @return {Promise<number>} How many messages the initial pass rendered.
  */
 export async function initMessages( config, sdkPageType ) {
-    if ( ! config?.messages?.enabled || config.messages.is_hidden ) {
-        return 0;
-    }
+	if ( ! config?.messages?.enabled || config.messages.is_hidden ) {
+		return 0;
+	}
 
-    watchForWrappers( config, sdkPageType );
+	watchForWrappers( config, sdkPageType );
 
-    return renderMessages( config, sdkPageType );
+	return renderMessages( config, sdkPageType );
 }
 
 /**
@@ -278,14 +287,22 @@ function createMessage( wrapper, config, amount ) {
 }
 
 /**
+ * A failed request is not repeated for the same amount.
+ *
  * @param {Element} element - The message element.
+ * @param {?string} amount  - The amount the message prices.
  */
-function fetchMessage( element ) {
+function fetchMessage( element, amount ) {
+	fetchedAmounts.set( element, amount );
+
 	messagesInstance
 		.fetchContent( element.getFetchContentOptions() )
 		.catch( ( error ) => {
 			// eslint-disable-next-line no-console
-			console.error( '[PPCP SDK v6] Pay Later message fetch failed', error );
+			console.error(
+				'[PPCP SDK v6] Pay Later message fetch failed',
+				error
+			);
 		} );
 }
 
@@ -329,7 +346,7 @@ export async function renderMessages( config, sdkPageType ) {
 			const element = createMessage( wrapper, config, amount );
 			wrapper.appendChild( element );
 			rendered.push( element );
-			fetchMessage( element );
+			fetchMessage( element, amount );
 		} );
 	} finally {
 		// Released either way, so a later pass can pick these up.
@@ -350,10 +367,10 @@ function currentAmount( config ) {
 }
 
 /**
- * Re-prices every rendered message.
+ * Re-prices every rendered message once the amount settles.
  *
- * Assigning `amount` re-renders in place. Detached elements are pruned, since
- * WooCommerce replaces the cart and checkout DOM wholesale.
+ * The amount is stored at once, so a placeholder filled during the wait
+ * already prices it.
  *
  * @param {string} amount - The new amount.
  */
@@ -363,9 +380,32 @@ export function updateMessagesAmount( amount ) {
 	}
 
 	latestAmount = amount;
+	clearTimeout( amountTimer );
+	amountTimer = setTimeout( applyLatestAmount, AMOUNT_DEBOUNCE_MS );
+}
+
+/**
+ * Detached elements are pruned, since WooCommerce replaces the cart and
+ * checkout DOM wholesale.
+ */
+function applyLatestAmount() {
+	amountTimer = null;
+
 	rendered = rendered.filter( ( element ) => element.isConnected );
-	rendered.forEach( ( element ) => {
-		element.amount = amount;
-		fetchMessage( element );
-	} );
+	rendered.forEach( ( element ) => applyAmount( element, latestAmount ) );
+}
+
+/**
+ * Assigning `amount` re-renders in place.
+ *
+ * @param {Element} element - The message element.
+ * @param {?string} amount  - The amount to price.
+ */
+function applyAmount( element, amount ) {
+	if ( fetchedAmounts.get( element ) === amount ) {
+		return;
+	}
+
+	element.amount = amount;
+	fetchMessage( element, amount );
 }
