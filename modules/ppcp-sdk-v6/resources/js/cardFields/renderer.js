@@ -95,9 +95,10 @@ function isCardGatewaySelected( paymentMethod ) {
 /**
  * Bootstraps the ACDC card fields for the classic checkout page.
  *
- * WC's checkout AJAX replaces the whole `#payment` box, inputs and
- * `#place_order` included, detaching whatever was mounted before. So `attach()`
- * re-queries the DOM and re-runs itself on `updated_checkout`.
+ * WC's checkout AJAX replaces the whole `#payment` box, detaching whatever was
+ * mounted before. So `attach()` re-queries the DOM and re-runs itself on
+ * `updated_checkout`. `#place_order` is replaced too, unless a plugin such as
+ * Germanized moved it out of `#payment`.
  *
  * @param {Object}   config     - The wc_ppcp_sdk_v6 config object.
  * @param {Function} [getTotal] - Returns the live cart total as a decimal
@@ -126,6 +127,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 	let getFieldState = null;
 	let submitting = false;
 	let boundPlaceOrderButton = null;
+	let mountedNumberInput = null;
 
 	/**
 	 * Re-queries the current card-form inputs, since a DOM swap invalidates
@@ -145,6 +147,7 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 		if ( ! cardSessionPromise ) {
 			cardSessionPromise = ( async () => {
 				const inputs = getInputs();
+				mountedNumberInput = inputs.number;
 				const sdk = await loadSdkV6( config, 'checkout' );
 				const cardSession = isFreeTrial()
 					? sdk.createCardFieldsSavePaymentSession()
@@ -275,18 +278,18 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 		forceSaveForSubscription( config );
 
 		const placeOrderButton = document.querySelector( '#place_order' );
-		if (
-			! placeOrderButton ||
-			placeOrderButton === boundPlaceOrderButton
-		) {
-			return;
+		if ( placeOrderButton && placeOrderButton !== boundPlaceOrderButton ) {
+			boundPlaceOrderButton = placeOrderButton;
+			placeOrderButton.addEventListener( 'click', handleSubmit, true );
 		}
 
-		// Only once the DOM really was replaced: mountField() skips inputs a
-		// previous mount hid, so an earlier drop leaves a session with no fields.
+		// Rebuild only for new inputs: mountField() skips inputs a previous mount
+		// hid, so a session rebuilt over the same inputs would have no fields.
+		if ( inputs.number === mountedNumberInput ) {
+			return;
+		}
 		cardSessionPromise = null;
-		boundPlaceOrderButton = placeOrderButton;
-		placeOrderButton.addEventListener( 'click', handleSubmit, true );
+		mountedNumberInput = null;
 
 		// Mount fields as soon as the card gateway is selected, so styling
 		// and the session are ready before the buyer tries to submit.
