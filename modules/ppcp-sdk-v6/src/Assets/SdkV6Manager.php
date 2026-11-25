@@ -1157,7 +1157,7 @@ class SdkV6Manager {
 	 * that context's express stack shares.
 	 *
 	 * @param string $context The page context.
-	 * @return array{colorClass: string, borderRadius: string, height: string}
+	 * @return array{colorClass: string, borderRadius: string, type: string, height: string}
 	 */
 	private function button_styles( string $context ): array {
 		return array_merge(
