@@ -287,6 +287,37 @@ function createMessage( wrapper, config, amount ) {
 }
 
 /**
+ * A detached message built for the same placement and style as this placeholder.
+ *
+ * Block cart and checkout replace the placeholder node when they hydrate and
+ * whenever an ancestor remounts. Moving the old message into the new node keeps
+ * its content, so an unchanged amount needs no new request.
+ *
+ * @param {Element} wrapper - The placeholder to fill.
+ * @param {Object}  config  - The wc_ppcp_sdk_v6 config object.
+ * @return {?Element} The message to move, or null.
+ */
+function reclaimMessage( wrapper, config ) {
+	const pageType = pageTypeFor( wrapper, config );
+	const style = styleFor( wrapper, config.messages.style );
+
+	return (
+		rendered.find(
+			( element ) =>
+				! element.isConnected &&
+				element.getAttribute( 'page-type' ) === pageType &&
+				element.getAttribute( 'logo-type' ) === style.logoType &&
+				element.getAttribute( 'logo-position' ) ===
+					style.logoPosition &&
+				element.getAttribute( 'text-color' ) === style.textColor &&
+				element.style.getPropertyValue(
+					'--paypal-message-font-size'
+				) === ( style.fontSize || '' )
+		) || null
+	);
+}
+
+/**
  * A failed request is not repeated for the same amount.
  *
  * @param {Element} element - The message element.
@@ -343,6 +374,13 @@ export async function renderMessages( config, sdkPageType ) {
 		const amount = currentAmount( config );
 
 		wrappers.forEach( ( wrapper ) => {
+			const reclaimed = reclaimMessage( wrapper, config );
+			if ( reclaimed ) {
+				wrapper.appendChild( reclaimed );
+				applyAmount( reclaimed, amount );
+				return;
+			}
+
 			const element = createMessage( wrapper, config, amount );
 			wrapper.appendChild( element );
 			rendered.push( element );

@@ -529,6 +529,86 @@ describe( 'updateMessagesAmount()', () => {
 	} );
 } );
 
+describe( 'renderMessages() when a placeholder is replaced', () => {
+	const replaceWrapper = ( html ) => {
+		document.body.innerHTML = html;
+	};
+
+	const getFetchContent = () =>
+		mockCreatePayPalMessages.mock.results[ 0 ].value.fetchContent;
+
+	beforeEach( () => {
+		jest.useFakeTimers();
+	} );
+
+	afterEach( () => {
+		jest.useRealTimers();
+	} );
+
+	test( 'moves the detached message into the new placeholder without a new fetch when the amount is unchanged', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+		const config = baseConfig();
+		await renderMessages( config, 'product' );
+		const original = document.querySelector( 'paypal-message' );
+
+		replaceWrapper( '<div class="ppcp-messages"></div>' );
+		await renderMessages( config, 'product' );
+
+		const fresh = document.querySelector( '.ppcp-messages' );
+		expect( fresh.firstElementChild ).toBe( original );
+		expect( document.querySelectorAll( 'paypal-message' ) ).toHaveLength(
+			1
+		);
+		expect( getFetchContent() ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'moves the detached message and fetches once when the amount changed meanwhile', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+		const config = baseConfig();
+		await renderMessages( config, 'product' );
+		const original = document.querySelector( 'paypal-message' );
+		getFetchContent().mockClear();
+
+		updateMessagesAmount( '250.00' );
+		replaceWrapper( '<div class="ppcp-messages"></div>' );
+		await renderMessages( config, 'product' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS );
+
+		const fresh = document.querySelector( '.ppcp-messages' );
+		expect( fresh.firstElementChild ).toBe( original );
+		expect( getFetchContent() ).toHaveBeenCalledTimes( 1 );
+		expect( getFetchContent() ).toHaveBeenCalledWith( {
+			amount: '250.00',
+		} );
+	} );
+
+	test.each( [
+		[
+			'placement',
+			'<div class="ppcp-messages" data-pp-placement="cart"></div>',
+		],
+		[
+			'style',
+			'<div class="ppcp-messages" data-pp-style-logo-type="alternative"></div>',
+		],
+	] )(
+		'builds a new message with a fetch when the new placeholder differs in %s',
+		async ( _label, html ) => {
+			document.body.innerHTML = '<div class="ppcp-messages"></div>';
+			const config = baseConfig();
+			await renderMessages( config, 'product' );
+			const original = document.querySelector( 'paypal-message' );
+
+			replaceWrapper( html );
+			await renderMessages( config, 'product' );
+
+			const created = document.querySelector( 'paypal-message' );
+			expect( created ).not.toBe( original );
+			expect( getFetchContent() ).toHaveBeenCalledTimes( 2 );
+		}
+	);
+} );
+
 describe( 'initMessages()', () => {
 	beforeEach( () => {
 		jest.useFakeTimers();
