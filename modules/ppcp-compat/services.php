@@ -105,6 +105,10 @@ return array(
 		return new PluginDetector\PluginDetector();
 	},
 
+	'compat.wpml'                                          => static function (): WpmlCompat {
+		return new WpmlCompat();
+	},
+
 	'compat.product-customization-detector'                => static function ( ContainerInterface $container ): PluginDetector\ProductCustomizationDetector {
 		return new PluginDetector\ProductCustomizationDetector(
 			$container->get( 'compat.plugin-detector' ),
