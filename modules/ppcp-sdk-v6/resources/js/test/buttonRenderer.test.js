@@ -119,6 +119,53 @@ describe( 'createMethodButton', () => {
 		).toBe( '30px' );
 	} );
 
+	test.each( [
+		[ 'paypal', 'buynow' ],
+		[ 'paypal', 'checkout' ],
+		[ 'venmo', 'buynow' ],
+		[ 'venmo', 'checkout' ],
+	] )( 'sets the %s button type to %s from styles.type', ( method, type ) => {
+		const button = createMethodButton( {
+			method,
+			styles: { type },
+			session: {},
+			createOrderFn: noop,
+		} );
+
+		expect( button.getAttribute( 'type' ) ).toBe( type );
+	} );
+
+	test.each( [
+		[ 'paypal', 'an empty string', { type: '' } ],
+		[ 'paypal', 'absent', {} ],
+		[ 'venmo', 'an empty string', { type: '' } ],
+		[ 'venmo', 'absent', {} ],
+	] )(
+		'leaves the %s button without a type attribute when styles.type is %s',
+		( method, _, styles ) => {
+			const button = createMethodButton( {
+				method,
+				styles,
+				session: {},
+				createOrderFn: noop,
+			} );
+
+			expect( button.hasAttribute( 'type' ) ).toBe( false );
+		}
+	);
+
+	test( 'does not set a type on the pay later button even when styles.type is set', () => {
+		const button = createMethodButton( {
+			method: 'paylater',
+			styles: { type: 'checkout' },
+			session: {},
+			createOrderFn: noop,
+			payLaterDetails: { productCode: 'PAYLATER' },
+		} );
+
+		expect( button.hasAttribute( 'type' ) ).toBe( false );
+	} );
+
 	test( 'returns null for pay later without product details', () => {
 		const button = createMethodButton( {
 			method: 'paylater',
@@ -154,19 +201,34 @@ describe( 'createPreviewButton', () => {
 	} );
 
 	test.each( [
-		[ 'paypal', 'paypal-button', 'pay' ],
-		[ 'venmo', 'venmo-button', 'pay' ],
-		[ 'paylater', 'paypal-pay-later-button', '' ],
+		[ 'paypal', 'paypal-button', 'buynow' ],
+		[ 'venmo', 'venmo-button', 'buynow' ],
+		[ 'paylater', 'paypal-pay-later-button', null ],
 	] )(
-		'creates a %s element with the %s type attribute',
-		( method, tagName, type ) => {
+		'creates a %s element (%s) with type attribute %s when styles.type is buynow',
+		( method, tagName, expectedType ) => {
 			const button = createPreviewButton( document, {
 				method,
-				styles: {},
+				styles: { type: 'buynow' },
 			} );
 
 			expect( button.tagName.toLowerCase() ).toBe( tagName );
-			expect( button.getAttribute( 'type' ) ).toBe( type || null );
+			expect( button.getAttribute( 'type' ) ).toBe( expectedType );
+		}
+	);
+
+	test.each( [
+		[ 'an empty string', { type: '' } ],
+		[ 'absent', {} ],
+	] )(
+		'leaves the type attribute off when styles.type is %s',
+		( _, styles ) => {
+			const button = createPreviewButton( document, {
+				method: 'paypal',
+				styles,
+			} );
+
+			expect( button.hasAttribute( 'type' ) ).toBe( false );
 		}
 	);
 
@@ -212,7 +274,7 @@ describe( 'createPreviewButton', () => {
 
 		const button = createPreviewButton( fakeDoc, {
 			method: 'paypal',
-			styles: { colorClass: 'paypal-blue' },
+			styles: { colorClass: 'paypal-blue', type: 'pay' },
 		} );
 
 		expect( fakeDoc.createElement ).toHaveBeenCalledWith( 'paypal-button' );
@@ -238,6 +300,31 @@ describe( 'renderButtons', () => {
 		expect( rendered.some( ( el ) => el.tagName === 'PAYPAL-BUTTON' ) ).toBe(
 			true
 		);
+
+		document.body.removeChild( wrapper );
+	} );
+
+	test( 'passes styles.type to the paypal button but not to the pay later button', () => {
+		const wrapper = document.createElement( 'div' );
+		document.body.appendChild( wrapper );
+
+		renderButtons( {
+			wrapper,
+			sessions: { paypal: {}, paylater: {} },
+			styles: { type: 'checkout' },
+			createOrderForFunding: () => noop,
+			payLaterDetails: { productCode: 'PAYLATER' },
+			payLaterEnabled: true,
+		} );
+
+		expect(
+			wrapper.querySelector( 'paypal-button' ).getAttribute( 'type' )
+		).toBe( 'checkout' );
+		expect(
+			wrapper
+				.querySelector( 'paypal-pay-later-button' )
+				.hasAttribute( 'type' )
+		).toBe( false );
 
 		document.body.removeChild( wrapper );
 	} );

@@ -24,23 +24,23 @@ import { FundingSources } from '../utils/fundingSources';
 const BUTTON_ELEMENTS = {
 	paypal: {
 		tagName: 'paypal-button',
-		type: 'pay',
+		takesType: true,
 		radiusProperty: '--paypal-button-border-radius',
 	},
 	venmo: {
 		tagName: 'venmo-button',
-		type: 'pay',
+		takesType: true,
 		radiusProperty: '--venmo-button-border-radius',
 	},
 	paylater: {
 		tagName: 'paypal-pay-later-button',
-		type: '',
+		takesType: false,
 		radiusProperty: '--paypal-button-border-radius',
 	},
 };
 
 /**
- * Applies color, shape and height to a new button element (shared by the button and preview).
+ * Applies label, color, shape and height to a new button element (shared by the button and preview).
  *
  * @param {Document} doc     - The document to create the element in.
  * @param {Object}   element - The BUTTON_ELEMENTS entry.
@@ -49,8 +49,8 @@ const BUTTON_ELEMENTS = {
  */
 function styleButtonElement( doc, element, styles ) {
 	const button = doc.createElement( element.tagName );
-	if ( element.type ) {
-		button.setAttribute( 'type', element.type );
+	if ( element.takesType && styles.type ) {
+		button.setAttribute( 'type', styles.type );
 	}
 
 	if ( styles.colorClass ) {
@@ -162,7 +162,7 @@ export function createMethodButton( {
  * @param {Document} doc            - The document to create the element in.
  * @param {Object}   options        - Button options.
  * @param {string}   options.method - The funding method (paypal, venmo, paylater).
- * @param {Object}   options.styles - Button styles ({ colorClass, borderRadius, height }).
+ * @param {Object}   options.styles - Button styles ({ colorClass, borderRadius, type, height }).
  * @return {?HTMLElement} The styled button element, or null.
  */
 export function createPreviewButton( doc, { method, styles } ) {
