@@ -9,6 +9,7 @@ declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat;
 
 use Exception;
+use SitePress;
 use WC_Order;
 use WC_Order_Item_Product;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
@@ -61,6 +62,11 @@ class CompatModule implements ServiceModule, ExecutableModule
         }
         if (class_exists('\Kestrel\Account_Funds\Cart')) {
             (new \WooCommerce\PayPalCommerce\Compat\WcAccountFundsCompat())->register();
+        }
+        if (class_exists(SitePress::class)) {
+            $wpml_compat = $c->get('compat.wpml');
+            assert($wpml_compat instanceof \WooCommerce\PayPalCommerce\Compat\WpmlCompat);
+            $wpml_compat->register();
         }
         $this->migrate_pay_later_settings($c);
         $this->migrate_smart_button_settings($c);

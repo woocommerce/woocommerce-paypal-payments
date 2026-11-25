@@ -52,6 +52,8 @@ return array('compat.ppec.mock-gateway' => static function ($container) {
     return class_exists('WC_Bookings');
 }, 'compat.plugin-detector' => static function (): \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector {
     return new \WooCommerce\PayPalCommerce\Compat\PluginDetector\PluginDetector();
+}, 'compat.wpml' => static function (): \WooCommerce\PayPalCommerce\Compat\WpmlCompat {
+    return new \WooCommerce\PayPalCommerce\Compat\WpmlCompat();
 }, 'compat.product-customization-detector' => static function (ContainerInterface $container): \WooCommerce\PayPalCommerce\Compat\PluginDetector\ProductCustomizationDetector {
     return new \WooCommerce\PayPalCommerce\Compat\PluginDetector\ProductCustomizationDetector($container->get('compat.plugin-detector'), $container->get('woocommerce.logger.woocommerce'));
 }, 'compat.asset_getter' => static function (ContainerInterface $container): AssetGetter {

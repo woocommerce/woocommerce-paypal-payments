@@ -488,6 +488,7 @@ class ComposerStaticInita712320141b04cc5c486f9729bb428e3
         'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalSettingsExporter' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalSettingsExporter.php',
         'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\PayPalSettingsImporter' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/PayPalSettingsImporter.php',
         'WooCommerce\\PayPalCommerce\\Compat\\WooCommerceBlueprint\\SetPayPalSettings' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WooCommerceBlueprint/SetPayPalSettings.php',
+        'WooCommerce\\PayPalCommerce\\Compat\\WpmlCompat' => __DIR__ . '/../..' . '/modules/ppcp-compat/src/WpmlCompat.php',
         'WooCommerce\\PayPalCommerce\\FraudProtection\\FraudProtectionModule' => __DIR__ . '/../..' . '/modules/ppcp-fraud-protection/src/FraudProtectionModule.php',
         'WooCommerce\\PayPalCommerce\\FraudProtection\\PersistentCounter' => __DIR__ . '/../..' . '/modules/ppcp-fraud-protection/src/PersistentCounter.php',
         'WooCommerce\\PayPalCommerce\\FraudProtection\\Recaptcha\\Recaptcha' => __DIR__ . '/../..' . '/modules/ppcp-fraud-protection/src/Recaptcha/Recaptcha.php',

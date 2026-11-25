@@ -1039,7 +1039,6 @@ class SdkV6Manager
         }
         $page_context = $this->get_page_context();
         $shipping_contexts = $this->shipping_contexts($page_context);
-        $store_api_base = rtrim(rest_url('wc/store/v1/cart'), '/');
         $button_styles = array();
         $pay_later_button = array();
         $venmo_button = array();
@@ -1104,7 +1103,7 @@ class SdkV6Manager
                 'create_payment_token' => array('endpoint' => \WC_AJAX::get_endpoint(CreatePaymentToken::ENDPOINT), 'nonce' => wp_create_nonce(CreatePaymentToken::nonce())),
                 'create_payment_token_for_guest' => array('endpoint' => \WC_AJAX::get_endpoint(CreatePaymentTokenForGuest::ENDPOINT), 'nonce' => wp_create_nonce(CreatePaymentTokenForGuest::nonce())),
                 'frontend_log' => array('endpoint' => \WC_AJAX::get_endpoint(FrontendLogEndpoint::ENDPOINT), 'nonce' => wp_create_nonce(FrontendLogEndpoint::nonce())),
-                'wc_store_api' => array('cart' => $store_api_base, 'select_shipping_rate' => $store_api_base . '/select-shipping-rate', 'update_customer' => $store_api_base . '/update-customer', 'nonce' => wp_create_nonce('wc_store_api')),
+                'wc_store_api' => array('cart' => $this->frontend_rest_url('wc/store/v1/cart'), 'select_shipping_rate' => $this->frontend_rest_url('wc/store/v1/cart/select-shipping-rate'), 'update_customer' => $this->frontend_rest_url('wc/store/v1/cart/update-customer'), 'nonce' => wp_create_nonce('wc_store_api')),
             ),
             'urls' => array('checkout' => wc_get_checkout_url()),
             'labels' => array(
@@ -1392,6 +1391,25 @@ class SdkV6Manager
             }
         }
         return '';
+    }
+    /**
+     * Browser requests do not carry the page's request context (such as the
+     * language), so integrations can add it through the filter below.
+     */
+    private function frontend_rest_url(string $route): string
+    {
+        $url = rest_url($route);
+        /**
+         * Filters a REST URL that the browser calls from a front-end page.
+         *
+         * @param string $url   The full REST URL.
+         * @param string $route The REST route, for example 'wc/store/v1/cart'.
+         */
+        $filtered_url = apply_filters('woocommerce_paypal_payments_frontend_rest_url', $url, $route);
+        if (!is_string($filtered_url) || '' === $filtered_url) {
+            return $url;
+        }
+        return $filtered_url;
     }
     /**
      * The page context for the current WC page, or empty off a supported page.
