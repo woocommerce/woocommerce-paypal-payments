@@ -22,38 +22,13 @@ import {
 } from '../sessions/freeTrialSave';
 import { hasJQuery } from '../utils/api';
 import { handleError } from '../utils/errorHandler';
+import { cardSubmitFailureDetail, logEvent } from '../utils/diagnostics';
 import { isFreeTrialCart } from '../utils/freeTrial';
 import {
 	CARD_DECLINE_MESSAGE,
 	CARD_SAVE_DECLINE_MESSAGE,
 	userFacingError,
 } from '../utils/cardDeclineMessages';
-
-/**
- * Reads the billing address from the classic checkout form for the card
- * session submit: countryCode is required, postalCode is included when present.
- *
- * @return {Object|undefined} A { billingAddress } options object, or undefined
- *                            when no country is present.
- */
-function billingAddressForSubmit() {
-	const countryCode = document
-		.querySelector( '#billing_country' )
-		?.value?.trim();
-	if ( ! countryCode ) {
-		return undefined;
-	}
-
-	const billingAddress = { countryCode };
-	const postalCode = document
-		.querySelector( '#billing_postcode' )
-		?.value?.trim();
-	if ( postalCode ) {
-		billingAddress.postalCode = postalCode;
-	}
-
-	return { billingAddress };
-}
 
 /**
  * Whether the buyer selected an existing saved payment token rather than
@@ -218,7 +193,6 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 
 		try {
 			const cardSession = await ensureCardSession();
-			const submitOptions = billingAddressForSubmit();
 
 			const fieldError = fieldStateError(
 				getFieldState(),
@@ -253,11 +227,11 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 			const { orderId } = await createCardOrder(
 				config,
 				config.page_context || 'checkout',
-                shouldSavePaymentMethod(),
+				shouldSavePaymentMethod()
 			);
-			const result = submitOptions
-				? await cardSession.submit( orderId, submitOptions )
-				: await cardSession.submit( orderId );
+			// No billingAddress option: with it, some issuers decline before 3D
+			// Secure (PAYER_CANNOT_PAY).
+			const result = await cardSession.submit( orderId );
 
 			// Buyer closed the 3DS challenge or the popup; let them retry.
 			if ( result.state === 'canceled' ) {
@@ -265,6 +239,11 @@ export async function initCardFields( config, getTotal = () => undefined ) {
 			}
 
 			if ( result.state !== 'succeeded' ) {
+				logEvent(
+					config,
+					'card-submit-failed',
+					cardSubmitFailureDetail( 'classic', orderId, result )
+				);
 				throw userFacingError( CARD_DECLINE_MESSAGE );
 			}
 

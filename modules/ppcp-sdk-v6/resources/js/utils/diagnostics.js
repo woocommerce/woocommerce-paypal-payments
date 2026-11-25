@@ -18,6 +18,22 @@ export function describeError( error ) {
 }
 
 /**
+ * Describes a card session submit that did not succeed, without address or card
+ * data.
+ *
+ * @param {string} checkout - The checkout type: classic or block.
+ * @param {string} orderId  - The PayPal order ID.
+ * @param {Object} result   - The submit result.
+ * @return {string} Reportable text.
+ */
+export function cardSubmitFailureDetail( checkout, orderId, result ) {
+	const errorCode = result?.data?.errorCode;
+	const detail = `${ checkout } order=${ orderId } state=${ result?.state }`;
+
+	return errorCode ? `${ detail } errorCode=${ errorCode }` : detail;
+}
+
+/**
  * Records one report, in the console and in the server log.
  *
  * Never throws, never rejects, and is not awaited.
