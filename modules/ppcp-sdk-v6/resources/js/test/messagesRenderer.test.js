@@ -1,12 +1,16 @@
+import '@ppcp-test/helpers/silenceConsole';
+
 const mockMessagesInstance = () => ( {
 	fetchContent: jest.fn( () => Promise.resolve() ),
 } );
 const mockCreatePayPalMessages = jest.fn( mockMessagesInstance );
-const mockLoadSdkV6 = jest.fn( () =>
-	Promise.resolve( { createPayPalMessages: mockCreatePayPalMessages } )
-);
+const loadSdkSucceeds = () =>
+	Promise.resolve( { createPayPalMessages: mockCreatePayPalMessages } );
+const mockLoadSdkV6 = jest.fn( loadSdkSucceeds );
+const mockIsSdkLoadAbandoned = jest.fn( () => false );
 jest.mock( '../sdkLoader', () => ( {
 	loadSdkV6: ( ...args ) => mockLoadSdkV6( ...args ),
+	isSdkLoadAbandoned: () => mockIsSdkLoadAbandoned(),
 } ) );
 
 // The real element comes from the SDK script, which jsdom does not load.
@@ -27,8 +31,9 @@ import {
 	buildMessageElement,
 } from '../messages/renderer';
 
-// Matches the module's RESCAN_DEBOUNCE_MS. Not exported, so mirrored here.
+// Mirrors the module's private debounce delays.
 const RESCAN_DEBOUNCE_MS = 100;
+const AMOUNT_DEBOUNCE_MS = 250;
 
 // `messages` is spread last so a partial `overrides.messages` merges into the
 // defaults rather than replacing them — spreading `...overrides` afterwards
@@ -55,6 +60,8 @@ const baseConfig = ( overrides = {} ) => ( {
 
 beforeEach( () => {
 	jest.clearAllMocks();
+	mockLoadSdkV6.mockImplementation( loadSdkSucceeds );
+	mockIsSdkLoadAbandoned.mockReset().mockReturnValue( false );
 	resetMessages();
 	document.body.innerHTML = '';
 } );
@@ -84,7 +91,8 @@ describe( 'renderMessages()', () => {
 
 		await renderMessages( baseConfig(), 'product' );
 
-		const { fetchContent } = mockCreatePayPalMessages.mock.results[ 0 ].value;
+		const { fetchContent } =
+			mockCreatePayPalMessages.mock.results[ 0 ].value;
 		expect( fetchContent ).toHaveBeenCalledWith( { amount: '100.00' } );
 	} );
 
@@ -379,14 +387,28 @@ describe( 'buildMessageElement()', () => {
 } );
 
 describe( 'updateMessagesAmount()', () => {
-	test( 'sets .amount on every rendered element', async () => {
+	const getFetchContent = () =>
+		mockCreatePayPalMessages.mock.results[ 0 ].value.fetchContent;
+
+	beforeEach( () => {
+		jest.useFakeTimers();
+	} );
+
+	afterEach( () => {
+		jest.useRealTimers();
+	} );
+
+	test( 'sets .amount on every rendered element once the amount settles', async () => {
 		document.body.innerHTML =
 			'<div class="ppcp-messages"></div><div class="ppcp-messages"></div>';
 		await renderMessages( baseConfig(), 'product' );
 
 		updateMessagesAmount( '250.00' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS );
 
-		document.querySelectorAll( 'paypal-message' ).forEach( ( element ) => {
+		const messages = document.querySelectorAll( 'paypal-message' );
+		expect( messages ).toHaveLength( 2 );
+		messages.forEach( ( element ) => {
 			expect( element.amount ).toBe( '250.00' );
 		} );
 	} );
@@ -396,9 +418,86 @@ describe( 'updateMessagesAmount()', () => {
 		await renderMessages( baseConfig(), 'product' );
 
 		updateMessagesAmount( '250.00' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS );
 
-		const { fetchContent } = mockCreatePayPalMessages.mock.results[ 0 ].value;
-		expect( fetchContent ).toHaveBeenLastCalledWith( { amount: '250.00' } );
+		expect( getFetchContent() ).toHaveBeenLastCalledWith( {
+			amount: '250.00',
+		} );
+	} );
+
+	test( 'does not fetch before the debounce delay has passed', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+		await renderMessages( baseConfig(), 'product' );
+		getFetchContent().mockClear();
+
+		updateMessagesAmount( '250.00' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS - 1 );
+
+		expect( getFetchContent() ).not.toHaveBeenCalled();
+	} );
+
+	test( 'fetches once per message with the last amount after a burst of changes', async () => {
+		document.body.innerHTML =
+			'<div class="ppcp-messages"></div><div class="ppcp-messages"></div>';
+		await renderMessages( baseConfig(), 'product' );
+		getFetchContent().mockClear();
+
+		updateMessagesAmount( '110.00' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS - 1 );
+		updateMessagesAmount( '120.00' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS - 1 );
+		updateMessagesAmount( '130.00' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS );
+
+		expect( getFetchContent() ).toHaveBeenCalledTimes( 2 );
+		expect( getFetchContent() ).toHaveBeenNthCalledWith( 1, {
+			amount: '130.00',
+		} );
+		expect( getFetchContent() ).toHaveBeenNthCalledWith( 2, {
+			amount: '130.00',
+		} );
+	} );
+
+	test( 'does not fetch again for the amount a message already holds', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+		await renderMessages( baseConfig(), 'product' );
+		getFetchContent().mockClear();
+
+		updateMessagesAmount( '100.00' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS );
+
+		expect( getFetchContent() ).not.toHaveBeenCalled();
+	} );
+
+	test( 'does not fetch again for the same amount after a failed fetch', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+		mockCreatePayPalMessages.mockImplementationOnce( () => ( {
+			fetchContent: jest.fn( () => Promise.reject( new Error( '422' ) ) ),
+		} ) );
+		await renderMessages( baseConfig(), 'product' );
+		await Promise.resolve();
+
+		updateMessagesAmount( '100.00' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS );
+
+		expect( getFetchContent() ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'prices a placeholder filled during the debounce wait with the latest amount', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+		const config = baseConfig();
+		await renderMessages( config, 'product' );
+
+		updateMessagesAmount( '250.00' );
+		document.body.insertAdjacentHTML(
+			'beforeend',
+			'<div class="ppcp-messages"></div>'
+		);
+		await renderMessages( config, 'product' );
+
+		const messages = document.querySelectorAll( 'paypal-message' );
+		expect( messages ).toHaveLength( 2 );
+		expect( messages[ 1 ].getAttribute( 'amount' ) ).toBe( '250.00' );
 	} );
 
 	test( 'prunes and skips elements that are no longer connected to the document', async () => {
@@ -408,20 +507,106 @@ describe( 'updateMessagesAmount()', () => {
 		const detached = document.querySelector( 'paypal-message' );
 		detached.remove();
 
-		expect( () => updateMessagesAmount( '250.00' ) ).not.toThrow();
+		updateMessagesAmount( '250.00' );
+		expect( () =>
+			jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS )
+		).not.toThrow();
 		expect( detached.amount ).toBeUndefined();
 	} );
 
 	test( 'is a no-op for an empty amount', async () => {
 		document.body.innerHTML = '<div class="ppcp-messages"></div>';
 		await renderMessages( baseConfig(), 'product' );
+		getFetchContent().mockClear();
 
 		updateMessagesAmount( '' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS );
 
 		expect(
 			document.querySelector( 'paypal-message' ).amount
 		).toBeUndefined();
+		expect( getFetchContent() ).not.toHaveBeenCalled();
 	} );
+} );
+
+describe( 'renderMessages() when a placeholder is replaced', () => {
+	const replaceWrapper = ( html ) => {
+		document.body.innerHTML = html;
+	};
+
+	const getFetchContent = () =>
+		mockCreatePayPalMessages.mock.results[ 0 ].value.fetchContent;
+
+	beforeEach( () => {
+		jest.useFakeTimers();
+	} );
+
+	afterEach( () => {
+		jest.useRealTimers();
+	} );
+
+	test( 'moves the detached message into the new placeholder without a new fetch when the amount is unchanged', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+		const config = baseConfig();
+		await renderMessages( config, 'product' );
+		const original = document.querySelector( 'paypal-message' );
+
+		replaceWrapper( '<div class="ppcp-messages"></div>' );
+		await renderMessages( config, 'product' );
+
+		const fresh = document.querySelector( '.ppcp-messages' );
+		expect( fresh.firstElementChild ).toBe( original );
+		expect( document.querySelectorAll( 'paypal-message' ) ).toHaveLength(
+			1
+		);
+		expect( getFetchContent() ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	test( 'moves the detached message and fetches once when the amount changed meanwhile', async () => {
+		document.body.innerHTML = '<div class="ppcp-messages"></div>';
+		const config = baseConfig();
+		await renderMessages( config, 'product' );
+		const original = document.querySelector( 'paypal-message' );
+		getFetchContent().mockClear();
+
+		updateMessagesAmount( '250.00' );
+		replaceWrapper( '<div class="ppcp-messages"></div>' );
+		await renderMessages( config, 'product' );
+		jest.advanceTimersByTime( AMOUNT_DEBOUNCE_MS );
+
+		const fresh = document.querySelector( '.ppcp-messages' );
+		expect( fresh.firstElementChild ).toBe( original );
+		expect( getFetchContent() ).toHaveBeenCalledTimes( 1 );
+		expect( getFetchContent() ).toHaveBeenCalledWith( {
+			amount: '250.00',
+		} );
+	} );
+
+	test.each( [
+		[
+			'placement',
+			'<div class="ppcp-messages" data-pp-placement="cart"></div>',
+		],
+		[
+			'style',
+			'<div class="ppcp-messages" data-pp-style-logo-type="alternative"></div>',
+		],
+	] )(
+		'builds a new message with a fetch when the new placeholder differs in %s',
+		async ( _label, html ) => {
+			document.body.innerHTML = '<div class="ppcp-messages"></div>';
+			const config = baseConfig();
+			await renderMessages( config, 'product' );
+			const original = document.querySelector( 'paypal-message' );
+
+			replaceWrapper( html );
+			await renderMessages( config, 'product' );
+
+			const created = document.querySelector( 'paypal-message' );
+			expect( created ).not.toBe( original );
+			expect( getFetchContent() ).toHaveBeenCalledTimes( 2 );
+		}
+	);
 } );
 
 describe( 'initMessages()', () => {
@@ -491,6 +676,61 @@ describe( 'initMessages()', () => {
 		const messages = document.querySelectorAll( 'paypal-message' );
 		expect( messages ).toHaveLength( 1 );
 		expect( freshWrapper.contains( messages[ 0 ] ) ).toBe( true );
+	} );
+
+	describe( 'when the SDK load fails', () => {
+		const addPlaceholder = async () => {
+			document.body.appendChild(
+				document.createElement( 'div' )
+			).className = 'ppcp-messages';
+			await jest.advanceTimersByTimeAsync( RESCAN_DEBOUNCE_MS );
+		};
+
+		test( 'stops rescanning for good once a failed rescan leaves the SDK load abandoned', async () => {
+			await initMessages( baseConfig(), 'product' );
+			mockLoadSdkV6.mockImplementation( () => {
+				mockIsSdkLoadAbandoned.mockReturnValue( true );
+				return Promise.reject( { status: 403 } );
+			} );
+
+			await addPlaceholder();
+			expect( mockLoadSdkV6 ).toHaveBeenCalledTimes( 1 );
+
+			await addPlaceholder();
+			await addPlaceholder();
+
+			expect( mockLoadSdkV6 ).toHaveBeenCalledTimes( 1 );
+		} );
+
+		test( 'keeps rescanning after a failure that may pass on a later attempt', async () => {
+			await initMessages( baseConfig(), 'product' );
+			mockLoadSdkV6.mockRejectedValue( { status: 500 } );
+
+			await addPlaceholder();
+			await addPlaceholder();
+
+			expect( mockLoadSdkV6 ).toHaveBeenCalledTimes( 2 );
+		} );
+
+		test( 'skips the rescan without calling loadSdkV6 when the SDK load was abandoned before the observer fired', async () => {
+			await initMessages( baseConfig(), 'product' );
+			mockIsSdkLoadAbandoned.mockReturnValue( true );
+
+			await addPlaceholder();
+
+			expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+			expect( document.querySelector( 'paypal-message' ) ).toBeNull();
+		} );
+
+		test( 'does not start watching when the SDK load is already abandoned', async () => {
+			mockIsSdkLoadAbandoned.mockReturnValue( true );
+			await initMessages( baseConfig(), 'product' );
+
+			mockIsSdkLoadAbandoned.mockReturnValue( false );
+			await addPlaceholder();
+
+			expect( mockLoadSdkV6 ).not.toHaveBeenCalled();
+		} );
 	} );
 
 	test( 'does not keep re-rendering once our own appended message settles', async () => {

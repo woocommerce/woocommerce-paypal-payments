@@ -9,7 +9,7 @@
  * @package
  */
 
-import { loadSdkV6 } from '../sdkLoader';
+import { isSdkLoadAbandoned, loadSdkV6 } from '../sdkLoader';
 
 const MESSAGE_TAG_NAME = 'paypal-message';
 
@@ -18,10 +18,16 @@ const MESSAGE_TAG_NAME = 'paypal-message';
 // and a marker attribute would go with the old one. The WeakSet covers the
 // window where callers race across the awaited SDK load.
 let inFlight = new WeakSet();
-let watching = false;
+let observer = null;
 let rescanTimer = null;
 
 const RESCAN_DEBOUNCE_MS = 100;
+
+// Coalesces a burst of amount changes into one request per message.
+const AMOUNT_DEBOUNCE_MS = 250;
+let amountTimer = null;
+
+let fetchedAmounts = new WeakMap();
 
 // Mapping of v5 placements from `data-pp-placement` of the Pay Later block.
 // `payment` is what the checkout block emits.
@@ -64,9 +70,13 @@ export function resetMessages() {
 	rendered = [];
 	latestAmount = null;
 	inFlight = new WeakSet();
-	watching = false;
+	fetchedAmounts = new WeakMap();
+	observer?.disconnect();
+	observer = null;
 	clearTimeout( rescanTimer );
 	rescanTimer = null;
+	clearTimeout( amountTimer );
+	amountTimer = null;
 }
 
 /**
@@ -80,13 +90,13 @@ export function resetMessages() {
  * @return {Promise<number>} How many messages the initial pass rendered.
  */
 export async function initMessages( config, sdkPageType ) {
-    if ( ! config?.messages?.enabled || config.messages.is_hidden ) {
-        return 0;
-    }
+	if ( ! config?.messages?.enabled || config.messages.is_hidden ) {
+		return 0;
+	}
 
-    watchForWrappers( config, sdkPageType );
+	watchForWrappers( config, sdkPageType );
 
-    return renderMessages( config, sdkPageType );
+	return renderMessages( config, sdkPageType );
 }
 
 /**
@@ -173,21 +183,50 @@ function wrappersNeedingMessage( config ) {
  * Observes document.body, not the placeholders: block pages replace those,
  * which would leave an observer holding a detached node.
  *
+ * Stops for good once the SDK load is abandoned: every later rescan would
+ * reject at once, and pages with frequent DOM changes would keep paying for it.
+ *
  * @param {Object} config      - The wc_ppcp_sdk_v6 config object.
  * @param {string} sdkPageType - The page context for the shared SDK instance.
  */
 function watchForWrappers( config, sdkPageType ) {
-	if ( watching || ! document.body ) {
+	if ( observer || ! document.body || isSdkLoadAbandoned() ) {
 		return;
 	}
-	watching = true;
 
-	new MutationObserver( () => {
+	const rescan = () => {
+		if ( stopWatchingIfAbandoned() ) {
+			return;
+		}
+
+		renderMessages( config, sdkPageType ).catch( stopWatchingIfAbandoned );
+	};
+
+	observer = new MutationObserver( () => {
 		clearTimeout( rescanTimer );
-		rescanTimer = setTimeout( () => {
-			renderMessages( config, sdkPageType ).catch( () => {} );
-		}, RESCAN_DEBOUNCE_MS );
-	} ).observe( document.body, { childList: true, subtree: true } );
+		rescanTimer = setTimeout( rescan, RESCAN_DEBOUNCE_MS );
+	} );
+	observer.observe( document.body, { childList: true, subtree: true } );
+}
+
+/**
+ * Disconnects the observer when the SDK will not load again.
+ *
+ * The disconnected observer is kept, so watchForWrappers() does not start a
+ * new one.
+ *
+ * @return {boolean} Whether watching has stopped.
+ */
+function stopWatchingIfAbandoned() {
+	if ( ! isSdkLoadAbandoned() ) {
+		return false;
+	}
+
+	observer?.disconnect();
+	clearTimeout( rescanTimer );
+	rescanTimer = null;
+
+	return true;
 }
 
 /**
@@ -248,14 +287,53 @@ function createMessage( wrapper, config, amount ) {
 }
 
 /**
- * @param {Element} element - The message element.
+ * A detached message built for the same placement and style as this placeholder.
+ *
+ * Block cart and checkout replace the placeholder node when they hydrate and
+ * whenever an ancestor remounts. Moving the old message into the new node keeps
+ * its content, so an unchanged amount needs no new request.
+ *
+ * @param {Element} wrapper - The placeholder to fill.
+ * @param {Object}  config  - The wc_ppcp_sdk_v6 config object.
+ * @return {?Element} The message to move, or null.
  */
-function fetchMessage( element ) {
+function reclaimMessage( wrapper, config ) {
+	const pageType = pageTypeFor( wrapper, config );
+	const style = styleFor( wrapper, config.messages.style );
+
+	return (
+		rendered.find(
+			( element ) =>
+				! element.isConnected &&
+				element.getAttribute( 'page-type' ) === pageType &&
+				element.getAttribute( 'logo-type' ) === style.logoType &&
+				element.getAttribute( 'logo-position' ) ===
+					style.logoPosition &&
+				element.getAttribute( 'text-color' ) === style.textColor &&
+				element.style.getPropertyValue(
+					'--paypal-message-font-size'
+				) === ( style.fontSize || '' )
+		) || null
+	);
+}
+
+/**
+ * A failed request is not repeated for the same amount.
+ *
+ * @param {Element} element - The message element.
+ * @param {?string} amount  - The amount the message prices.
+ */
+function fetchMessage( element, amount ) {
+	fetchedAmounts.set( element, amount );
+
 	messagesInstance
 		.fetchContent( element.getFetchContentOptions() )
 		.catch( ( error ) => {
 			// eslint-disable-next-line no-console
-			console.error( '[PPCP SDK v6] Pay Later message fetch failed', error );
+			console.error(
+				'[PPCP SDK v6] Pay Later message fetch failed',
+				error
+			);
 		} );
 }
 
@@ -296,10 +374,17 @@ export async function renderMessages( config, sdkPageType ) {
 		const amount = currentAmount( config );
 
 		wrappers.forEach( ( wrapper ) => {
+			const reclaimed = reclaimMessage( wrapper, config );
+			if ( reclaimed ) {
+				wrapper.appendChild( reclaimed );
+				applyAmount( reclaimed, amount );
+				return;
+			}
+
 			const element = createMessage( wrapper, config, amount );
 			wrapper.appendChild( element );
 			rendered.push( element );
-			fetchMessage( element );
+			fetchMessage( element, amount );
 		} );
 	} finally {
 		// Released either way, so a later pass can pick these up.
@@ -320,10 +405,10 @@ function currentAmount( config ) {
 }
 
 /**
- * Re-prices every rendered message.
+ * Re-prices every rendered message once the amount settles.
  *
- * Assigning `amount` re-renders in place. Detached elements are pruned, since
- * WooCommerce replaces the cart and checkout DOM wholesale.
+ * The amount is stored at once, so a placeholder filled during the wait
+ * already prices it.
  *
  * @param {string} amount - The new amount.
  */
@@ -333,9 +418,32 @@ export function updateMessagesAmount( amount ) {
 	}
 
 	latestAmount = amount;
+	clearTimeout( amountTimer );
+	amountTimer = setTimeout( applyLatestAmount, AMOUNT_DEBOUNCE_MS );
+}
+
+/**
+ * Detached elements are pruned, since WooCommerce replaces the cart and
+ * checkout DOM wholesale.
+ */
+function applyLatestAmount() {
+	amountTimer = null;
+
 	rendered = rendered.filter( ( element ) => element.isConnected );
-	rendered.forEach( ( element ) => {
-		element.amount = amount;
-		fetchMessage( element );
-	} );
+	rendered.forEach( ( element ) => applyAmount( element, latestAmount ) );
+}
+
+/**
+ * Assigning `amount` re-renders in place.
+ *
+ * @param {Element} element - The message element.
+ * @param {?string} amount  - The amount to price.
+ */
+function applyAmount( element, amount ) {
+	if ( fetchedAmounts.get( element ) === amount ) {
+		return;
+	}
+
+	element.amount = amount;
+	fetchMessage( element, amount );
 }

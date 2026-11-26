@@ -87,6 +87,18 @@ function withTimeout( promise, ms ) {
 }
 
 /**
+ * Whether this page view has stopped loading the SDK for good.
+ *
+ * True after MAX_REJECTIONS 4xx answers in a row. Callers that watch the DOM
+ * can stop watching then, since every further load rejects at once.
+ *
+ * @return {boolean} Whether the SDK will not load again before a reload.
+ */
+export function isSdkLoadAbandoned() {
+	return Boolean( window[ FAILURE_KEY ]?.final );
+}
+
+/**
  * The error of the last failed load, while the next load has to wait.
  *
  * On window for the same reason as the instance promise. Callers ask for the
