@@ -27,7 +27,7 @@ class CaptureCardPaymentTest extends TestCase {
 	 * @param string $three_d_secure_enum Value returned by settings_provider->three_d_secure_enum().
 	 * @param array  &$captured_body      Passed by reference; populated with the decoded request body inside the wp_remote_get stub.
 	 */
-	private function make_testee( string $three_d_secure_enum, array &$captured_body ): CaptureCardPayment {
+	private function make_testee( string $three_d_secure_enum, array &$captured_body, array &$captured_headers = array() ): CaptureCardPayment {
 		$token = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Entity\Token::class );
 		$token->shouldReceive( 'token' )->andReturn( 'test-bearer-token' );
 
@@ -87,8 +87,9 @@ class CaptureCardPaymentTest extends TestCase {
 		$headers_stub->shouldReceive( 'getAll' )->andReturn( array() );
 
 		expect( 'wp_remote_get' )->andReturnUsing(
-			function ( string $url, array $args ) use ( &$captured_body, $headers_stub ): array {
-				$captured_body = (array) json_decode( $args['body'], true );
+			function ( string $url, array $args ) use ( &$captured_body, &$captured_headers, $headers_stub ): array {
+				$captured_body    = (array) json_decode( $args['body'], true );
+				$captured_headers = $args['headers'];
 				return array(
 					'body'     => '{"id":"MOCK-ORDER-ID"}',
 					'response' => array( 'code' => 200 ),
@@ -210,6 +211,23 @@ class CaptureCardPaymentTest extends TestCase {
 			$captured_body['payment_source']['card']['experience_context']['return_url'] ?? null,
 			'create_order() must include payment_source.card.experience_context with a return_url'
 		);
+	}
+
+	/**
+	 * GIVEN a saved card payment is created
+	 * WHEN the HTTP request is sent
+	 * THEN it asks PayPal for the full order representation via the Prefer header
+	 */
+	public function test_create_order_requests_full_order_representation(): void {
+		$captured_body    = array();
+		$captured_headers = array();
+		$testee           = $this->make_testee( '', $captured_body, $captured_headers );
+		$wc_order         = Mockery::mock( WC_Order::class );
+		$wc_order->shouldReceive( 'get_id' )->andReturn( 1 );
+
+		$testee->create_order( 'vault-abc-123', $wc_order );
+
+		$this->assertSame( 'return=representation', $captured_headers['Prefer'] ?? null );
 	}
 
 	public function three_d_secure_enum_provider(): array {
