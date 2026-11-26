@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 4.2.3 - XXXX-XX-XX =
+* TBD
+
 = 4.2.2 - 2026-11-09 =
 * Enhancement - Refresh the SDK v6 client token earlier, so the token served to the buyer stays valid for at least two minutes #4841
 * Enhancement - Show the Store Sync beta invitation only to US-based PayPal merchants #4845

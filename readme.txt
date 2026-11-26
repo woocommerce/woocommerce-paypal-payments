@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 4.2.2
+Stable tag: 4.2.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -160,6 +160,9 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 ⚠️ Major Update — This release includes significant changes. Please back up your site before updating.
 
 == Changelog ==
+
+= 4.2.3 - XXXX-XX-XX =
+* TBD
 
 = 4.2.2 - 2026-11-09 =
 * Enhancement - Refresh the SDK v6 client token earlier, so the token served to the buyer stays valid for at least two minutes #4841
