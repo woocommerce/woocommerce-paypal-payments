@@ -23,6 +23,7 @@ import {
 } from '../paypal-config';
 import { useRef } from 'react';
 import Spinner from '../../../../ppcp-button/resources/js/modules/Helper/Spinner';
+import { isInlineExpressFundingSource } from '../Helper/FundingSource';
 
 const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
@@ -163,7 +164,22 @@ export const PayPalComponent = ( {
 			return actions.reject();
 		}
 
-		window.ppcpFundingSource = data.fundingSource;
+		const selectedFundingSource = data.fundingSource ?? fundingSource;
+		window.ppcpFundingSource = selectedFundingSource;
+
+		// Defer Blocks express processing for inline card forms; see
+		// isInlineExpressFundingSource(). Popup/app buttons still signal now.
+		if ( isInlineExpressFundingSource( selectedFundingSource ) ) {
+			return;
+		}
+
+		onClick();
+	};
+
+	const beginExpressPaymentIfDeferred = () => {
+		if ( ! isInlineExpressFundingSource( fundingSource ) ) {
+			return;
+		}
 
 		onClick();
 	};
@@ -374,6 +390,7 @@ export const PayPalComponent = ( {
 			config.scriptData.context,
 			{
 				createOrder: ( data ) => {
+					beginExpressPaymentIfDeferred();
 					return createOrder( data, config, onError, onClose );
 				},
 				onApprove: ( data, actions ) => {
@@ -465,7 +482,10 @@ export const PayPalComponent = ( {
 				onClick={ handleClick }
 				onCancel={ handleCancel }
 				onError={ onClose }
-				createVaultSetupToken={ () => createVaultSetupToken( config ) }
+				createVaultSetupToken={ () => {
+					beginExpressPaymentIfDeferred();
+					return createVaultSetupToken( config );
+				} }
 				onApprove={ ( { vaultSetupToken } ) =>
 					onApproveSavePayment(
 						vaultSetupToken,
@@ -493,9 +513,10 @@ export const PayPalComponent = ( {
 				onClick={ handleClick }
 				onCancel={ handleCancel }
 				onError={ onClose }
-				createSubscription={ ( data, actions ) =>
-					createSubscription( data, actions, config )
-				}
+				createSubscription={ ( data, actions ) => {
+					beginExpressPaymentIfDeferred();
+					return createSubscription( data, actions, config );
+				} }
 				onApprove={ ( data, actions ) =>
 					handleApproveSubscription(
 						data,
@@ -531,9 +552,10 @@ export const PayPalComponent = ( {
 			onClick={ handleClick }
 			onCancel={ handleCancel }
 			onError={ onClose }
-			createOrder={ ( data ) =>
-				createOrder( data, config, onError, onClose )
-			}
+			createOrder={ ( data ) => {
+				beginExpressPaymentIfDeferred();
+				return createOrder( data, config, onError, onClose );
+			} }
 			onApprove={ ( data, actions ) =>
 				handleApprove(
 					data,
