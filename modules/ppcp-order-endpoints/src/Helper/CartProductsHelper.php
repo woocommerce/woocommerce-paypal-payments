@@ -117,9 +117,10 @@ class CartProductsHelper {
 	 * Adds products to cart.
 	 *
 	 * @param array $products Array of products to be added to cart.
+	 * @param bool  $validate Whether to run woocommerce_add_to_cart_validation before adding each product.
 	 * @throws Exception When the cart is not set or a product is not added.
 	 */
-	public function add_products( array $products ): bool {
+	public function add_products( array $products, bool $validate = true ): bool {
 		if ( ! $this->cart ) {
 			throw new Exception( 'Cart not set.' );
 		}
@@ -137,7 +138,11 @@ class CartProductsHelper {
 				}
 			}
 
-			$args          = $this->add_to_cart_args( $entry );
+			$args = $this->add_to_cart_args( $entry );
+			if ( $validate && ! $this->passes_add_to_cart_validation( $args ) ) {
+				throw new Exception( 'Error adding products to cart.' );
+			}
+
 			$cart_item_key = $this->cart->add_to_cart(
 				$args['product_id'],
 				$args['quantity'],
@@ -205,7 +210,39 @@ class CartProductsHelper {
 			throw new Exception( 'WooCommerce Bookings is not active.' );
 		}
 
+		// WC Bookings reads its booking fields from $_POST, so copy them there first.
+		foreach ( $booking_fields as $key => $value ) {
+			if ( 0 === strpos( (string) $key, 'wc_bookings_field' ) ) {
+				$_POST[ $key ] = $value;
+			}
+		}
+
 		return wc_bookings_get_posted_data( $booking_fields, $product ); // @phpstan-ignore function.notFound
+	}
+
+	/**
+	 * @phpstan-param AddToCartArgs $args
+	 */
+	private function passes_add_to_cart_validation( array $args ): bool {
+		/**
+		 * WooCommerce's add-to-cart validation, which stock and quantity limit plugins hook into.
+		 *
+		 * @param bool  $passed_validation Whether the product may be added.
+		 * @param int   $product_id        The product ID.
+		 * @param int   $quantity          The quantity to add.
+		 * @param int   $variation_id      The matched variation ID, or 0 for products without variations.
+		 * @param array $variation         The variation attributes, or an empty array.
+		 * @param array $cart_item_data    The cart item data, such as a booking.
+		 */
+		return (bool) apply_filters(
+			'woocommerce_add_to_cart_validation',
+			true,
+			$args['product_id'],
+			$args['quantity'],
+			$args['variation_id'],
+			$args['variation'],
+			$args['cart_item_data']
+		);
 	}
 
 	/**
