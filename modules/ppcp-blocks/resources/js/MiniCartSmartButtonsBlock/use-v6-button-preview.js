@@ -9,7 +9,7 @@ import { createPreviewButton } from '@ppcp-sdk-v6/components/buttonRenderer';
  * @param {Object} options          - The preview options.
  * @param {Object} options.sdkV6    - The localized sdkV6 data (sdkUrl, clientId, locale).
  * @param {string} options.pageType - The v6 page type.
- * @param {Object} options.style    - The v6 button style ({ colorClass, borderRadius, height }).
+ * @param {Object} options.style    - The v6 button style ({ colorClass, borderRadius, type, height }).
  * @return {{containerRef: Function, loaded: boolean, failed: boolean}} Container ref and state.
  */
 export function useV6ButtonPreview( { sdkV6, pageType, style } ) {
@@ -18,7 +18,7 @@ export function useV6ButtonPreview( { sdkV6, pageType, style } ) {
 	const [ failed, setFailed ] = useState( false );
 
 	const { sdkUrl, clientId, locale } = sdkV6;
-	const { colorClass, borderRadius, height } = style;
+	const { colorClass, borderRadius, type, height } = style;
 
 	useEffect( () => {
 		if ( ! container ) {
@@ -47,7 +47,7 @@ export function useV6ButtonPreview( { sdkV6, pageType, style } ) {
 
 				element = createPreviewButton( doc, {
 					method: 'paypal',
-					styles: { colorClass, borderRadius, height },
+					styles: { colorClass, borderRadius, type, height },
 				} );
 				if ( ! element ) {
 					setFailed( true );
@@ -91,6 +91,7 @@ export function useV6ButtonPreview( { sdkV6, pageType, style } ) {
 		pageType,
 		colorClass,
 		borderRadius,
+		type,
 		height,
 	] );
 

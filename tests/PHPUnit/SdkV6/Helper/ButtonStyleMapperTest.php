@@ -14,9 +14,9 @@ class ButtonStyleMapperTest extends TestCase
 {
 	use MockeryPHPUnitIntegration;
 
-	private function mapperFor(string $color, string $shape): ButtonStyleMapper
+	private function mapperFor(string $color, string $shape, string $label = 'pay'): ButtonStyleMapper
 	{
-		$dto = new LocationStylingDTO('product', true, array(), $shape, 'pay', $color);
+		$dto = new LocationStylingDTO('product', true, array(), $shape, $label, $color);
 
 		$provider = Mockery::mock(SettingsProvider::class);
 		$provider
@@ -53,10 +53,33 @@ class ButtonStyleMapperTest extends TestCase
 
 	public function testEmptyDtoValuesFallBackToDefaults(): void
 	{
-		$result = $this->mapperFor('', '')->styles_for_context('product');
+		$result = $this->mapperFor('', '', '')->styles_for_context('product');
 
 		$this->assertSame('paypal-gold', $result['colorClass']);
 		$this->assertSame('24px', $result['borderRadius']);
+		$this->assertSame('pay', $result['type']);
+	}
+
+	/**
+	 * @dataProvider labelTypeData
+	 */
+	public function testMapsButtonLabelToWebComponentType(string $label, string $expectedType): void
+	{
+		$result = $this->mapperFor('gold', 'pill', $label)->styles_for_context('product');
+
+		$this->assertSame($expectedType, $result['type']);
+	}
+
+	public function labelTypeData(): array
+	{
+		return array(
+			'paypal logo-only button has no type' => array('paypal', ''),
+			'checkout label'                      => array('checkout', 'checkout'),
+			'buy now label'                       => array('buynow', 'buynow'),
+			'pay label'                           => array('pay', 'pay'),
+			'empty label defaults to pay'         => array('', 'pay'),
+			'unknown label falls back to pay'     => array('installment', 'pay'),
+		);
 	}
 
 	public function testDoesNotExposeAHeightStyle(): void

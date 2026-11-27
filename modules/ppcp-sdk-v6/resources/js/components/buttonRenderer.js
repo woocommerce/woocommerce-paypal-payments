@@ -24,35 +24,33 @@ import { FundingSources } from '../utils/fundingSources';
 const BUTTON_ELEMENTS = {
 	paypal: {
 		tagName: 'paypal-button',
-		type: 'pay',
+		takesType: true,
 		radiusProperty: '--paypal-button-border-radius',
 	},
 	venmo: {
 		tagName: 'venmo-button',
-		type: 'pay',
+		takesType: true,
 		radiusProperty: '--venmo-button-border-radius',
 	},
 	paylater: {
 		tagName: 'paypal-pay-later-button',
-		type: '',
+		takesType: false,
 		radiusProperty: '--paypal-button-border-radius',
 	},
 };
 
 /**
- * Applies color, shape and height to a new button element (shared by the button and preview).
+ * Applies label, color, shape and height to a new button element (shared by the button and preview).
  *
- * @param {Document} doc            - The document to create the element in.
- * @param {string}   tagName        - The web component tag.
- * @param {string}   type           - The button type attribute.
- * @param {string}   radiusProperty - The element's border-radius custom property.
- * @param {Object}   styles         - Style config from ButtonStyleMapper.
+ * @param {Document} doc     - The document to create the element in.
+ * @param {Object}   element - The BUTTON_ELEMENTS entry.
+ * @param {Object}   styles  - Style config from ButtonStyleMapper.
  * @return {HTMLElement} The styled button element.
  */
-function styleButtonElement( doc, tagName, type, radiusProperty, styles ) {
-	const button = doc.createElement( tagName );
-	if ( type ) {
-		button.setAttribute( 'type', type );
+function styleButtonElement( doc, element, styles ) {
+	const button = doc.createElement( element.tagName );
+	if ( element.takesType && styles.type ) {
+		button.setAttribute( 'type', styles.type );
 	}
 
 	if ( styles.colorClass ) {
@@ -60,7 +58,7 @@ function styleButtonElement( doc, tagName, type, radiusProperty, styles ) {
 	}
 
 	if ( styles.borderRadius ) {
-		button.style.setProperty( radiusProperty, styles.borderRadius );
+		button.style.setProperty( element.radiusProperty, styles.borderRadius );
 	}
 
 	if ( styles.height ) {
@@ -76,31 +74,15 @@ function styleButtonElement( doc, tagName, type, radiusProperty, styles ) {
  * Components read their configuration when they connect, so every
  * attribute and property must be in place before insertion.
  *
- * @param {string}       tagName        - The web component tag.
- * @param {string}       type           - The button type attribute.
- * @param {string}       radiusProperty - The element's border-radius custom property.
- * @param {Object}       styles         - Style config from ButtonStyleMapper.
- * @param {Object}       session        - The payment session.
- * @param {OrderCreator} createOrderFn  - Returns the created order id.
- * @param {() => void}   [onClick]      - Called on click before the session starts.
+ * @param {Object}       element       - The BUTTON_ELEMENTS entry.
+ * @param {Object}       styles        - Style config from ButtonStyleMapper.
+ * @param {Object}       session       - The payment session.
+ * @param {OrderCreator} createOrderFn - Returns the created order id.
+ * @param {() => void}   [onClick]     - Called on click before the session starts.
  * @return {HTMLElement} The configured button element.
  */
-function createButton(
-	tagName,
-	type,
-	radiusProperty,
-	styles,
-	session,
-	createOrderFn,
-	onClick
-) {
-	const button = styleButtonElement(
-		document,
-		tagName,
-		type,
-		radiusProperty,
-		styles
-	);
+function createButton( element, styles, session, createOrderFn, onClick ) {
+	const button = styleButtonElement( document, element, styles );
 
 	button.addEventListener( 'click', async () => {
 		try {
@@ -156,9 +138,7 @@ export function createMethodButton( {
 	}
 
 	const button = createButton(
-		element.tagName,
-		element.type,
-		element.radiusProperty,
+		element,
 		styles,
 		session,
 		createOrderFn,
@@ -182,7 +162,7 @@ export function createMethodButton( {
  * @param {Document} doc            - The document to create the element in.
  * @param {Object}   options        - Button options.
  * @param {string}   options.method - The funding method (paypal, venmo, paylater).
- * @param {Object}   options.styles - Button styles ({ colorClass, borderRadius, height }).
+ * @param {Object}   options.styles - Button styles ({ colorClass, borderRadius, type, height }).
  * @return {?HTMLElement} The styled button element, or null.
  */
 export function createPreviewButton( doc, { method, styles } ) {
@@ -191,13 +171,7 @@ export function createPreviewButton( doc, { method, styles } ) {
 		return null;
 	}
 
-	return styleButtonElement(
-		doc,
-		element.tagName,
-		element.type,
-		element.radiusProperty,
-		styles
-	);
+	return styleButtonElement( doc, element, styles );
 }
 
 /**

@@ -32,6 +32,7 @@ const baseProps = ( overrides = {} ) => ( {
 	style: {
 		colorClass: 'paypal-blue',
 		borderRadius: '8px',
+		type: 'checkout',
 		height: '35px',
 	},
 	...overrides,
@@ -81,6 +82,7 @@ describe( 'useV6ButtonPreview()', () => {
 			styles: {
 				colorClass: 'paypal-blue',
 				borderRadius: '8px',
+				type: 'checkout',
 				height: '35px',
 			},
 		} );
