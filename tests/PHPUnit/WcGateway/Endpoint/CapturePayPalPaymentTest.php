@@ -24,7 +24,11 @@ class CapturePayPalPaymentTest extends TestCase {
 	 * @param array       &$captured_body   Passed by reference; populated with the decoded request body inside the wp_remote_get stub.
 	 * @param PurchaseUnit|null $purchase_unit The purchase unit returned by from_wc_order(); defaults to one whose to_array() is empty.
 	 */
-	private function make_testee( array &$captured_body, ?PurchaseUnit $purchase_unit = null ): array {
+	private function make_testee(
+		array &$captured_body,
+		?PurchaseUnit $purchase_unit = null,
+		array &$captured_headers = array()
+	): array {
 		$token = Mockery::mock( \WooCommerce\PayPalCommerce\ApiClient\Entity\Token::class );
 		$token->shouldReceive( 'token' )->andReturn( 'test-bearer-token' );
 
@@ -61,8 +65,9 @@ class CapturePayPalPaymentTest extends TestCase {
 		$headers_stub->shouldReceive( 'getAll' )->andReturn( array() );
 
 		expect( 'wp_remote_get' )->andReturnUsing(
-			function ( string $url, array $args ) use ( &$captured_body, $headers_stub ): array {
-				$captured_body = (array) json_decode( $args['body'], true );
+			function ( string $url, array $args ) use ( &$captured_body, &$captured_headers, $headers_stub ): array {
+				$captured_body    = (array) json_decode( $args['body'], true );
+				$captured_headers = $args['headers'];
 				return array(
 					'body'     => '{"id":"MOCK-ORDER-ID"}',
 					'response' => array( 'code' => 200 ),
@@ -191,5 +196,20 @@ class CapturePayPalPaymentTest extends TestCase {
 		$testee->create_order( 'vault-abc-123', $wc_order );
 
 		$this->assertArrayHasKey( 'paypal', $captured_body['payment_source'] ?? array() );
+	}
+
+	/**
+	 * GIVEN a saved PayPal account payment is created
+	 * WHEN the HTTP request is sent
+	 * THEN it asks PayPal for the full order representation via the Prefer header
+	 */
+	public function test_create_order_requests_full_order_representation(): void {
+		$captured_body    = array();
+		$captured_headers = array();
+		[ $testee ]       = $this->make_testee( $captured_body, null, $captured_headers );
+
+		$testee->create_order( 'vault-abc-123', Mockery::mock( WC_Order::class ) );
+
+		$this->assertSame( 'return=representation', $captured_headers['Prefer'] ?? null );
 	}
 }

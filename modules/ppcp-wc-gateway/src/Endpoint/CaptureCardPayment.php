@@ -160,6 +160,7 @@ class CaptureCardPayment {
 				'Authorization'     => 'Bearer ' . $bearer->token(),
 				'Content-Type'      => 'application/json',
 				'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
+				'Prefer'            => 'return=representation',
 			),
 			'body'    => wp_json_encode( $data ),
 		);
