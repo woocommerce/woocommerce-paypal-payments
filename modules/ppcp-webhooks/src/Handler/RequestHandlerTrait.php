@@ -244,6 +244,22 @@ trait RequestHandlerTrait {
 		$captured = new Money( (float) $amount['value'], (string) $amount['currency_code'] );
 		$total    = new Money( (float) $wc_order->get_total(), $wc_order->get_currency() );
 
+		/**
+		 * Filters the money a capture must cover before the WC order is marked as paid.
+		 *
+		 * By default it is the WC order total, in the WC order currency. When the PayPal
+		 * order was created in another currency than the WC order (for example by a
+		 * multi-currency plugin), return the amount that was sent to PayPal.
+		 *
+		 * @param Money    $total    The WC order total.
+		 * @param WC_Order $wc_order The WC order.
+		 * @param Money    $captured The captured money from the webhook.
+		 */
+		$expected = apply_filters( 'woocommerce_paypal_payments_expected_capture_money', $total, $wc_order, $captured );
+		if ( $expected instanceof Money ) {
+			$total = $expected;
+		}
+
 		return $captured->currency_code() === $total->currency_code()
 			&& (float) $captured->value_str() >= (float) $total->value_str();
 	}
