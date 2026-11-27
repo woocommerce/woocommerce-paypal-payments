@@ -42,7 +42,8 @@ class ChangeCartEndpointTest extends TestCase
                         $singleProductArray['id'],
                         $singleProductArray['quantity'],
                         $singleProductArray['__test_data_variation_id'],
-                        $singleProductArray['__test_data_variation_map']
+                        $singleProductArray['__test_data_variation_map'],
+                        array()
                     )
                     ->andReturnTrue();
             }
@@ -54,7 +55,7 @@ class ChangeCartEndpointTest extends TestCase
 				}
 
 				expect('wc_bookings_get_posted_data')
-					->with($singleProductArray['booking'])
+					->with($singleProductArray['booking'], $products[$productKey])
 					->andReturn($processedBooking);
 				$cart
 					->expects('add_to_cart')
@@ -70,7 +71,7 @@ class ChangeCartEndpointTest extends TestCase
 			else {
 				$cart
 					->expects('add_to_cart')
-					->with($singleProductArray['id'], $singleProductArray['quantity'])
+					->with($singleProductArray['id'], $singleProductArray['quantity'], 0, array(), array())
 					->andReturnTrue();
 			}
 		}

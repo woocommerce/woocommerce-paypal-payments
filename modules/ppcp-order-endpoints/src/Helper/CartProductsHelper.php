@@ -15,6 +15,8 @@ use WC_Data_Store;
 
 /**
  * Class CartProductsHelper
+ *
+ * @phpstan-type AddToCartArgs array{product_id: int, quantity: int, variation_id: int, variation: array, cart_item_data: array}
  */
 class CartProductsHelper {
 
@@ -115,17 +117,20 @@ class CartProductsHelper {
 	 * Adds products to cart.
 	 *
 	 * @param array $products Array of products to be added to cart.
-	 * @return bool
-	 * @throws Exception Add to cart methods throw an exception on fail.
+	 * @param bool  $validate Whether to run woocommerce_add_to_cart_validation before adding each product.
+	 * @throws Exception When the cart is not set or a product is not added.
 	 */
-	public function add_products( array $products ): bool {
-		$success = true;
-		foreach ( $products as $product ) {
+	public function add_products( array $products, bool $validate = true ): bool {
+		if ( ! $this->cart ) {
+			throw new Exception( 'Cart not set.' );
+		}
+
+		foreach ( $products as $entry ) {
 
 			// Add extras to POST, they are usually added by custom plugins.
-			if ( $product['extra'] && is_array( $product['extra'] ) ) {
+			if ( $entry['extra'] && is_array( $entry['extra'] ) ) {
 				// Handle cases like field[].
-				$query = http_build_query( $product['extra'] );
+				$query = http_build_query( $entry['extra'] );
 				parse_str( $query, $extra );
 
 				foreach ( $extra as $key => $value ) {
@@ -133,132 +138,111 @@ class CartProductsHelper {
 				}
 			}
 
-			if ( $product['product']->is_type( 'booking' ) ) {
-				$success = $success && $this->add_booking_product(
-					$product['product'],
-					$product['booking']
-				);
-			} elseif ( $product['product']->is_type( 'variable' ) ) {
-				if ( empty( $product['variations'] ) || ! is_array( $product['variations'] ) ) {
-					$product['variations'] = array();
-				}
-				$success = $success && $this->add_variable_product(
-					$product['product'],
-					$product['quantity'],
-					$product['variations']
-				);
-			} else {
-				$success = $success && $this->add_product(
-					$product['product'],
-					$product['quantity']
-				);
+			$args = $this->add_to_cart_args( $entry );
+			if ( $validate && ! $this->passes_add_to_cart_validation( $args ) ) {
+				throw new Exception( 'Error adding products to cart.' );
 			}
-		}
 
-		if ( ! $success ) {
-			throw new Exception( 'Error adding products to cart.' );
+			$cart_item_key = $this->cart->add_to_cart(
+				$args['product_id'],
+				$args['quantity'],
+				$args['variation_id'],
+				$args['variation'],
+				$args['cart_item_data']
+			);
+			if ( ! $cart_item_key ) {
+				throw new Exception( 'Error adding products to cart.' );
+			}
+			$this->cart_item_keys[] = $cart_item_key;
 		}
 
 		return true;
 	}
 
 	/**
-	 * Adds a product to the cart.
-	 *
-	 * @param \WC_Product $product The Product.
-	 * @param int         $quantity The Quantity.
-	 *
-	 * @return bool
-	 * @throws Exception When product could not be added.
+	 * @phpstan-return AddToCartArgs
+	 * @throws Exception When a booking is added without WC Bookings.
 	 */
-	public function add_product( \WC_Product $product, int $quantity ): bool {
-		if ( ! $this->cart ) {
-			throw new Exception( 'Cart not set.' );
+	private function add_to_cart_args( array $entry ): array {
+		$product = $entry['product'];
+		$args    = array(
+			'product_id'     => $product->get_id(),
+			'quantity'       => $entry['quantity'],
+			'variation_id'   => 0,
+			'variation'      => array(),
+			'cart_item_data' => array(),
+		);
+
+		if ( $product->is_type( 'booking' ) ) {
+			$args['quantity']       = 1;
+			$args['cart_item_data'] = array(
+				'booking' => $this->booking_data( $product, is_array( $entry['booking'] ) ? $entry['booking'] : array() ),
+			);
+		} elseif ( $product->is_type( 'variable' ) ) {
+			$args['variation'] = $this->variation_attributes( is_array( $entry['variations'] ) ? $entry['variations'] : array() );
+			// @phpstan-ignore method.notFound
+			$args['variation_id'] = $this->product_data_store->find_matching_product_variation( $product, $args['variation'] );
 		}
 
-		$cart_item_key = $this->cart->add_to_cart( $product->get_id(), $quantity );
-
-		if ( $cart_item_key ) {
-			$this->cart_item_keys[] = $cart_item_key;
-		}
-		return false !== $cart_item_key;
+		return $args;
 	}
 
 	/**
-	 * Adds variations to the cart.
-	 *
-	 * @param \WC_Product $product The Product.
-	 * @param int         $quantity The Quantity.
-	 * @param array       $post_variations The variations.
-	 *
-	 * @return bool
-	 * @throws Exception When product could not be added.
+	 * @param array $post_variations The form's attribute fields, as name/value pairs.
 	 */
-	public function add_variable_product(
-		\WC_Product $product,
-		int $quantity,
-		array $post_variations
-	): bool {
-		if ( ! $this->cart ) {
-			throw new Exception( 'Cart not set.' );
-		}
-
-		$variations = array();
-		foreach ( $post_variations as $key => $value ) {
-			if ( ! isset( $value['name'], $value['value'] ) ) {
+	private function variation_attributes( array $post_variations ): array {
+		$attributes = array();
+		foreach ( $post_variations as $field ) {
+			if ( ! isset( $field['name'], $field['value'] ) ) {
 				continue;
 			}
-			$variations[ $value['name'] ] = $value['value'];
+			$attributes[ $field['name'] ] = $field['value'];
 		}
 
-		// @phpstan-ignore method.notFound
-		$variation_id = $this->product_data_store->find_matching_product_variation( $product, $variations );
-
-		// ToDo: Check stock status for variation.
-		$cart_item_key = $this->cart->add_to_cart(
-			$product->get_id(),
-			$quantity,
-			$variation_id,
-			$variations
-		);
-
-		if ( $cart_item_key ) {
-			$this->cart_item_keys[] = $cart_item_key;
-		}
-		return false !== $cart_item_key;
+		return $attributes;
 	}
 
 	/**
-	 * Adds booking to the cart.
-	 *
-	 * @param \WC_Product $product The Product.
-	 * @param array       $data Data used by the booking plugin.
-	 *
-	 * @return bool
-	 * @throws Exception When product could not be added.
+	 * @throws Exception When WC Bookings is not active.
 	 */
-	public function add_booking_product(
-		\WC_Product $product,
-		array $data
-	): bool {
-		if ( ! $this->cart ) {
-			throw new Exception( 'Cart not set.' );
-		}
-
+	private function booking_data( \WC_Product $product, array $booking_fields ): array {
 		if ( ! is_callable( 'wc_bookings_get_posted_data' ) ) { // @phpstan-ignore function.impossibleType
-			return false;
+			throw new Exception( 'WooCommerce Bookings is not active.' );
 		}
 
-		$cart_item_data = array(
-			'booking' => wc_bookings_get_posted_data( $data, $product ), // @phpstan-ignore function.notFound
+		// WC Bookings reads its booking fields from $_POST, so copy them there first.
+		foreach ( $booking_fields as $key => $value ) {
+			if ( 0 === strpos( (string) $key, 'wc_bookings_field' ) ) {
+				$_POST[ $key ] = $value;
+			}
+		}
+
+		return wc_bookings_get_posted_data( $booking_fields, $product ); // @phpstan-ignore function.notFound
+	}
+
+	/**
+	 * @phpstan-param AddToCartArgs $args
+	 */
+	private function passes_add_to_cart_validation( array $args ): bool {
+		/**
+		 * WooCommerce's add-to-cart validation, which stock and quantity limit plugins hook into.
+		 *
+		 * @param bool  $passed_validation Whether the product may be added.
+		 * @param int   $product_id        The product ID.
+		 * @param int   $quantity          The quantity to add.
+		 * @param int   $variation_id      The matched variation ID, or 0 for products without variations.
+		 * @param array $variation         The variation attributes, or an empty array.
+		 * @param array $cart_item_data    The cart item data, such as a booking.
+		 */
+		return (bool) apply_filters(
+			'woocommerce_add_to_cart_validation',
+			true,
+			$args['product_id'],
+			$args['quantity'],
+			$args['variation_id'],
+			$args['variation'],
+			$args['cart_item_data']
 		);
-
-		$cart_item_key = $this->cart->add_to_cart( $product->get_id(), 1, 0, array(), $cart_item_data );
-
-		if ( $cart_item_key ) {
-			$this->cart_item_keys[] = $cart_item_key;
-		}
-		return false !== $cart_item_key;
 	}
 
 	/**

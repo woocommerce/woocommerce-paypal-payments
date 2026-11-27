@@ -51,7 +51,8 @@ class IsolatedCartSimulator {
 			$cart = $this->create_isolated_cart();
 
 			$this->cart_products->set_cart( $cart );
-			$this->cart_products->add_products( $products );
+			// woocommerce_add_to_cart_validation callbacks read WC()->cart, not this isolated cart; ChangeCartEndpoint validates the real add.
+			$this->cart_products->add_products( $products, false );
 
 			$cart->calculate_totals();
 

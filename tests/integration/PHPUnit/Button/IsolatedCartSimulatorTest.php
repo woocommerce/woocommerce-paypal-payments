@@ -59,6 +59,30 @@ class IsolatedCartSimulatorTest extends SimulateCartTestCase {
 		);
 	}
 
+	/**
+	 * GIVEN a store plugin that refuses every add to cart
+	 * WHEN a cart simulation runs for a product
+	 * THEN the simulation still returns a total
+	 * AND the validation filter never ran
+	 */
+	public function testSimulateIgnoresAddToCartValidation(): void {
+		$validation_ran = false;
+		$refuse         = static function () use ( &$validation_ran ): bool {
+			$validation_ran = true;
+			return false;
+		};
+		add_filter( 'woocommerce_add_to_cart_validation', $refuse, 10, 5 );
+
+		try {
+			$result = $this->cart_simulator->simulate( [ $this->productData( $this->createSimpleProduct( 30.00 ) ) ] );
+		} finally {
+			remove_filter( 'woocommerce_add_to_cart_validation', $refuse, 10 );
+		}
+
+		self::assertGreaterThan( 0.0, $result['total'] );
+		self::assertFalse( $validation_ran );
+	}
+
 	public function testSimulateDoesNotRemoveShutdownHooks(): void {
 		$callback = function () {};
 

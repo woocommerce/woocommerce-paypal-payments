@@ -166,4 +166,124 @@ class ApplePayButtonTest extends TestCase {
 
 		$this->assertSame( 'NY', $packages[0]['destination']['state'] );
 	}
+
+	/**
+	 * Builds a button whose cart already holds one item and whose product cannot be added.
+	 *
+	 * @param array $error_notices The WooCommerce error notices present after the failed add.
+	 */
+	private function button_failing_to_add_product( array $error_notices, Mockery\MockInterface $cart ): ApplePayButton {
+		$cart->allows( 'is_empty' )->andReturn( false );
+		$cart->allows( 'get_cart_contents' )->andReturn( array( 'old-key' => array( 'product_id' => 5 ) ) );
+		$cart->allows( 'remove_cart_item' );
+
+		when( 'WC' )->justReturn( (object) array( 'cart' => $cart ) );
+		when( 'wc_get_notices' )->justReturn( $error_notices );
+		when( 'wp_strip_all_tags' )->alias( 'strip_tags' );
+
+		$cart_products = Mockery::mock( CartProductsHelper::class );
+		$cart_products->allows( 'set_cart' );
+		$cart_products->allows( 'product_from_data' )->andReturn( array( 'product' => 'unused' ) );
+		$cart_products->allows( 'add_products' )->andThrow( new \Exception( 'Error adding products to cart.' ) );
+
+		return new ApplePayButton(
+			$this->settings,
+			Mockery::mock( PaymentSettings::class ),
+			Mockery::mock( LoggerInterface::class ),
+			Mockery::mock( OrderProcessor::class ),
+			Mockery::mock( AssetGetter::class ),
+			'1.0.0',
+			Mockery::mock( DataToAppleButtonScripts::class ),
+			$cart_products,
+			$this->context
+		);
+	}
+
+	private function request_data(): Assets\ApplePayDataObjectHttp {
+		$request = Mockery::mock( Assets\ApplePayDataObjectHttp::class );
+		$request->allows( 'product_id' )->andReturn( '10' );
+		$request->allows( 'product_quantity' )->andReturn( '1' );
+		$request->allows( 'product_variations' )->andReturn( array() );
+		$request->allows( 'product_extra' )->andReturn( array() );
+		$request->allows( 'product_booking' )->andReturn( array() );
+
+		return $request;
+	}
+
+	private function error_thrown_by_prepare_cart( ApplePayButton $button ): \Exception {
+		try {
+			$button->prepare_cart( $this->request_data() );
+		} catch ( \Exception $exception ) {
+			return $exception;
+		}
+
+		$this->fail( 'prepare_cart() should have thrown.' );
+	}
+
+	/**
+	 * GIVEN a shopper's cart that was set aside and a product the add-to-cart validation refuses
+	 * WHEN the Apple Pay cart is prepared
+	 * THEN the shopper's saved cart items are restored
+	 */
+	public function testPrepareCartRestoresSavedCartWhenProductIsRefused(): void {
+		$cart = Mockery::mock( \WC_Cart::class );
+		$cart->expects( 'restore_cart_item' )->once()->with( 'old-key' );
+		when( 'wc_clear_notices' )->justReturn( null );
+
+		$this->error_thrown_by_prepare_cart( $this->button_failing_to_add_product( array(), $cart ) );
+
+		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN a product the add-to-cart validation refuses with error notices
+	 * WHEN the Apple Pay cart is prepared
+	 * THEN the notices are cleared so they do not show again on the next page view
+	 */
+	public function testPrepareCartClearsNoticesWhenProductIsRefused(): void {
+		$cart = Mockery::mock( \WC_Cart::class )->shouldIgnoreMissing();
+		\Brain\Monkey\Functions\expect( 'wc_clear_notices' )->once();
+
+		$this->error_thrown_by_prepare_cart(
+			$this->button_failing_to_add_product( array( array( 'notice' => 'Max 5 per order.' ) ), $cart )
+		);
+
+		$this->addToAssertionCount( 1 );
+	}
+
+	/**
+	 * GIVEN a product the add-to-cart validation refuses with two error notices, one containing markup
+	 * WHEN the Apple Pay cart is prepared
+	 * THEN the thrown message is the notice text without tags, joined by a space
+	 */
+	public function testPrepareCartThrowsNoticeTextAsMessage(): void {
+		$cart = Mockery::mock( \WC_Cart::class )->shouldIgnoreMissing();
+		when( 'wc_clear_notices' )->justReturn( null );
+
+		$exception = $this->error_thrown_by_prepare_cart(
+			$this->button_failing_to_add_product(
+				array(
+					array( 'notice' => '<strong>Max 5</strong> per order.' ),
+					array( 'notice' => 'Try again later.' ),
+				),
+				$cart
+			)
+		);
+
+		$this->assertSame( 'Max 5 per order. Try again later.', $exception->getMessage() );
+	}
+
+	/**
+	 * GIVEN a product that cannot be added and no error notices
+	 * WHEN the Apple Pay cart is prepared
+	 * THEN the thrown message is the original failure message
+	 */
+	public function testPrepareCartFallsBackToOriginalMessageWithoutNotices(): void {
+		$cart = Mockery::mock( \WC_Cart::class )->shouldIgnoreMissing();
+		when( 'wc_clear_notices' )->justReturn( null );
+
+		$exception = $this->error_thrown_by_prepare_cart( $this->button_failing_to_add_product( array(), $cart ) );
+
+		$this->assertSame( 'Error adding products to cart.', $exception->getMessage() );
+	}
 }

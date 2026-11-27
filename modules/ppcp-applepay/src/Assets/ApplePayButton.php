@@ -718,8 +718,28 @@ class ApplePayButton implements ButtonInterface {
 			)
 		);
 
-		$this->cart_products->add_products( array( $product ) );
+		try {
+			$this->cart_products->add_products( array( $product ) );
+		} catch ( Exception $exception ) {
+			$this->reload_cart( WC()->cart );
+			$message = $this->error_notices_text() ?: $exception->getMessage();
+			// The Apple Pay sheet shows the message; left in the session, it would show again on the next page view.
+			wc_clear_notices();
+			throw new Exception( $message, 0, $exception );
+		}
+
 		return $this->cart_products->cart_item_keys()[0] ?? '';
+	}
+
+	private function error_notices_text(): string {
+		$messages = array_map(
+			static function ( array $notice ): string {
+				return wp_strip_all_tags( (string) $notice['notice'] );
+			},
+			wc_get_notices( 'error' )
+		);
+
+		return implode( ' ', $messages );
 	}
 
 	/**

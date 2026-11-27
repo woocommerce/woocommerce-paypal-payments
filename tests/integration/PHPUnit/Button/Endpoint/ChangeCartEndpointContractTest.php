@@ -134,6 +134,115 @@ class ChangeCartEndpointContractTest extends WcAjaxEndpointTestCase {
 	}
 
 	/**
+	 * GIVEN a store plugin that refuses quantities above 5 with an error notice
+	 * WHEN ppc-change-cart is called with a quantity of 6
+	 * THEN the request fails with the plugin's notice as the message
+	 * AND the WC cart stays empty
+	 */
+	public function test_quantity_refused_by_add_to_cart_validation_fails_with_notice(): void {
+		$product = $this->createVirtualProduct( 10.0 );
+		$this->refuseQuantitiesAbove( 5 );
+
+		$response = $this->dispatchAjaxRequest(
+			$this->endpoint,
+			array( 'products' => array( array( 'id' => $product->get_id(), 'quantity' => 6 ) ) )
+		);
+
+		$this->assertFalse( $response['success'] );
+		$this->assertStringContainsString( 'Max 5 per order.', $response['data']['message'] ?? '' );
+		$this->assertTrue( WC()->cart->is_empty(), 'Refused product must not be in the WC cart' );
+	}
+
+	/**
+	 * GIVEN a store plugin that refuses quantities above 5
+	 * WHEN ppc-change-cart is called with a quantity of exactly 5
+	 * THEN the request succeeds
+	 * AND the WC cart contains 5 of the product
+	 */
+	public function test_quantity_within_add_to_cart_validation_limit_succeeds(): void {
+		$product = $this->createVirtualProduct( 10.0 );
+		$this->refuseQuantitiesAbove( 5 );
+
+		$response = $this->dispatchAjaxRequest(
+			$this->endpoint,
+			array( 'products' => array( array( 'id' => $product->get_id(), 'quantity' => 5 ) ) )
+		);
+
+		$this->assertTrue( $response['success'], 'ppc-change-cart must succeed: ' . $response['raw'] );
+		$cart_items = array_values( WC()->cart->get_cart() );
+		$this->assertCount( 1, $cart_items );
+		$this->assertSame( 5, $cart_items[0]['quantity'] );
+	}
+
+	/**
+	 * GIVEN a variable product and a store plugin that refuses every add to cart
+	 * WHEN ppc-change-cart is called for the "red" variation
+	 * THEN the validation filter receives the variation ID and the attribute array as arguments 4 and 5
+	 * AND the request fails
+	 * AND the WC cart stays empty
+	 */
+	public function test_variable_product_validation_receives_variation_and_is_enforced(): void {
+		$products = $this->createVariableProduct( 15.0 );
+		$received = array();
+		$this->addValidationFilter(
+			static function ( $passed, $product_id, $quantity, $variation_id = 0, $variations = array() ) use ( &$received ) {
+				$received = array( $variation_id, $variations );
+				return false;
+			}
+		);
+
+		$response = $this->dispatchAjaxRequest(
+			$this->endpoint,
+			array(
+				'products' => array(
+					array(
+						'id'         => $products['parent']->get_id(),
+						'quantity'   => 1,
+						'variations' => array( array( 'name' => 'attribute_color', 'value' => 'red' ) ),
+					),
+				),
+			)
+		);
+
+		$this->assertSame(
+			array( $products['variation']->get_id(), array( 'attribute_color' => 'red' ) ),
+			$received
+		);
+		$this->assertFalse( $response['success'] );
+		$this->assertTrue( WC()->cart->is_empty(), 'Refused variation must not be in the WC cart' );
+	}
+
+	/** @var callable|null */
+	private $validationFilter = null;
+
+	public function tearDown(): void {
+		if ( $this->validationFilter ) {
+			remove_filter( 'woocommerce_add_to_cart_validation', $this->validationFilter, 10 );
+			$this->validationFilter = null;
+		}
+		wc_clear_notices();
+
+		parent::tearDown();
+	}
+
+	private function addValidationFilter( callable $filter ): void {
+		$this->validationFilter = $filter;
+		add_filter( 'woocommerce_add_to_cart_validation', $filter, 10, 5 );
+	}
+
+	private function refuseQuantitiesAbove( int $limit ): void {
+		$this->addValidationFilter(
+			static function ( $passed, $product_id, $quantity ) use ( $limit ) {
+				if ( $quantity > $limit ) {
+					wc_add_notice( 'Max ' . $limit . ' per order.', 'error' );
+					return false;
+				}
+				return $passed;
+			}
+		);
+	}
+
+	/**
 	 * GIVEN a request body without a products field
 	 * WHEN ppc-change-cart is called with a valid nonce
 	 * THEN the request fails with the "Necessary fields not defined" error shape
